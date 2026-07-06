@@ -1,0 +1,28 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              # /customer-service/** gibi adreslerin Eureka uzerinden otomatik yonlendirilmesi
+              enabled: true
+              lower-case-service-id: true
+          routes:
+            # Servisler eklendikce asagidaki gibi route tanimlanir:
+            # - id: customer-service
+            #   uri: lb://customer-service
+            #   predicates:
+            #     - Path=/api/v1/customers/**
+            - id: discovery-server-ui
+              uri: http://localhost:8761
+              predicates:
+                - Path=/eureka/web
+              filters:
+                - SetPath=/
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${keycloak.issuer-uri}

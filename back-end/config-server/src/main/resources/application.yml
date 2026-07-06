@@ -1,0 +1,22 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          # Varsayilan: back-end/config-repo klasoru (config-server dizininden calistirildiginda).
+          # Farkli bir konum icin CONFIG_REPO_PATH ortam degiskeni verilebilir,
+          # ileride git backend'e gecmek icin "native" profili kaldirip spring.cloud.config.server.git.uri tanimlanmalidir.
+          search-locations: ${CONFIG_REPO_PATH:file:${user.dir}/../config-repo}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
