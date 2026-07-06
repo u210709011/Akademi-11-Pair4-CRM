@@ -1,0 +1,17 @@
+# Discovery Server (Eureka) - tum ortamlar icin gecerli ortak konfigurasyon.
+# Ortama ozel degerler: discovery-server-dev.yml / discovery-server-test.yml / discovery-server-prod.yml
+
+server:
+  port: 8761
+
+eureka:
+  client:
+    # Eureka Server kendisini bir client olarak kaydetmez
+    register-with-eureka: false
+    fetch-registry: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

@@ -1,0 +1,6 @@
+# Discovery Server - prod ortami.
+
+eureka:
+  server:
+    # Prod'da gecici ag sorunlarinda kayitlarin toplu dusmesini onler
+    enable-self-preservation: true
