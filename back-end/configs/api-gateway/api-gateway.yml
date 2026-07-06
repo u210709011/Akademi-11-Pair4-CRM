@@ -1,0 +1,24 @@
+# API Gateway - tum ortamlar icin ortak konfigurasyon.
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              # /customer-service/** gibi adreslerin Eureka uzerinden otomatik yonlendirilmesi
+              enabled: true
+              lower-case-service-id: true
+          # Servisler eklendikce asagidaki gibi route tanimlanir:
+          # routes:
+          #   - id: customer-service
+          #     uri: lb://customer-service
+          #     predicates:
+          #       - Path=/api/v1/customers/**
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${keycloak.issuer-uri}
