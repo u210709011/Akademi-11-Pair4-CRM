@@ -1,4 +1,12 @@
-# API Gateway - dev ortamina ozel ayarlar.
+# API Gateway - dev ortami: tum altyapi lokalde (podman compose) calisir.
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+keycloak:
+  issuer-uri: http://localhost:8180/realms/crm
 
 spring:
   cloud:

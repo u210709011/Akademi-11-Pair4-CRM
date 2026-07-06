@@ -1,0 +1,5 @@
+# Discovery Server - test ortami.
+
+eureka:
+  server:
+    enable-self-preservation: false

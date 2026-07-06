@@ -12,12 +12,15 @@ back-end/
 │   ├── keycloak/           # crm realm import dosyası
 │   └── debezium/           # Outbox connector tanımları + outbox/inbox SQL
 ├── configs/                # Config Server'ın sunduğu merkezi konfigürasyonlar
-│   ├── application.yml     # Tüm servisler için ortak ayarlar
-│   ├── application-dev.yml # Ortak ayarların dev ortamı değerleri
-│   ├── application-prod.yml# Ortak ayarların prod ortamı değerleri
-│   └── api-gateway/        # Her servis için ayrı alt klasör
+│   ├── discovery-server/   # Her sunucu/servis için ayrı klasör
+│   │   ├── discovery-server.yml       # Ortamdan bağımsız ayarlar
+│   │   ├── discovery-server-dev.yml   # Dev ortamı
+│   │   ├── discovery-server-test.yml  # Test ortamı
+│   │   └── discovery-server-prod.yml  # Prod ortamı
+│   └── api-gateway/
 │       ├── api-gateway.yml
 │       ├── api-gateway-dev.yml
+│       ├── api-gateway-test.yml
 │       └── api-gateway-prod.yml
 ├── config-server/          # Spring Cloud Config Server (port 8888)
 ├── discovery-server/       # Eureka Server (port 8761)
@@ -52,12 +55,15 @@ podman compose -f compose.yml up -d
 
 Her projede Maven wrapper (`mvnw`) mevcuttur, ayrıca Maven kurulumu gerekmez.
 
-```bash
-# 1. Discovery Server (Eureka) - http://localhost:8761
-cd back-end/discovery-server && ./mvnw spring-boot:run
+Config Server tüm konfigürasyonların kaynağı olduğu için ilk o başlatılır;
+diğer tüm uygulamalar (Eureka dahil) ayarlarını ondan çeker.
 
-# 2. Config Server - http://localhost:8888
+```bash
+# 1. Config Server - http://localhost:8888
 cd back-end/config-server && ./mvnw spring-boot:run
+
+# 2. Discovery Server (Eureka) - http://localhost:8761
+cd back-end/discovery-server && ./mvnw spring-boot:run
 
 # 3. API Gateway - http://localhost:8080
 cd back-end/api-gateway && ./mvnw spring-boot:run
@@ -71,18 +77,23 @@ Doğrulama:
 
 ## Konfigürasyon ve Ortam Profilleri
 
-Merkezi konfigürasyonlar `configs/` klasöründedir:
+Merkezi konfigürasyonlar `configs/` klasöründedir. `configs/` kökünde dosya
+bulunmaz; Eureka ve Gateway dahil her sunucu/servisin kendi klasörü vardır ve
+her klasörde dört dosya bulunur (istisna: Config Server, merkezi
+konfigürasyonun kaynağı kendisi olduğu için kendi ayarlarını yerel
+`src/main/resources/application.yml` dosyasından okur):
 
-- Ortak dosyalar kökte durur: `application.yml` + `application-<profil>.yml`
-- Her servisin kendi alt klasörü vardır: `configs/<servis-adi>/<servis-adi>[-<profil>].yml`
+```
+configs/<servis-adi>/
+├── <servis-adi>.yml        # ortamdan bağımsız ayarlar
+├── <servis-adi>-dev.yml    # dev ortamı
+├── <servis-adi>-test.yml   # test ortamı
+└── <servis-adi>-prod.yml   # prod ortamı
+```
 
-Bir servis Config Server'a bağlandığında sırasıyla şunlar yüklenir
-(alttakiler üsttekileri ezer):
-
-1. `application.yml` (ortak)
-2. `application-<profil>.yml` (ortak, ortama özel)
-3. `<servis-adi>.yml` (servise özel)
-4. `<servis-adi>-<profil>.yml` (servise özel, ortama özel)
+Bir servis Config Server'a bağlandığında önce `<servis-adi>.yml`, sonra aktif
+profile göre `<servis-adi>-<profil>.yml` yüklenir; profil dosyası ortamdan
+bağımsız dosyayı ezer.
 
 Aktif profil varsayılan olarak `dev`'dir; değiştirmek için:
 
@@ -130,8 +141,8 @@ Yeni servis için `infra/debezium/customer-outbox-connector.json` kopyalanıp
    (bağımlılıklar: Web, JPA, PostgreSQL, Eureka Client, Config Client, Kafka, Redis, Lombok, Actuator).
 2. `infra/postgres-init/01-create-databases.sql` dosyasına veritabanını ekle
    (mevcut PostgreSQL volume'ü varsa veritabanını elle oluştur).
-3. `configs/<servis-adi>/` klasörünü oluştur; içine `<servis-adi>.yml` ve gerekli
-   `<servis-adi>-dev.yml` / `<servis-adi>-prod.yml` dosyalarını ekle
-   (ortak ayarlar `configs/application*.yml`'den gelir).
+3. `configs/<servis-adi>/` klasörünü oluştur; içine `<servis-adi>.yml`,
+   `<servis-adi>-dev.yml`, `<servis-adi>-test.yml` ve `<servis-adi>-prod.yml`
+   dosyalarını ekle.
 4. `configs/api-gateway/api-gateway.yml` içine route tanımı ekle.
 5. Outbox/inbox tablolarını migration ile oluştur, Debezium connector JSON'ını ekle ve kaydet.
