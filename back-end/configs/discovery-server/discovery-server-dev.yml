@@ -1,0 +1,6 @@
+# Discovery Server - dev ortami.
+
+eureka:
+  server:
+    # Dev'de tek tek kapanan servislerin kayitlarinin hemen dusmesi icin kapali
+    enable-self-preservation: false

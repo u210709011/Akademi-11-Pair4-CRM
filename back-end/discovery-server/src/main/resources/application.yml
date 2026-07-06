@@ -1,21 +1,18 @@
-server:
-  port: 8761
-
 spring:
   application:
     name: discovery-server
+  profiles:
+    # Aktif profil configs/discovery-server/ altindaki hangi dosyanin yuklenecegini belirler
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  config:
+    # Config Server ayakta degilse de uygulama asagidaki yerel varsayilanlarla acilabilsin diye "optional"
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+
+# Config Server'a ulasilamazsa kullanilacak yerel varsayilanlar (asil degerler configs/discovery-server/ altindadir)
+server:
+  port: 8761
 
 eureka:
   client:
-    # Eureka Server kendisini bir client olarak kaydetmez
     register-with-eureka: false
     fetch-registry: false
-  server:
-    # Lokal gelistirmede kapali olmasi onerilir; prod'da acilabilir
-    enable-self-preservation: false
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info

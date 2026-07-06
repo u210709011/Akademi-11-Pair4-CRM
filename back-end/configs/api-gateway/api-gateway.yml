@@ -1,4 +1,15 @@
-# API Gateway - tum ortamlar icin ortak konfigurasyon.
+# API Gateway - tum ortamlar icin gecerli ortak konfigurasyon.
+# Ortama ozel degerler: api-gateway-dev.yml / api-gateway-test.yml / api-gateway-prod.yml
+
+eureka:
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
 
 spring:
   cloud:
