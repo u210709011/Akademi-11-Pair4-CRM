@@ -1,0 +1,19 @@
+# API Gateway - dev ortamina ozel ayarlar.
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            # Dev'de Eureka paneline gateway uzerinden erisim kolayligi
+            - id: discovery-server-ui
+              uri: http://localhost:8761
+              predicates:
+                - Path=/eureka/web
+              filters:
+                - SetPath=/
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

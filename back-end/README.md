@@ -11,7 +11,14 @@ back-end/
 │   ├── postgres-init/      # Servis başına veritabanı oluşturan SQL
 │   ├── keycloak/           # crm realm import dosyası
 │   └── debezium/           # Outbox connector tanımları + outbox/inbox SQL
-├── config-repo/            # Config Server'ın sunduğu merkezi konfigürasyonlar
+├── configs/                # Config Server'ın sunduğu merkezi konfigürasyonlar
+│   ├── application.yml     # Tüm servisler için ortak ayarlar
+│   ├── application-dev.yml # Ortak ayarların dev ortamı değerleri
+│   ├── application-prod.yml# Ortak ayarların prod ortamı değerleri
+│   └── api-gateway/        # Her servis için ayrı alt klasör
+│       ├── api-gateway.yml
+│       ├── api-gateway-dev.yml
+│       └── api-gateway-prod.yml
 ├── config-server/          # Spring Cloud Config Server (port 8888)
 ├── discovery-server/       # Eureka Server (port 8761)
 └── api-gateway/            # Spring Cloud Gateway (port 8080)
@@ -59,8 +66,31 @@ cd back-end/api-gateway && ./mvnw spring-boot:run
 Doğrulama:
 
 - Eureka paneli: http://localhost:8761 (api-gateway kayıtlı görünmeli)
-- Config Server: `curl http://localhost:8888/api-gateway/default`
+- Config Server: `curl http://localhost:8888/api-gateway/dev`
 - Gateway (token'sız 401 dönmeli): `curl -i http://localhost:8080/api/test`
+
+## Konfigürasyon ve Ortam Profilleri
+
+Merkezi konfigürasyonlar `configs/` klasöründedir:
+
+- Ortak dosyalar kökte durur: `application.yml` + `application-<profil>.yml`
+- Her servisin kendi alt klasörü vardır: `configs/<servis-adi>/<servis-adi>[-<profil>].yml`
+
+Bir servis Config Server'a bağlandığında sırasıyla şunlar yüklenir
+(alttakiler üsttekileri ezer):
+
+1. `application.yml` (ortak)
+2. `application-<profil>.yml` (ortak, ortama özel)
+3. `<servis-adi>.yml` (servise özel)
+4. `<servis-adi>-<profil>.yml` (servise özel, ortama özel)
+
+Aktif profil varsayılan olarak `dev`'dir; değiştirmek için:
+
+```bash
+SPRING_PROFILES_ACTIVE=prod ./mvnw spring-boot:run
+# veya
+./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+```
 
 ## Keycloak ile Token Alma
 
@@ -100,6 +130,8 @@ Yeni servis için `infra/debezium/customer-outbox-connector.json` kopyalanıp
    (bağımlılıklar: Web, JPA, PostgreSQL, Eureka Client, Config Client, Kafka, Redis, Lombok, Actuator).
 2. `infra/postgres-init/01-create-databases.sql` dosyasına veritabanını ekle
    (mevcut PostgreSQL volume'ü varsa veritabanını elle oluştur).
-3. `config-repo/<servis-adi>.yml` dosyasını oluştur (ortak ayarlar `application.yml`'den gelir).
-4. `config-repo/api-gateway.yml` içine route tanımı ekle.
+3. `configs/<servis-adi>/` klasörünü oluştur; içine `<servis-adi>.yml` ve gerekli
+   `<servis-adi>-dev.yml` / `<servis-adi>-prod.yml` dosyalarını ekle
+   (ortak ayarlar `configs/application*.yml`'den gelir).
+4. `configs/api-gateway/api-gateway.yml` içine route tanımı ekle.
 5. Outbox/inbox tablolarını migration ile oluştur, Debezium connector JSON'ını ekle ve kaydet.
