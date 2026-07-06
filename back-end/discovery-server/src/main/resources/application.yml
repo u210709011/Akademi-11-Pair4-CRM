@@ -1,0 +1,21 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: discovery-server
+
+eureka:
+  client:
+    # Eureka Server kendisini bir client olarak kaydetmez
+    register-with-eureka: false
+    fetch-registry: false
+  server:
+    # Lokal gelistirmede kapali olmasi onerilir; prod'da acilabilir
+    enable-self-preservation: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

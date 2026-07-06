@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: api-gateway
+  config:
+    # Config Server ayakta degilse de uygulama lokal degerlerle acilabilsin diye "optional"
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+
+# Config Server'a ulasilamazsa kullanilacak yerel varsayilan (asil deger config-repo'dadir)
+spring.security.oauth2.resourceserver.jwt.issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/crm}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
