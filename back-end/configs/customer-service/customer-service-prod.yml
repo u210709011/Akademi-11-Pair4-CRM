@@ -1,0 +1,28 @@
+# Customer Service - prod ortami: adresler ortam degiskenlerinden gelir,
+# varsayilanlar container agindaki servis adlarina goredir.
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://postgres:5432/customer_db}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak:8180/realms/crm}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://discovery-server:8761/eureka}
+
+logging:
+  level:
+    com.etiya.crm.customerservice: INFO
