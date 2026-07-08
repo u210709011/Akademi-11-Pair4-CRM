@@ -10,7 +10,6 @@ import com.etiya.crm.contactinfoservice.entities.concretes.ContactMedium;
 import com.etiya.crm.contactinfoservice.mapper.ContactMediumMapper;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -48,7 +47,6 @@ public class ContactMediumServiceImpl implements ContactMediumService {
     @Override
     public ContactMediumResponse add(CreateContactMediumRequest request) {
         ContactMedium contactMedium = ContactMediumMapper.toEntity(request);
-        contactMedium.setCdate(LocalDateTime.now());
         ContactMedium saved = contactMediumRepository.save(contactMedium);
         return ContactMediumMapper.toResponse(saved);
     }
@@ -57,7 +55,6 @@ public class ContactMediumServiceImpl implements ContactMediumService {
     public ContactMediumResponse update(Long id, UpdateContactMediumRequest request) {
         ContactMedium contactMedium = contactMediumBusinessRules.checkIfContactMediumExists(id);
         ContactMediumMapper.updateEntity(contactMedium, request);
-        contactMedium.setUdate(LocalDateTime.now());
         ContactMedium saved = contactMediumRepository.save(contactMedium);
         return ContactMediumMapper.toResponse(saved);
     }

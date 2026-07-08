@@ -29,7 +29,7 @@ public class Address extends BaseEntity {
     @Column(length = 200)
     private String addrDesc;
 
-    @Column(nullable = false)
-    private boolean isPrimary = false;
+    @Column(name = "is_primary", nullable = false)
+    private boolean primary = false;
 
 }

@@ -17,7 +17,6 @@ public class ContactMediumMapper {
         contactMedium.setCntcData(request.getCntcData());
         contactMedium.setCntcMediumTypeId(request.getCntcMediumTypeId());
         contactMedium.setStatusId(request.getStatusId());
-        contactMedium.setCuser(request.getCuser());
         return contactMedium;
     }
 
@@ -25,7 +24,6 @@ public class ContactMediumMapper {
         contactMedium.setCntcData(request.getCntcData());
         contactMedium.setCntcMediumTypeId(request.getCntcMediumTypeId());
         contactMedium.setStatusId(request.getStatusId());
-        contactMedium.setUuser(request.getUuser());
     }
 
     public static ContactMediumResponse toResponse(ContactMedium contactMedium) {

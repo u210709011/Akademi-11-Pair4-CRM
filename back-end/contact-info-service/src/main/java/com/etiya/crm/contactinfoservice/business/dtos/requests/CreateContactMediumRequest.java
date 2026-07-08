@@ -30,7 +30,4 @@ public class CreateContactMediumRequest {
     @NotNull
     private Long statusId;
 
-    @NotNull
-    private Long cuser;
-
 }

@@ -34,9 +34,6 @@ public class CreateAddressRequest {
     @Size(max = 200)
     private String addrDesc;
 
-    private boolean isPrimary;
-
-    @NotNull
-    private Long cuser;
+    private boolean primary;
 
 }
