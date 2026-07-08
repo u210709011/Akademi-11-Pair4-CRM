@@ -1,0 +1,13 @@
+# contact-info-service - dev ortami.
+# Migration kullanilmiyor; semalar Hibernate ddl-auto: update ile senkronize edilir.
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/contact_info_db
+    username: crm
+    password: crm
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
