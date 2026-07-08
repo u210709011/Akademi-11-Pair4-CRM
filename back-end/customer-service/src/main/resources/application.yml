@@ -7,6 +7,8 @@ spring:
   config:
     # Config Server ayakta degilse de uygulama asagidaki yerel varsayilanlarla acilabilsin diye "optional"
     import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  messages:
+    basename: messages/messages
 
 # Config Server'a ulasilamazsa kullanilacak yerel varsayilanlar (asil degerler configs/customer-service/ altindadir)
 server:
