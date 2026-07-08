@@ -4,15 +4,24 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
+<<<<<<< HEAD
     "types": []
+=======
+    "types": [],
+    "composite": true
+>>>>>>> e30a3ca57aad24604ec7887d56afe09e94e85c61
   },
   "files": [
     "src/main.ts"
   ],
   "include": [
+<<<<<<< HEAD
     "src/**/*.ts"
   ],
   "exclude": [
     "src/**/*.spec.ts"
+=======
+    "src/**/*.d.ts"
+>>>>>>> e30a3ca57aad24604ec7887d56afe09e94e85c61
   ]
 }
