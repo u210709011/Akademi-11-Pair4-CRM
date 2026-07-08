@@ -1,6 +1,11 @@
+<<<<<<< HEAD
 import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { I18nService, Lang } from '../../core/i18n';
+=======
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+>>>>>>> e30a3ca57aad24604ec7887d56afe09e94e85c61
 
 @Component({
   selector: 'app-auth-layout',
@@ -9,6 +14,7 @@ import { I18nService, Lang } from '../../core/i18n';
   styleUrl: './auth-layout.component.scss'
 })
 export class AuthLayoutComponent {
+<<<<<<< HEAD
   protected readonly i18n = inject(I18nService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
 
@@ -34,4 +40,7 @@ export class AuthLayoutComponent {
       this.langMenuOpen.set(false);
     }
   }
+=======
+
+>>>>>>> e30a3ca57aad24604ec7887d56afe09e94e85c61
 }
