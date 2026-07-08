@@ -126,6 +126,7 @@ public class CustomerServiceImpl implements CustomerService {
 		Customer customer = getActiveCustomerOrThrow(custId);
 		List<CustomerAccount> accounts = customerAccountRepository.findByCustomer_CustIdAndActiveTrue(custId);
 		return customerMapper.toResponse(customer, accounts);
+		System.out.println("hello");
 	}
 
 	@Override
