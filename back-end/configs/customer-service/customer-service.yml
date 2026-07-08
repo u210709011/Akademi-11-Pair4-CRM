@@ -1,0 +1,23 @@
+# Customer Service - tum ortamlar icin gecerli ortak konfigurasyon.
+# Ortama ozel degerler: customer-service-dev.yml / customer-service-test.yml / customer-service-prod.yml
+
+server:
+  port: 8081
+
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+eureka:
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
