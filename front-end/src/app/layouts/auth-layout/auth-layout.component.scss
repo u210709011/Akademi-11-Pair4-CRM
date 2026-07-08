@@ -10,9 +10,9 @@
   overflow: hidden;
   color: #fff;
   background:
-    radial-gradient(120% 140% at 12% 10%, rgba(255, 106, 0, 0.16), transparent 45%),
-    radial-gradient(90% 120% at 88% 92%, rgba(45, 108, 223, 0.35), transparent 55%),
-    linear-gradient(160deg, #0b1c3d 0%, #071224 100%);
+  radial-gradient(120% 140% at 12% 10%, rgba(255, 106, 0, 0.16), transparent 45%),
+  radial-gradient(90% 120% at 12% 10%, rgba(45, 108, 223, 0.10), transparent 55%),
+  linear-gradient(160deg, #0b1c3d 0%, #071224 100%);
 }
 
 .auth-container {
@@ -63,10 +63,11 @@
   font-weight: 600;
   color: #fff;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.08);
+  background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
   transition: background 0.2s ease;
+  border-radius: 9px;
 
   .globe-icon {
     fill: none;
@@ -165,14 +166,15 @@
 .tagline {
   display: flex;
   align-items: center;
-  gap: 16px;
   margin-bottom: 28px;
+  
 }
 
 .tagline-rule {
   flex: 1;
   height: 2px;
   background: #F47920;
+  margin: 0 30px;
 }
 
 .tagline-text {

@@ -22,7 +22,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'login.demoLogin': 'Demo login'
   },
   tr: {
-    'auth.heroPrefix': 'Saha ekibiniz için eksiksiz',
+    'auth.heroPrefix': 'Ekibiniz için eksiksiz',
     'auth.heroHighlight': 'müşteri',
     'auth.heroSuffix': 'çalışma alanı.',
     'auth.heroSubtitle': 'Müşteri kaydı, arama ve profil yönetimi.',
@@ -30,14 +30,14 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'auth.footerSecure': 'Güvenli kurumsal giriş',
 
     'login.badge': 'Tekrar hoş geldiniz',
-    'login.title': "CRM Lite'a giriş yapın",
+    'login.title': "CRM Lite'a Giriş Yapın",
     'login.subtitle': 'Devam etmek için Etiya kurumsal hesabınızı kullanın.',
-    'login.usernameLabel': 'Kullanıcı adı',
+    'login.usernameLabel': 'Kullanıcı Adı',
     'login.usernamePlaceholder': 'Kullanıcı adınızı girin',
-    'login.passwordLabel': 'Şifre',
-    'login.passwordPlaceholder': 'Şifrenizi girin',
-    'login.showPassword': 'Şifreyi göster',
-    'login.hidePassword': 'Şifreyi gizle',
+    'login.passwordLabel': 'Parola',
+    'login.passwordPlaceholder': 'Parolanızı girin',
+    'login.showPassword': 'Parolayı göster',
+    'login.hidePassword': 'Parolayı gizle',
     'login.submit': 'Giriş yap',
     'login.demoLogin': 'Demo giriş'
   }
