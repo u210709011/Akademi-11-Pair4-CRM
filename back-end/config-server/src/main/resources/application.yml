@@ -9,15 +9,11 @@ spring:
   cloud:
     config:
       server:
-        native:
-          # Her microservice'in konfigurasyonlari configs/<servis-adi>/ klasorundedir;
-          # her klasorde <servis-adi>.yml + <servis-adi>-{dev,test,prod}.yml bulunur.
-          # {application} yer tutucusu, istegi yapan servisin adiyla degistirilir.
-          # Farkli bir konum icin CONFIGS_PATH ortam degiskeni verilebilir;
-          # ileride git backend'e gecmek icin "native" profili kaldirip
-          # spring.cloud.config.server.git.uri tanimlanmalidir.
-          search-locations:
-            - ${CONFIGS_PATH:file:${user.dir}/../configs}/{application}
+        git:
+          uri: https://github.com/u210709011/CONFIG_Etiya-11-Akademi-CRM.git
+          search-paths: configs/{application}
+          default-label: main
+          clone-on-start: true
 
 management:
   endpoints:
