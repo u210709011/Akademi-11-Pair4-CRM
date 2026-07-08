@@ -10,7 +10,6 @@ import com.etiya.crm.contactinfoservice.entities.concretes.Address;
 import com.etiya.crm.contactinfoservice.mapper.AddressMapper;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -47,7 +46,6 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public AddressResponse add(CreateAddressRequest request) {
         Address address = AddressMapper.toEntity(request);
-        address.setCdate(LocalDateTime.now());
         Address saved = addressRepository.save(address);
 
         if (saved.isPrimary()) {
@@ -61,7 +59,6 @@ public class AddressServiceImpl implements AddressService {
     public AddressResponse update(Long id, UpdateAddressRequest request) {
         Address address = addressBusinessRules.checkIfAddressExists(id);
         AddressMapper.updateEntity(address, request);
-        address.setUdate(LocalDateTime.now());
         Address saved = addressRepository.save(address);
 
         if (saved.isPrimary()) {

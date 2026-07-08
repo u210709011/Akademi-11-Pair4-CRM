@@ -28,9 +28,6 @@ public class UpdateAddressRequest {
     @Size(max = 200)
     private String addrDesc;
 
-    private boolean isPrimary;
-
-    @NotNull
-    private Long uuser;
+    private boolean primary;
 
 }

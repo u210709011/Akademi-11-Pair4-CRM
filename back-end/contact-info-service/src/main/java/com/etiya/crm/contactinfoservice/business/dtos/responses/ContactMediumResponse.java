@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -19,9 +19,9 @@ public class ContactMediumResponse {
     private String cntcData;
     private Long cntcMediumTypeId;
     private Long statusId;
-    private LocalDateTime cdate;
+    private Instant cdate;
     private Long cuser;
-    private LocalDateTime udate;
+    private Instant udate;
     private Long uuser;
 
 }

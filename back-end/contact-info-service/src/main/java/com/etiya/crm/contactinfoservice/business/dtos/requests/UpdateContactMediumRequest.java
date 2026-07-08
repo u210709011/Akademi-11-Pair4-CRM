@@ -24,7 +24,4 @@ public class UpdateContactMediumRequest {
     @NotNull
     private Long statusId;
 
-    @NotNull
-    private Long uuser;
-
 }

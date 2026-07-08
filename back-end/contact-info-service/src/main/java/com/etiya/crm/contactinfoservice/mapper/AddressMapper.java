@@ -19,7 +19,6 @@ public class AddressMapper {
         address.setHouseName(request.getHouseName());
         address.setAddrDesc(request.getAddrDesc());
         address.setPrimary(request.isPrimary());
-        address.setCuser(request.getCuser());
         return address;
     }
 
@@ -29,7 +28,6 @@ public class AddressMapper {
         address.setHouseName(request.getHouseName());
         address.setAddrDesc(request.getAddrDesc());
         address.setPrimary(request.isPrimary());
-        address.setUuser(request.getUuser());
     }
 
     public static AddressResponse toResponse(Address address) {

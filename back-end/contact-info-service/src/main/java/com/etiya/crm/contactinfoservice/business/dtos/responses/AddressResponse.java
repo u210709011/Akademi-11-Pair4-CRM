@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -20,10 +20,10 @@ public class AddressResponse {
     private String streetName;
     private String houseName;
     private String addrDesc;
-    private boolean isPrimary;
-    private LocalDateTime cdate;
+    private boolean primary;
+    private Instant cdate;
     private Long cuser;
-    private LocalDateTime udate;
+    private Instant udate;
     private Long uuser;
 
 }
