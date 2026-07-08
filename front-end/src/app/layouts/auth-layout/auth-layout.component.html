@@ -1,1 +1,71 @@
-<router-outlet></router-outlet>
+<div class="auth-page">
+
+  <div class="lang-switcher top-bar" [class.open]="langMenuOpen()">
+    <button class="language-btn" type="button" (click)="toggleLangMenu()">
+      <svg class="globe-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.7-3.8-9s1.3-6.5 3.8-9Z" />
+      </svg>
+      {{ i18n.lang().toUpperCase() }}
+      <svg class="chevron-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+    </button>
+
+    @if (langMenuOpen()) {
+      <div class="lang-menu">
+        @for (option of languages; track option.code) {
+          <button
+            type="button"
+            class="lang-option"
+            [class.active]="option.code === i18n.lang()"
+            (click)="selectLang(option.code)"
+          >
+            <span class="lang-name">{{ option.label }}</span>
+            <span class="lang-code">{{ option.code.toUpperCase() }}</span>
+            @if (option.code === i18n.lang()) {
+              <svg class="check-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7" /></svg>
+            }
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="auth-container">
+
+    <section class="panel left-panel">
+
+      <div class="hero">
+        <div class="logo">
+          <img class="logo-image" src="assets/etiya-logo.png" alt="Etiya">
+        </div>
+
+        <div class="tagline">
+          <span class="tagline-rule"></span>
+          <span class="tagline-text">CRM LITE</span>
+          <span class="tagline-rule"></span>
+        </div>
+
+        <h1>{{ i18n.t('auth.heroPrefix') }} <span>{{ i18n.t('auth.heroHighlight') }}</span> {{ i18n.t('auth.heroSuffix') }}</h1>
+
+        <span class="divider"></span>
+
+        <p>{{ i18n.t('auth.heroSubtitle') }}</p>
+      </div>
+
+    </section>
+
+    <section class="panel right-panel">
+      <router-outlet></router-outlet>
+    </section>
+
+  </div>
+
+  <footer class="footer">
+    <span>© 2026 Etiya</span>
+    <span class="dot" aria-hidden="true">&bull;</span>
+    <span>{{ i18n.t('auth.footerProduct') }}</span>
+    <span class="dot" aria-hidden="true">&bull;</span>
+    <span>{{ i18n.t('auth.footerSecure') }}</span>
+  </footer>
+
+</div>
