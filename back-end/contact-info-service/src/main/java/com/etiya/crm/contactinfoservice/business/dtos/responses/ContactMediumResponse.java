@@ -20,8 +20,8 @@ public class ContactMediumResponse {
     private Long cntcMediumTypeId;
     private Long statusId;
     private Instant cdate;
-    private Long cuser;
+    private String cuser;
     private Instant udate;
-    private Long uuser;
+    private String uuser;
 
 }

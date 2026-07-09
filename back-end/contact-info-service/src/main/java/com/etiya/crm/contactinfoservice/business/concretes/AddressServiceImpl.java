@@ -25,7 +25,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public List<AddressResponse> getAll() {
-        return addressRepository.findAllByDeletedFalse().stream()
+        return addressRepository.findAllByActiveTrue().stream()
                 .map(AddressMapper::toResponse)
                 .toList();
     }
@@ -38,14 +38,22 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public List<AddressResponse> getByRowIdAndDataTypeId(Long rowId, Long dataTypeId) {
-        return addressRepository.findAllByRowIdAndDataTypeIdAndDeletedFalse(rowId, dataTypeId).stream()
+        return addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(rowId, dataTypeId).stream()
                 .map(AddressMapper::toResponse)
                 .toList();
     }
 
     @Override
     public AddressResponse add(CreateAddressRequest request) {
+        List<Address> existingAddresses = addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(
+                request.getRowId(), request.getDataTypeId());
+        addressBusinessRules.checkAddressLimitNotExceeded(existingAddresses);
+
         Address address = AddressMapper.toEntity(request);
+        if (existingAddresses.isEmpty()) {
+            address.setPrimary(true);
+        }
+
         Address saved = addressRepository.save(address);
 
         if (saved.isPrimary()) {
@@ -58,7 +66,14 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public AddressResponse update(Long id, UpdateAddressRequest request) {
         Address address = addressBusinessRules.checkIfAddressExists(id);
+        List<Address> existingAddresses = addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(
+                address.getRowId(), address.getDataTypeId());
+
         AddressMapper.updateEntity(address, request);
+        if (existingAddresses.size() == 1) {
+            address.setPrimary(true);
+        }
+
         Address saved = addressRepository.save(address);
 
         if (saved.isPrimary()) {
@@ -71,8 +86,16 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public void delete(Long id) {
         Address address = addressBusinessRules.checkIfAddressExists(id);
-        address.setDeleted(true);
+        addressBusinessRules.checkIfNotPrimary(address);
+        address.setActive(false);
         addressRepository.save(address);
+    }
+
+    @Override
+    public void deactivateAllForRow(Long rowId, Long dataTypeId) {
+        List<Address> addresses = addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(rowId, dataTypeId);
+        addresses.forEach(address -> address.setActive(false));
+        addressRepository.saveAll(addresses);
     }
 
 }
