@@ -4,58 +4,35 @@
   "registrationAllowed": false,
   "clients": [
     {
-      "clientId": "crm-gateway",
-      "name": "CRM API Gateway",
+      "clientId": "crm-client",
+      "name": "CRM Client",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": false,
-      "secret": "crm-gateway-secret",
+      "secret": "crm-client-secret",
       "serviceAccountsEnabled": true,
       "directAccessGrantsEnabled": true,
       "standardFlowEnabled": true,
       "redirectUris": ["*"],
       "webOrigins": ["*"]
-    },
-    {
-      "clientId": "crm-frontend",
-      "name": "CRM Front-end",
-      "enabled": true,
-      "protocol": "openid-connect",
-      "publicClient": true,
-      "directAccessGrantsEnabled": true,
-      "standardFlowEnabled": true,
-      "redirectUris": ["http://localhost:4200/*", "http://localhost:3000/*"],
-      "webOrigins": ["+"]
     }
   ],
   "roles": {
     "realm": [
-      { "name": "admin", "description": "Sistem yoneticisi" },
-      { "name": "user", "description": "Standart kullanici" }
+      { "name": "CRM_AGENT", "description": "CRM Agent Role" }
     ]
   },
   "users": [
     {
-      "username": "testuser",
+      "username": "salesperson",
       "enabled": true,
-      "email": "testuser@example.com",
-      "firstName": "Test",
-      "lastName": "User",
+      "email": "salesperson@example.com",
+      "firstName": "Sales",
+      "lastName": "Person",
       "credentials": [
-        { "type": "password", "value": "test123", "temporary": false }
+        { "type": "password", "value": "password", "temporary": false }
       ],
-      "realmRoles": ["user"]
-    },
-    {
-      "username": "testadmin",
-      "enabled": true,
-      "email": "testadmin@example.com",
-      "firstName": "Test",
-      "lastName": "Admin",
-      "credentials": [
-        { "type": "password", "value": "admin123", "temporary": false }
-      ],
-      "realmRoles": ["admin", "user"]
+      "realmRoles": ["CRM_AGENT"]
     }
   ]
 }
