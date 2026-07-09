@@ -1,8 +1,8 @@
-<app-navbar></app-navbar>
+<app-navbar (menuToggle)="toggleSidebar()"></app-navbar>
 
 <div class="sidebar-container">
 
-  <app-sidebar></app-sidebar>
+  <app-sidebar [class.collapsed]="!sidebarOpen()"></app-sidebar>
 
   <main class="main-content">
     <router-outlet></router-outlet>
