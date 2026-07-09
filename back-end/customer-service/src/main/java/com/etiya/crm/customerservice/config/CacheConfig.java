@@ -7,6 +7,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -34,8 +35,8 @@ public class CacheConfig {
 				.maximumSize(1000));
 		return manager;
 	}
-
 	@Bean(CacheNames.REDIS_CACHE_MANAGER)
+	@Primary
 	public CacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
 		RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
 				.entryTtl(Duration.ofMinutes(10))
