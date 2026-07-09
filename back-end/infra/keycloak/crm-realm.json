@@ -1,0 +1,38 @@
+{
+  "realm": "crm",
+  "enabled": true,
+  "registrationAllowed": false,
+  "clients": [
+    {
+      "clientId": "crm-client",
+      "name": "CRM Client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "crm-client-secret",
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"]
+    }
+  ],
+  "roles": {
+    "realm": [
+      { "name": "CRM_AGENT", "description": "CRM Agent Role" }
+    ]
+  },
+  "users": [
+    {
+      "username": "salesperson",
+      "enabled": true,
+      "email": "salesperson@example.com",
+      "firstName": "Sales",
+      "lastName": "Person",
+      "credentials": [
+        { "type": "password", "value": "password", "temporary": false }
+      ],
+      "realmRoles": ["CRM_AGENT"]
+    }
+  ]
+}
