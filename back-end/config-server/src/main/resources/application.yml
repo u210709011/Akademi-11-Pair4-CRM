@@ -4,14 +4,12 @@ server:
 spring:
   application:
     name: config-server
-  profiles:
-    active: native
   cloud:
     config:
       server:
         git:
           uri: https://github.com/u210709011/CONFIG_Etiya-11-Akademi-CRM.git
-          search-paths: configs/{application}
+          search-paths: configs/{application}/
           default-label: main
           clone-on-start: true
 
