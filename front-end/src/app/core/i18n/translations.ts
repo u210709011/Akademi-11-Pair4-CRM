@@ -20,7 +20,17 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'login.hidePassword': 'Hide password',
     'login.submit': 'Sign in',
     'login.demoLogin': 'Demo login',
-    'login.wrongCredentials': 'Wrong user name or password. Please try again.'
+    'login.wrongCredentials': 'Wrong user name or password. Please try again.',
+    'login.accountLocked': 'Your account has been locked. Please try again after 15 minutes.',
+
+    'sidebar.b2c' : 'B2C',
+    'sidebar.b2b' : 'B2B',
+    'sidebar.approvals' : 'Approvals',
+    'sidebar.logout' : 'Log out',
+
+    'navbar.myProfile' : 'My Profile',
+    'navbar.logout' : 'Log out'
+
   },
   tr: {
     'auth.heroPrefix': 'Ekibiniz için eksiksiz',
@@ -41,6 +51,16 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'login.hidePassword': 'Parolayı gizle',
     'login.submit': 'Giriş yap',
     'login.demoLogin': 'Demo giriş',
-    'login.wrongCredentials': 'Kullanıcı adı veya parola hatalı. Lütfen tekrar deneyin.'
+    'login.wrongCredentials': 'Kullanıcı adı veya parola hatalı. Lütfen tekrar deneyin.',
+    'login.accountLocked': 'Hesabınız kilitlendi. Lütfen 15 dakika sonra tekrar deneyin.',
+
+    'sidebar.b2c' : 'B2C',
+    'sidebar.b2b' : 'B2B',
+    'sidebar.approvals' : 'Onaylar',
+    'sidebar.logout' : 'Çıkış',
+
+    'navbar.myProfile' : 'Profilim',
+    'navbar.logout' : 'Çkış'
+
   }
 };
