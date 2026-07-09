@@ -19,7 +19,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'login.showPassword': 'Show password',
     'login.hidePassword': 'Hide password',
     'login.submit': 'Sign in',
-    'login.demoLogin': 'Demo login'
+    'login.demoLogin': 'Demo login',
+    'login.wrongCredentials': 'Wrong user name or password. Please try again.'
   },
   tr: {
     'auth.heroPrefix': 'Ekibiniz için eksiksiz',
@@ -39,6 +40,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'login.showPassword': 'Parolayı göster',
     'login.hidePassword': 'Parolayı gizle',
     'login.submit': 'Giriş yap',
-    'login.demoLogin': 'Demo giriş'
+    'login.demoLogin': 'Demo giriş',
+    'login.wrongCredentials': 'Kullanıcı adı veya parola hatalı. Lütfen tekrar deneyin.'
   }
 };
