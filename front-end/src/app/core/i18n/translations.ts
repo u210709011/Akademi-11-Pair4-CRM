@@ -29,7 +29,25 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'sidebar.logout' : 'Log out',
 
     'navbar.myProfile' : 'My Profile',
-    'navbar.logout' : 'Log out'
+    'navbar.logout' : 'Log out',
+
+    'search.searchCustomer' : 'Search Customer',
+    'search.b2c' : 'B2C',
+    'search.searchFilters' : 'Search Filters',
+    'search.results' : 'Search Results',
+    'search.natId' : 'National ID Number',
+    'search.custId' : 'Customer ID',
+    'search.accNum' : 'Account Number',
+    'search.gsm' : 'GSM Number',
+    'search.firstName' : 'First Name',
+    'search.lastName' : 'Last Name',
+    'search.ordNum' : 'Order Number',
+    'search.clearBtn' : 'Clear',
+    'search.searchBtn' : 'Search',
+    'search.title' : 'Search for a customer',
+    'search.subTitle' : 'Enter one or more criteria on the left and click Search to find an existing customer.'
+
+
 
   },
   tr: {
@@ -60,7 +78,25 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'sidebar.logout' : 'Çıkış',
 
     'navbar.myProfile' : 'Profilim',
-    'navbar.logout' : 'Çkış'
+    'navbar.logout' : 'Çkış',
+
+    'search.searchCustomer' : 'Müşteri Ara',
+    'search.b2c' : 'B2C',
+    'search.searchFilters' : 'Arama Filtreleri',
+    'search.results' : 'Arama Sonuçları',
+    'search.natId' : 'TC Kimlik Numarası',
+    'search.custId' : 'Müşteri Numarası',
+    'search.accNum' : 'Hesap Numarası',
+    'search.gsm' : 'GSM NUmarası',
+    'search.firstName' : 'Ad',
+    'search.lastName' : 'Soyad',
+    'search.ordNum' : 'Sipariş Numarası',
+    'search.clearBtn' : 'Temizle',
+    'search.searchBtn' : 'Ara',
+    'search.title' : 'Bir müşteri arayın',
+    'search.subTitle' : "Soldan bir veya daha fazla kriter girin ve mevcut bir müşteriyi bulmak için Ara'ya tıklayın."
+
+
 
   }
 };
