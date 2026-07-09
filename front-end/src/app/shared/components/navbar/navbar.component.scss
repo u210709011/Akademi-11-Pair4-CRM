@@ -1,0 +1,273 @@
+:host {
+  display: block;
+}
+
+.navbar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 76px;
+  padding: 0 24px;
+  background: linear-gradient(160deg, #0b1c3d 0%, #071224 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    background: none;
+    border: none;
+
+    svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    &:hover {
+      color: #fff;
+    }
+  }
+
+  .logo-badge {
+    display: flex;
+    align-items: center;
+    padding: 6px 14px;
+  }
+
+  .logo-image {
+    display: block;
+    height: 32px;
+    width: auto;
+  }
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .divider {
+    width: 2px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  .user-title {
+    display: flex;
+    flex-direction: column;
+    max-width: 95px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #fff;
+    text-align: right;
+  }
+}
+
+.chevron-icon {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke:  #fff;
+  stroke-width: 2;
+  transition: transform 0.15s ease;
+}
+
+.lang-switcher {
+  position: relative;
+
+  &.open .chevron-icon {
+    transform: rotate(180deg);
+  }
+
+  .language-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  .lang-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 20;
+    overflow: hidden;
+    min-width: 160px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
+  }
+
+  .lang-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    text-align: left;
+    cursor: pointer;
+    background: none;
+    border: none;
+
+    .lang-name {
+      flex: 1;
+    }
+
+    .lang-code {
+      font-size: 12px;
+      font-weight: 600;
+      color: #9ca3af;
+    }
+
+    .check-icon {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.4;
+    }
+
+    &:hover {
+      background: #f9fafb;
+    }
+
+    &.active {
+      color: #F47920;
+      background: rgba(244, 121, 32, 0.08);
+
+      .lang-code {
+        color: #F47920;
+      }
+    }
+  }
+}
+
+.profile-switcher {
+  position: relative;
+
+  &.open .chevron-icon {
+    transform: rotate(180deg);
+  }
+
+  .profile {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px 6px 6px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      color: #F47920;
+      border: 1px solid rgba(244, 121, 32, 0.5);
+      border-radius: 50%;
+
+      svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    }
+
+    .profile-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+  }
+
+  .profile-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 20;
+    overflow: hidden;
+    min-width: 170px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
+  }
+
+  .profile-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #262830;
+    text-align: left;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 13px;
+    font-weight: 300;
+
+    svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    &:hover {
+      background: #f9fafb;
+    }
+
+    &.logout {
+      color: #DC2626;
+    }
+  }
+}

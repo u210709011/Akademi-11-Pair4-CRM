@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
@@ -10,5 +10,9 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
   styleUrl: './main-layout.component.scss'
 })
 export class MainLayoutComponent {
+  protected readonly sidebarOpen = signal(true);
 
+  protected toggleSidebar(): void {
+    this.sidebarOpen.update(open => !open);
+  }
 }
