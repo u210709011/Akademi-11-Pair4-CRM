@@ -36,7 +36,7 @@ class ContactMediumServiceImplTest {
 
     @Test
     void add_savesContactMedium_whenFormatIsValid() {
-        CreateContactMediumRequest request = new CreateContactMediumRequest(10L, 1L, "user@example.com", 1L, 1L);
+        CreateContactMediumRequest request = new CreateContactMediumRequest(10L, 1L, "user@example.com", 1L);
         when(contactMediumRepository.save(any(ContactMedium.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         contactMediumService.add(request);
@@ -47,7 +47,7 @@ class ContactMediumServiceImplTest {
 
     @Test
     void add_throws_whenFormatIsInvalid() {
-        CreateContactMediumRequest request = new CreateContactMediumRequest(10L, 1L, "not-an-email", 1L, 1L);
+        CreateContactMediumRequest request = new CreateContactMediumRequest(10L, 1L, "not-an-email", 1L);
         doThrow(new InvalidContactMediumFormatException("Invalid email format"))
                 .when(contactMediumBusinessRules).checkDataFormat("not-an-email", 1L);
 
@@ -63,7 +63,7 @@ class ContactMediumServiceImplTest {
         existing.setId(1L);
         when(contactMediumBusinessRules.checkIfContactMediumExists(1L)).thenReturn(existing);
 
-        UpdateContactMediumRequest request = new UpdateContactMediumRequest("abc-phone", 2L, 1L);
+        UpdateContactMediumRequest request = new UpdateContactMediumRequest("abc-phone", 2L);
         doThrow(new InvalidContactMediumFormatException("Invalid phone number format"))
                 .when(contactMediumBusinessRules).checkDataFormat("abc-phone", 2L);
 

@@ -21,7 +21,4 @@ public class UpdateContactMediumRequest {
     @NotNull
     private Long cntcMediumTypeId;
 
-    @NotNull
-    private Long statusId;
-
 }
