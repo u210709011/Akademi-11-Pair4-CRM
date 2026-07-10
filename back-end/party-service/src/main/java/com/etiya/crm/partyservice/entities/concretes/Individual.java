@@ -46,9 +46,6 @@ public class Individual extends BaseEntity {
     @Column(name = "nat_id", nullable = false, unique = true)
     private String nationalId;
 
-    @Column(name = "st_id", nullable = false)
-    private Long statusId;
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "party_id", nullable = false)
     private Party party;
