@@ -11,7 +11,8 @@ services:
     environment:
       POSTGRES_USER: crm
       POSTGRES_PASSWORD: crm
-      POSTGRES_DB: crm
+      # POSTGRES_DB: Varsayilan DB (init scriptleri icin), asil servis DB'leri postgres-init/ altinda
+      POSTGRES_DB: postgres
     # Debezium'un WAL uzerinden CDC yapabilmesi icin logical replication acilir
     command: >-
       postgres -c wal_level=logical
