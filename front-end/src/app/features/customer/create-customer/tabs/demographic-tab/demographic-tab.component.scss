@@ -1,0 +1,46 @@
+.create-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px 24px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #111827;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #F47920;
+      box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15);
+    }
+  }
+
+  .field-error {
+    font-size: 12px;
+    font-weight: 600;
+    color: #dc2626;
+  }
+}
