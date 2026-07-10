@@ -137,6 +137,12 @@
       box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15);
     }
   }
+
+  .field-error {
+    font-size: 12px;
+    font-weight: 600;
+    color: #dc2626;
+  }
 }
 
 .gsm-field {
