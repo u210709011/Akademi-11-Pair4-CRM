@@ -45,9 +45,29 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'search.clearBtn' : 'Clear',
     'search.searchBtn' : 'Search',
     'search.title' : 'Search for a customer',
-    'search.subTitle' : 'Enter one or more criteria on the left and click Search to find an existing customer.'
+    'search.subTitle' : 'Enter one or more criteria on the left and click Search to find an existing customer.',
+    'search.natIdError' : 'National ID must contain only 11 digits.',
+    'search.customerIdError' : 'Customer ID must contain only digits.',
+    'search.accountNumberError' : 'Account number must contain only digits.',
+    'search.gsmError' : 'GSM number must contain only digits and start with 5.',
+    'search.orderNumberError' : 'Order number must contain only digits.',
 
-
+    'create.createCustomer': 'Create Customer',
+    'create.tabDemographic': 'Demographic Information',
+    'create.tabAddress': 'Address Information',
+    'create.tabContact': 'Contact Information',
+    'create.firstName': 'First Name',
+    'create.middleName': 'Middle Name',
+    'create.lastName': 'Last Name',
+    'create.birthDate': 'Birth Date',
+    'create.gender': 'Gender',
+    'create.fatherName': "Father's Name",
+    'create.motherName': "Mother's Name",
+    'create.nationalId': 'National ID Number',
+    'create.nationalIdError': 'National ID must contain only 11 digits.',
+    'create.genderMale': 'Male',
+    'create.genderFemale': 'Female',
+    'create.selectPlaceholder': 'Select'
 
   },
   tr: {
@@ -94,9 +114,29 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'search.clearBtn' : 'Temizle',
     'search.searchBtn' : 'Ara',
     'search.title' : 'Bir müşteri arayın',
-    'search.subTitle' : "Soldan bir veya daha fazla kriter girin ve mevcut bir müşteriyi bulmak için Ara'ya tıklayın."
+    'search.subTitle' : "Soldan bir veya daha fazla kriter girin ve mevcut bir müşteriyi bulmak için Ara'ya tıklayın.",
+    'search.natIdError' : 'TC Kimlik Numarası sadece 11 rakam içermelidir.',
+    'search.customerIdError' : 'Müşteri Numarası yalnızca rakam içermelidir.',
+    'search.accountNumberError' : 'Hesap Numarası yalnızca rakam içermelidir.',
+    'search.gsmError' : 'GSM Numarası yalnızca rakam içermeli ve 5 ile başlamalıdır.',
+    'search.orderNumberError' : 'Sipariş Numarası yalnızca rakam içermelidir.',
 
-
+    'create.createCustomer': 'Müşteri Oluştur',
+    'create.tabDemographic': 'Demografik Bilgiler',
+    'create.tabAddress': 'Adres Bilgileri',
+    'create.tabContact': 'İletişim Bilgileri',
+    'create.firstName': 'Ad',
+    'create.middleName': 'İkinci Ad',
+    'create.lastName': 'Soyad',
+    'create.birthDate': 'Doğum Tarihi',
+    'create.gender': 'Cinsiyet',
+    'create.fatherName': 'Baba Adı',
+    'create.motherName': 'Anne Adı',
+    'create.nationalId': 'TC Kimlik Numarası',
+    'create.nationalIdError': 'TC Kimlik Numarası sadece 11 rakam içermelidir.',
+    'create.genderMale': 'Erkek',
+    'create.genderFemale': 'Kadın',
+    'create.selectPlaceholder': 'Seçiniz'
 
   }
 };
