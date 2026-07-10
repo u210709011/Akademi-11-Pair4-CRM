@@ -27,7 +27,4 @@ public class CreateContactMediumRequest {
     @NotNull
     private Long cntcMediumTypeId;
 
-    @NotNull
-    private Long statusId;
-
 }

@@ -25,6 +25,7 @@ public class UpdateAddressRequest {
     @Size(max = 100)
     private String houseName;
 
+    @NotBlank
     @Size(max = 200)
     private String addrDesc;
 

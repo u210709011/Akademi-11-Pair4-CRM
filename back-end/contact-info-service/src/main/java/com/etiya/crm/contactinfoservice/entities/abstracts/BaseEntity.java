@@ -36,8 +36,8 @@ public abstract class BaseEntity {
     @Column(nullable = false)
     private Long dataTypeId;
 
-    @Column(nullable = false)
-    private boolean deleted = false;
+    @Column(name = "is_active", nullable = false)
+    private boolean active = true;
 
     @CreatedDate
     @Column(name = "cdate", nullable = false, updatable = false)
@@ -45,7 +45,7 @@ public abstract class BaseEntity {
 
     @CreatedBy
     @Column(name = "cuser", nullable = false, updatable = false)
-    private Long cuser;
+    private String cuser;
 
     @LastModifiedDate
     @Column(name = "udate")
@@ -53,6 +53,6 @@ public abstract class BaseEntity {
 
     @LastModifiedBy
     @Column(name = "uuser")
-    private Long uuser;
+    private String uuser;
 
 }

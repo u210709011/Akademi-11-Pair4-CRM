@@ -23,7 +23,4 @@ public class ContactMedium extends BaseEntity {
     @Column(nullable = false)
     private Long cntcMediumTypeId;
 
-    @Column(nullable = false)
-    private Long statusId;
-
 }
