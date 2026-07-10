@@ -1,0 +1,43 @@
+<div class="create-customer-page">
+  <nav class="breadcrumb">
+        <a class="breadcrumb-link" href="#">
+            <svg class="breadcrumb-home-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+        </a>
+        <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" />
+        </svg>
+        <a class="breadcrumb-link" href="#">{{ i18n.t('search.b2c') }}</a>
+        <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" />
+        </svg>
+        <span class="breadcrumb-current"> Create Customer </span>
+  </nav>
+  
+  <h1 class="page-title"> Create Customer </h1>
+
+  <div class="create-customer-layout">
+  
+    <div class="tabs-container">
+        @for (tab of tabs; track tab.key) {
+            <button
+                type="button"
+                class="tab"
+                [class.active]="tab.key === activeTab()"
+                (click)="selectTab(tab.key)"
+            >
+                {{ i18n.t(tab.labelKey) }}
+            </button>
+        }
+    </div>
+
+    <div class="tab-content">
+        <div class="tab-title">{{ activeTabLabel() }}</div>
+        <ng-container [ngComponentOutlet]="activeTabComponent()" />
+    </div>
+  </div>
+    
+</div>

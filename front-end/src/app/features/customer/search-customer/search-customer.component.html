@@ -1,0 +1,168 @@
+<div class="search-customer-page">
+
+    <nav class="breadcrumb">
+        <a class="breadcrumb-link" href="#">
+            <svg class="breadcrumb-home-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+        </a>
+        <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" />
+        </svg>
+        <a class="breadcrumb-link" href="#">{{ i18n.t('search.b2c') }}</a>
+        <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" />
+        </svg>
+        <span class="breadcrumb-current">{{ i18n.t('search.searchCustomer') }}</span>
+    </nav>
+
+    <h1 class="page-title">{{ i18n.t('search.searchCustomer') }}</h1>
+
+    <div class="search-customer-layout">
+
+        <section class="filters-panel">
+            <h2 class="panel-title">{{ i18n.t('search.searchFilters') }}</h2>
+
+            <form class="filters-form" [formGroup]="searchForm">
+
+                <div class="filter-field">
+                    <label for="natIdNumber">{{ i18n.t('search.natId') }}</label>
+                    <input
+                        id="natIdNumber"
+                        type="text"
+                        inputmode="numeric"
+                        maxlength="11"
+                        formControlName="natIdNumber"
+                        placeholder="NAT ID Number"
+                        (input)="sanitizeDigits($event, 'natIdNumber', 11)"
+                        (blur)="setFieldError('natIdNumber', false)"
+                    >
+                    @if (fieldErrors().natIdNumber) {
+                        <span class="field-error">{{ i18n.t('search.natIdError') }}</span>
+                    }
+                </div>
+
+                <div class="filter-field">
+                    <label for="customerId">{{ i18n.t('search.custId') }}</label>
+                    <div class="customer-id-field">
+                        <span class="customer-id-prefix">CUST-</span>
+                        <input
+                            id="customerId"
+                            type="text"
+                            inputmode="numeric"
+                            formControlName="customerId"
+                            (input)="sanitizeDigits($event, 'customerId')"
+                            (blur)="setFieldError('customerId', false)"
+                        >
+                    </div>
+                    @if (fieldErrors().customerId) {
+                        <span class="field-error">{{ i18n.t('search.customerIdError') }}</span>
+                    }
+                </div>
+
+                <div class="filter-field">
+                    <label for="accountNumber">{{ i18n.t('search.accNum') }}</label>
+                    <div class="accountNumber-id-field">
+                    <input
+                        id="accountNumber"
+                        type="text"
+                        inputmode="numeric"
+                        formControlName="accountNumber"
+                        placeholder="Account Number"
+                        (input)="sanitizeDigits($event, 'accountNumber')"
+                        (blur)="setFieldError('accountNumber', false)"
+                    >
+                   </div>
+                @if (fieldErrors().accountNumber) {
+                        <span class="field-error">{{ i18n.t('search.accountNumberError') }}</span>
+                    }
+                </div>
+
+                <div class="filter-field">
+                    <label for="gsmNumber">{{ i18n.t('search.gsm') }}</label>
+                    <div class="gsm-field">
+                        <span class="gsm-country-code">TR +90</span>
+                        <input
+                            id="gsmNumber"
+                            type="text"
+                            inputmode="numeric"
+                            formControlName="gsmNumber"
+                            placeholder="5XX XXX XX XX"
+                            (input)="sanitizeGsm($event)"
+                            (blur)="setFieldError('gsmNumber', false)"
+                        >
+                    </div>
+                    @if (fieldErrors().gsmNumber) {
+                        <span class="field-error">{{ i18n.t('search.gsmError') }}</span>
+                    }
+                </div>
+
+                <div class="filter-field">
+                    <label for="firstName">{{ i18n.t('search.firstName') }}</label>
+                    <input
+                        id="firstName"
+                        type="text"
+                        formControlName="firstName"
+                        placeholder="First Name"
+                        (input)="sanitizeLetters($event, 'firstName')"
+                    >
+                </div>
+
+                <div class="filter-field">
+                    <label for="lastName">{{ i18n.t('search.lastName') }}</label>
+                    <input
+                        id="lastName"
+                        type="text"
+                        formControlName="lastName"
+                        placeholder="Last Name"
+                        (input)="sanitizeLetters($event, 'lastName')"
+                    >
+                </div>
+
+                <div class="filter-field">
+                    <label for="orderNumber">{{ i18n.t('search.ordNum') }}</label>
+                    <input
+                        id="orderNumber"
+                        type="text"
+                        inputmode="numeric"
+                        formControlName="orderNumber"
+                        placeholder="Order Number"
+                        (input)="sanitizeDigits($event, 'orderNumber')"
+                        (blur)="setFieldError('orderNumber', false)"
+                    >
+                    @if (fieldErrors().orderNumber) {
+                        <span class="field-error">{{ i18n.t('search.orderNumberError') }}</span>
+                    }
+                </div>
+
+            </form>
+
+            <div class="filters-actions">
+                <button type="button" class="clear-button" (click)="clearFilters()">{{ i18n.t('search.clearBtn') }}</button>
+                <button type="button" class="search-button" [disabled]="!hasFilledFilter()">{{ i18n.t('search.searchBtn') }}</button>
+            </div>
+        </section>
+
+        <section class="results-panel">
+            <h2 class="panel-title">{{ i18n.t('search.results') }}</h2>
+
+            <div class="results-empty-state">
+                <span class="results-empty-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <ellipse cx="10" cy="5" rx="7" ry="2.5" />
+                        <path d="M3 5v10c0 1.4 3.1 2.5 7 2.5" />
+                        <path d="M3 10c0 1.4 3.1 2.5 7 2.5" />
+                        <circle cx="16.5" cy="16.5" r="4" />
+                        <path d="M19.5 19.5 22 22" />
+                    </svg>
+                </span>
+                <h3 class="results-empty-title">{{ i18n.t('search.title') }}</h3>
+                <p class="results-empty-description">{{ i18n.t('search.subTitle') }}</p>
+            </div>
+        </section>
+
+    </div>
+
+</div>

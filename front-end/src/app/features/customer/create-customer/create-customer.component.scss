@@ -1,0 +1,94 @@
+
+.create-customer-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px 32px 40px;
+  box-sizing: border-box;
+  background-color: #F4F5F7;
+
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-decoration: none;
+
+  &:hover {
+    color: #111827;
+  }
+}
+
+.breadcrumb-home-icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.breadcrumb-separator {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: #9ca3af;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.breadcrumb-current {
+  font-size: 13px;
+  font-weight: 700;
+  color: #F47920;
+}
+
+.page-title {
+  margin: 0 0 20px;
+  font-size: 32px;
+  font-weight: 800;
+  color: #F47920;
+}
+
+.create-customer-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+}
+.tabs-container {
+    display: flex;
+    height: 48px;
+}
+.tab {
+    flex: 1 1 0%;
+    border: 1px solid #E2E8F0;
+    background-color:rgb(255, 255, 255);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #667085;
+    
+    &.active {
+      background-color: #F47920;
+      color: black;
+    }
+}
+
+.tab-title {
+    font-weight: 700;
+    color:black;
+    font-size: 18px;
+    margin-bottom:18px;
+}
