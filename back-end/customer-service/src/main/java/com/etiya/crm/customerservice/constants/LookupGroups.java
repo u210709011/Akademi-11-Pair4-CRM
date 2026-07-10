@@ -11,6 +11,9 @@ public final class LookupGroups {
 	public static final String CITY = "CITY";
 	public static final String CONTACT_MEDIUM_TYPE = "CNTC_MEDIUM_TYPE";
 
+	/** contact-info-service polimorfik ADDR/CNTC_MEDIUM.DATA_TP_ID icin. */
+	public static final String DATA_TYPE = "DATA_TYPE";
+
 	private LookupGroups() {
 	}
 }

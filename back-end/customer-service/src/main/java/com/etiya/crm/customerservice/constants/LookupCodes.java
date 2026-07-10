@@ -10,6 +10,9 @@ public final class LookupCodes {
 	public static final String CONTACT_MEDIUM_HOME_PHONE = "HOME_PHONE";
 	public static final String CONTACT_MEDIUM_FAX = "FAX";
 
+	/** DATA_TYPE grubunda musteriyi temsil eden deger (lookup seed: value_id=102). */
+	public static final String DATA_TYPE_CUSTOMER = "CUST";
+
 	private LookupCodes() {
 	}
 }
