@@ -16,6 +16,7 @@ public final class MessageKeys {
 	public static final String ADDRESS_MIN_REQUIRED = "validation.address.min-required";
 
 	public static final String CUSTOMER_NOT_FOUND = "error.customer.not-found";
+	public static final String ADDRESS_NOT_FOUND = "error.customer.address-not-found";
 	public static final String DUPLICATE_NATIONAL_ID = "error.customer.duplicate-national-id";
 	public static final String ONBOARDING_FAILED = "error.customer.onboarding-failed";
 	public static final String IDENTITY_VERIFICATION_FAILED = "error.identity.verification-failed";
