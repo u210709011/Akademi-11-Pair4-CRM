@@ -7,6 +7,8 @@ import { I18nService } from '../../../core/i18n';
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_DURATION_MS = 15 * 60 * 1000;
 
+type LoginErrorKey = 'wrongCredentials' | 'accountLocked';
+
 @Component({
   selector: 'app-login',
   imports: [ReactiveFormsModule],
@@ -21,8 +23,11 @@ export class LoginComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly showPassword = signal(false);
-  protected readonly loginError = signal(false);
-  protected readonly accountLocked = signal(false);
+
+  protected readonly loginErrors = signal<Record<LoginErrorKey, boolean>>({
+    wrongCredentials: false,
+    accountLocked: false
+  });
 
   private failedAttempts = 0;
   private lockTimeoutId?: ReturnType<typeof setTimeout>;
@@ -34,7 +39,7 @@ export class LoginComponent {
   });
 
   constructor() {
-    this.loginForm.valueChanges.subscribe(() => this.loginError.set(false));
+    this.loginForm.valueChanges.subscribe(() => this.setLoginError('wrongCredentials', false));
     this.destroyRef.onDestroy(() => clearTimeout(this.lockTimeoutId));
   }
 
@@ -47,8 +52,12 @@ export class LoginComponent {
     control.setValue(control.value.trim());
   }
 
+  protected setLoginError(key: LoginErrorKey, hasError: boolean): void {
+    this.loginErrors.update(errors => ({ ...errors, [key]: hasError }));
+  }
+
   protected submit(): void {
-    if (this.loginForm.invalid || this.accountLocked()) {
+    if (this.loginForm.invalid || this.loginErrors().accountLocked) {
       return;
     }
 
@@ -56,7 +65,7 @@ export class LoginComponent {
 
     this.authService.login(username.trim(), password).subscribe(success => {
       if (success) {
-        this.loginError.set(false);
+        this.setLoginError('wrongCredentials', false);
         this.router.navigateByUrl('/search-customer');
         return;
       }
@@ -64,18 +73,18 @@ export class LoginComponent {
       this.failedAttempts++;
 
       if (this.failedAttempts >= MAX_FAILED_ATTEMPTS) {
-        this.loginError.set(false);
+        this.setLoginError('wrongCredentials', false);
         this.lockAccount();
       } else {
-        this.loginError.set(true);
+        this.setLoginError('wrongCredentials', true);
       }
     });
   }
 
   private lockAccount(): void {
-    this.accountLocked.set(true);
+    this.setLoginError('accountLocked', true);
     this.lockTimeoutId = setTimeout(() => {
-      this.accountLocked.set(false);
+      this.setLoginError('accountLocked', false);
       this.failedAttempts = 0;
     }, LOCK_DURATION_MS);
   }
