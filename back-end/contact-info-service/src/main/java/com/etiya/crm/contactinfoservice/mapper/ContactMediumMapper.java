@@ -16,14 +16,12 @@ public class ContactMediumMapper {
         contactMedium.setDataTypeId(request.getDataTypeId());
         contactMedium.setCntcData(request.getCntcData());
         contactMedium.setCntcMediumTypeId(request.getCntcMediumTypeId());
-        contactMedium.setStatusId(request.getStatusId());
         return contactMedium;
     }
 
     public static void updateEntity(ContactMedium contactMedium, UpdateContactMediumRequest request) {
         contactMedium.setCntcData(request.getCntcData());
         contactMedium.setCntcMediumTypeId(request.getCntcMediumTypeId());
-        contactMedium.setStatusId(request.getStatusId());
     }
 
     public static ContactMediumResponse toResponse(ContactMedium contactMedium) {
@@ -33,7 +31,6 @@ public class ContactMediumMapper {
         response.setDataTypeId(contactMedium.getDataTypeId());
         response.setCntcData(contactMedium.getCntcData());
         response.setCntcMediumTypeId(contactMedium.getCntcMediumTypeId());
-        response.setStatusId(contactMedium.getStatusId());
         response.setCdate(contactMedium.getCdate());
         response.setCuser(contactMedium.getCuser());
         response.setUdate(contactMedium.getUdate());
