@@ -1,23 +1,21 @@
 package com.etiya.crm.customerservice.messaging;
 
-import java.util.UUID;
-
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.etiya.crm.customerservice.constants.KafkaTopics;
 import com.etiya.crm.customerservice.constants.LogMessages;
-import com.etiya.crm.customerservice.constants.PartyEventTypes;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchViewRepository;
-import com.etiya.crm.customerservice.dataAccess.abstracts.InboxEventRepository;
 import com.etiya.crm.customerservice.entities.concretes.Customer;
 import com.etiya.crm.customerservice.entities.concretes.CustomerSearchView;
-import com.etiya.crm.customerservice.events.PartyEvent;
-import com.etiya.crm.customerservice.inbox.InboxEvent;
+import com.etiya.crm.shared.events.KafkaTopics;
+import com.etiya.crm.shared.events.inbox.InboxEvent;
+import com.etiya.crm.shared.events.inbox.InboxEventRepository;
+import com.etiya.crm.shared.events.party.PartyEvent;
+import com.etiya.crm.shared.events.party.PartyEventTypes;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,11 +45,10 @@ public class PartyEventListener {
 	@KafkaListener(topics = KafkaTopics.PARTY_EVENTS, groupId = "customer-service")
 	@Transactional
 	public void onPartyEvent(PartyEvent event) {
-		UUID eventId = UUID.fromString(event.eventId());
-		if (inboxEventRepository.existsById(eventId)) {
+		if (inboxEventRepository.existsById(event.eventId())) {
 			return; // idempotency: ayni event tekrar teslim edilirse islenmez.
 		}
-		inboxEventRepository.save(InboxEvent.of(eventId, event.type()));
+		inboxEventRepository.save(InboxEvent.of(event.eventId(), event.type()));
 
 		if (PartyEventTypes.INDIVIDUAL_PARTY_CREATED.equals(event.type())
 				|| PartyEventTypes.INDIVIDUAL_UPDATED.equals(event.type())) {
