@@ -1,11 +1,10 @@
 package com.etiya.crm.partyservice.business.concretes;
 
 import com.etiya.crm.partyservice.business.abstracts.IndividualService;
+import com.etiya.crm.partyservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.partyservice.business.dtos.requests.CreateIndividualCommand;
 import com.etiya.crm.partyservice.business.dtos.responses.PartyRoleResponse;
 import com.etiya.crm.partyservice.business.rules.IndividualBusinessRules;
-import com.etiya.crm.partyservice.config.PartyLookupProperties;
-import com.etiya.crm.partyservice.constants.StatusIds;
 import com.etiya.crm.partyservice.dataAccess.abstracts.IndividualRepository;
 import com.etiya.crm.partyservice.dataAccess.abstracts.PartyRepository;
 import com.etiya.crm.partyservice.dataAccess.abstracts.PartyRoleRepository;
@@ -31,13 +30,18 @@ public class IndividualManager implements IndividualService {
 
     private static final String AGGREGATE_TYPE = "party";
 
+    private static final String LOOKUP_GROUP_PARTY_TYPE = "PARTY_TYPE";
+    private static final String LOOKUP_CODE_INDIVIDUAL = "INDIVIDUAL";
+    private static final String LOOKUP_GROUP_PARTY_ROLE_TYPE = "PARTY_ROLE_TYPE";
+    private static final String LOOKUP_CODE_CUSTOMER = "CUSTOMER";
+
     private final PartyRepository partyRepository;
     private final IndividualRepository individualRepository;
     private final PartyRoleRepository partyRoleRepository;
     private final OutboxRepository outboxRepository;
     private final IndividualMapper individualMapper;
     private final IndividualBusinessRules individualBusinessRules;
-    private final PartyLookupProperties lookupProperties;
+    private final LookupCacheService lookupCacheService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -46,18 +50,16 @@ public class IndividualManager implements IndividualService {
         individualBusinessRules.checkNationalIdNotDuplicate(command.getNationalId());
 
         Party party = new Party();
-        party.setPartyTypeId(lookupProperties.getPartyTypeIndividualId());
-        party.setStatusId(StatusIds.ACTIVE);
+        party.setPartyTypeId(lookupCacheService.resolveIdByCode(LOOKUP_GROUP_PARTY_TYPE, LOOKUP_CODE_INDIVIDUAL));
         party = partyRepository.save(party);
 
         Individual individual = individualMapper.toEntity(command);
-        individual.setStatusId(StatusIds.ACTIVE);
         individual.setParty(party);
         individualRepository.save(individual);
 
         PartyRole partyRole = new PartyRole();
-        partyRole.setPartyRoleTypeId(lookupProperties.getPartyRoleTypeCustomerId());
-        partyRole.setStatusId(StatusIds.ACTIVE);
+        partyRole.setPartyRoleTypeId(
+                lookupCacheService.resolveIdByCode(LOOKUP_GROUP_PARTY_ROLE_TYPE, LOOKUP_CODE_CUSTOMER));
         partyRole.setParty(party);
         partyRole = partyRoleRepository.save(partyRole);
 
