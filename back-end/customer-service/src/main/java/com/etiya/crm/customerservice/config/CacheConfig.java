@@ -27,6 +27,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 @EnableCaching
 public class CacheConfig {
 
+	// Şu anda kullanılmıyor. CAFFEINE
 	@Bean(CacheNames.CAFFEINE_CACHE_MANAGER)
 	public CacheManager caffeineCacheManager() {
 		CaffeineCacheManager manager = new CaffeineCacheManager(CacheNames.LOOKUPS);
@@ -35,6 +36,9 @@ public class CacheConfig {
 				.maximumSize(1000));
 		return manager;
 	}
+
+
+	// Kullanılan asıl cache manager. REDIS
 	@Bean(CacheNames.REDIS_CACHE_MANAGER)
 	@Primary
 	public CacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
