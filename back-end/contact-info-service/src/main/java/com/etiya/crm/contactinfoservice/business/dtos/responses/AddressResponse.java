@@ -22,8 +22,8 @@ public class AddressResponse {
     private String addrDesc;
     private boolean primary;
     private Instant cdate;
-    private Long cuser;
+    private String cuser;
     private Instant udate;
-    private Long uuser;
+    private String uuser;
 
 }

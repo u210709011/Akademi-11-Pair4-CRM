@@ -20,4 +20,6 @@ public interface ContactMediumService {
 
     void delete(Long id);
 
+    void deactivateAllForRow(Long rowId, Long dataTypeId);
+
 }

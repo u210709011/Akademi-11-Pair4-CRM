@@ -26,7 +26,7 @@ public class Address extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String houseName;
 
-    @Column(length = 200)
+    @Column(nullable = false, length = 200)
     private String addrDesc;
 
     @Column(name = "is_primary", nullable = false)

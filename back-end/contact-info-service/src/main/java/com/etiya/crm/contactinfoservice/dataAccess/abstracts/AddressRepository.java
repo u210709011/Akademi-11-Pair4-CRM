@@ -10,10 +10,10 @@ import java.util.Optional;
 @Repository
 public interface AddressRepository extends JpaRepository<Address, Long> {
 
-    Optional<Address> findByIdAndDeletedFalse(Long id);
+    Optional<Address> findByIdAndActiveTrue(Long id);
 
-    List<Address> findAllByDeletedFalse();
+    List<Address> findAllByActiveTrue();
 
-    List<Address> findAllByRowIdAndDataTypeIdAndDeletedFalse(Long rowId, Long dataTypeId);
+    List<Address> findAllByRowIdAndDataTypeIdAndActiveTrue(Long rowId, Long dataTypeId);
 
 }

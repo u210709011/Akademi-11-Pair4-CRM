@@ -10,10 +10,10 @@ import java.util.Optional;
 @Repository
 public interface ContactMediumRepository extends JpaRepository<ContactMedium, Long> {
 
-    Optional<ContactMedium> findByIdAndDeletedFalse(Long id);
+    Optional<ContactMedium> findByIdAndActiveTrue(Long id);
 
-    List<ContactMedium> findAllByDeletedFalse();
+    List<ContactMedium> findAllByActiveTrue();
 
-    List<ContactMedium> findAllByRowIdAndDataTypeIdAndDeletedFalse(Long rowId, Long dataTypeId);
+    List<ContactMedium> findAllByRowIdAndDataTypeIdAndActiveTrue(Long rowId, Long dataTypeId);
 
 }
