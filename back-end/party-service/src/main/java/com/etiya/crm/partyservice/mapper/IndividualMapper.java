@@ -9,11 +9,11 @@ import org.mapstruct.Mapping;
 public interface IndividualMapper {
 
     @Mapping(target = "individualId", ignore = true)
-    @Mapping(target = "statusId", ignore = true)
     @Mapping(target = "party", ignore = true)
-    @Mapping(target = "createdDate", ignore = true)
-    @Mapping(target = "createdUser", ignore = true)
-    @Mapping(target = "updatedDate", ignore = true)
-    @Mapping(target = "updatedUser", ignore = true)
+    @Mapping(target = "cdate", ignore = true)
+    @Mapping(target = "cuser", ignore = true)
+    @Mapping(target = "udate", ignore = true)
+    @Mapping(target = "uuser", ignore = true)
+    @Mapping(target = "active", ignore = true)
     Individual toEntity(CreateIndividualCommand command);
 }

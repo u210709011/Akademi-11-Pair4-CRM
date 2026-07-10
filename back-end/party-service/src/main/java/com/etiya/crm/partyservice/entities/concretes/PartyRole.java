@@ -23,9 +23,6 @@ public class PartyRole extends BaseEntity {
     @Column(name = "party_role_tp_id",nullable = false)
     private Long partyRoleTypeId;
 
-    @Column(name = "st_id",nullable = false)
-    private Long statusId;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "party_id", nullable = false)
     private Party party;
