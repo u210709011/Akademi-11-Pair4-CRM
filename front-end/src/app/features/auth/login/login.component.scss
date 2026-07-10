@@ -30,9 +30,10 @@
 }
 
 .subtitle {
-  margin: 0 0 28px;
-  font-size: 14px;
-  color: #6b7280;
+  margin: 0px 0px 30px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.64);
 }
 
 .login-form {
@@ -56,6 +57,35 @@
 .required {
   color: #F47920;
 }
+
+.error-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(220, 38, 38, 0.08);
+  box-shadow: rgba(248, 113, 113, 0.35) 0px 0px 0px 1px inset;
+  border-radius: 8px;
+
+  .error-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: rgb(252, 165, 165);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .error-message {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgb(252, 165, 165);
+  }
+}
+
 
 .input-wrapper {
   position: relative;
@@ -99,7 +129,11 @@
   left: 14px;
   width: 18px;
   height: 18px;
-  fill: #9ca3af;
+  fill: none;
+  stroke: #9ca3af;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   pointer-events: none;
 }
 
@@ -140,6 +174,7 @@
   border: none;
   border-radius: 10px;
   transition: filter 0.2s ease, transform 0.05s ease;
+  box-shadow: rgba(244, 121, 32, 0.6) 0px 10px 22px -8px, rgba(255, 255, 255, 0.25) 0px 1px 0px inset;
 
   &:hover {
     filter: brightness(1.05);
@@ -147,6 +182,12 @@
 
   &:active {
     transform: translateY(1px);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    filter: none;
   }
 }
 
