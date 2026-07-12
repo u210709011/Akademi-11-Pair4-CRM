@@ -1,4 +1,4 @@
-package com.etiya.crm.customerservice.clients;
+package com.etiya.crm.customerservice.clients.responses;
 
 import java.time.LocalDate;
 

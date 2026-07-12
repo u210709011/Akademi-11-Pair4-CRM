@@ -1,4 +1,4 @@
-package com.etiya.crm.customerservice.clients;
+package com.etiya.crm.customerservice.clients.commands;
 
 /**
  * party-service PUT /api/v1/individuals/by-party-role/{partyRoleId} istek

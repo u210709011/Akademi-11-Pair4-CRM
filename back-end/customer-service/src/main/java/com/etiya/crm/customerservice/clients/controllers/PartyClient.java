@@ -1,4 +1,4 @@
-package com.etiya.crm.customerservice.clients;
+package com.etiya.crm.customerservice.clients.controllers;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -8,6 +8,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import com.etiya.crm.customerservice.clients.commands.CreateIndividualCommand;
+import com.etiya.crm.customerservice.clients.commands.UpdateIndividualCommand;
+import com.etiya.crm.customerservice.clients.responses.IndividualResponse;
+import com.etiya.crm.customerservice.clients.responses.PartyRoleResponse;
 
 @FeignClient(name = "party-service")
 public interface PartyClient {

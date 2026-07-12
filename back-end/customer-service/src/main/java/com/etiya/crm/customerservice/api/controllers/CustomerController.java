@@ -25,8 +25,8 @@ import com.etiya.crm.customerservice.business.dtos.requests.UpdateIndividualInfo
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.IdentityVerificationResponse;
-import com.etiya.crm.customerservice.clients.AddressResponse;
-import com.etiya.crm.customerservice.clients.IndividualResponse;
+import com.etiya.crm.customerservice.clients.responses.AddressResponse;
+import com.etiya.crm.customerservice.clients.responses.IndividualResponse;
 import com.etiya.crm.customerservice.constants.Roles;
 
 import jakarta.validation.Valid;

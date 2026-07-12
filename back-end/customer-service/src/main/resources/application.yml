@@ -12,7 +12,7 @@ spring:
 
 # Config Server'a ulasilamazsa kullanilacak yerel varsayilanlar (asil degerler configs/customer-service/ altindadir)
 server:
-  port: 8081
+  port: ${PORT:0}
 
 eureka:
   client:

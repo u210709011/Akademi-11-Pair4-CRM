@@ -11,8 +11,8 @@ import com.etiya.crm.customerservice.business.exceptions.AddressLimitExceededExc
 import com.etiya.crm.customerservice.business.exceptions.AddressNotFoundException;
 import com.etiya.crm.customerservice.business.exceptions.DuplicateNationalIdException;
 import com.etiya.crm.customerservice.business.exceptions.InvalidBirthDateException;
-import com.etiya.crm.customerservice.clients.AddressCommand;
-import com.etiya.crm.customerservice.clients.AddressResponse;
+import com.etiya.crm.customerservice.clients.commands.AddressCommand;
+import com.etiya.crm.customerservice.clients.responses.AddressResponse;
 
 @Component
 public class CustomerBusinessRules {
