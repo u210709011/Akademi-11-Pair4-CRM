@@ -6,7 +6,6 @@ public record CustomerResponse(
 		Long custId,
 		Long partyRoleId,
 		Long custTpId,
-		Long stId,
 		boolean active,
 		List<CustomerAccountResponse> accounts) {
 }

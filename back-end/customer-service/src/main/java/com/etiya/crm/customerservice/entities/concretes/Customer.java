@@ -34,11 +34,6 @@ public class Customer extends BaseEntity {
 	@Column(name = "cust_tp_id")
 	private Long custTpId;
 
-	// lookup-service uzerindeki lifecycle durumu (PENDING / ACTIVE / SUSPENDED / ...).
-	// Soft-delete icin bu degil, BaseEntity.active kullanilir.
-	@Column(name = "st_id", nullable = false)
-	private Long stId;
-
 	// Servis-ici iliski. CascadeType.REMOVE / orphanRemoval KULLANMA (soft delete var).
 	@OneToMany(mappedBy = "customer", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
 	private List<CustomerAccount> accounts = new ArrayList<>();
