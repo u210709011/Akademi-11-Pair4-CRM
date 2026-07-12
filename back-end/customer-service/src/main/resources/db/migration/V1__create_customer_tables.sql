@@ -1,11 +1,10 @@
 -- CUST: musteri kaydi. PARTY_ROLE_ID, party-service'e mantiksal referanstir (FK degildir).
--- is_active: soft-delete bayragi. st_id: lookup-service'teki lifecycle durumu (PENDING/ACTIVE/SUSPENDED/...).
--- Ikisi birbirinin yerine gecmez.
+-- is_active: soft-delete bayragi. Ayrica bir lifecycle (st_id) kullanilmiyor -
+-- suspend/pending gibi bir durum ihtiyaci cikarsa o zaman eklenir.
 CREATE TABLE cust (
     cust_id       BIGSERIAL PRIMARY KEY,
     party_role_id BIGINT       NOT NULL,
     cust_tp_id    BIGINT,
-    st_id         BIGINT       NOT NULL,
     is_active     BOOLEAN      NOT NULL DEFAULT true,
     cdate         TIMESTAMP    NOT NULL DEFAULT now(),
     cuser         VARCHAR(100) NOT NULL,
@@ -22,7 +21,6 @@ CREATE TABLE cust_acct (
     acct_no      VARCHAR(50)  NOT NULL,
     acct_name    VARCHAR(200),
     acct_tp_id   BIGINT,
-    st_id        BIGINT       NOT NULL,
     is_active    BOOLEAN      NOT NULL DEFAULT true,
     cdate        TIMESTAMP    NOT NULL DEFAULT now(),
     cuser        VARCHAR(100) NOT NULL,

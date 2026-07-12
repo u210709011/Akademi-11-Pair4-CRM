@@ -293,21 +293,15 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	private Customer createCustomerWithDefaultAccount(Long partyRoleId) {
-		Long activeStatusId = lookupCacheService.resolveId(LookupGroups.CUSTOMER_STATUS, LookupCodes.STATUS_ACTIVE);
-
 		Customer customer = new Customer();
 		customer.setPartyRoleId(partyRoleId);
-		customer.setStId(activeStatusId);
 		customer = customerRepository.save(customer); // IDENTITY: save sonrasi custId dolu gelir.
-
-		Long accountStatusId = lookupCacheService.resolveId(LookupGroups.ACCOUNT_STATUS, LookupCodes.STATUS_ACTIVE);
 
 		// ACC-025: musteri olusturulurken otomatik olarak varsayilan tipte tek bir hesap acilir.
 		CustomerAccount account = new CustomerAccount();
 		account.setCustomer(customer);
 		account.setAccountNo(AccountDefaults.ACCOUNT_NO_PREFIX + customer.getCustId());
 		account.setAccountTpId(DefaultLookupValues.DEFAULT_ACCOUNT_TYPE_ID);
-		account.setStId(accountStatusId);
 		account = customerAccountRepository.save(account);
 
 		customer.getAccounts().add(account);
