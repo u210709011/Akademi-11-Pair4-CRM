@@ -1,4 +1,4 @@
-package com.etiya.crm.customerservice.clients;
+package com.etiya.crm.customerservice.clients.controllers;
 
 import java.util.List;
 
@@ -10,6 +10,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import com.etiya.crm.customerservice.clients.commands.CreateAddressCommand;
+import com.etiya.crm.customerservice.clients.commands.CreateContactCommand;
+import com.etiya.crm.customerservice.clients.commands.CreateContactMediumCommand;
+import com.etiya.crm.customerservice.clients.commands.UpdateAddressCommand;
+import com.etiya.crm.customerservice.clients.commands.UpdateContactMediumCommand;
+import com.etiya.crm.customerservice.clients.responses.AddressResponse;
+import com.etiya.crm.customerservice.clients.responses.ContactMediumResponse;
 
 /**
  * contact-info-service ile haberlesme kontrati. Eureka'daki gercek servis adi

@@ -1,4 +1,4 @@
-package com.etiya.crm.customerservice.clients;
+package com.etiya.crm.customerservice.clients.commands;
 
 /** contact-info-service PUT /api/v1/addresses/{id} istek govdesi. */
 public record UpdateAddressCommand(
