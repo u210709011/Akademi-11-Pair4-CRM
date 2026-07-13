@@ -1,35 +1,58 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { I18nService } from '../../../../../core/i18n';
+import { CreateCustomerFormStateService } from '../../create-customer.component';
 
 type LetterFieldName = 'firstName' | 'middleName' | 'lastName' | 'fatherName' | 'motherName';
 
 @Component({
   selector: 'app-demographic-tab',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, DatePickerComponent],
   templateUrl: './demographic-tab.component.html',
   styleUrl: './demographic-tab.component.scss'
 })
 export class DemographicTabComponent {
   protected readonly i18n = inject(I18nService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly formState = inject(CreateCustomerFormStateService);
 
   protected readonly nationalIdError = signal(false);
 
+  protected readonly letterFieldErrors = signal<Record<LetterFieldName, boolean>>({
+    firstName: false,
+    middleName: false,
+    lastName: false,
+    fatherName: false,
+    motherName: false
+  });
+
   protected readonly createForm = this.formBuilder.nonNullable.group({
-    firstName: [''],
+    firstName: ['', Validators.required],
     middleName: [''],
-    lastName: [''],
-    birthDate: [''],
-    gender: [''],
+    lastName: ['', Validators.required],
+    birthDate: ['', Validators.required],
+    gender: ['', Validators.required],
     fatherName: [''],
     motherName: [''],
-    nationalId: ['']
+    nationalId: ['', Validators.required]
   });
+
+  constructor() {
+    this.formState.demographicValid.set(this.createForm.valid);
+    this.createForm.statusChanges.subscribe(() => {
+      this.formState.demographicValid.set(this.createForm.valid);
+    });
+  }
+
+  protected setLetterFieldError(field: LetterFieldName, hasError: boolean): void {
+    this.letterFieldErrors.update(errors => ({ ...errors, [field]: hasError }));
+  }
 
   protected sanitizeLetters(event: Event, controlName: LetterFieldName): void {
     const input = event.target as HTMLInputElement;
     const lettersOnly = input.value.replace(/[^a-zA-ZçÇğĞıİöÖşŞüÜ\s]/g, '');
+    this.setLetterFieldError(controlName, input.value !== lettersOnly);
     this.createForm.controls[controlName].setValue(lettersOnly);
   }
 
