@@ -1,14 +1,18 @@
 <form class="create-form" [formGroup]="createForm">
 
     <div class="form-field">
-        <label for="firstName">{{ i18n.t('create.firstName') }}</label>
+        <label for="firstName">{{ i18n.t('create.firstName') }} <span class="required">*</span></label>
         <input
             id="firstName"
             type="text"
             formControlName="firstName"
             [placeholder]="i18n.t('create.firstName')"
             (input)="sanitizeLetters($event, 'firstName')"
+            (blur)="setLetterFieldError('firstName', false)"
         >
+        @if (letterFieldErrors().firstName) {
+            <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+        }
     </div>
 
     <div class="form-field">
@@ -19,27 +23,35 @@
             formControlName="middleName"
             [placeholder]="i18n.t('create.middleName')"
             (input)="sanitizeLetters($event, 'middleName')"
+            (blur)="setLetterFieldError('middleName', false)"
         >
+        @if (letterFieldErrors().middleName) {
+            <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+        }
     </div>
 
     <div class="form-field">
-        <label for="lastName">{{ i18n.t('create.lastName') }}</label>
+        <label for="lastName">{{ i18n.t('create.lastName') }} <span class="required">*</span></label>
         <input
             id="lastName"
             type="text"
             formControlName="lastName"
             [placeholder]="i18n.t('create.lastName')"
             (input)="sanitizeLetters($event, 'lastName')"
+            (blur)="setLetterFieldError('lastName', false)"
         >
+        @if (letterFieldErrors().lastName) {
+            <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+        }
     </div>
 
     <div class="form-field">
-        <label for="birthDate">{{ i18n.t('create.birthDate') }}</label>
-        <input id="birthDate" type="date" formControlName="birthDate">
+        <label for="birthDate">{{ i18n.t('create.birthDate') }} <span class="required">*</span></label>
+        <app-date-picker formControlName="birthDate"></app-date-picker>
     </div>
 
     <div class="form-field">
-        <label for="gender">{{ i18n.t('create.gender') }}</label>
+        <label for="gender">{{ i18n.t('create.gender') }} <span class="required">*</span></label>
         <select id="gender" formControlName="gender">
             <option value="" disabled selected>{{ i18n.t('create.selectPlaceholder') }}</option>
             <option value="male">{{ i18n.t('create.genderMale') }}</option>
@@ -55,7 +67,11 @@
             formControlName="fatherName"
             [placeholder]="i18n.t('create.fatherName')"
             (input)="sanitizeLetters($event, 'fatherName')"
+            (blur)="setLetterFieldError('fatherName', false)"
         >
+        @if (letterFieldErrors().fatherName) {
+            <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+        }
     </div>
 
     <div class="form-field">
@@ -66,11 +82,15 @@
             formControlName="motherName"
             [placeholder]="i18n.t('create.motherName')"
             (input)="sanitizeLetters($event, 'motherName')"
+            (blur)="setLetterFieldError('motherName', false)"
         >
+        @if (letterFieldErrors().motherName) {
+            <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+        }
     </div>
 
     <div class="form-field">
-        <label for="nationalId">{{ i18n.t('create.nationalId') }}</label>
+        <label for="nationalId">{{ i18n.t('create.nationalId') }} <span class="required">*</span></label>
         <input
             id="nationalId"
             type="text"
