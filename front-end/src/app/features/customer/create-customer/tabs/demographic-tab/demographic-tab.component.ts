@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { I18nService } from '../../../../../core/i18n';
@@ -10,6 +10,7 @@ type LetterFieldName = 'firstName' | 'middleName' | 'lastName' | 'fatherName' | 
   selector: 'app-demographic-tab',
   imports: [ReactiveFormsModule, DatePickerComponent],
   templateUrl: './demographic-tab.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './demographic-tab.component.scss'
 })
 export class DemographicTabComponent {

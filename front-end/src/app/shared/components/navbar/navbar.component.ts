@@ -1,10 +1,11 @@
-import { Component, ElementRef, EventEmitter, HostListener, Output, inject, signal } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Output, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { I18nService, Lang } from '../../../core/i18n';
 
 @Component({
   selector: 'app-navbar',
   imports: [],
   templateUrl: './navbar.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent {
