@@ -1,1 +1,72 @@
-<p>adress tab</p>
+<section class="address-panel">
+
+    <div class="address-panel-header">
+        <h3 class="address-count">{{ i18n.t('create.myAddresses') }} ({{ addresses().length }}/{{ maxAddresses }})</h3>
+        <button type="button" class="add-address-button" (click)="openAddAddressModal()">
+            <span class="add-address-icon">+</span> {{ i18n.t('create.addNewAddress') }}
+        </button>
+    </div>
+
+    @if (addresses().length === 0) {
+        <div class="address-empty-state">
+            <span class="address-empty-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 22s7-7.5 7-12A7 7 0 0 0 5 10c0 4.5 7 12 7 12Z" />
+                    <circle cx="12" cy="10" r="2.5" />
+                </svg>
+            </span>
+            <h4 class="address-empty-title">{{ i18n.t('create.noAddressTitle') }}</h4>
+            <p class="address-empty-description">{{ i18n.t('create.noAddressDescription') }}</p>
+        </div>
+    }
+
+</section>
+
+@if (isAddAddressModalOpen()) {
+    <div class="modal-backdrop" (click)="closeAddAddressModal()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+                <h3 class="modal-title">{{ i18n.t('create.addNewAddress') }}</h3>
+                <button type="button" class="modal-close" (click)="closeAddAddressModal()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+            </div>
+
+            <form class="modal-form" [formGroup]="addressForm">
+
+                <div class="modal-field">
+                    <label for="city">{{ i18n.t('create.city') }} <span class="required">*</span></label>
+                    <div class="select-wrapper">
+                        <select id="city" formControlName="city">
+                            <option value="" disabled selected>{{ i18n.t('create.selectCity') }}</option>
+                        </select>
+                        <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label for="street">{{ i18n.t('create.street') }} <span class="required">*</span></label>
+                    <input id="street" type="text" formControlName="street" [placeholder]="i18n.t('create.streetPlaceholder')">
+                </div>
+
+                <div class="modal-field">
+                    <label for="houseNumber">{{ i18n.t('create.houseNumber') }} <span class="required">*</span></label>
+                    <input id="houseNumber" type="text" formControlName="houseNumber" [placeholder]="i18n.t('create.houseNumberPlaceholder')">
+                </div>
+
+                <div class="modal-field">
+                    <label for="addressDescription">{{ i18n.t('create.addressDescription') }} <span class="required">*</span></label>
+                    <input id="addressDescription" type="text" formControlName="description" [placeholder]="i18n.t('create.addressDescriptionPlaceholder')">
+                </div>
+
+            </form>
+
+            <div class="modal-actions">
+                <button type="button" class="cancel-button" (click)="closeAddAddressModal()">{{ i18n.t('create.cancelBtn') }}</button>
+                <button type="button" class="save-button" [disabled]="addressForm.invalid" (click)="saveAddress()">{{ i18n.t('create.saveBtn') }}</button>
+            </div>
+
+        </div>
+    </div>
+}

@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { I18nService } from '../../../core/i18n';
 
 type SidebarItem = 'b2c' | 'b2b' | 'approvals';
@@ -7,6 +7,7 @@ type SidebarItem = 'b2c' | 'b2b' | 'approvals';
   selector: 'app-sidebar',
   imports: [],
   templateUrl: './sidebar.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './sidebar.component.scss'
 })
 export class SidebarComponent {

@@ -141,26 +141,70 @@
 
             <div class="filters-actions">
                 <button type="button" class="clear-button" (click)="clearFilters()">{{ i18n.t('search.clearBtn') }}</button>
-                <button type="button" class="search-button" [disabled]="!hasFilledFilter()">{{ i18n.t('search.searchBtn') }}</button>
+                <button
+                    type="button"
+                    class="search-button"
+                    [disabled]="!hasFilledFilter() || isSearching()"
+                    (click)="search()"
+                >{{ i18n.t('search.searchBtn') }}</button>
             </div>
         </section>
 
         <section class="results-panel">
             <h2 class="panel-title">{{ i18n.t('search.results') }}</h2>
 
-            <div class="results-empty-state">
-                <span class="results-empty-icon">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <ellipse cx="10" cy="5" rx="7" ry="2.5" />
-                        <path d="M3 5v10c0 1.4 3.1 2.5 7 2.5" />
-                        <path d="M3 10c0 1.4 3.1 2.5 7 2.5" />
-                        <circle cx="16.5" cy="16.5" r="4" />
-                        <path d="M19.5 19.5 22 22" />
-                    </svg>
-                </span>
-                <h3 class="results-empty-title">{{ i18n.t('search.title') }}</h3>
-                <p class="results-empty-description">{{ i18n.t('search.subTitle') }}</p>
-            </div>
+            @if (isSearching()) {
+                <div class="results-empty-state">
+                    <p class="results-empty-description">{{ i18n.t('search.loading') }}</p>
+                </div>
+            } @else if (searchError()) {
+                <div class="results-empty-state">
+                    <p class="results-empty-description">{{ i18n.t('search.error') }}</p>
+                </div>
+            } @else if (!hasSearched()) {
+                <div class="results-empty-state">
+                    <span class="results-empty-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <ellipse cx="10" cy="5" rx="7" ry="2.5" />
+                            <path d="M3 5v10c0 1.4 3.1 2.5 7 2.5" />
+                            <path d="M3 10c0 1.4 3.1 2.5 7 2.5" />
+                            <circle cx="16.5" cy="16.5" r="4" />
+                            <path d="M19.5 19.5 22 22" />
+                        </svg>
+                    </span>
+                    <h3 class="results-empty-title">{{ i18n.t('search.title') }}</h3>
+                    <p class="results-empty-description">{{ i18n.t('search.subTitle') }}</p>
+                </div>
+            } @else if (searchResults().length === 0) {
+                <div class="results-empty-state">
+                    <p class="results-empty-description">{{ i18n.t('search.noResults') }}</p>
+                </div>
+            } @else {
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>{{ i18n.t('search.custId') }}</th>
+                            <th>{{ i18n.t('search.firstName') }}</th>
+                            <th>{{ i18n.t('search.lastName') }}</th>
+                            <th>{{ i18n.t('search.natId') }}</th>
+                            <th>{{ i18n.t('search.accNum') }}</th>
+                            <th>{{ i18n.t('search.status') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (customer of searchResults(); track customer.custId) {
+                            <tr>
+                                <td>{{ customer.custId }}</td>
+                                <td>{{ customer.firstName }}</td>
+                                <td>{{ customer.lastName }}</td>
+                                <td>{{ customer.tcNo }}</td>
+                                <td>{{ customer.acctNo }}</td>
+                                <td>{{ customer.status }}</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
         </section>
 
     </div>
