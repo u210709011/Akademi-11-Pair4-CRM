@@ -37,9 +37,4 @@ public class CustomerAccount extends BaseEntity {
 
 	@Column(name = "acct_tp_id")
 	private Long accountTpId;
-
-	// lookup-service uzerindeki lifecycle durumu (PENDING / ACTIVE / SUSPENDED / ...).
-	// Soft-delete icin bu degil, BaseEntity.active kullanilir.
-	@Column(name = "st_id", nullable = false)
-	private Long stId;
 }

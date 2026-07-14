@@ -2,6 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { I18nService } from '../../../core/i18n';
 
+type DigitFieldName = 'natIdNumber' | 'customerId' | 'accountNumber' | 'gsmNumber' | 'orderNumber';
+
 @Component({
   selector: 'app-search-customer',
   imports: [ReactiveFormsModule],
@@ -13,6 +15,14 @@ export class SearchCustomerComponent {
   private readonly formBuilder = inject(FormBuilder);
 
   protected readonly hasFilledFilter = signal(false);
+
+  protected readonly fieldErrors = signal<Record<DigitFieldName, boolean>>({
+    natIdNumber: false,
+    customerId: false,
+    accountNumber: false,
+    gsmNumber: false,
+    orderNumber: false
+  });
 
   protected readonly searchForm = this.formBuilder.nonNullable.group({
     natIdNumber: [''],
@@ -35,11 +45,18 @@ export class SearchCustomerComponent {
     this.searchForm.reset();
   }
 
+  protected setFieldError(field: DigitFieldName, hasError: boolean): void {
+    this.fieldErrors.update(errors => ({ ...errors, [field]: hasError }));
+  }
+
   protected sanitizeDigits(
-    event: Event, controlName: 'natIdNumber' | 'customerId' | 'accountNumber', maxLength?: number
+    event: Event,
+    controlName: 'natIdNumber' | 'customerId' | 'accountNumber' | 'orderNumber',
+    maxLength?: number
   ): void {
     const input = event.target as HTMLInputElement;
     const digitsOnly = input.value.replace(/\D/g, '').slice(0, maxLength);
+    this.setFieldError(controlName, input.value !== digitsOnly);
     this.searchForm.controls[controlName].setValue(digitsOnly);
   }
 
@@ -51,6 +68,7 @@ export class SearchCustomerComponent {
       digitsOnly = digitsOnly.slice(1);
     }
 
+    this.setFieldError('gsmNumber', input.value !== digitsOnly);
     this.searchForm.controls.gsmNumber.setValue(digitsOnly);
   }
 

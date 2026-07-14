@@ -2,13 +2,24 @@ package com.etiya.crm.customerservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+/**
+ * shared-events modulundeki OutboxEvent/InboxEvent entity+repository'leri
+ * com.etiya.crm.shared.events paketinde yasar - Spring Boot'un varsayilan
+ * component/entity scan'i sadece bu sinifin paketinden asagisini tarar, bu
+ * yuzden shared paket acikca eklenir.
+ */
 @EnableDiscoveryClient
 @EnableFeignClients
 @EnableJpaAuditing(auditorAwareRef = "jwtAuditorAware")
+@EntityScan(basePackages = { "com.etiya.crm.customerservice.entities", "com.etiya.crm.shared.events" })
+@EnableJpaRepositories(basePackages = { "com.etiya.crm.customerservice.dataAccess.abstracts",
+		"com.etiya.crm.shared.events" })
 @SpringBootApplication
 public class CustomerServiceApplication {
 

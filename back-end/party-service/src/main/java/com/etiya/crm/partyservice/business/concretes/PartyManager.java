@@ -2,7 +2,6 @@ package com.etiya.crm.partyservice.business.concretes;
 
 import com.etiya.crm.partyservice.business.abstracts.PartyService;
 import com.etiya.crm.partyservice.business.exceptions.BusinessException;
-import com.etiya.crm.partyservice.constants.StatusIds;
 import com.etiya.crm.partyservice.dataAccess.abstracts.IndividualRepository;
 import com.etiya.crm.partyservice.dataAccess.abstracts.PartyRepository;
 import com.etiya.crm.partyservice.entities.concretes.Party;
@@ -23,9 +22,9 @@ public class PartyManager implements PartyService {
         Party party = partyRepository.findById(partyId)
                 .orElseThrow(() -> new BusinessException("Party bulunamadi: " + partyId));
 
-        party.setStatusId(StatusIds.PASSIVE);
-        party.getRoles().forEach(role -> role.setStatusId(StatusIds.PASSIVE));
+        party.setActive(false);
+        party.getRoles().forEach(role -> role.setActive(false));
         individualRepository.findByParty_PartyId(partyId)
-                .ifPresent(individual -> individual.setStatusId(StatusIds.PASSIVE));
+                .ifPresent(individual -> individual.setActive(false));
     }
 }
