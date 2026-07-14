@@ -14,10 +14,12 @@ import com.etiya.crm.customerservice.business.abstracts.IdentityVerificationServ
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.business.dtos.requests.AddressEditRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.ContactInfo;
+import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.CustomerSearchRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.IndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateIndividualInfo;
+import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.IdentityVerificationResponse;
@@ -241,6 +243,52 @@ public class CustomerServiceImpl implements CustomerService {
 
 		return new ContactInfo(email.cntcData(), mobile.cntcData(), home != null ? home.cntcData() : null,
 				fax != null ? fax.cntcData() : null);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<CustomerAccountResponse> getAccounts(Long custId) {
+		getActiveCustomerOrThrow(custId);
+		return customerAccountRepository.findByCustomer_CustIdAndActiveTrue(custId).stream()
+				.map(customerMapper::toResponse)
+				.toList();
+	}
+
+	@Override
+	@Transactional
+	public CustomerAccountResponse createBillingAccount(Long custId, CreateBillingAccountRequest request) {
+		Customer customer = getActiveCustomerOrThrow(custId);
+		rules.ensureAddressProvided(request.addressId(), request.newAddress());
+
+		Long addressId = resolveBillingAddressId(custId, request);
+
+		CustomerAccount account = new CustomerAccount();
+		account.setCustomer(customer);
+		account.setAccountName(request.accountName());
+		account.setAccountDesc(request.accountDesc());
+		account.setAccountTpId(DefaultLookupValues.BILLING_ACCOUNT_TYPE_ID);
+		account.setAddressId(addressId);
+		// acct_no NOT NULL+UNIQUE oldugu icin gecici bir deger ile ilk kayit yapilir,
+		// IDENTITY'den donen custAcctId ile asil numara ikinci kayitta yazilir.
+		account.setAccountNo(UUID.randomUUID().toString());
+		account = customerAccountRepository.save(account);
+		account.setAccountNo(AccountDefaults.ACCOUNT_NO_PREFIX + account.getCustAcctId());
+		account = customerAccountRepository.save(account);
+
+		return customerMapper.toResponse(account);
+	}
+
+	private Long resolveBillingAddressId(Long custId, CreateBillingAccountRequest request) {
+		Long dataTypeId = resolveCustomerDataTypeId();
+		if (request.newAddress() != null) {
+			CreateAddressCommand command = new CreateAddressCommand(custId, dataTypeId, request.newAddress().cityId(),
+					request.newAddress().streetName(), request.newAddress().buildingName(),
+					request.newAddress().addressDesc(), false);
+			return contactAddressClient.addAddress(command).id();
+		}
+		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, dataTypeId);
+		rules.ensureAddressBelongsToCustomer(custId, request.addressId(), existing);
+		return request.addressId();
 	}
 
 	/**
