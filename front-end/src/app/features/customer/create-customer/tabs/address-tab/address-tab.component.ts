@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { I18nService } from '../../../../../core/i18n';
 
@@ -6,6 +6,7 @@ import { I18nService } from '../../../../../core/i18n';
   selector: 'app-address-tab',
   imports: [ReactiveFormsModule],
   templateUrl: './address-tab.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './address-tab.component.scss'
 })
 export class AddressTabComponent {

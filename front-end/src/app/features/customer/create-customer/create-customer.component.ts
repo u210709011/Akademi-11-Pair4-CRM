@@ -1,5 +1,5 @@
 import { NgComponentOutlet } from '@angular/common';
-import { Component, Injectable, Type, computed, inject, signal } from '@angular/core';
+import { Component, Injectable, Type, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { I18nService } from '../../../core/i18n';
 import { AddressTabComponent } from './tabs/address-tab/address-tab.component';
@@ -24,6 +24,7 @@ export class CreateCustomerFormStateService {
   imports: [NgComponentOutlet],
   templateUrl: './create-customer.component.html',
   styleUrl: './create-customer.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [CreateCustomerFormStateService]
 })
 export class CreateCustomerComponent {

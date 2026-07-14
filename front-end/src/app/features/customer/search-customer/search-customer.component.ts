@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { CustomerSearchResult, CustomerService } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
@@ -9,6 +9,7 @@ type DigitFieldName = 'natIdNumber' | 'customerId' | 'accountNumber' | 'gsmNumbe
   selector: 'app-search-customer',
   imports: [ReactiveFormsModule],
   templateUrl: './search-customer.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './search-customer.component.scss'
 })
 export class SearchCustomerComponent {
