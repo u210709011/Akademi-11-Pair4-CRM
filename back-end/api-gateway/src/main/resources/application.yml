@@ -19,6 +19,11 @@ eureka:
 # Config Server'a ulasilamazsa kullanilacak yerel varsayilan (asil deger configs/ altindadir)
 spring.security.oauth2.resourceserver.jwt.issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/crm}
 
+# /api/v1/auth/** ucundan Keycloak'a token istegi atarken kullanilan confidential client.
+keycloak:
+  client-id: ${KEYCLOAK_CLIENT_ID:crm-client}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:crm-client-secret}
+
 management:
   endpoints:
     web:
