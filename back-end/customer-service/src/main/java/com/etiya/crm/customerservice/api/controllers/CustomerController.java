@@ -131,4 +131,11 @@ public class CustomerController {
 		CustomerAccountResponse response = customerService.createBillingAccount(custId, request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
+
+	// contact-info-service'in adres silmeden once soracagi varlik kontrolu.
+	// custId altinda degil: silme aninda bilinen tek bilgi addressId'dir.
+	@GetMapping("/accounts/exists-by-address/{addressId}")
+	public ResponseEntity<Boolean> existsAccountByAddress(@PathVariable Long addressId) {
+		return ResponseEntity.ok(customerService.existsAccountByAddressId(addressId));
+	}
 }

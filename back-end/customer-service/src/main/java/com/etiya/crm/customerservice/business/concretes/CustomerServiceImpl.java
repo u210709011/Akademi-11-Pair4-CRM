@@ -278,6 +278,12 @@ public class CustomerServiceImpl implements CustomerService {
 		return customerMapper.toResponse(account);
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	public boolean existsAccountByAddressId(Long addressId) {
+		return customerAccountRepository.existsByAddressIdAndActiveTrue(addressId);
+	}
+
 	private Long resolveBillingAddressId(Long custId, CreateBillingAccountRequest request) {
 		Long dataTypeId = resolveCustomerDataTypeId();
 		if (request.newAddress() != null) {
