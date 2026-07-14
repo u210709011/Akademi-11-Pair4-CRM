@@ -14,6 +14,7 @@ public final class MessageKeys {
 	public static final String PHONE_INVALID = "validation.phone.invalid";
 	public static final String ADDRESS_MAX_EXCEEDED = "validation.address.max-exceeded";
 	public static final String ADDRESS_MIN_REQUIRED = "validation.address.min-required";
+	public static final String BILLING_ACCOUNT_ADDRESS_REQUIRED = "validation.billing-account.address-required";
 
 	public static final String CUSTOMER_NOT_FOUND = "error.customer.not-found";
 	public static final String ADDRESS_NOT_FOUND = "error.customer.address-not-found";

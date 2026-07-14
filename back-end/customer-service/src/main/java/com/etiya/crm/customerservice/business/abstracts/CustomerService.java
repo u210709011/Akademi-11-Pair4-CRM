@@ -4,10 +4,12 @@ import java.util.List;
 
 import com.etiya.crm.customerservice.business.dtos.requests.AddressEditRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.ContactInfo;
+import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.CustomerSearchRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.IndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateIndividualInfo;
+import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.IdentityVerificationResponse;
@@ -43,4 +45,10 @@ public interface CustomerService {
 	ContactInfo getContact(Long custId);
 
 	ContactInfo updateContact(Long custId, ContactInfo request);
+
+	// --- ACC-001..014: Customer Account tab / Create Billing Account ---
+
+	List<CustomerAccountResponse> getAccounts(Long custId);
+
+	CustomerAccountResponse createBillingAccount(Long custId, CreateBillingAccountRequest request);
 }
