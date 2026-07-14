@@ -11,13 +11,11 @@ import com.etiya.crm.partyservice.dataAccess.abstracts.PartyRoleRepository;
 import com.etiya.crm.partyservice.entities.concretes.Individual;
 import com.etiya.crm.partyservice.entities.concretes.Party;
 import com.etiya.crm.partyservice.entities.concretes.PartyRole;
-import com.etiya.crm.partyservice.events.PartyEventPayload;
-import com.etiya.crm.partyservice.events.PartyEventTypes;
 import com.etiya.crm.partyservice.mapper.IndividualMapper;
-import com.etiya.crm.partyservice.outbox.Outbox;
-import com.etiya.crm.partyservice.outbox.OutboxRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.etiya.crm.shared.events.KafkaTopics;
+import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
+import com.etiya.crm.shared.events.party.PartyEvent;
+import com.etiya.crm.shared.events.party.PartyEventTypes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,8 +26,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class IndividualManager implements IndividualService {
 
-    private static final String AGGREGATE_TYPE = "party";
-
     private static final String LOOKUP_GROUP_PARTY_TYPE = "PARTY_TYPE";
     private static final String LOOKUP_CODE_INDIVIDUAL = "INDIVIDUAL";
     private static final String LOOKUP_GROUP_PARTY_ROLE_TYPE = "PARTY_ROLE_TYPE";
@@ -38,11 +34,10 @@ public class IndividualManager implements IndividualService {
     private final PartyRepository partyRepository;
     private final IndividualRepository individualRepository;
     private final PartyRoleRepository partyRoleRepository;
-    private final OutboxRepository outboxRepository;
+    private final OutboxEventPublisher outboxEventPublisher;
     private final IndividualMapper individualMapper;
     private final IndividualBusinessRules individualBusinessRules;
     private final LookupCacheService lookupCacheService;
-    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -78,29 +73,15 @@ public class IndividualManager implements IndividualService {
      * WAL'den okuyup "party-events" topic'ine yayinlar (relay/polling YOK).
      */
     private void publishIndividualPartyCreatedEvent(Long partyRoleId, CreateIndividualCommand command) {
-        UUID eventId = UUID.randomUUID();
-        PartyEventPayload payload = new PartyEventPayload(
-                eventId,
+        PartyEvent payload = new PartyEvent(
+                UUID.randomUUID(),
                 PartyEventTypes.INDIVIDUAL_PARTY_CREATED,
                 partyRoleId,
                 command.getFirstName(),
                 command.getLastName(),
                 command.getNationalId());
 
-        Outbox outbox = new Outbox();
-        outbox.setId(eventId);
-        outbox.setAggregateType(AGGREGATE_TYPE);
-        outbox.setAggregateId(String.valueOf(partyRoleId));
-        outbox.setType(PartyEventTypes.INDIVIDUAL_PARTY_CREATED);
-        outbox.setPayload(writeJson(payload));
-        outboxRepository.save(outbox);
-    }
-
-    private String writeJson(PartyEventPayload payload) {
-        try {
-            return objectMapper.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("PartyEventPayload serialize edilemedi", e);
-        }
+        outboxEventPublisher.publish(KafkaTopics.PARTY_AGGREGATE_TYPE, String.valueOf(partyRoleId),
+                PartyEventTypes.INDIVIDUAL_PARTY_CREATED, payload);
     }
 }
