@@ -2,6 +2,7 @@
   "realm": "crm",
   "enabled": true,
   "registrationAllowed": false,
+  "accessTokenLifespan": 36000,
   "clients": [
     {
       "clientId": "crm-client",
