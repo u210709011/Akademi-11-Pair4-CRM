@@ -51,4 +51,7 @@ public interface CustomerService {
 	List<CustomerAccountResponse> getAccounts(Long custId);
 
 	CustomerAccountResponse createBillingAccount(Long custId, CreateBillingAccountRequest request);
+
+	/** contact-info-service'in adres silmeden once soracagi varlik kontrolu. */
+	boolean existsAccountByAddressId(Long addressId);
 }
