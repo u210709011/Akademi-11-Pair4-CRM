@@ -47,7 +47,22 @@
 
     <div class="form-field">
         <label for="birthDate">{{ i18n.t('create.birthDate') }} <span class="required">*</span></label>
-        <app-date-picker formControlName="birthDate"></app-date-picker>
+        <mat-form-field class="date-field" appearance="outline" subscriptSizing="dynamic">
+            <input
+                matInput
+                id="birthDate"
+                placeholder="DD/MM/YYYY"
+                [matDatepicker]="birthDatePicker"
+                [max]="today"
+                formControlName="birthDate"
+            >
+            <mat-datepicker-toggle matIconSuffix [for]="birthDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker
+                #birthDatePicker
+                [calendarHeaderComponent]="datePickerHeader"
+                panelClass="app-date-picker-panel"
+            ></mat-datepicker>
+        </mat-form-field>
     </div>
 
     <div class="form-field">
