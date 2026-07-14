@@ -26,8 +26,6 @@ public class Party extends BaseEntity {
     @Column(name = "party_tp_id", nullable = false)
     private Long partyTypeId;
 
-    @Column(name = "st_id", nullable = false)
-    private Long statusId;
 
     @OneToMany(mappedBy = "party", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.LAZY)
     private List<PartyRole> roles = new ArrayList<>();

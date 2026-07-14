@@ -25,6 +25,17 @@ public class GlobalExceptionHandler {
 		return build(HttpStatus.NOT_FOUND, ex, request);
 	}
 
+	@ExceptionHandler(AddressNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleAddressNotFound(AddressNotFoundException ex, HttpServletRequest request) {
+		return build(HttpStatus.NOT_FOUND, ex, request);
+	}
+
+	@ExceptionHandler(AddressLimitExceededException.class)
+	public ResponseEntity<ErrorResponse> handleAddressLimitExceeded(AddressLimitExceededException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.CONFLICT, ex, request);
+	}
+
 	@ExceptionHandler(DuplicateNationalIdException.class)
 	public ResponseEntity<ErrorResponse> handleDuplicate(DuplicateNationalIdException ex, HttpServletRequest request) {
 		return build(HttpStatus.CONFLICT, ex, request);
