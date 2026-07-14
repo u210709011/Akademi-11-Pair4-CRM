@@ -1,14 +1,17 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { I18nService } from '../../../../../core/i18n';
+import { DatePickerHeaderComponent } from '../../../../../shared/components/date-picker-header/date-picker-header.component';
 import { CreateCustomerFormStateService } from '../../create-customer.component';
 
 type LetterFieldName = 'firstName' | 'middleName' | 'lastName' | 'fatherName' | 'motherName';
 
 @Component({
   selector: 'app-demographic-tab',
-  imports: [ReactiveFormsModule, DatePickerComponent],
+  imports: [ReactiveFormsModule, MatDatepickerModule, MatFormFieldModule, MatInputModule],
   templateUrl: './demographic-tab.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './demographic-tab.component.scss'
@@ -19,6 +22,8 @@ export class DemographicTabComponent {
   private readonly formState = inject(CreateCustomerFormStateService);
 
   protected readonly nationalIdError = signal(false);
+  protected readonly today = new Date();
+  protected readonly datePickerHeader = DatePickerHeaderComponent;
 
   protected readonly letterFieldErrors = signal<Record<LetterFieldName, boolean>>({
     firstName: false,
@@ -32,7 +37,7 @@ export class DemographicTabComponent {
     firstName: ['', Validators.required],
     middleName: [''],
     lastName: ['', Validators.required],
-    birthDate: ['', Validators.required],
+    birthDate: this.formBuilder.control<Date | null>(null, Validators.required),
     gender: ['', Validators.required],
     fatherName: [''],
     motherName: [''],
