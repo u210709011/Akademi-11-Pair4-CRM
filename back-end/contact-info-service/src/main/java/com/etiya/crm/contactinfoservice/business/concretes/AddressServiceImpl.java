@@ -87,6 +87,7 @@ public class AddressServiceImpl implements AddressService {
     public void delete(Long id) {
         Address address = addressBusinessRules.checkIfAddressExists(id);
         addressBusinessRules.checkIfNotPrimary(address);
+        addressBusinessRules.checkNotLinkedToAccount(id);
         address.setActive(false);
         addressRepository.save(address);
     }
