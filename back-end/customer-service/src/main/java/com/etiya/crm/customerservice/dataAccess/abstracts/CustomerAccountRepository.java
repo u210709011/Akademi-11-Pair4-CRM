@@ -15,6 +15,8 @@ public interface CustomerAccountRepository extends JpaRepository<CustomerAccount
 
 	boolean existsByAccountNo(String accountNo);
 
+	boolean existsByAddressIdAndActiveTrue(Long addressId);
+
 	@Modifying
 	@Query("update CustomerAccount a set a.active = false where a.customer.custId = :custId")
 	void softDeleteByCustId(@Param("custId") Long custId);
