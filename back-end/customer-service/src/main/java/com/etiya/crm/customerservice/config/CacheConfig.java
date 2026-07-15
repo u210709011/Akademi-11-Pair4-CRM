@@ -30,12 +30,14 @@ public class CacheConfig {
 	// Şu anda kullanılmıyor. CAFFEINE
 	@Bean(CacheNames.CAFFEINE_CACHE_MANAGER)
 	public CacheManager caffeineCacheManager() {
-		CaffeineCacheManager manager = new CaffeineCacheManager(CacheNames.LOOKUPS);
+		CaffeineCacheManager manager = new CaffeineCacheManager(CacheNames.TP_LOOKUPS, CacheNames.ST_LOOKUPS);
 		manager.setCaffeine(Caffeine.newBuilder()
 				.expireAfterWrite(Duration.ofMinutes(30))
 				.maximumSize(1000));
 		return manager;
 	}
+
+	
 
 
 	// Kullanılan asıl cache manager. REDIS

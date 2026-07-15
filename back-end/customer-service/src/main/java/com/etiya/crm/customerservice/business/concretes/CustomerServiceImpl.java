@@ -45,7 +45,7 @@ import com.etiya.crm.customerservice.constants.CacheNames;
 import com.etiya.crm.customerservice.constants.DefaultLookupValues;
 import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.constants.LookupCodes;
-import com.etiya.crm.customerservice.constants.LookupGroups;
+import com.etiya.crm.customerservice.constants.LookupTpGroups;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerAccountRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchSpecifications;
@@ -334,11 +334,11 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	private Long resolveCustomerDataTypeId() {
-		return lookupCacheService.resolveId(LookupGroups.DATA_TYPE, LookupCodes.DATA_TYPE_CUSTOMER);
+		return lookupCacheService.resolveTpId(LookupTpGroups.DATA_TYPE, LookupCodes.DATA_TYPE_CUSTOMER);
 	}
 
 	private Long resolveContactMediumTypeId(String code) {
-		return lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, code);
+		return lookupCacheService.resolveTpId(LookupTpGroups.CONTACT_MEDIUM_TYPE, code);
 	}
 
 	private Customer getActiveCustomerOrThrow(Long custId) {
@@ -398,21 +398,21 @@ public class CustomerServiceImpl implements CustomerService {
 	private List<ContactMediumCommand> toContactMediumCommands(ContactInfo contact) {
 		List<ContactMediumCommand> mediums = new ArrayList<>();
 		mediums.add(new ContactMediumCommand(
-				lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_EMAIL),
+				lookupCacheService.resolveTpId(LookupTpGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_EMAIL),
 				contact.email()));
 		mediums.add(new ContactMediumCommand(
-				lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE,
+				lookupCacheService.resolveTpId(LookupTpGroups.CONTACT_MEDIUM_TYPE,
 						LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE),
 				contact.mobilePhone()));
 		if (StringUtils.hasText(contact.homePhone())) {
 			mediums.add(new ContactMediumCommand(
-					lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE,
+					lookupCacheService.resolveTpId(LookupTpGroups.CONTACT_MEDIUM_TYPE,
 							LookupCodes.CONTACT_MEDIUM_HOME_PHONE),
 					contact.homePhone()));
 		}
 		if (StringUtils.hasText(contact.fax())) {
 			mediums.add(new ContactMediumCommand(
-					lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_FAX),
+					lookupCacheService.resolveTpId(LookupTpGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_FAX),
 					contact.fax()));
 		}
 		return mediums;

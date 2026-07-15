@@ -3,7 +3,8 @@ package com.etiya.crm.customerservice.constants;
 public final class CacheNames {
 
 	/** Caffeine (local, in-memory): sik degismeyen kucuk lookup verileri. */
-	public static final String LOOKUPS = "lookups";
+	public static final String TP_LOOKUPS = "lookups";
+	public static final String ST_LOOKUPS = "st_lookups";
 
 	/** Redis (distributed): instance'lar arasi paylasilan musteri/arama verisi. */
 	public static final String CUSTOMERS = "customers";
