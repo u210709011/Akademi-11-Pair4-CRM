@@ -87,7 +87,12 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'create.houseNumberPlaceholder': 'No / Daire',
     'create.addressDescription': 'Address Description',
     'create.addressDescriptionPlaceholder': 'e.g. Home, Work, Summer house',
-    'create.saveBtn': 'Save'
+    'create.saveBtn': 'Save',
+    'create.email': 'Email',
+    'create.emailPlaceholder': 'Enter email address',
+    'create.homePhone': 'Home Phone',
+    'create.mobilePhone': 'Mobile Phone',
+    'create.fax': 'Fax'
 
   },
   tr: {
@@ -176,7 +181,12 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'create.houseNumberPlaceholder': 'No / Daire',
     'create.addressDescription': 'Adres Açıklaması',
     'create.addressDescriptionPlaceholder': 'Örn. Ev, İş, Yazlık',
-    'create.saveBtn': 'Kaydet'
+    'create.saveBtn': 'Kaydet',
+    'create.email': 'E-posta',
+    'create.emailPlaceholder': 'E-posta adresini girin',
+    'create.homePhone': 'Ev Telefonu',
+    'create.mobilePhone': 'Cep Telefonu',
+    'create.fax': 'Faks'
 
   }
 };
