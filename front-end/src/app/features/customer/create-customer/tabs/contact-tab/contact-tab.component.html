@@ -1,1 +1,64 @@
-<p>contact tab</p>
+<form class="contact-form" [formGroup]="createForm">
+
+    <div class="form-field">
+        <label for="email">{{ i18n.t('create.email') }} <span class="required">*</span></label>
+        <div class="input-with-icon">
+            <input
+                id="email"
+                type="email"
+                formControlName="email"
+                [placeholder]="i18n.t('create.emailPlaceholder')"
+            >
+            <svg class="mail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                <path d="m3 7 9 6 9-6"></path>
+            </svg>
+        </div>
+    </div>
+
+    <div class="form-field">
+        <label for="homePhone">{{ i18n.t('create.homePhone') }}</label>
+        <div class="phone-field">
+            <span class="phone-prefix">TR <strong>+90</strong></span>
+            <input
+                id="homePhone"
+                type="text"
+                inputmode="numeric"
+                formControlName="homePhone"
+                placeholder="XXX XXX XX XX"
+                (input)="sanitizePhone($event, 'homePhone')"
+            >
+        </div>
+    </div>
+
+    <div class="form-field">
+        <label for="mobilePhone">{{ i18n.t('create.mobilePhone') }} <span class="required">*</span></label>
+        <div class="phone-field">
+            <span class="phone-prefix">TR <strong>+90</strong></span>
+            <input
+                id="mobilePhone"
+                type="text"
+                inputmode="numeric"
+                formControlName="mobilePhone"
+                placeholder="5XX XXX XX XX"
+                (input)="sanitizePhone($event, 'mobilePhone')"
+            >
+        </div>
+    </div>
+
+    <div class="form-field">
+        <label for="fax">{{ i18n.t('create.fax') }}</label>
+        <div class="phone-field">
+            <span class="phone-prefix">TR <strong>+90</strong></span>
+            <input
+                id="fax"
+                type="text"
+                inputmode="numeric"
+                formControlName="fax"
+                placeholder="XXX XXX XX XX"
+                (input)="sanitizePhone($event, 'fax')"
+            >
+        </div>
+    </div>
+
+</form>

@@ -132,6 +132,7 @@
                         (input)="sanitizeDigits($event, 'orderNumber')"
                         (blur)="setFieldError('orderNumber', false)"
                     >
+                    
                     @if (fieldErrors().orderNumber) {
                         <span class="field-error">{{ i18n.t('search.orderNumberError') }}</span>
                     }
