@@ -58,14 +58,18 @@ html {
 .app-date-picker-panel {
   --mat-datepicker-calendar-date-selected-state-background-color: #F47920;
   --mat-datepicker-calendar-date-selected-state-text-color: #fff;
-  --mat-datepicker-calendar-date-today-outline-color: #F47920;
   --mat-datepicker-calendar-date-hover-state-background-color: rgba(244, 121, 32, 0.1);
   --mat-datepicker-calendar-header-text-color: #9ca3af;
   --mat-datepicker-calendar-period-button-text-color: #1f2937;
   --mat-datepicker-calendar-navigation-button-icon-color: #6b7280;
+  --mat-datepicker-calendar-date-today-outline-color: transparent;
+  --mat-datepicker-calendar-date-today-selected-state-outline-color: transparent;
+  --mat-datepicker-calendar-date-outline-color: transparent;
+  --mat-datepicker-calendar-date-focus-state-background-color: transparent;
 
   .mat-calendar-body-cell-content {
     border-radius: 8px;
+    outline: none;
   }
 
   // gunlerin sola kaymasina sebep oluyordu - hucre yerinde kalsin diye

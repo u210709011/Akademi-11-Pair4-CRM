@@ -87,7 +87,30 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'create.houseNumberPlaceholder': 'No / Daire',
     'create.addressDescription': 'Address Description',
     'create.addressDescriptionPlaceholder': 'e.g. Home, Work, Summer house',
-    'create.saveBtn': 'Save'
+    'create.saveBtn': 'Save',
+    'create.email': 'Email',
+    'create.emailPlaceholder': 'Enter email address',
+    'create.homePhone': 'Home Phone',
+    'create.mobilePhone': 'Mobile Phone',
+    'create.fax': 'Fax',
+
+    'detail.b2c': 'B2C',
+    'detail.detailCustomer': 'Detail Customer',
+    'detail.backToSearch': 'Back To Search',
+    'detail.customerBadge': 'Customer',
+    'detail.customerId': 'Customer ID',
+    'detail.accounts': 'Accounts',
+    'detail.addresses': 'Addresses',
+    'detail.primaryCity': 'Primary City',
+    'detail.tabInformation': 'Customer Information',
+    'detail.tabAccounts': 'Customer Accounts',
+    'detail.tabAddress': 'Address Information',
+    'detail.tabContact': 'Contact Information',
+    'detail.accountNumber': 'Account Number',
+    'detail.accountName': 'Account Name',
+    'detail.accountType': 'Account Type',
+    'detail.accountStatus': 'Account Status',
+    'detail.deleteCustomer': 'Delete Customer',
 
   },
   tr: {
@@ -176,7 +199,30 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'create.houseNumberPlaceholder': 'No / Daire',
     'create.addressDescription': 'Adres Açıklaması',
     'create.addressDescriptionPlaceholder': 'Örn. Ev, İş, Yazlık',
-    'create.saveBtn': 'Kaydet'
+    'create.saveBtn': 'Kaydet',
+    'create.email': 'E-posta',
+    'create.emailPlaceholder': 'E-posta adresini girin',
+    'create.homePhone': 'Ev Telefonu',
+    'create.mobilePhone': 'Cep Telefonu',
+    'create.fax': 'Faks',
+
+    'detail.b2c': 'B2C',
+    'detail.detailCustomer': 'Müşteri Detayı',
+    'detail.backToSearch': 'Aramaya Dön',
+    'detail.customerBadge': 'Müşteri',
+    'detail.customerId': 'Müşteri No',
+    'detail.accounts': 'Hesaplar',
+    'detail.addresses': 'Adresler',
+    'detail.primaryCity': 'Birincil Şehir',
+    'detail.tabInformation': 'Müşteri Bilgileri',
+    'detail.tabAccounts': 'Müşteri Hesapları',
+    'detail.tabAddress': 'Adres Bilgileri',
+    'detail.tabContact': 'İletişim Bilgileri',
+    'detail.accountNumber': 'Hesap Numarası',
+    'detail.accountName': 'Hesap Adı',
+    'detail.accountType': 'Hesap Türü',
+    'detail.accountStatus': 'Hesap Durumu',
+    'detail.deleteCustomer': 'Müşteriyi Sil'
 
   }
 };

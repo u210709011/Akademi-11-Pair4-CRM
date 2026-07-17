@@ -1,11 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { CustomerSearchCriteria, CustomerSearchResult } from './customer.model';
-
-// customer-service'in lokal fallback portu (server.port: 8081, application.yml).
-// Gateway routing netlesince bu, api-gateway URL'ine cevrilecek.
-const CUSTOMER_SERVICE_BASE_URL = 'http://localhost:8081';
 
 @Injectable({ providedIn: 'root' })
 export class CustomerService {
@@ -20,7 +17,7 @@ export class CustomerService {
       }
     }
 
-    return this.http.get<CustomerSearchResult[]>(`${CUSTOMER_SERVICE_BASE_URL}/api/v1/customers/search`, {
+    return this.http.get<CustomerSearchResult[]>(`${environment.customerServiceUrl}/api/v1/customers/search`, {
       params
     });
   }
