@@ -1,0 +1,6 @@
+target/
+*.class
+
+# IntelliJ (makineye ozel: JDK yolu, output path vs. - surekli sahte "conflict" yaratiyordu)
+.idea/
+*.iml
