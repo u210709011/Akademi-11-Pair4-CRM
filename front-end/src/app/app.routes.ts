@@ -6,6 +6,7 @@ import { MainLayoutComponent } from './layouts/main-layout/main-layout.component
 import { LoginComponent } from './features/auth/login/login.component';
 import { SearchCustomerComponent } from './features/customer/search-customer/search-customer.component';
 import { CreateCustomerComponent } from './features/customer/create-customer/create-customer.component';
+import { DetailCustomerComponent } from './features/customer/detail-customer/detail-customer.component';
 import { ApprovalsComponent } from './features/approvals/approvals.component';
 import { B2bComponent } from './features/b2b/b2b.component';
 
@@ -31,6 +32,10 @@ export const routes: Routes = [
       {
         path: 'create-customer',
         component: CreateCustomerComponent
+      },
+      {
+        path: 'detail-customer',
+        component: DetailCustomerComponent
       },
       {
         path: 'approvals',
