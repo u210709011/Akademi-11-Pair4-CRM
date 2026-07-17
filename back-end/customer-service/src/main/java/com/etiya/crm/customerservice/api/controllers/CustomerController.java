@@ -18,15 +18,17 @@ import org.springframework.web.bind.annotation.RestController;
 import com.etiya.crm.customerservice.business.abstracts.CustomerService;
 import com.etiya.crm.customerservice.business.dtos.requests.AddressEditRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.ContactInfo;
+import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.CustomerSearchRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.IndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateIndividualInfo;
+import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.IdentityVerificationResponse;
-import com.etiya.crm.customerservice.clients.AddressResponse;
-import com.etiya.crm.customerservice.clients.IndividualResponse;
+import com.etiya.crm.customerservice.clients.responses.AddressResponse;
+import com.etiya.crm.customerservice.clients.responses.IndividualResponse;
 import com.etiya.crm.customerservice.constants.Roles;
 
 import jakarta.validation.Valid;
@@ -114,5 +116,26 @@ public class CustomerController {
 	public ResponseEntity<ContactInfo> updateContact(@PathVariable Long custId,
 			@Valid @RequestBody ContactInfo request) {
 		return ResponseEntity.ok(customerService.updateContact(custId, request));
+	}
+
+	// --- ACC-001..014: Customer Account tab / Create Billing Account ---
+
+	@GetMapping("/{custId}/accounts")
+	public ResponseEntity<List<CustomerAccountResponse>> getAccounts(@PathVariable Long custId) {
+		return ResponseEntity.ok(customerService.getAccounts(custId));
+	}
+
+	@PostMapping("/{custId}/accounts")
+	public ResponseEntity<CustomerAccountResponse> createBillingAccount(@PathVariable Long custId,
+			@Valid @RequestBody CreateBillingAccountRequest request) {
+		CustomerAccountResponse response = customerService.createBillingAccount(custId, request);
+		return ResponseEntity.status(HttpStatus.CREATED).body(response);
+	}
+
+	// contact-info-service'in adres silmeden once soracagi varlik kontrolu.
+	// custId altinda degil: silme aninda bilinen tek bilgi addressId'dir.
+	@GetMapping("/accounts/exists-by-address/{addressId}")
+	public ResponseEntity<Boolean> existsAccountByAddress(@PathVariable Long addressId) {
+		return ResponseEntity.ok(customerService.existsAccountByAddressId(addressId));
 	}
 }

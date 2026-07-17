@@ -14,30 +14,32 @@ import com.etiya.crm.customerservice.business.abstracts.IdentityVerificationServ
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.business.dtos.requests.AddressEditRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.ContactInfo;
+import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.CustomerSearchRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.IndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateIndividualInfo;
+import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.IdentityVerificationResponse;
 import com.etiya.crm.customerservice.business.exceptions.CustomerNotFoundException;
 import com.etiya.crm.customerservice.business.exceptions.OnboardingFailedException;
 import com.etiya.crm.customerservice.business.rules.CustomerBusinessRules;
-import com.etiya.crm.customerservice.clients.AddressResponse;
-import com.etiya.crm.customerservice.clients.ContactAddressClient;
-import com.etiya.crm.customerservice.clients.ContactMediumCommand;
-import com.etiya.crm.customerservice.clients.ContactMediumResponse;
-import com.etiya.crm.customerservice.clients.CreateAddressCommand;
-import com.etiya.crm.customerservice.clients.CreateContactCommand;
-import com.etiya.crm.customerservice.clients.CreateContactMediumCommand;
-import com.etiya.crm.customerservice.clients.CreateIndividualCommand;
-import com.etiya.crm.customerservice.clients.IndividualResponse;
-import com.etiya.crm.customerservice.clients.PartyClient;
-import com.etiya.crm.customerservice.clients.PartyRoleResponse;
-import com.etiya.crm.customerservice.clients.UpdateAddressCommand;
-import com.etiya.crm.customerservice.clients.UpdateContactMediumCommand;
-import com.etiya.crm.customerservice.clients.UpdateIndividualCommand;
+import com.etiya.crm.customerservice.clients.commands.ContactMediumCommand;
+import com.etiya.crm.customerservice.clients.commands.CreateAddressCommand;
+import com.etiya.crm.customerservice.clients.commands.CreateContactCommand;
+import com.etiya.crm.customerservice.clients.commands.CreateContactMediumCommand;
+import com.etiya.crm.customerservice.clients.commands.CreateIndividualCommand;
+import com.etiya.crm.customerservice.clients.commands.UpdateAddressCommand;
+import com.etiya.crm.customerservice.clients.commands.UpdateContactMediumCommand;
+import com.etiya.crm.customerservice.clients.commands.UpdateIndividualCommand;
+import com.etiya.crm.customerservice.clients.controllers.ContactAddressClient;
+import com.etiya.crm.customerservice.clients.controllers.PartyClient;
+import com.etiya.crm.customerservice.clients.responses.AddressResponse;
+import com.etiya.crm.customerservice.clients.responses.ContactMediumResponse;
+import com.etiya.crm.customerservice.clients.responses.IndividualResponse;
+import com.etiya.crm.customerservice.clients.responses.PartyRoleResponse;
 import com.etiya.crm.customerservice.constants.AccountDefaults;
 import com.etiya.crm.customerservice.constants.CacheNames;
 import com.etiya.crm.customerservice.constants.DefaultLookupValues;
@@ -243,6 +245,58 @@ public class CustomerServiceImpl implements CustomerService {
 				fax != null ? fax.cntcData() : null);
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	public List<CustomerAccountResponse> getAccounts(Long custId) {
+		getActiveCustomerOrThrow(custId);
+		return customerAccountRepository.findByCustomer_CustIdAndActiveTrue(custId).stream()
+				.map(customerMapper::toResponse)
+				.toList();
+	}
+
+	@Override
+	@Transactional
+	public CustomerAccountResponse createBillingAccount(Long custId, CreateBillingAccountRequest request) {
+		Customer customer = getActiveCustomerOrThrow(custId);
+		rules.ensureAddressProvided(request.addressId(), request.newAddress());
+
+		Long addressId = resolveBillingAddressId(custId, request);
+
+		CustomerAccount account = new CustomerAccount();
+		account.setCustomer(customer);
+		account.setAccountName(request.accountName());
+		account.setAccountDesc(request.accountDesc());
+		account.setAccountTpId(DefaultLookupValues.BILLING_ACCOUNT_TYPE_ID);
+		account.setAddressId(addressId);
+		// acct_no NOT NULL+UNIQUE oldugu icin gecici bir deger ile ilk kayit yapilir,
+		// IDENTITY'den donen custAcctId ile asil numara ikinci kayitta yazilir.
+		account.setAccountNo(UUID.randomUUID().toString());
+		account = customerAccountRepository.save(account);
+		account.setAccountNo(AccountDefaults.ACCOUNT_NO_PREFIX + account.getCustAcctId());
+		account = customerAccountRepository.save(account);
+
+		return customerMapper.toResponse(account);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public boolean existsAccountByAddressId(Long addressId) {
+		return customerAccountRepository.existsByAddressIdAndActiveTrue(addressId);
+	}
+
+	private Long resolveBillingAddressId(Long custId, CreateBillingAccountRequest request) {
+		Long dataTypeId = resolveCustomerDataTypeId();
+		if (request.newAddress() != null) {
+			CreateAddressCommand command = new CreateAddressCommand(custId, dataTypeId, request.newAddress().cityId(),
+					request.newAddress().streetName(), request.newAddress().buildingName(),
+					request.newAddress().addressDesc(), false);
+			return contactAddressClient.addAddress(command).id();
+		}
+		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, dataTypeId);
+		rules.ensureAddressBelongsToCustomer(custId, request.addressId(), existing);
+		return request.addressId();
+	}
+
 	/**
 	 * required=false alanlar (homePhone/fax) icin: mevcut kayit varsa ve yeni
 	 * deger bossa dokunulmaz (silme desteklenmiyor); mevcut kayit yoksa ve deger
@@ -293,21 +347,15 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	private Customer createCustomerWithDefaultAccount(Long partyRoleId) {
-		Long activeStatusId = lookupCacheService.resolveId(LookupGroups.CUSTOMER_STATUS, LookupCodes.STATUS_ACTIVE);
-
 		Customer customer = new Customer();
 		customer.setPartyRoleId(partyRoleId);
-		customer.setStId(activeStatusId);
 		customer = customerRepository.save(customer); // IDENTITY: save sonrasi custId dolu gelir.
-
-		Long accountStatusId = lookupCacheService.resolveId(LookupGroups.ACCOUNT_STATUS, LookupCodes.STATUS_ACTIVE);
 
 		// ACC-025: musteri olusturulurken otomatik olarak varsayilan tipte tek bir hesap acilir.
 		CustomerAccount account = new CustomerAccount();
 		account.setCustomer(customer);
 		account.setAccountNo(AccountDefaults.ACCOUNT_NO_PREFIX + customer.getCustId());
 		account.setAccountTpId(DefaultLookupValues.DEFAULT_ACCOUNT_TYPE_ID);
-		account.setStId(accountStatusId);
 		account = customerAccountRepository.save(account);
 
 		customer.getAccounts().add(account);

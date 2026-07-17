@@ -1,0 +1,61 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 4px;
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  padding: 0;
+  color: #6b7280;
+  cursor: pointer;
+  background: none;
+  border: none;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &:hover {
+    color: #111827;
+  }
+}
+
+.period-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  cursor: pointer;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+
+  &:hover {
+    background: #f9fafb;
+  }
+}
+
+.month-box {
+  flex: 1;
+}
+
+.year-box {
+  min-width: 64px;
+}

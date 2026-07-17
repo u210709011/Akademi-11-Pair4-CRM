@@ -1,0 +1,51 @@
+<div class="approvals-page">
+
+    <h1 class="page-title">Approvals</h1>
+
+    <div class="approval-tabs">
+        @for (tab of tabs; track tab) {
+            <button type="button" class="approval-tab" [class.active]="tab === activeTab()" (click)="selectTab(tab)">
+                {{ tabLabels[tab] }}
+            </button>
+        }
+    </div>
+
+    <div class="approval-panel">
+
+        <div class="panel-header">
+            <h2 class="panel-title">{{ panelTitle() }}</h2>
+            <span class="request-count">{{ requests().length }} requests</span>
+        </div>
+
+        <table class="approval-table">
+            <thead>
+                <tr>
+                    <th>Request ID</th>
+                    <th>Customer</th>
+                    <th>Type</th>
+                    <th>Requested By</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (request of requests(); track request.requestId) {
+                    <tr>
+                        <td class="request-id">{{ request.requestId }}</td>
+                        <td>{{ request.customer }}</td>
+                        <td>{{ request.type }}</td>
+                        <td>{{ request.requestedBy }}</td>
+                        <td>{{ request.date }}</td>
+                        <td>
+                            <span class="status-badge" [class]="request.status.toLowerCase()">
+                                <span class="status-dot"></span>{{ request.status }}
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
