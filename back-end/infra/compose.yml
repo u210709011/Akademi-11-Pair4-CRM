@@ -24,7 +24,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ./postgres-init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U crm"]
+      test: ["CMD-SHELL", "pg_isready -U crm -d postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,6 +50,15 @@ services:
       - "9092:9092"
     volumes:
       - kafka-data:/var/lib/kafka/data
+    # KRaft (broker+controller) baslamasi postgres/redis'e gore daha uzun surer;
+    # healthcheck olmadan port acik gorunse de broker istekleri kabul etmeyebilir
+    # ve ona bagli servisler (party-service dahil) baglanti/metadata timeout'u alir.
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:29092"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   kafka-ui:
     image: ghcr.io/kafbat/kafka-ui:latest
@@ -60,7 +69,8 @@ services:
     ports:
       - "8090:8080"
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
 
   debezium:
     image: quay.io/debezium/connect:3.1
@@ -76,8 +86,10 @@ services:
     ports:
       - "8083:8083"
     depends_on:
-      - kafka
-      - postgres
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
 
   redis:
     image: docker.io/library/redis:7
