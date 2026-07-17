@@ -35,6 +35,14 @@ public class CustomerAccount extends BaseEntity {
 	@Column(name = "acct_name")
 	private String accountName;
 
+	@Column(name = "acct_desc", length = 500)
+	private String accountDesc;
+
 	@Column(name = "acct_tp_id")
 	private Long accountTpId;
+
+	// contact-info-service'teki Address'e logical referans (fatura hesabinin
+	// adresi). FK DEGIL, sadece Long.
+	@Column(name = "address_id")
+	private Long addressId;
 }

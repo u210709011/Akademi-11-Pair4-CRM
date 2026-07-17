@@ -39,5 +39,10 @@
         <ng-container [ngComponentOutlet]="activeTabComponent()" />
     </div>
   </div>
-    
+
+  <div class="wizard-actions">
+      <button type="button" class="cancel-button" (click)="cancel()">{{ i18n.t('create.cancelBtn') }}</button>
+      <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="nextTab()">{{ i18n.t('create.nextBtn') }}</button>
+  </div>
+
 </div>

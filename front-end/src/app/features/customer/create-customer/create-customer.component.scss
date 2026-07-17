@@ -64,6 +64,8 @@
 .create-customer-layout {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: 24px;
 
 }
@@ -82,7 +84,7 @@
     
     &.active {
       background-color: #F47920;
-      color: black;
+      color: white;
     }
 }
 
@@ -91,4 +93,46 @@
     color:black;
     font-size: 18px;
     margin-bottom:18px;
+}
+
+.wizard-actions {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: space-between;
+  margin-top: 24px;
+
+  button {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: filter 0.2s ease, background 0.2s ease;
+  }
+}
+
+.cancel-button {
+  color: #374151;
+  background: #fff;
+  border: 1px solid #d1d5db;
+
+  &:hover {
+    background: #f9fafb;
+  }
+}
+
+.next-button {
+  color: #fff;
+  background: #F47920;
+  border: none;
+
+  &:hover {
+    filter: brightness(1.05);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    filter: none;
+  }
 }

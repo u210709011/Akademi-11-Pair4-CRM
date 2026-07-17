@@ -51,6 +51,10 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'search.accountNumberError' : 'Account number must contain only digits.',
     'search.gsmError' : 'GSM number must contain only digits and start with 5.',
     'search.orderNumberError' : 'Order number must contain only digits.',
+    'search.loading' : 'Searching...',
+    'search.error' : 'Something went wrong while searching. Please try again.',
+    'search.noResults' : 'No customers found matching your criteria.',
+    'search.status' : 'Status',
 
     'create.createCustomer': 'Create Customer',
     'create.tabDemographic': 'Demographic Information',
@@ -65,9 +69,25 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'create.motherName': "Mother's Name",
     'create.nationalId': 'National ID Number',
     'create.nationalIdError': 'National ID must contain only 11 digits.',
+    'create.nameError': "Name can't contain numbers.",
     'create.genderMale': 'Male',
     'create.genderFemale': 'Female',
-    'create.selectPlaceholder': 'Select'
+    'create.selectPlaceholder': 'Select',
+    'create.cancelBtn': 'Cancel',
+    'create.nextBtn': 'Next',
+    'create.myAddresses': 'My Addresses',
+    'create.addNewAddress': 'Add New Address',
+    'create.noAddressTitle': 'No address added yet',
+    'create.noAddressDescription': "Click Add New Address to add the customer's first address.",
+    'create.city': 'City',
+    'create.selectCity': 'Select city',
+    'create.street': 'Street / Avenue',
+    'create.streetPlaceholder': 'e.g. Bağdat Caddesi',
+    'create.houseNumber': 'House/Flat Number',
+    'create.houseNumberPlaceholder': 'No / Daire',
+    'create.addressDescription': 'Address Description',
+    'create.addressDescriptionPlaceholder': 'e.g. Home, Work, Summer house',
+    'create.saveBtn': 'Save'
 
   },
   tr: {
@@ -120,6 +140,10 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'search.accountNumberError' : 'Hesap Numarası yalnızca rakam içermelidir.',
     'search.gsmError' : 'GSM Numarası yalnızca rakam içermeli ve 5 ile başlamalıdır.',
     'search.orderNumberError' : 'Sipariş Numarası yalnızca rakam içermelidir.',
+    'search.loading' : 'Aranıyor...',
+    'search.error' : 'Arama sırasında bir sorun oluştu. Lütfen tekrar deneyin.',
+    'search.noResults' : 'Kriterlerinize uyan müşteri bulunamadı.',
+    'search.status' : 'Durum',
 
     'create.createCustomer': 'Müşteri Oluştur',
     'create.tabDemographic': 'Demografik Bilgiler',
@@ -134,9 +158,25 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'create.motherName': 'Anne Adı',
     'create.nationalId': 'TC Kimlik Numarası',
     'create.nationalIdError': 'TC Kimlik Numarası sadece 11 rakam içermelidir.',
+    'create.nameError': 'İsim rakam içeremez.',
     'create.genderMale': 'Erkek',
     'create.genderFemale': 'Kadın',
-    'create.selectPlaceholder': 'Seçiniz'
+    'create.selectPlaceholder': 'Seçiniz',
+    'create.cancelBtn': 'İptal',
+    'create.nextBtn': 'İleri',
+    'create.myAddresses': 'Adreslerim',
+    'create.addNewAddress': 'Yeni Adres Ekle',
+    'create.noAddressTitle': 'Henüz adres eklenmedi',
+    'create.noAddressDescription': "Müşterinin ilk adresini eklemek için Yeni Adres Ekle'ye tıklayın.",
+    'create.city': 'Şehir',
+    'create.selectCity': 'Şehir seçin',
+    'create.street': 'Cadde / Sokak',
+    'create.streetPlaceholder': 'Örn. Bağdat Caddesi',
+    'create.houseNumber': 'Kapı/Daire Numarası',
+    'create.houseNumberPlaceholder': 'No / Daire',
+    'create.addressDescription': 'Adres Açıklaması',
+    'create.addressDescriptionPlaceholder': 'Örn. Ev, İş, Yazlık',
+    'create.saveBtn': 'Kaydet'
 
   }
 };

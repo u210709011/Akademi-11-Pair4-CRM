@@ -1,4 +1,31 @@
-/* You can add global styles to this file, and also import other style files */
+
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme((
+    color: (
+      primary: mat.$orange-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
+
+body {
+
+  color-scheme: light;
+
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+
+  // Reset the user agent margin.
+  margin: 0;
+  height: 100%;
+}
+
 
 :root {
   --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -20,4 +47,29 @@ body {
 body {
   font-family: var(--font-ui);
   font-variant-ligatures: none;
+}
+
+html {
+  --mat-datepicker-calendar-container-background-color: #fff;
+  --mat-datepicker-calendar-container-shape: 12px;
+}
+
+
+.app-date-picker-panel {
+  --mat-datepicker-calendar-date-selected-state-background-color: #F47920;
+  --mat-datepicker-calendar-date-selected-state-text-color: #fff;
+  --mat-datepicker-calendar-date-today-outline-color: #F47920;
+  --mat-datepicker-calendar-date-hover-state-background-color: rgba(244, 121, 32, 0.1);
+  --mat-datepicker-calendar-header-text-color: #9ca3af;
+  --mat-datepicker-calendar-period-button-text-color: #1f2937;
+  --mat-datepicker-calendar-navigation-button-icon-color: #6b7280;
+
+  .mat-calendar-body-cell-content {
+    border-radius: 8px;
+  }
+
+  // gunlerin sola kaymasina sebep oluyordu - hucre yerinde kalsin diye
+  .mat-calendar-body-label {
+    visibility: hidden;
+  }
 }
