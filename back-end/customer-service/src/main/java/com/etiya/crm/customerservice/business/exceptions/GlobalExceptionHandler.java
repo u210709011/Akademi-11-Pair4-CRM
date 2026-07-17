@@ -47,6 +47,12 @@ public class GlobalExceptionHandler {
 		return build(HttpStatus.BAD_REQUEST, ex, request);
 	}
 
+	@ExceptionHandler(BillingAccountAddressRequiredException.class)
+	public ResponseEntity<ErrorResponse> handleBillingAccountAddressRequired(BillingAccountAddressRequiredException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, ex, request);
+	}
+
 	@ExceptionHandler(IdentityVerificationFailedException.class)
 	public ResponseEntity<ErrorResponse> handleIdentityVerificationFailed(IdentityVerificationFailedException ex,
 			HttpServletRequest request) {
