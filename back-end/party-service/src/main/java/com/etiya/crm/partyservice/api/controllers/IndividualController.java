@@ -36,7 +36,7 @@ public class IndividualController {
     }
 
     // customer-service PartyClient.updateIndividual(...) buradan besleniyor.
-    // nationalId/birthDate govdede yok - editlenemez (bkz. UpdateIndividualCommand).
+    // nationalId degisirse baska bir bireyle cakismadigi kontrol edilir (bkz. IndividualBusinessRules).
     @PutMapping("/by-party-role/{partyRoleId}")
     public ResponseEntity<IndividualResponse> updateByPartyRoleId(@PathVariable Long partyRoleId,
             @Valid @RequestBody UpdateIndividualCommand command) {

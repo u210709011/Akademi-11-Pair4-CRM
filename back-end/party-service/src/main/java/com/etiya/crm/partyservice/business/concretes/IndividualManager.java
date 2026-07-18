@@ -82,6 +82,8 @@ public class IndividualManager implements IndividualService {
     public IndividualResponse updateByPartyRoleId(Long partyRoleId, UpdateIndividualCommand command) {
         Individual individual = findIndividualOrThrow(partyRoleId);
 
+        individualBusinessRules.checkNationalIdNotDuplicateForUpdate(command.nationalId(), individual.getIndividualId());
+
         individualMapper.updateEntity(command, individual);
         individual = individualRepository.save(individual);
 

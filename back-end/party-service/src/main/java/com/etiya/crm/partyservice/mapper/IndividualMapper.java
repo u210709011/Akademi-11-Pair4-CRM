@@ -22,10 +22,8 @@ public interface IndividualMapper {
 
     IndividualResponse toResponse(Individual individual);
 
-    /** nationalId/birthDate/statusId/party KASITLI OLARAK guncellenmez - bkz. UpdateIndividualCommand. */
+    /** statusId/party guncellenmez; nationalId/birthDate artik FR-004 geregi guncellenebilir. */
     @Mapping(target = "individualId", ignore = true)
-    @Mapping(target = "nationalId", ignore = true)
-    @Mapping(target = "birthDate", ignore = true)
     @Mapping(target = "party", ignore = true)
     @Mapping(target = "cdate", ignore = true)
     @Mapping(target = "cuser", ignore = true)
