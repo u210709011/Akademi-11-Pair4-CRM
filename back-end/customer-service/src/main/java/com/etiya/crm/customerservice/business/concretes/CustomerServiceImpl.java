@@ -12,30 +12,40 @@ import org.springframework.util.StringUtils;
 import com.etiya.crm.customerservice.business.abstracts.CustomerService;
 import com.etiya.crm.customerservice.business.abstracts.IdentityVerificationService;
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
+import com.etiya.crm.customerservice.business.dtos.requests.AddressEditRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.ContactInfo;
+import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.CustomerSearchRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.IndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerRequest;
+import com.etiya.crm.customerservice.business.dtos.requests.UpdateIndividualInfo;
+import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.IdentityVerificationResponse;
 import com.etiya.crm.customerservice.business.exceptions.CustomerNotFoundException;
 import com.etiya.crm.customerservice.business.exceptions.OnboardingFailedException;
 import com.etiya.crm.customerservice.business.rules.CustomerBusinessRules;
-import com.etiya.crm.customerservice.clients.ContactAddressClient;
-import com.etiya.crm.customerservice.clients.ContactMediumCommand;
-import com.etiya.crm.customerservice.clients.CreateContactCommand;
-import com.etiya.crm.customerservice.clients.CreateIndividualCommand;
-import com.etiya.crm.customerservice.clients.PartyClient;
-import com.etiya.crm.customerservice.clients.PartyRoleResponse;
+import com.etiya.crm.shared.contracts.contactmedium.ContactMediumCommand;
+import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.contactmedium.CreateContactCommand;
+import com.etiya.crm.shared.contracts.contactmedium.CreateContactMediumRequest;
+import com.etiya.crm.shared.contracts.individual.CreateIndividualCommand;
+import com.etiya.crm.shared.contracts.address.UpdateAddressRequest;
+import com.etiya.crm.shared.contracts.contactmedium.UpdateContactMediumRequest;
+import com.etiya.crm.shared.contracts.individual.UpdateIndividualCommand;
+import com.etiya.crm.customerservice.clients.controllers.ContactAddressClient;
+import com.etiya.crm.customerservice.clients.controllers.PartyClient;
+import com.etiya.crm.shared.contracts.address.AddressResponse;
+import com.etiya.crm.shared.contracts.contactmedium.ContactMediumResponse;
+import com.etiya.crm.shared.contracts.individual.IndividualResponse;
+import com.etiya.crm.shared.contracts.individual.PartyRoleResponse;
 import com.etiya.crm.customerservice.constants.AccountDefaults;
 import com.etiya.crm.customerservice.constants.CacheNames;
-import com.etiya.crm.customerservice.constants.CustomerEventTypes;
 import com.etiya.crm.customerservice.constants.DefaultLookupValues;
-import com.etiya.crm.customerservice.constants.KafkaTopics;
 import com.etiya.crm.customerservice.constants.LogMessages;
-import com.etiya.crm.customerservice.constants.LookupCodes;
-import com.etiya.crm.customerservice.constants.LookupGroups;
+import com.etiya.crm.shared.contracts.lookup.LookupCodes;
+import com.etiya.crm.shared.contracts.lookup.LookupGroups;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerAccountRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchSpecifications;
@@ -43,13 +53,17 @@ import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchViewRepo
 import com.etiya.crm.customerservice.entities.concretes.Customer;
 import com.etiya.crm.customerservice.entities.concretes.CustomerAccount;
 import com.etiya.crm.customerservice.entities.concretes.CustomerSearchView;
-import com.etiya.crm.customerservice.events.CustomerDeletedPayload;
-import com.etiya.crm.customerservice.events.CustomerOnboardedPayload;
 import com.etiya.crm.customerservice.mapper.CustomerMapper;
-import com.etiya.crm.customerservice.outbox.OutboxEventPublisher;
+import com.etiya.crm.shared.events.KafkaTopics;
+import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
+import com.etiya.crm.shared.events.customer.CustomerEventTypes;
+import com.etiya.crm.shared.events.customer.CustomerOnboardedEvent;
+import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -86,7 +100,7 @@ public class CustomerServiceImpl implements CustomerService {
 		try {
 			Customer customer = createCustomerWithDefaultAccount(partyRole.partyRoleId());
 			CustomerAccount account = customer.getAccounts().get(0);
-			createSearchView(customer, request.individual(), account.getAccountNo());
+			createSearchView(customer, request.individual(), request.contact(), account.getAccountNo());
 
 			try {
 				contactAddressClient.createContact(toContactCommand(customer.getCustId(), request));
@@ -98,7 +112,8 @@ public class CustomerServiceImpl implements CustomerService {
 
 			outboxEventPublisher.publish(KafkaTopics.CUSTOMER_AGGREGATE_TYPE, customer.getCustId().toString(),
 					CustomerEventTypes.CUSTOMER_ONBOARDED,
-					new CustomerOnboardedPayload(customer.getCustId(), customer.getPartyRoleId()));
+					new CustomerOnboardedEvent(UUID.randomUUID(), CustomerEventTypes.CUSTOMER_ONBOARDED,
+							customer.getCustId(), customer.getPartyRoleId()));
 
 			return customerMapper.toResponse(customer, List.of(account));
 		} catch (Exception ex) {
@@ -113,7 +128,7 @@ public class CustomerServiceImpl implements CustomerService {
 	public List<CustomerSearchResponse> search(CustomerSearchRequest request) {
 		return customerSearchViewRepository
 				.findAll(CustomerSearchSpecifications.search(request.firstName(), request.lastName(),
-						request.tcNo(), request.acctNo()))
+						request.tcNo(), request.acctNo(), request.custId(), request.gsm()))
 				.stream()
 				.map(customerMapper::toResponse)
 				.toList();
@@ -142,7 +157,188 @@ public class CustomerServiceImpl implements CustomerService {
 		});
 
 		outboxEventPublisher.publish(KafkaTopics.CUSTOMER_AGGREGATE_TYPE, custId.toString(),
-				CustomerEventTypes.CUSTOMER_DELETED, new CustomerDeletedPayload(custId, customer.getPartyRoleId()));
+				CustomerEventTypes.CUSTOMER_DELETED,
+				new CustomerDeletedEvent(UUID.randomUUID(), CustomerEventTypes.CUSTOMER_DELETED, custId,
+						customer.getPartyRoleId()));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public IndividualResponse getIndividual(Long custId) {
+		Customer customer = getActiveCustomerOrThrow(custId);
+		return partyClient.getIndividualByPartyRoleId(customer.getPartyRoleId());
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public IndividualResponse updateIndividual(Long custId, UpdateIndividualInfo request) {
+		Customer customer = getActiveCustomerOrThrow(custId);
+		UpdateIndividualCommand command = new UpdateIndividualCommand(request.firstName(), request.middleName(),
+				request.lastName(), request.genderId(), request.motherName(), request.fatherName());
+		// CustomerSearchView senkronu burada YAPILMAZ: party-service'in yayinlayacagi
+		// IndividualUpdated event'i PartyEventListener tarafindan async islenir.
+		return partyClient.updateIndividual(customer.getPartyRoleId(), command);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<AddressResponse> getAddresses(Long custId) {
+		getActiveCustomerOrThrow(custId);
+		return contactAddressClient.getAddressesByCustomer(custId, resolveCustomerDataTypeId());
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public AddressResponse addAddress(Long custId, AddressEditRequest request) {
+		getActiveCustomerOrThrow(custId);
+		Long dataTypeId = resolveCustomerDataTypeId();
+		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, dataTypeId);
+		rules.validateAddressLimit(existing.size());
+
+		CreateAddressRequest command = new CreateAddressRequest(custId, dataTypeId, request.cityId(),
+				request.streetName(), request.buildingName(), request.addressDesc(), request.primary());
+		return contactAddressClient.addAddress(command);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public AddressResponse updateAddress(Long custId, Long addressId, AddressEditRequest request) {
+		getActiveCustomerOrThrow(custId);
+		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, resolveCustomerDataTypeId());
+		rules.ensureAddressBelongsToCustomer(custId, addressId, existing);
+
+		UpdateAddressRequest command = new UpdateAddressRequest(request.cityId(), request.streetName(),
+				request.buildingName(), request.addressDesc(), request.primary());
+		return contactAddressClient.updateAddress(addressId, command);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ContactInfo getContact(Long custId) {
+		getActiveCustomerOrThrow(custId);
+		List<ContactMediumResponse> mediums = contactAddressClient.getContactMediumsByCustomer(custId,
+				resolveCustomerDataTypeId());
+		return new ContactInfo(
+				findMediumValue(mediums, resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_EMAIL)),
+				findMediumValue(mediums, resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE)),
+				findMediumValue(mediums, resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_HOME_PHONE)),
+				findMediumValue(mediums, resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_FAX)));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ContactInfo updateContact(Long custId, ContactInfo request) {
+		getActiveCustomerOrThrow(custId);
+		Long dataTypeId = resolveCustomerDataTypeId();
+		List<ContactMediumResponse> existing = contactAddressClient.getContactMediumsByCustomer(custId, dataTypeId);
+
+		ContactMediumResponse email = upsertMedium(custId, dataTypeId, existing,
+				resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_EMAIL), request.email(), true);
+		ContactMediumResponse mobile = upsertMedium(custId, dataTypeId, existing,
+				resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE), request.mobilePhone(), true);
+		ContactMediumResponse home = upsertMedium(custId, dataTypeId, existing,
+				resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_HOME_PHONE), request.homePhone(), false);
+		ContactMediumResponse fax = upsertMedium(custId, dataTypeId, existing,
+				resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_FAX), request.fax(), false);
+
+		return new ContactInfo(email.cntcData(), mobile.cntcData(), home != null ? home.cntcData() : null,
+				fax != null ? fax.cntcData() : null);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<CustomerAccountResponse> getAccounts(Long custId) {
+		getActiveCustomerOrThrow(custId);
+		return customerAccountRepository.findByCustomer_CustIdAndActiveTrue(custId).stream()
+				.map(customerMapper::toResponse)
+				.toList();
+	}
+
+	@Override
+	@Transactional
+	public CustomerAccountResponse createBillingAccount(Long custId, CreateBillingAccountRequest request) {
+		Customer customer = getActiveCustomerOrThrow(custId);
+		rules.ensureAddressProvided(request.addressId(), request.newAddress());
+
+		Long addressId = resolveBillingAddressId(custId, request);
+
+		CustomerAccount account = new CustomerAccount();
+		account.setCustomer(customer);
+		account.setAccountName(request.accountName());
+		account.setAccountDesc(request.accountDesc());
+		account.setAccountTpId(DefaultLookupValues.BILLING_ACCOUNT_TYPE_ID);
+		account.setAddressId(addressId);
+		// acct_no NOT NULL+UNIQUE oldugu icin gecici bir deger ile ilk kayit yapilir,
+		// IDENTITY'den donen custAcctId ile asil numara ikinci kayitta yazilir.
+		account.setAccountNo(UUID.randomUUID().toString());
+		account = customerAccountRepository.save(account);
+		account.setAccountNo(AccountDefaults.ACCOUNT_NO_PREFIX + account.getCustAcctId());
+		account = customerAccountRepository.save(account);
+
+		return customerMapper.toResponse(account);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public boolean existsAccountByAddressId(Long addressId) {
+		return customerAccountRepository.existsByAddressIdAndActiveTrue(addressId);
+	}
+
+	private Long resolveBillingAddressId(Long custId, CreateBillingAccountRequest request) {
+		Long dataTypeId = resolveCustomerDataTypeId();
+		if (request.newAddress() != null) {
+			CreateAddressRequest command = new CreateAddressRequest(custId, dataTypeId, request.newAddress().cityId(),
+					request.newAddress().streetName(), request.newAddress().buildingName(),
+					request.newAddress().addressDesc(), false);
+			return contactAddressClient.addAddress(command).id();
+		}
+		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, dataTypeId);
+		rules.ensureAddressBelongsToCustomer(custId, request.addressId(), existing);
+		return request.addressId();
+	}
+
+	/**
+	 * required=false alanlar (homePhone/fax) icin: mevcut kayit varsa ve yeni
+	 * deger bossa dokunulmaz (silme desteklenmiyor); mevcut kayit yoksa ve deger
+	 * de bossa hicbir sey yapilmaz (null doner).
+	 */
+	private ContactMediumResponse upsertMedium(Long custId, Long dataTypeId, List<ContactMediumResponse> existing,
+			Long typeId, String value, boolean required) {
+		ContactMediumResponse current = existing.stream()
+				.filter(medium -> medium.cntcMediumTypeId().equals(typeId))
+				.findFirst()
+				.orElse(null);
+
+		if (current != null) {
+			if (!required && !StringUtils.hasText(value)) {
+				return current;
+			}
+			UpdateContactMediumRequest command = new UpdateContactMediumRequest(value, typeId);
+			return contactAddressClient.updateContactMedium(current.id(), command);
+		}
+
+		if (!StringUtils.hasText(value)) {
+			return null;
+		}
+
+		CreateContactMediumRequest command = new CreateContactMediumRequest(custId, dataTypeId, value, typeId);
+		return contactAddressClient.addContactMedium(command);
+	}
+
+	private String findMediumValue(List<ContactMediumResponse> mediums, Long typeId) {
+		return mediums.stream()
+				.filter(medium -> medium.cntcMediumTypeId().equals(typeId))
+				.map(ContactMediumResponse::cntcData)
+				.findFirst()
+				.orElse(null);
+	}
+
+	private Long resolveCustomerDataTypeId() {
+		return lookupCacheService.resolveId(LookupGroups.DATA_TYPE, LookupCodes.DATA_TYPE_CUSTOMER);
+	}
+
+	private Long resolveContactMediumTypeId(String code) {
+		return lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, code);
 	}
 
 	private Customer getActiveCustomerOrThrow(Long custId) {
@@ -151,21 +347,15 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	private Customer createCustomerWithDefaultAccount(Long partyRoleId) {
-		Long activeStatusId = lookupCacheService.resolveId(LookupGroups.CUSTOMER_STATUS, LookupCodes.STATUS_ACTIVE);
-
 		Customer customer = new Customer();
 		customer.setPartyRoleId(partyRoleId);
-		customer.setStId(activeStatusId);
 		customer = customerRepository.save(customer); // IDENTITY: save sonrasi custId dolu gelir.
-
-		Long accountStatusId = lookupCacheService.resolveId(LookupGroups.ACCOUNT_STATUS, LookupCodes.STATUS_ACTIVE);
 
 		// ACC-025: musteri olusturulurken otomatik olarak varsayilan tipte tek bir hesap acilir.
 		CustomerAccount account = new CustomerAccount();
 		account.setCustomer(customer);
 		account.setAccountNo(AccountDefaults.ACCOUNT_NO_PREFIX + customer.getCustId());
 		account.setAccountTpId(DefaultLookupValues.DEFAULT_ACCOUNT_TYPE_ID);
-		account.setStId(accountStatusId);
 		account = customerAccountRepository.save(account);
 
 		customer.getAccounts().add(account);
@@ -181,13 +371,23 @@ public class CustomerServiceImpl implements CustomerService {
 		});
 	}
 
-	private void createSearchView(Customer customer, IndividualInfo individual, String accountNo) {
+	/**
+	 * firstName/middleName/lastName/tcNo/gsm burada senkron yazilir: hepsi bu
+	 * istekte customer-service'e caller tarafindan verilen degerlerdir, baska
+	 * bir servisin karari degildir. role BURADA YAZILMAZ: rol (partyRoleTypeId)
+	 * party-service'in karari - PartyEventListener'in az sonra tuketecegi
+	 * IndividualPartyCreated event'i ile async doldurulur (bkz. PartyEventListener).
+	 */
+	private void createSearchView(Customer customer, IndividualInfo individual, ContactInfo contact,
+			String accountNo) {
 		CustomerSearchView view = new CustomerSearchView();
 		view.setCustId(customer.getCustId());
 		view.setPartyRoleId(customer.getPartyRoleId());
 		view.setFirstName(individual.firstName());
+		view.setMiddleName(individual.middleName());
 		view.setLastName(individual.lastName());
 		view.setTcNo(individual.nationalId());
+		view.setGsm(contact.mobilePhone());
 		view.setAcctNo(accountNo);
 		view.setStatus(LookupCodes.STATUS_ACTIVE);
 		view.setDeleted(false);

@@ -22,7 +22,7 @@ public final class CustomerSearchSpecifications {
 	}
 
 	public static Specification<CustomerSearchView> search(String firstName, String lastName, String tcNo,
-			String acctNo) {
+			String acctNo, Long custId, String gsm) {
 		return (root, query, cb) -> {
 			List<Predicate> orGroup = new ArrayList<>();
 
@@ -44,6 +44,12 @@ public final class CustomerSearchSpecifications {
 			}
 			if (StringUtils.hasText(acctNo)) {
 				orGroup.add(cb.equal(root.get("acctNo"), acctNo));
+			}
+			if (custId != null) {
+				orGroup.add(cb.equal(root.get("custId"), custId));
+			}
+			if (StringUtils.hasText(gsm)) {
+				orGroup.add(cb.equal(root.get("gsm"), gsm));
 			}
 
 			Predicate notDeleted = cb.isFalse(root.get("deleted"));

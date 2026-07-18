@@ -4,7 +4,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
-import com.etiya.crm.customerservice.clients.LookupClient;
+import com.etiya.crm.customerservice.clients.controllers.LookupClient;
 import com.etiya.crm.customerservice.constants.CacheNames;
 
 import lombok.RequiredArgsConstructor;

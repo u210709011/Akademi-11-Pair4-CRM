@@ -9,15 +9,43 @@ spring:
     import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
   messages:
     basename: messages/messages
+  # Config Server ayakta degilse (ornn. mvn test tek basina calistirilirken) bu servisin
+  # DataSource/JwtDecoder bean'leri hic kurulamaz ve @SpringBootTest context yuklemesi
+  # "Failed to determine a suitable driver class" ile patlar - bu yuzden podman compose
+  # ile calisan lokal altyapiya isaret eden calisan bir varsayilan burada da tutulur.
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/customer_db}
+    username: ${DB_USERNAME:crm}
+    password: ${DB_PASSWORD:crm}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/crm}
 
 # Config Server'a ulasilamazsa kullanilacak yerel varsayilanlar (asil degerler configs/customer-service/ altindadir)
 server:
-  port: 8081
+  port: ${PORT:0}
+  # Gateway'in ekledigi X-Forwarded-* header'larina guven: springdoc bu sayede
+  # OpenAPI servers[] alanini gateway'in disaridan gorunen adresiyle (localhost:8080)
+  # uretir, kendi ham host:port'unu (rastgele PORT) degil - Swagger UI "Try it out"
+  # aksi halde tarayicidan erisilemeyen bir adrese gitmeye calisir.
+  forward-headers-strategy: framework
 
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+
+# Kafka listener'lar (PartyEventListener/ContactMediumEventListener) gibi istekle
+# tetiklenmeyen akislarda FeignConfig'in JWT propagation'i yapacak bir kullanici
+# istegi/SecurityContext yok - bu durumda lookup-service'e erismek icin kendi
+# service-account (client_credentials) client'imiz kullanilir. api-gateway'in
+# login akisinda kullandigi crm-client'tan KASITLI OLARAK ayridir: bir client'in
+# secret'i sizarsa diger client'in yetkisini de acmasin (blast radius ayrimi).
+keycloak:
+  client-id: ${KEYCLOAK_CLIENT_ID:customer-service-m2m}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:customer-service-m2m-secret}
 
 management:
   endpoints:
