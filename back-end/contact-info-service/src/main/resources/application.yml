@@ -2,42 +2,8 @@ spring:
   application:
     name: contact-info-service
   profiles:
-    # Aktif profil configs/contact-info-service/ altindaki hangi dosyanin yuklenecegini belirler
     active: ${SPRING_PROFILES_ACTIVE:dev}
   config:
-    # Config Server ayakta degilse de uygulama asagidaki yerel varsayilanlarla acilabilsin diye "optional"
-    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
-  # Sema artik Hibernate ddl-auto DEGIL, Flyway ile yonetilir (bkz. db/migration).
-  # baseline-on-migrate: bu servis daha once ddl-auto: update ile calistigi icin
-  # mevcut (bos olmayan) veritabanlarinda V1 calistirilmadan "zaten uygulanmis"
-  # sayilir; V2+ (ornn. outbox tablosu) normal calisir.
-  # Config Server ayakta degilse (ornn. mvn test tek basina calistirilirken) DataSource/
-  # JwtDecoder bean'leri hic kurulamaz ve @SpringBootTest context yuklemesi patlar - bu
-  # yuzden podman compose ile calisan lokal altyapiya isaret eden bir varsayilan burada da tutulur.
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/contact_info_db}
-    username: ${DB_USERNAME:crm}
-    password: ${DB_PASSWORD:crm}
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/crm}
-  jpa:
-    hibernate:
-      ddl-auto: validate
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    baseline-version: 1
-
-# Config Server'a ulasilamazsa kullanilacak yerel varsayilanlar (asil degerler configs/contact-info-service/ altindadir)
-server:
-  port: 8084
-  # Gateway'in ekledigi X-Forwarded-* header'larina guven - bkz. customer-service/application.yml aciklamasi.
-  forward-headers-strategy: framework
-
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+    # Config Server zorunludur: ayakta degilse (veya bu import basarisiz olursa) uygulama
+    # BASLAMAZ. Yerel varsayilan/fallback deger tutulmaz - asil degerler configs/contact-info-service/ altindadir.
+    import: configserver:${CONFIG_SERVER_URL:http://localhost:8888}
