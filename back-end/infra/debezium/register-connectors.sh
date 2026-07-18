@@ -1,6 +1,3 @@
-#!/usr/bin/env bash
-# Bu klasordeki tum *-connector.json dosyalarini Debezium Connect'e kaydeder.
-# Kullanim: ./register-connectors.sh  (Debezium ayakta olmali: http://localhost:8083)
 
 set -euo pipefail
 
