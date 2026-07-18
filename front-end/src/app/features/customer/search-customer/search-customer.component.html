@@ -184,22 +184,73 @@
                 <table class="results-table">
                     <thead>
                         <tr>
-                            <th>{{ i18n.t('search.custId') }}</th>
-                            <th>{{ i18n.t('search.firstName') }}</th>
-                            <th>{{ i18n.t('search.lastName') }}</th>
-                            <th>{{ i18n.t('search.natId') }}</th>
-                            <th>{{ i18n.t('search.accNum') }}</th>
-                            <th>{{ i18n.t('search.status') }}</th>
+                            <th class="sortable" (click)="toggleSort('custId')">
+                                {{ i18n.t('search.custId') }}
+                                @if (sortColumn() === 'custId') {
+                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                }
+                            </th>
+                            <th class="sortable" (click)="toggleSort('firstName')">
+                                {{ i18n.t('search.firstName') }}
+                                @if (sortColumn() === 'firstName') {
+                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                }
+                            </th>
+                            <th class="sortable" (click)="toggleSort('middleName')">
+                                {{ i18n.t('search.middleName') }}
+                                @if (sortColumn() === 'middleName') {
+                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                }
+                            </th>
+                            <th class="sortable" (click)="toggleSort('lastName')">
+                                {{ i18n.t('search.lastName') }}
+                                @if (sortColumn() === 'lastName') {
+                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                }
+                            </th>
+                            <th class="sortable" (click)="toggleSort('role')">
+                                {{ i18n.t('search.role') }}
+                                @if (sortColumn() === 'role') {
+                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                }
+                            </th>
+                            <th class="sortable" (click)="toggleSort('tcNo')">
+                                {{ i18n.t('search.natId') }}
+                                @if (sortColumn() === 'tcNo') {
+                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                }
+                            </th>
+                            <th class="sortable" (click)="toggleSort('acctNo')">
+                                {{ i18n.t('search.accNum') }}
+                                @if (sortColumn() === 'acctNo') {
+                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                }
+                            </th>
+                            <th class="sortable" (click)="toggleSort('gsm')">
+                                {{ i18n.t('search.gsm') }}
+                                @if (sortColumn() === 'gsm') {
+                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                }
+                            </th>
+                            <th class="sortable" (click)="toggleSort('status')">
+                                {{ i18n.t('search.status') }}
+                                @if (sortColumn() === 'status') {
+                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                }
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        @for (customer of searchResults(); track customer.custId) {
+                        @for (customer of sortedResults(); track customer.custId) {
                             <tr>
                                 <td>{{ customer.custId }}</td>
                                 <td>{{ customer.firstName }}</td>
+                                <td>{{ customer.middleName ?? '-' }}</td>
                                 <td>{{ customer.lastName }}</td>
+                                <td>{{ customer.role ?? '-' }}</td>
                                 <td>{{ customer.tcNo }}</td>
                                 <td>{{ customer.acctNo }}</td>
+                                <td>{{ customer.gsm ?? '-' }}</td>
                                 <td>{{ customer.status }}</td>
                             </tr>
                         }
