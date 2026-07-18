@@ -55,6 +55,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'search.error' : 'Something went wrong while searching. Please try again.',
     'search.noResults' : 'No customers found matching your criteria.',
     'search.status' : 'Status',
+    'search.middleName' : 'Middle Name',
+    'search.role' : 'Role',
 
     'create.createCustomer': 'Create Customer',
     'create.tabDemographic': 'Demographic Information',
@@ -167,6 +169,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'search.error' : 'Arama sırasında bir sorun oluştu. Lütfen tekrar deneyin.',
     'search.noResults' : 'Kriterlerinize uyan müşteri bulunamadı.',
     'search.status' : 'Durum',
+    'search.middleName' : 'İkinci Ad',
+    'search.role' : 'Rol',
 
     'create.createCustomer': 'Müşteri Oluştur',
     'create.tabDemographic': 'Demografik Bilgiler',

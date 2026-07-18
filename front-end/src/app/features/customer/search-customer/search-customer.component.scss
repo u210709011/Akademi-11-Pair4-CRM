@@ -316,6 +316,21 @@
     color: #1f2937;
   }
 
+  th.sortable {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+
+    &:hover {
+      color: #111827;
+    }
+  }
+
+  .sort-indicator {
+    margin-left: 4px;
+    font-size: 11px;
+  }
+
   td {
     color: #374151;
   }

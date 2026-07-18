@@ -1,9 +1,12 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { CustomerSearchResult, CustomerService } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
 
 type DigitFieldName = 'natIdNumber' | 'customerId' | 'accountNumber' | 'gsmNumber' | 'orderNumber';
+
+type SortColumn = 'custId' | 'firstName' | 'middleName' | 'lastName' | 'tcNo' | 'acctNo' | 'role' | 'gsm' | 'status';
+type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-search-customer',
@@ -22,6 +25,33 @@ export class SearchCustomerComponent {
   protected readonly hasSearched = signal(false);
   protected readonly searchError = signal(false);
   protected readonly searchResults = signal<CustomerSearchResult[]>([]);
+
+  protected readonly sortColumn = signal<SortColumn | null>(null);
+  protected readonly sortDirection = signal<SortDirection>('asc');
+
+  protected readonly sortedResults = computed(() => {
+    const column = this.sortColumn();
+    const results = this.searchResults();
+    if (!column) {
+      return results;
+    }
+
+    const direction = this.sortDirection() === 'asc' ? 1 : -1;
+    return [...results].sort((a, b) => {
+      const left = a[column];
+      const right = b[column];
+      if (left == null && right == null) {
+        return 0;
+      }
+      if (left == null) {
+        return direction;
+      }
+      if (right == null) {
+        return -direction;
+      }
+      return direction * String(left).localeCompare(String(right), undefined, { numeric: true });
+    });
+  });
 
   protected readonly fieldErrors = signal<Record<DigitFieldName, boolean>>({
     natIdNumber: false,
@@ -53,6 +83,8 @@ export class SearchCustomerComponent {
     this.hasSearched.set(false);
     this.searchError.set(false);
     this.searchResults.set([]);
+    this.sortColumn.set(null);
+    this.sortDirection.set('asc');
   }
 
   protected search(): void {
@@ -60,13 +92,15 @@ export class SearchCustomerComponent {
       return;
     }
 
-    const { natIdNumber, accountNumber, firstName, lastName } = this.searchForm.getRawValue();
+    const { natIdNumber, accountNumber, customerId, gsmNumber, firstName, lastName } = this.searchForm.getRawValue();
 
     this.isSearching.set(true);
     this.searchError.set(false);
+    this.sortColumn.set(null);
+    this.sortDirection.set('asc');
 
     this.customerService
-      .search({ firstName, lastName, tcNo: natIdNumber, acctNo: accountNumber })
+      .search({ firstName, lastName, tcNo: natIdNumber, acctNo: accountNumber, custId: customerId, gsm: gsmNumber })
       .subscribe({
         next: results => {
           this.searchResults.set(results);
@@ -79,6 +113,16 @@ export class SearchCustomerComponent {
           this.isSearching.set(false);
         }
       });
+  }
+
+  /** Tek kolonda sort: ilk tik ASC, ikinci tik DESC, farkli kolona tiklamak o kolonu ASC'den baslatir. */
+  protected toggleSort(column: SortColumn): void {
+    if (this.sortColumn() !== column) {
+      this.sortColumn.set(column);
+      this.sortDirection.set('asc');
+      return;
+    }
+    this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
   }
 
   protected setFieldError(field: DigitFieldName, hasError: boolean): void {
