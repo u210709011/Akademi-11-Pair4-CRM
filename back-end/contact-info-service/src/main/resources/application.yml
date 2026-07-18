@@ -2,7 +2,6 @@ spring:
   application:
     name: contact-info-service
   profiles:
-    # Aktif profil configs/contact-info-service/ altindaki hangi dosyanin yuklenecegini belirler
     active: ${SPRING_PROFILES_ACTIVE:dev}
   config:
     # Config Server zorunludur: ayakta degilse (veya bu import basarisiz olursa) uygulama
