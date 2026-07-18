@@ -1,6 +1,6 @@
 package com.etiya.crm.lookupservice.business.abstracts;
 
-import com.etiya.crm.lookupservice.business.dtos.responses.LookupValueResponse;
+import com.etiya.crm.shared.contracts.lookup.LookupValueResponse;
 
 public interface LookupService {
 
