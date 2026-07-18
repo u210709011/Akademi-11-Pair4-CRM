@@ -33,3 +33,18 @@ management:
     web:
       exposure:
         include: health,info,gateway
+
+# Tek bir Swagger UI'da (http://localhost:8080/swagger-ui.html) tum servisler:
+# gateway'in kendi /v3/api-docs'u + SwaggerAggregatorConfig'in ayni-origin'e
+# tasidigi diger servislerin dokumanlari, ust-sagdaki dropdown'dan secilir.
+springdoc:
+  swagger-ui:
+    urls:
+      - name: API Gateway (Auth)
+        url: /v3/api-docs
+      - name: Customer Service
+        url: /v3/api-docs/customer-service
+      - name: Contact Info Service
+        url: /v3/api-docs/contact-info-service
+      - name: Lookup Service
+        url: /v3/api-docs/lookup-service
