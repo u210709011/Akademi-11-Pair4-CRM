@@ -2,6 +2,9 @@ package com.etiya.crm.customerservice.business.abstracts;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.etiya.crm.customerservice.business.dtos.requests.AddressEditRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.ContactInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccountRequest;
@@ -24,7 +27,8 @@ public interface CustomerService {
 	/** ACC-023: gercek onboarding. party + customer(+account) + contact/address yazar. */
 	CustomerResponse onboard(OnboardCustomerRequest request);
 
-	List<CustomerSearchResponse> search(CustomerSearchRequest request);
+	/** ACC-007: ilk 50 kayit + sayfalama (page/size caller tarafindan verilir). */
+	Page<CustomerSearchResponse> search(CustomerSearchRequest request, Pageable pageable);
 
 	CustomerResponse getById(Long custId);
 
