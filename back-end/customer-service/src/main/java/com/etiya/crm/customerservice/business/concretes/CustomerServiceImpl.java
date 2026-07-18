@@ -272,7 +272,7 @@ public class CustomerServiceImpl implements CustomerService {
 		// IDENTITY'den donen custAcctId ile asil numara ikinci kayitta yazilir.
 		account.setAccountNo(UUID.randomUUID().toString());
 		account = customerAccountRepository.save(account);
-		account.setAccountNo(AccountDefaults.ACCOUNT_NO_PREFIX + account.getCustAcctId());
+		account.setAccountNo(AccountDefaults.formatAccountNo(account.getCustAcctId()));
 		account = customerAccountRepository.save(account);
 
 		return customerMapper.toResponse(account);
@@ -354,7 +354,7 @@ public class CustomerServiceImpl implements CustomerService {
 		// ACC-025: musteri olusturulurken otomatik olarak varsayilan tipte tek bir hesap acilir.
 		CustomerAccount account = new CustomerAccount();
 		account.setCustomer(customer);
-		account.setAccountNo(AccountDefaults.ACCOUNT_NO_PREFIX + customer.getCustId());
+		account.setAccountNo(AccountDefaults.formatAccountNo(customer.getCustId()));
 		account.setAccountTpId(DefaultLookupValues.DEFAULT_ACCOUNT_TYPE_ID);
 		account = customerAccountRepository.save(account);
 
