@@ -2,6 +2,8 @@ package com.etiya.crm.customerservice.api.controllers;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -85,9 +87,10 @@ public class CustomerController {
 					+ "bu grup ile tcNo/acctNo/custId birbirine ve isim grubuna her zaman OR ile baglanir "
 					+ "(ör. hem ad-soyad hem tcNo verilirse, ya ada-soyada UYAN ya da o tcNo'ya sahip "
 					+ "musteriler doner). Hicbir parametre verilmezse tum (aktif) musteriler doner. "
-					+ "Soft-delete edilmis musteriler sonuca dahil olmaz.")
+					+ "Soft-delete edilmis musteriler sonuca dahil olmaz. ACC-007: varsayilan sayfa "
+					+ "boyutu 50 - ilk 50 kayit dogrudan doner, kalani page/size ile sayfalanir.")
 	@GetMapping("/search")
-	public ResponseEntity<List<CustomerSearchResponse>> search(
+	public ResponseEntity<Page<CustomerSearchResponse>> search(
 			@Parameter(description = "Ad (kismi/prefix eslesme)", example = "Ahmet")
 			@RequestParam(required = false) String firstName,
 			@Parameter(description = "Soyad (kismi/prefix eslesme)", example = "Yilmaz")
@@ -99,9 +102,13 @@ public class CustomerController {
 			@Parameter(description = "Musteri no (tam eslesme), CUST-{custId} onekindeki sayisal kisim.", example = "1")
 			@RequestParam(required = false) Long custId,
 			@Parameter(description = "GSM no (tam eslesme), basinda ulke kodu/sifir olmadan rakamlar.", example = "5551234567")
-			@RequestParam(required = false) String gsm) {
+			@RequestParam(required = false) String gsm,
+			@Parameter(description = "Sayfa numarasi (0'dan baslar)", example = "0")
+			@RequestParam(defaultValue = "0") int page,
+			@Parameter(description = "Sayfa basina kayit sayisi", example = "50")
+			@RequestParam(defaultValue = "50") int size) {
 		CustomerSearchRequest request = new CustomerSearchRequest(firstName, lastName, tcNo, acctNo, custId, gsm);
-		return ResponseEntity.ok(customerService.search(request));
+		return ResponseEntity.ok(customerService.search(request, PageRequest.of(page, size)));
 	}
 
 	@Operation(summary = "Musteriyi sil (soft-delete)",
@@ -123,7 +130,8 @@ public class CustomerController {
 	}
 
 	@Operation(summary = "Kisisel bilgiyi guncelle",
-			description = "party-service'e proxy. nationalId/birthDate editlenemez (bkz. UpdateIndividualInfo).")
+			description = "party-service'e proxy. nationalId/birthDate de guncellenebilir; nationalId "
+					+ "baska bir musteriyle cakisirsa 409 doner.")
 	@PutMapping("/{custId}/individual")
 	public ResponseEntity<IndividualResponse> updateIndividual(@PathVariable Long custId,
 			@Valid @RequestBody UpdateIndividualInfo request) {

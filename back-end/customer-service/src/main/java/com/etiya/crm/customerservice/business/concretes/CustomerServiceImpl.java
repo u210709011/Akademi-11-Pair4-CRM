@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -125,13 +127,11 @@ public class CustomerServiceImpl implements CustomerService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<CustomerSearchResponse> search(CustomerSearchRequest request) {
+	public Page<CustomerSearchResponse> search(CustomerSearchRequest request, Pageable pageable) {
 		return customerSearchViewRepository
 				.findAll(CustomerSearchSpecifications.search(request.firstName(), request.lastName(),
-						request.tcNo(), request.acctNo(), request.custId(), request.gsm()))
-				.stream()
-				.map(customerMapper::toResponse)
-				.toList();
+						request.tcNo(), request.acctNo(), request.custId(), request.gsm()), pageable)
+				.map(customerMapper::toResponse);
 	}
 
 	@Override
@@ -173,8 +173,10 @@ public class CustomerServiceImpl implements CustomerService {
 	@Transactional(readOnly = true)
 	public IndividualResponse updateIndividual(Long custId, UpdateIndividualInfo request) {
 		Customer customer = getActiveCustomerOrThrow(custId);
+		rules.validateBirthDate(request.birthDate());
 		UpdateIndividualCommand command = new UpdateIndividualCommand(request.firstName(), request.middleName(),
-				request.lastName(), request.genderId(), request.motherName(), request.fatherName());
+				request.lastName(), request.genderId(), request.motherName(), request.fatherName(),
+				request.birthDate(), request.nationalId());
 		// CustomerSearchView senkronu burada YAPILMAZ: party-service'in yayinlayacagi
 		// IndividualUpdated event'i PartyEventListener tarafindan async islenir.
 		return partyClient.updateIndividual(customer.getPartyRoleId(), command);
