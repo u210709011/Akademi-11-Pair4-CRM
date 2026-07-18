@@ -2,12 +2,12 @@ package com.etiya.crm.contactinfoservice.api.controllers;
 
 import com.etiya.crm.contactinfoservice.business.abstracts.AddressService;
 import com.etiya.crm.contactinfoservice.business.abstracts.ContactMediumService;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.AddressCommand;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.ContactMediumCommand;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.CreateAddressRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.CreateContactCommand;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.CreateContactMediumRequest;
-import com.etiya.crm.contactinfoservice.constants.DataTypeIds;
+import com.etiya.crm.shared.contracts.contactmedium.AddressCommand;
+import com.etiya.crm.shared.contracts.contactmedium.ContactMediumCommand;
+import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.contactmedium.CreateContactCommand;
+import com.etiya.crm.shared.contracts.contactmedium.CreateContactMediumRequest;
+import com.etiya.crm.shared.contracts.lookup.DataTypeIds;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -45,18 +45,18 @@ class ContactMediumControllerTest {
         ArgumentCaptor<CreateAddressRequest> addressCaptor = ArgumentCaptor.forClass(CreateAddressRequest.class);
         verify(addressService).add(addressCaptor.capture());
         CreateAddressRequest capturedAddress = addressCaptor.getValue();
-        assertThat(capturedAddress.getRowId()).isEqualTo(42L);
-        assertThat(capturedAddress.getDataTypeId()).isEqualTo(DataTypeIds.CUSTOMER);
-        assertThat(capturedAddress.getHouseName()).isEqualTo("12");
-        assertThat(capturedAddress.isPrimary()).isTrue();
+        assertThat(capturedAddress.rowId()).isEqualTo(42L);
+        assertThat(capturedAddress.dataTypeId()).isEqualTo(DataTypeIds.CUSTOMER);
+        assertThat(capturedAddress.houseName()).isEqualTo("12");
+        assertThat(capturedAddress.primary()).isTrue();
 
         ArgumentCaptor<CreateContactMediumRequest> contactCaptor = ArgumentCaptor.forClass(CreateContactMediumRequest.class);
         verify(contactMediumService).add(contactCaptor.capture());
         CreateContactMediumRequest capturedContact = contactCaptor.getValue();
-        assertThat(capturedContact.getRowId()).isEqualTo(42L);
-        assertThat(capturedContact.getDataTypeId()).isEqualTo(DataTypeIds.CUSTOMER);
-        assertThat(capturedContact.getCntcData()).isEqualTo("user@example.com");
-        assertThat(capturedContact.getCntcMediumTypeId()).isEqualTo(4001L);
+        assertThat(capturedContact.rowId()).isEqualTo(42L);
+        assertThat(capturedContact.dataTypeId()).isEqualTo(DataTypeIds.CUSTOMER);
+        assertThat(capturedContact.cntcData()).isEqualTo("user@example.com");
+        assertThat(capturedContact.cntcMediumTypeId()).isEqualTo(4001L);
     }
 
     @Test

@@ -1,8 +1,8 @@
 package com.etiya.crm.contactinfoservice.business.concretes;
 
-import com.etiya.crm.contactinfoservice.business.dtos.requests.CreateAddressRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.UpdateAddressRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.responses.AddressResponse;
+import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.address.UpdateAddressRequest;
+import com.etiya.crm.shared.contracts.address.AddressResponse;
 import com.etiya.crm.contactinfoservice.business.exceptions.AddressLimitExceededException;
 import com.etiya.crm.contactinfoservice.business.exceptions.AddressLinkedToAccountException;
 import com.etiya.crm.contactinfoservice.business.exceptions.PrimaryAddressDeletionException;
@@ -45,7 +45,7 @@ class AddressServiceImplTest {
 
         AddressResponse response = addressService.add(request);
 
-        assertThat(response.isPrimary()).isTrue();
+        assertThat(response.primary()).isTrue();
     }
 
     @Test
@@ -58,7 +58,7 @@ class AddressServiceImplTest {
 
         AddressResponse response = addressService.add(request);
 
-        assertThat(response.isPrimary()).isFalse();
+        assertThat(response.primary()).isFalse();
     }
 
     @Test
@@ -90,7 +90,7 @@ class AddressServiceImplTest {
         UpdateAddressRequest request = new UpdateAddressRequest(5L, "Street", "12", "Desc", false);
         AddressResponse response = addressService.update(1L, request);
 
-        assertThat(response.isPrimary()).isTrue();
+        assertThat(response.primary()).isTrue();
     }
 
     @Test
