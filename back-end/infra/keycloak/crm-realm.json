@@ -2,7 +2,15 @@
   "realm": "crm",
   "enabled": true,
   "registrationAllowed": false,
-  "accessTokenLifespan": 36000,
+  "accessTokenLifespan": 28800,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 900,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 900,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "permanentLockout": false,
   "clients": [
     {
       "clientId": "crm-client",
