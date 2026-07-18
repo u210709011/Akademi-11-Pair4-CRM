@@ -9,10 +9,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.etiya.crm.customerservice.clients.commands.CreateIndividualCommand;
-import com.etiya.crm.customerservice.clients.commands.UpdateIndividualCommand;
-import com.etiya.crm.customerservice.clients.responses.IndividualResponse;
-import com.etiya.crm.customerservice.clients.responses.PartyRoleResponse;
+import com.etiya.crm.shared.contracts.individual.CreateIndividualCommand;
+import com.etiya.crm.shared.contracts.individual.UpdateIndividualCommand;
+import com.etiya.crm.shared.contracts.individual.IndividualResponse;
+import com.etiya.crm.shared.contracts.individual.PartyRoleResponse;
 
 @FeignClient(name = "party-service")
 public interface PartyClient {
@@ -27,13 +27,7 @@ public interface PartyClient {
 	@GetMapping("/api/v1/individuals/exists")
 	boolean existsByNationalId(@RequestParam("nationalId") String nationalId);
 
-	/**
-	 * HENUZ party-service TARAFINDA YOK - bkz. CUSTOMER_EDIT_INTEGRATION.md SS1.
-	 * Customer entity'si sadece partyRoleId tasidigi (bkz. Customer.partyRoleId),
-	 * individual'in kendi id'sini hic bilmedigi icin sorgu/guncelleme partyRoleId
-	 * uzerinden yapilir; party-service bunu PartyRole -> Party -> Individual
-	 * join'iyle cozer.
-	 */
+
 	@GetMapping("/api/v1/individuals/by-party-role/{partyRoleId}")
 	IndividualResponse getIndividualByPartyRoleId(@PathVariable("partyRoleId") Long partyRoleId);
 

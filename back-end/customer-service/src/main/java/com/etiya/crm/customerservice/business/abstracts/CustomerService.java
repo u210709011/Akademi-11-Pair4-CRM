@@ -13,8 +13,8 @@ import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResp
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.IdentityVerificationResponse;
-import com.etiya.crm.customerservice.clients.responses.AddressResponse;
-import com.etiya.crm.customerservice.clients.responses.IndividualResponse;
+import com.etiya.crm.shared.contracts.address.AddressResponse;
+import com.etiya.crm.shared.contracts.individual.IndividualResponse;
 
 public interface CustomerService {
 
