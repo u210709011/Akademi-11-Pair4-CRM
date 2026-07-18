@@ -1,8 +1,10 @@
 package com.etiya.crm.partyservice.api.controllers;
 
 import com.etiya.crm.partyservice.business.abstracts.IndividualService;
-import com.etiya.crm.partyservice.business.dtos.requests.CreateIndividualCommand;
-import com.etiya.crm.partyservice.business.dtos.responses.PartyRoleResponse;
+import com.etiya.crm.shared.contracts.individual.CreateIndividualCommand;
+import com.etiya.crm.shared.contracts.individual.IndividualResponse;
+import com.etiya.crm.shared.contracts.individual.PartyRoleResponse;
+import com.etiya.crm.shared.contracts.individual.UpdateIndividualCommand;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,5 +26,20 @@ public class IndividualController {
     @GetMapping("/exists")
     public ResponseEntity<Boolean> existsByNationalId(@RequestParam String nationalId) {
         return ResponseEntity.ok(individualService.existsByNationalId(nationalId));
+    }
+
+    // customer-service PartyClient.getIndividualByPartyRoleId(...) buradan besleniyor -
+    // Customer entity sadece partyRoleId tasidigi icin sorgu bu kimlikle yapilir.
+    @GetMapping("/by-party-role/{partyRoleId}")
+    public ResponseEntity<IndividualResponse> getByPartyRoleId(@PathVariable Long partyRoleId) {
+        return ResponseEntity.ok(individualService.getByPartyRoleId(partyRoleId));
+    }
+
+    // customer-service PartyClient.updateIndividual(...) buradan besleniyor.
+    // nationalId/birthDate govdede yok - editlenemez (bkz. UpdateIndividualCommand).
+    @PutMapping("/by-party-role/{partyRoleId}")
+    public ResponseEntity<IndividualResponse> updateByPartyRoleId(@PathVariable Long partyRoleId,
+            @Valid @RequestBody UpdateIndividualCommand command) {
+        return ResponseEntity.ok(individualService.updateByPartyRoleId(partyRoleId, command));
     }
 }

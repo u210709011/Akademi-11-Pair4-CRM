@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient(name = "lookup-service")
 public interface LookupClient {
 
-    @GetMapping("/api/lookups/{groupCode}/code/{code}")
+    @GetMapping("/api/v1/lookups/{groupCode}/code/{code}")
     LookupValueResponse getByCode(@PathVariable("groupCode") String groupCode,
                                   @PathVariable("code") String code);
 }
