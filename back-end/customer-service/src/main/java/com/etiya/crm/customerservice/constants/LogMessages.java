@@ -16,6 +16,14 @@ public final class LogMessages {
 
 	public static final String UNKNOWN_PARTY_EVENT_TYPE = "Unhandled party event type={}, ignoring";
 
+	public static final String CONTACT_MEDIUM_EVENT_CUSTOMER_NOT_FOUND =
+			"No CUSTOMER_SEARCH_VIEW row found for custId={}, skipping gsm sync";
+
+	public static final String UNKNOWN_CONTACT_MEDIUM_EVENT_TYPE = "Unhandled contact medium event type={}, ignoring";
+
+	public static final String LOOKUP_SERVICE_CALL_FAILED =
+			"lookup-service call failed (expected to be transient: network/auth), will retry via RetryableTopic: {}";
+
 	private LogMessages() {
 	}
 }

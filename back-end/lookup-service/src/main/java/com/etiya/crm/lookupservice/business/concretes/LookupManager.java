@@ -1,7 +1,7 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
 import com.etiya.crm.lookupservice.business.abstracts.LookupService;
-import com.etiya.crm.lookupservice.business.dtos.responses.LookupValueResponse;
+import com.etiya.crm.shared.contracts.lookup.LookupValueResponse;
 import com.etiya.crm.lookupservice.business.exceptions.LookupNotFoundException;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.LookupRepository;
 import com.etiya.crm.lookupservice.entities.concretes.Lookup;

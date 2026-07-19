@@ -1,5 +1,6 @@
 package com.etiya.crm.customerservice.business.exceptions;
 
+import com.etiya.crm.shared.contracts.error.ErrorResponse;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;

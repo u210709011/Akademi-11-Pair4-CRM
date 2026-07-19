@@ -1,13 +1,13 @@
 package com.etiya.crm.contactinfoservice.business.concretes;
 
 import com.etiya.crm.contactinfoservice.business.abstracts.AddressService;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.CreateAddressRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.UpdateAddressRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.responses.AddressResponse;
 import com.etiya.crm.contactinfoservice.business.rules.AddressBusinessRules;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.AddressRepository;
 import com.etiya.crm.contactinfoservice.entities.concretes.Address;
 import com.etiya.crm.contactinfoservice.mapper.AddressMapper;
+import com.etiya.crm.shared.contracts.address.AddressResponse;
+import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.address.UpdateAddressRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -46,7 +46,7 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public AddressResponse add(CreateAddressRequest request) {
         List<Address> existingAddresses = addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(
-                request.getRowId(), request.getDataTypeId());
+                request.rowId(), request.dataTypeId());
         addressBusinessRules.checkAddressLimitNotExceeded(existingAddresses);
 
         Address address = AddressMapper.toEntity(request);

@@ -15,7 +15,8 @@ import java.util.regex.Pattern;
 public class ContactMediumBusinessRules {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w.+-]+@[\\w-]+\\.[a-zA-Z]{2,}$");
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^[0-9]{7,15}$");
+    private static final Pattern MOBILE_PHONE_PATTERN = Pattern.compile("^5[0-9]{9}$");
+    private static final Pattern LANDLINE_PHONE_PATTERN = Pattern.compile("^[0-9]{10,11}$");
 
     private final ContactMediumRepository contactMediumRepository;
     private final LookupClient lookupClient;
@@ -37,10 +38,13 @@ public class ContactMediumBusinessRules {
             if (!EMAIL_PATTERN.matcher(cntcData).matches()) {
                 throw new InvalidContactMediumFormatException("Invalid email format");
             }
-        } else if (LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE.equals(typeCode)
-                || LookupCodes.CONTACT_MEDIUM_HOME_PHONE.equals(typeCode)
+        } else if (LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE.equals(typeCode)) {
+            if (!MOBILE_PHONE_PATTERN.matcher(cntcData).matches()) {
+                throw new InvalidContactMediumFormatException("Invalid phone number format");
+            }
+        } else if (LookupCodes.CONTACT_MEDIUM_HOME_PHONE.equals(typeCode)
                 || LookupCodes.CONTACT_MEDIUM_FAX.equals(typeCode)) {
-            if (!PHONE_PATTERN.matcher(cntcData).matches()) {
+            if (!LANDLINE_PHONE_PATTERN.matcher(cntcData).matches()) {
                 throw new InvalidContactMediumFormatException("Invalid phone number format");
             }
         }
