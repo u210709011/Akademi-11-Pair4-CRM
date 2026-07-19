@@ -299,6 +299,23 @@
   color: #6b7280;
 }
 
+.create-customer-button {
+  padding: 12px 24px;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: #F47920;
+  border: none;
+  border-radius: 8px;
+  transition: filter 0.2s ease;
+
+  &:hover {
+    filter: brightness(1.05);
+  }
+}
+
 .results-table {
   width: 100%;
   border-collapse: collapse;
@@ -333,5 +350,19 @@
 
   td {
     color: #374151;
+  }
+}
+
+.customer-id-link {
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: #F47920;
+  cursor: pointer;
+  background: none;
+  border: none;
+
+  &:hover {
+    text-decoration: underline;
   }
 }

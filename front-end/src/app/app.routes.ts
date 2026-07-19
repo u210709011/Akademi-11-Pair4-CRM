@@ -34,7 +34,7 @@ export const routes: Routes = [
         component: CreateCustomerComponent
       },
       {
-        path: 'detail-customer',
+        path: 'detail-customer/:custId',
         component: DetailCustomerComponent
       },
       {

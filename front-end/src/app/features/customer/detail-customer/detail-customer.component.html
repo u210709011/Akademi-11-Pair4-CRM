@@ -19,6 +19,12 @@
     </nav>
 
 
+    @if (isLoading()) {
+        <p class="detail-status-message">{{ i18n.t('detail.loading') }}</p>
+    } @else if (loadError()) {
+        <p class="detail-status-message">{{ i18n.t('detail.loadError') }}</p>
+    } @else {
+
     <div class="customer-title">
         <button type="button" class="back-to-search-button" (click)="backToSearch()">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
@@ -201,5 +207,7 @@
         </div>
 
     </div>
+
+    }
 
 </div>

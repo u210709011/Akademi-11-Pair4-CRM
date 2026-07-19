@@ -1,32 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin, of, switchMap } from 'rxjs';
+import { CustomerService } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
+import { PartyService } from '../../../core/party';
+import { CustomerAccount, CustomerDetail, mapToCustomerAccounts, mapToCustomerDetail } from './detail-customer.mapper';
 
 type DetailTab = 'information' | 'accounts' | 'address' | 'contact';
 
-interface CustomerDetail {
-  customerId: string;
-  fullName: string;
-  accountsCount: number;
-  addressCount: number;
-  maxAddresses: number;
-  primaryCity: string;
-  firstName: string;
-  middleName: string;
-  lastName: string;
-  dateOfBirth: string;
-  gender: string;
-  fatherName: string;
-  motherName: string;
-  nationalId: string;
-}
-
-interface CustomerAccount {
-  accountNumber: string;
-  accountName: string;
-  accountType: string;
-  status: string;
-}
+const UNKNOWN = '—';
 
 interface CustomerContact {
   email: string;
@@ -34,6 +16,23 @@ interface CustomerContact {
   homePhone: string;
   fax: string;
 }
+
+const EMPTY_CUSTOMER_DETAIL: CustomerDetail = {
+  customerId: UNKNOWN,
+  fullName: UNKNOWN,
+  accountsCount: 0,
+  addressCount: 0,
+  maxAddresses: 5,
+  primaryCity: UNKNOWN,
+  firstName: UNKNOWN,
+  middleName: UNKNOWN,
+  lastName: UNKNOWN,
+  dateOfBirth: UNKNOWN,
+  gender: UNKNOWN,
+  fatherName: UNKNOWN,
+  motherName: UNKNOWN,
+  nationalId: UNKNOWN
+};
 
 @Component({
   selector: 'app-detail-customer',
@@ -44,34 +43,22 @@ interface CustomerContact {
 export class DetailCustomerComponent {
   protected readonly i18n = inject(I18nService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly customerService = inject(CustomerService);
+  private readonly partyService = inject(PartyService);
 
-  // service gelince bağlanacak 
-  protected readonly customer = signal<CustomerDetail>({
-    customerId: 'CUST-100234',
-    fullName: 'Mert Kaya',
-    accountsCount: 1,
-    addressCount: 2,
-    maxAddresses: 5,
-    primaryCity: 'İstanbul',
-    firstName: 'Mert',
-    middleName: 'Metin',
-    lastName: 'Kaya',
-    dateOfBirth: '02/11/1996',
-    gender: 'Male',
-    fatherName: 'Mehmet',
-    motherName: 'Dilek',
-    nationalId: '12311123111'
-  });
+  protected readonly isLoading = signal(true);
+  protected readonly loadError = signal(false);
 
-  protected readonly accounts = signal<CustomerAccount[]>([
-    { accountNumber: 'ACC-2231023', accountName: 'Mert Kaya', accountType: 'Customer Account (223)', status: 'Active' }
-  ]);
+  protected readonly customer = signal<CustomerDetail>(EMPTY_CUSTOMER_DETAIL);
+  protected readonly accounts = signal<CustomerAccount[]>([]);
 
+  // e-posta/telefon henuz contact-info-service'ten cekilmiyor - o entegrasyon gelince eklenecek.
   protected readonly contact = signal<CustomerContact>({
-    email: 'mert.kaya@example.com',
-    mobilePhone: '+90 532 123 45 67',
-    homePhone: '+90 216 555 00 00',
-    fax: ''
+    email: UNKNOWN,
+    mobilePhone: UNKNOWN,
+    homePhone: UNKNOWN,
+    fax: UNKNOWN
   });
 
   protected readonly tabs: { key: DetailTab; labelKey: string }[] = [
@@ -82,6 +69,33 @@ export class DetailCustomerComponent {
   ];
 
   protected readonly activeTab = signal<DetailTab>('information');
+
+  // cust id result combines with party role id result and shows combined results in detail-customer page
+  constructor() {
+    const custId = Number(this.route.snapshot.paramMap.get('custId'));
+
+    this.customerService
+      .getById(custId)
+      .pipe(
+        switchMap(customerDetail =>
+          forkJoin({
+            customerDetail: of(customerDetail),
+            individual: this.partyService.getIndividualByPartyRole(customerDetail.partyRoleId)
+          })
+        )
+      )
+      .subscribe({
+        next: ({ customerDetail, individual }) => {
+          this.customer.set(mapToCustomerDetail(customerDetail, individual));
+          this.accounts.set(mapToCustomerAccounts(customerDetail, individual));
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.loadError.set(true);
+          this.isLoading.set(false);
+        }
+      });
+  }
 
   protected selectTab(tab: DetailTab): void {
     this.activeTab.set(tab);
