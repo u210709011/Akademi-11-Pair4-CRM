@@ -1,7 +1,8 @@
-// This mapper combines customer-servie and party-service results and shows in the detail page,
-// so the component doesn't have to know or care that the data came from two services.
-import { CustomerDetailResponse } from '../../../core/customer';
-import { IndividualResponse } from '../../../core/party';
+// customer-service is the single front door for customer detail data - it internally proxies
+// /individual to party-service and /contact to contact-info-service, so this file only
+// talks to core/customer types. This mapper just reshapes those responses into the flat
+// view-model the detail page renders, keeping that transformation out of the component.
+import { ContactInfo, CustomerDetailResponse, IndividualResponse } from '../../../core/customer';
 
 const UNKNOWN = '—';
 
@@ -27,6 +28,13 @@ export interface CustomerAccount {
   accountName: string;
   accountType: string;
   status: string;
+}
+
+export interface CustomerContact {
+  email: string;
+  mobilePhone: string;
+  homePhone: string;
+  fax: string;
 }
 
 export function mapToCustomerDetail(customerDetail: CustomerDetailResponse, individual: IndividualResponse): CustomerDetail {
@@ -55,4 +63,13 @@ export function mapToCustomerAccounts(customerDetail: CustomerDetailResponse, in
     accountType: account.accountDesc ?? UNKNOWN,
     status: account.active ? 'Active' : 'Inactive'
   }));
+}
+
+export function mapToCustomerContact(contact: ContactInfo): CustomerContact {
+  return {
+    email: contact.email,
+    mobilePhone: contact.mobilePhone,
+    homePhone: contact.homePhone ?? UNKNOWN,
+    fax: contact.fax ?? UNKNOWN
+  };
 }

@@ -3,11 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  ContactInfo,
   CustomerDetailResponse,
   CustomerSearchCriteria,
   CustomerSearchResult,
   IdentityVerificationResponse,
-  IndividualInfo
+  IndividualInfo,
+  IndividualResponse
 } from './customer.model';
 // to align with the object logic implemented on the backend.
 interface PagedResponse<T> {
@@ -44,5 +46,15 @@ export class CustomerService {
       `${environment.apiGatewayUrl}/api/v1/customers/onboarding/verify-identity`,
       individual
     );
+  }
+
+  // customer-service proxies this to party-service internally - frontend never calls party-service directly.
+  getIndividual(custId: number): Observable<IndividualResponse> {
+    return this.http.get<IndividualResponse>(`${environment.apiGatewayUrl}/api/v1/customers/${custId}/individual`);
+  }
+
+  // customer-service proxies this to contact-info-service internally.
+  getContact(custId: number): Observable<ContactInfo> {
+    return this.http.get<ContactInfo>(`${environment.apiGatewayUrl}/api/v1/customers/${custId}/contact`);
   }
 }

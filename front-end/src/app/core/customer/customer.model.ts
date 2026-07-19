@@ -53,3 +53,23 @@ export interface IdentityVerificationResponse {
   verified: boolean;
   message: string;
 }
+
+// GET /api/v1/customers/{custId}/individual - customer-service internally proxies this to party-service.
+export interface IndividualResponse {
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  birthDate: string;
+  genderId: number;
+  motherName: string | null;
+  fatherName: string | null;
+  nationalId: string;
+}
+
+// GET /api/v1/customers/{custId}/contact - customer-service internally proxies this to contact-info-service.
+export interface ContactInfo {
+  email: string;
+  mobilePhone: string;
+  homePhone: string | null;
+  fax: string | null;
+}
