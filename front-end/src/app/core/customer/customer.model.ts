@@ -36,3 +36,20 @@ export interface CustomerDetailResponse {
   active: boolean;
   accounts: CustomerAccountSummary[];
 }
+
+// onboarding/verify-identity request body - birthDate must be "dd/MM/yyyy".
+export interface IndividualInfo {
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  birthDate: string;
+  genderId: number;
+  motherName: string | null;
+  fatherName: string | null;
+  nationalId: string;
+}
+
+export interface IdentityVerificationResponse {
+  verified: boolean;
+  message: string;
+}
