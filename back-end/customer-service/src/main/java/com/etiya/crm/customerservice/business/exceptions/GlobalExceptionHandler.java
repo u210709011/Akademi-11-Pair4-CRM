@@ -1,5 +1,6 @@
 package com.etiya.crm.customerservice.business.exceptions;
 
+import com.etiya.crm.shared.contracts.error.ErrorResponse;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
@@ -43,6 +44,12 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(InvalidBirthDateException.class)
 	public ResponseEntity<ErrorResponse> handleInvalidBirthDate(InvalidBirthDateException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, ex, request);
+	}
+
+	@ExceptionHandler(BillingAccountAddressRequiredException.class)
+	public ResponseEntity<ErrorResponse> handleBillingAccountAddressRequired(BillingAccountAddressRequiredException ex,
 			HttpServletRequest request) {
 		return build(HttpStatus.BAD_REQUEST, ex, request);
 	}

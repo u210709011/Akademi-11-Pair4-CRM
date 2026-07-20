@@ -2,6 +2,15 @@
   "realm": "crm",
   "enabled": true,
   "registrationAllowed": false,
+  "accessTokenLifespan": 28800,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 900,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 900,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "permanentLockout": false,
   "clients": [
     {
       "clientId": "crm-client",
@@ -15,6 +24,20 @@
       "standardFlowEnabled": true,
       "redirectUris": ["*"],
       "webOrigins": ["*"]
+    },
+    {
+      "clientId": "customer-service-m2m",
+      "name": "customer-service (machine-to-machine)",
+      "description": "PartyEventListener/ContactMediumEventListener gibi Kafka consumer'larin lookup-service'e erismek icin kullandigi service-account client'i. crm-client (interaktif login) ile karistirilmaz - ayri secret, ayri blast radius.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "customer-service-m2m-secret",
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "standardFlowEnabled": false,
+      "redirectUris": [],
+      "webOrigins": []
     }
   ],
   "roles": {

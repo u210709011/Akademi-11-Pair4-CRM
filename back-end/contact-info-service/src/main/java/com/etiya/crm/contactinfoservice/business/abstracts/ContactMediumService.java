@@ -1,8 +1,8 @@
 package com.etiya.crm.contactinfoservice.business.abstracts;
 
-import com.etiya.crm.contactinfoservice.business.dtos.requests.CreateContactMediumRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.UpdateContactMediumRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.responses.ContactMediumResponse;
+import com.etiya.crm.shared.contracts.contactmedium.ContactMediumResponse;
+import com.etiya.crm.shared.contracts.contactmedium.CreateContactMediumRequest;
+import com.etiya.crm.shared.contracts.contactmedium.UpdateContactMediumRequest;
 
 import java.util.List;
 

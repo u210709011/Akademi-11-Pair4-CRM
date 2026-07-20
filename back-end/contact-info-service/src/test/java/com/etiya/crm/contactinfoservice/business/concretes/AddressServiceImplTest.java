@@ -1,9 +1,10 @@
 package com.etiya.crm.contactinfoservice.business.concretes;
 
-import com.etiya.crm.contactinfoservice.business.dtos.requests.CreateAddressRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.UpdateAddressRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.responses.AddressResponse;
+import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.address.UpdateAddressRequest;
+import com.etiya.crm.shared.contracts.address.AddressResponse;
 import com.etiya.crm.contactinfoservice.business.exceptions.AddressLimitExceededException;
+import com.etiya.crm.contactinfoservice.business.exceptions.AddressLinkedToAccountException;
 import com.etiya.crm.contactinfoservice.business.exceptions.PrimaryAddressDeletionException;
 import com.etiya.crm.contactinfoservice.business.rules.AddressBusinessRules;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.AddressRepository;
@@ -44,7 +45,7 @@ class AddressServiceImplTest {
 
         AddressResponse response = addressService.add(request);
 
-        assertThat(response.isPrimary()).isTrue();
+        assertThat(response.primary()).isTrue();
     }
 
     @Test
@@ -57,7 +58,7 @@ class AddressServiceImplTest {
 
         AddressResponse response = addressService.add(request);
 
-        assertThat(response.isPrimary()).isFalse();
+        assertThat(response.primary()).isFalse();
     }
 
     @Test
@@ -89,7 +90,7 @@ class AddressServiceImplTest {
         UpdateAddressRequest request = new UpdateAddressRequest(5L, "Street", "12", "Desc", false);
         AddressResponse response = addressService.update(1L, request);
 
-        assertThat(response.isPrimary()).isTrue();
+        assertThat(response.primary()).isTrue();
     }
 
     @Test
@@ -120,7 +121,25 @@ class AddressServiceImplTest {
         addressService.delete(1L);
 
         assertThat(address.isActive()).isFalse();
+        verify(addressBusinessRules).checkNotLinkedToAccount(1L);
         verify(addressRepository).save(address);
+    }
+
+    @Test
+    void delete_throws_whenAddressIsLinkedToAccount() {
+        Address address = new Address();
+        address.setId(1L);
+        address.setPrimary(false);
+
+        when(addressBusinessRules.checkIfAddressExists(1L)).thenReturn(address);
+        doThrow(new AddressLinkedToAccountException(
+                "Please change the billing address on the related customer account first."))
+                .when(addressBusinessRules).checkNotLinkedToAccount(1L);
+
+        assertThatThrownBy(() -> addressService.delete(1L))
+                .isInstanceOf(AddressLinkedToAccountException.class);
+
+        verify(addressRepository, never()).save(any());
     }
 
     @Test

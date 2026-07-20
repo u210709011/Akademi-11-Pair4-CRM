@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -14,36 +16,38 @@ import com.etiya.crm.customerservice.business.abstracts.IdentityVerificationServ
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.business.dtos.requests.AddressEditRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.ContactInfo;
+import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.CustomerSearchRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.IndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateIndividualInfo;
+import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.IdentityVerificationResponse;
 import com.etiya.crm.customerservice.business.exceptions.CustomerNotFoundException;
 import com.etiya.crm.customerservice.business.exceptions.OnboardingFailedException;
 import com.etiya.crm.customerservice.business.rules.CustomerBusinessRules;
-import com.etiya.crm.customerservice.clients.AddressResponse;
-import com.etiya.crm.customerservice.clients.ContactAddressClient;
-import com.etiya.crm.customerservice.clients.ContactMediumCommand;
-import com.etiya.crm.customerservice.clients.ContactMediumResponse;
-import com.etiya.crm.customerservice.clients.CreateAddressCommand;
-import com.etiya.crm.customerservice.clients.CreateContactCommand;
-import com.etiya.crm.customerservice.clients.CreateContactMediumCommand;
-import com.etiya.crm.customerservice.clients.CreateIndividualCommand;
-import com.etiya.crm.customerservice.clients.IndividualResponse;
-import com.etiya.crm.customerservice.clients.PartyClient;
-import com.etiya.crm.customerservice.clients.PartyRoleResponse;
-import com.etiya.crm.customerservice.clients.UpdateAddressCommand;
-import com.etiya.crm.customerservice.clients.UpdateContactMediumCommand;
-import com.etiya.crm.customerservice.clients.UpdateIndividualCommand;
+import com.etiya.crm.shared.contracts.contactmedium.ContactMediumCommand;
+import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.contactmedium.CreateContactCommand;
+import com.etiya.crm.shared.contracts.contactmedium.CreateContactMediumRequest;
+import com.etiya.crm.shared.contracts.individual.CreateIndividualCommand;
+import com.etiya.crm.shared.contracts.address.UpdateAddressRequest;
+import com.etiya.crm.shared.contracts.contactmedium.UpdateContactMediumRequest;
+import com.etiya.crm.shared.contracts.individual.UpdateIndividualCommand;
+import com.etiya.crm.customerservice.clients.controllers.ContactAddressClient;
+import com.etiya.crm.customerservice.clients.controllers.PartyClient;
+import com.etiya.crm.shared.contracts.address.AddressResponse;
+import com.etiya.crm.shared.contracts.contactmedium.ContactMediumResponse;
+import com.etiya.crm.shared.contracts.individual.IndividualResponse;
+import com.etiya.crm.shared.contracts.individual.PartyRoleResponse;
 import com.etiya.crm.customerservice.constants.AccountDefaults;
 import com.etiya.crm.customerservice.constants.CacheNames;
 import com.etiya.crm.customerservice.constants.DefaultLookupValues;
 import com.etiya.crm.customerservice.constants.LogMessages;
-import com.etiya.crm.customerservice.constants.LookupCodes;
-import com.etiya.crm.customerservice.constants.LookupGroups;
+import com.etiya.crm.shared.contracts.lookup.LookupCodes;
+import com.etiya.crm.shared.contracts.lookup.LookupGroups;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerAccountRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchSpecifications;
@@ -98,7 +102,7 @@ public class CustomerServiceImpl implements CustomerService {
 		try {
 			Customer customer = createCustomerWithDefaultAccount(partyRole.partyRoleId());
 			CustomerAccount account = customer.getAccounts().get(0);
-			createSearchView(customer, request.individual(), account.getAccountNo());
+			createSearchView(customer, request.individual(), request.contact(), account.getAccountNo());
 
 			try {
 				contactAddressClient.createContact(toContactCommand(customer.getCustId(), request));
@@ -123,13 +127,11 @@ public class CustomerServiceImpl implements CustomerService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<CustomerSearchResponse> search(CustomerSearchRequest request) {
+	public Page<CustomerSearchResponse> search(CustomerSearchRequest request, Pageable pageable) {
 		return customerSearchViewRepository
 				.findAll(CustomerSearchSpecifications.search(request.firstName(), request.lastName(),
-						request.tcNo(), request.acctNo()))
-				.stream()
-				.map(customerMapper::toResponse)
-				.toList();
+						request.tcNo(), request.acctNo(), request.custId(), request.gsm()), pageable)
+				.map(customerMapper::toResponse);
 	}
 
 	@Override
@@ -171,8 +173,10 @@ public class CustomerServiceImpl implements CustomerService {
 	@Transactional(readOnly = true)
 	public IndividualResponse updateIndividual(Long custId, UpdateIndividualInfo request) {
 		Customer customer = getActiveCustomerOrThrow(custId);
+		rules.validateBirthDate(request.birthDate());
 		UpdateIndividualCommand command = new UpdateIndividualCommand(request.firstName(), request.middleName(),
-				request.lastName(), request.genderId(), request.motherName(), request.fatherName());
+				request.lastName(), request.genderId(), request.motherName(), request.fatherName(),
+				request.birthDate(), request.nationalId());
 		// CustomerSearchView senkronu burada YAPILMAZ: party-service'in yayinlayacagi
 		// IndividualUpdated event'i PartyEventListener tarafindan async islenir.
 		return partyClient.updateIndividual(customer.getPartyRoleId(), command);
@@ -193,7 +197,7 @@ public class CustomerServiceImpl implements CustomerService {
 		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, dataTypeId);
 		rules.validateAddressLimit(existing.size());
 
-		CreateAddressCommand command = new CreateAddressCommand(custId, dataTypeId, request.cityId(),
+		CreateAddressRequest command = new CreateAddressRequest(custId, dataTypeId, request.cityId(),
 				request.streetName(), request.buildingName(), request.addressDesc(), request.primary());
 		return contactAddressClient.addAddress(command);
 	}
@@ -205,7 +209,7 @@ public class CustomerServiceImpl implements CustomerService {
 		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, resolveCustomerDataTypeId());
 		rules.ensureAddressBelongsToCustomer(custId, addressId, existing);
 
-		UpdateAddressCommand command = new UpdateAddressCommand(request.cityId(), request.streetName(),
+		UpdateAddressRequest command = new UpdateAddressRequest(request.cityId(), request.streetName(),
 				request.buildingName(), request.addressDesc(), request.primary());
 		return contactAddressClient.updateAddress(addressId, command);
 	}
@@ -243,6 +247,58 @@ public class CustomerServiceImpl implements CustomerService {
 				fax != null ? fax.cntcData() : null);
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	public List<CustomerAccountResponse> getAccounts(Long custId) {
+		getActiveCustomerOrThrow(custId);
+		return customerAccountRepository.findByCustomer_CustIdAndActiveTrue(custId).stream()
+				.map(customerMapper::toResponse)
+				.toList();
+	}
+
+	@Override
+	@Transactional
+	public CustomerAccountResponse createBillingAccount(Long custId, CreateBillingAccountRequest request) {
+		Customer customer = getActiveCustomerOrThrow(custId);
+		rules.ensureAddressProvided(request.addressId(), request.newAddress());
+
+		Long addressId = resolveBillingAddressId(custId, request);
+
+		CustomerAccount account = new CustomerAccount();
+		account.setCustomer(customer);
+		account.setAccountName(request.accountName());
+		account.setAccountDesc(request.accountDesc());
+		account.setAccountTpId(DefaultLookupValues.BILLING_ACCOUNT_TYPE_ID);
+		account.setAddressId(addressId);
+		// acct_no NOT NULL+UNIQUE oldugu icin gecici bir deger ile ilk kayit yapilir,
+		// IDENTITY'den donen custAcctId ile asil numara ikinci kayitta yazilir.
+		account.setAccountNo(UUID.randomUUID().toString());
+		account = customerAccountRepository.save(account);
+		account.setAccountNo(AccountDefaults.formatAccountNo(account.getCustAcctId()));
+		account = customerAccountRepository.save(account);
+
+		return customerMapper.toResponse(account);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public boolean existsAccountByAddressId(Long addressId) {
+		return customerAccountRepository.existsByAddressIdAndActiveTrue(addressId);
+	}
+
+	private Long resolveBillingAddressId(Long custId, CreateBillingAccountRequest request) {
+		Long dataTypeId = resolveCustomerDataTypeId();
+		if (request.newAddress() != null) {
+			CreateAddressRequest command = new CreateAddressRequest(custId, dataTypeId, request.newAddress().cityId(),
+					request.newAddress().streetName(), request.newAddress().buildingName(),
+					request.newAddress().addressDesc(), false);
+			return contactAddressClient.addAddress(command).id();
+		}
+		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, dataTypeId);
+		rules.ensureAddressBelongsToCustomer(custId, request.addressId(), existing);
+		return request.addressId();
+	}
+
 	/**
 	 * required=false alanlar (homePhone/fax) icin: mevcut kayit varsa ve yeni
 	 * deger bossa dokunulmaz (silme desteklenmiyor); mevcut kayit yoksa ve deger
@@ -259,7 +315,7 @@ public class CustomerServiceImpl implements CustomerService {
 			if (!required && !StringUtils.hasText(value)) {
 				return current;
 			}
-			UpdateContactMediumCommand command = new UpdateContactMediumCommand(value, typeId);
+			UpdateContactMediumRequest command = new UpdateContactMediumRequest(value, typeId);
 			return contactAddressClient.updateContactMedium(current.id(), command);
 		}
 
@@ -267,7 +323,7 @@ public class CustomerServiceImpl implements CustomerService {
 			return null;
 		}
 
-		CreateContactMediumCommand command = new CreateContactMediumCommand(custId, dataTypeId, value, typeId);
+		CreateContactMediumRequest command = new CreateContactMediumRequest(custId, dataTypeId, value, typeId);
 		return contactAddressClient.addContactMedium(command);
 	}
 
@@ -293,21 +349,15 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	private Customer createCustomerWithDefaultAccount(Long partyRoleId) {
-		Long activeStatusId = lookupCacheService.resolveId(LookupGroups.CUSTOMER_STATUS, LookupCodes.STATUS_ACTIVE);
-
 		Customer customer = new Customer();
 		customer.setPartyRoleId(partyRoleId);
-		customer.setStId(activeStatusId);
 		customer = customerRepository.save(customer); // IDENTITY: save sonrasi custId dolu gelir.
-
-		Long accountStatusId = lookupCacheService.resolveId(LookupGroups.ACCOUNT_STATUS, LookupCodes.STATUS_ACTIVE);
 
 		// ACC-025: musteri olusturulurken otomatik olarak varsayilan tipte tek bir hesap acilir.
 		CustomerAccount account = new CustomerAccount();
 		account.setCustomer(customer);
-		account.setAccountNo(AccountDefaults.ACCOUNT_NO_PREFIX + customer.getCustId());
+		account.setAccountNo(AccountDefaults.formatAccountNo(customer.getCustId()));
 		account.setAccountTpId(DefaultLookupValues.DEFAULT_ACCOUNT_TYPE_ID);
-		account.setStId(accountStatusId);
 		account = customerAccountRepository.save(account);
 
 		customer.getAccounts().add(account);
@@ -323,13 +373,23 @@ public class CustomerServiceImpl implements CustomerService {
 		});
 	}
 
-	private void createSearchView(Customer customer, IndividualInfo individual, String accountNo) {
+	/**
+	 * firstName/middleName/lastName/tcNo/gsm burada senkron yazilir: hepsi bu
+	 * istekte customer-service'e caller tarafindan verilen degerlerdir, baska
+	 * bir servisin karari degildir. role BURADA YAZILMAZ: rol (partyRoleTypeId)
+	 * party-service'in karari - PartyEventListener'in az sonra tuketecegi
+	 * IndividualPartyCreated event'i ile async doldurulur (bkz. PartyEventListener).
+	 */
+	private void createSearchView(Customer customer, IndividualInfo individual, ContactInfo contact,
+			String accountNo) {
 		CustomerSearchView view = new CustomerSearchView();
 		view.setCustId(customer.getCustId());
 		view.setPartyRoleId(customer.getPartyRoleId());
 		view.setFirstName(individual.firstName());
+		view.setMiddleName(individual.middleName());
 		view.setLastName(individual.lastName());
 		view.setTcNo(individual.nationalId());
+		view.setGsm(contact.mobilePhone());
 		view.setAcctNo(accountNo);
 		view.setStatus(LookupCodes.STATUS_ACTIVE);
 		view.setDeleted(false);
