@@ -2,6 +2,8 @@ import { Component, inject } from '@angular/core';
 import { DateAdapter } from '@angular/material/core';
 import { MatCalendar } from '@angular/material/datepicker';
 
+const YEARS_PER_PAGE = 24;
+
 @Component({
   selector: 'app-date-picker-header',
   imports: [],
@@ -20,12 +22,24 @@ export class DatePickerHeaderComponent<D> {
     return String((this.calendar.activeDate as unknown as Date).getFullYear());
   }
 
+// ok tuşları ile sıralanan yıllar arasında ilerleyebilmek için eklendi
   protected previousClicked(): void {
-    this.calendar.activeDate = this.dateAdapter.addCalendarMonths(this.calendar.activeDate, -1);
+    this.calendar.activeDate = this.shiftActiveDate(-1);
   }
 
   protected nextClicked(): void {
-    this.calendar.activeDate = this.dateAdapter.addCalendarMonths(this.calendar.activeDate, 1);
+    this.calendar.activeDate = this.shiftActiveDate(1);
+  }
+
+  private shiftActiveDate(direction: 1 | -1): D {
+    const view = this.calendar.currentView;
+
+    if (view === 'month') {
+      return this.dateAdapter.addCalendarMonths(this.calendar.activeDate, direction);
+    }
+
+    const years = view === 'year' ? direction : direction * YEARS_PER_PAGE;
+    return this.dateAdapter.addCalendarYears(this.calendar.activeDate, years);
   }
 
   protected openMonthView(): void {

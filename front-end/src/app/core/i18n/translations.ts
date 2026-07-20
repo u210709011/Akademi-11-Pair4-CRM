@@ -53,7 +53,9 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'search.orderNumberError' : 'Order number must contain only digits.',
     'search.loading' : 'Searching...',
     'search.error' : 'Something went wrong while searching. Please try again.',
-    'search.noResults' : 'No customers found matching your criteria.',
+    'search.noResults' : 'No customer found!',
+    'search.noResultsSubtitle' : 'Would you like to create the customer?',
+    'search.createCustomerBtn' : 'Create Customer',
     'search.status' : 'Status',
     'search.middleName' : 'Middle Name',
     'search.role' : 'Role',
@@ -77,6 +79,9 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'create.selectPlaceholder': 'Select',
     'create.cancelBtn': 'Cancel',
     'create.nextBtn': 'Next',
+    'create.verifyingIdentity': 'Verifying via KPS...',
+    'create.identityError': 'Identity could not be verified. Please check the details and try again.',
+    'create.identityDuplicate': 'A customer with this national ID already exists.',
     'create.myAddresses': 'My Addresses',
     'create.addNewAddress': 'Add New Address',
     'create.noAddressTitle': 'No address added yet',
@@ -113,6 +118,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'detail.accountType': 'Account Type',
     'detail.accountStatus': 'Account Status',
     'detail.deleteCustomer': 'Delete Customer',
+    'detail.loading': 'Loading customer...',
+    'detail.loadError': 'Could not load customer details. Please try again.',
 
   },
   tr: {
@@ -167,7 +174,9 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'search.orderNumberError' : 'Sipariş Numarası yalnızca rakam içermelidir.',
     'search.loading' : 'Aranıyor...',
     'search.error' : 'Arama sırasında bir sorun oluştu. Lütfen tekrar deneyin.',
-    'search.noResults' : 'Kriterlerinize uyan müşteri bulunamadı.',
+    'search.noResults' : 'Müşteri bulunamadı!',
+    'search.noResultsSubtitle' : 'Müşteriyi oluşturmak ister misiniz?',
+    'search.createCustomerBtn' : 'Müşteri Oluştur',
     'search.status' : 'Durum',
     'search.middleName' : 'İkinci Ad',
     'search.role' : 'Rol',
@@ -191,6 +200,9 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'create.selectPlaceholder': 'Seçiniz',
     'create.cancelBtn': 'İptal',
     'create.nextBtn': 'İleri',
+    'create.verifyingIdentity': 'KPS ile doğrulanıyor...',
+    'create.identityError': 'Kimlik doğrulanamadı. Lütfen bilgileri kontrol edip tekrar deneyin.',
+    'create.identityDuplicate': 'Bu TC kimlik numarasıyla kayıtlı bir müşteri zaten var.',
     'create.myAddresses': 'Adreslerim',
     'create.addNewAddress': 'Yeni Adres Ekle',
     'create.noAddressTitle': 'Henüz adres eklenmedi',
@@ -226,7 +238,9 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'detail.accountName': 'Hesap Adı',
     'detail.accountType': 'Hesap Türü',
     'detail.accountStatus': 'Hesap Durumu',
-    'detail.deleteCustomer': 'Müşteriyi Sil'
+    'detail.deleteCustomer': 'Müşteriyi Sil',
+    'detail.loading': 'Müşteri yükleniyor...',
+    'detail.loadError': 'Müşteri detayları yüklenemedi. Lütfen tekrar deneyin.'
 
   }
 };

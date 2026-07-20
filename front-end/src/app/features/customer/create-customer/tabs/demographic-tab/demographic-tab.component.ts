@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { IndividualInfo } from '../../../../../core/customer';
 import { I18nService } from '../../../../../core/i18n';
 import { DatePickerHeaderComponent } from '../../../../../shared/components/date-picker-header/date-picker-header.component';
 import { CreateCustomerFormStateService } from '../../create-customer.component';
@@ -19,7 +20,7 @@ type LetterFieldName = 'firstName' | 'middleName' | 'lastName' | 'fatherName' | 
 export class DemographicTabComponent {
   protected readonly i18n = inject(I18nService);
   private readonly formBuilder = inject(FormBuilder);
-  private readonly formState = inject(CreateCustomerFormStateService);
+  protected readonly formState = inject(CreateCustomerFormStateService);
 
   protected readonly nationalIdError = signal(false);
   protected readonly today = new Date();
@@ -45,10 +46,35 @@ export class DemographicTabComponent {
   });
 
   constructor() {
+    this.syncFormState();
+    this.createForm.valueChanges.subscribe(() => this.syncFormState());
+    this.createForm.statusChanges.subscribe(() => this.syncFormState());
+  }
+
+  private syncFormState(): void {
     this.formState.demographicValid.set(this.createForm.valid);
-    this.createForm.statusChanges.subscribe(() => {
-      this.formState.demographicValid.set(this.createForm.valid);
-    });
+    this.formState.demographicValue.set(this.createForm.valid ? this.toIndividualInfo() : null);
+  }
+
+  // formdaki Date/string gender'i backend'in beklediği IndividualInfo şekline (dd/MM/yyyy, numeric genderId) çevirdi
+  private toIndividualInfo(): IndividualInfo {
+    const value = this.createForm.getRawValue();
+    const birthDate = value.birthDate as Date;
+
+    const day = String(birthDate.getDate()).padStart(2, '0');
+    const month = String(birthDate.getMonth() + 1).padStart(2, '0');
+    const year = birthDate.getFullYear();
+
+    return {
+      firstName: value.firstName,
+      middleName: value.middleName || null,
+      lastName: value.lastName,
+      birthDate: `${day}/${month}/${year}`,
+      genderId: Number(value.gender),
+      motherName: value.motherName || null,
+      fatherName: value.fatherName || null,
+      nationalId: value.nationalId
+    };
   }
 
   protected setLetterFieldError(field: LetterFieldName, hasError: boolean): void {

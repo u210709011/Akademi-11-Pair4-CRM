@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { CustomerSearchResult, CustomerService } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
 
@@ -19,6 +20,7 @@ export class SearchCustomerComponent {
   protected readonly i18n = inject(I18nService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly customerService = inject(CustomerService);
+  private readonly router = inject(Router);
 
   protected readonly hasFilledFilter = signal(false);
   protected readonly isSearching = signal(false);
@@ -113,6 +115,14 @@ export class SearchCustomerComponent {
           this.isSearching.set(false);
         }
       });
+  }
+
+  protected viewCustomerDetail(customer: CustomerSearchResult): void {
+    this.router.navigate(['/detail-customer', customer.custId], { state: { customer } });
+  }
+
+  protected goToCreateCustomer(): void {
+    this.router.navigateByUrl('/create-customer');
   }
 
   /** Tek kolonda sort: ilk tik ASC, ikinci tik DESC, farkli kolona tiklamak o kolonu ASC'den baslatir. */
