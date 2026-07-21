@@ -1,4 +1,4 @@
-<form class="create-form" [formGroup]="createForm">
+<form class="create-form">
 
     @if (formState.identityVerificationError()) {
         <div class="identity-error-banner">{{ formState.identityVerificationError() }}</div>
@@ -9,9 +9,8 @@
         <input
             id="firstName"
             type="text"
-            formControlName="firstName"
+            [formField]="demographicForm.firstName"
             [placeholder]="i18n.t('create.firstName')"
-            (input)="sanitizeLetters($event, 'firstName')"
             (blur)="setLetterFieldError('firstName', false)"
         >
         @if (letterFieldErrors().firstName) {
@@ -24,9 +23,8 @@
         <input
             id="middleName"
             type="text"
-            formControlName="middleName"
+            [formField]="demographicForm.middleName"
             [placeholder]="i18n.t('create.middleName')"
-            (input)="sanitizeLetters($event, 'middleName')"
             (blur)="setLetterFieldError('middleName', false)"
         >
         @if (letterFieldErrors().middleName) {
@@ -39,9 +37,8 @@
         <input
             id="lastName"
             type="text"
-            formControlName="lastName"
+            [formField]="demographicForm.lastName"
             [placeholder]="i18n.t('create.lastName')"
-            (input)="sanitizeLetters($event, 'lastName')"
             (blur)="setLetterFieldError('lastName', false)"
         >
         @if (letterFieldErrors().lastName) {
@@ -58,7 +55,7 @@
                 placeholder="DD/MM/YYYY"
                 [matDatepicker]="birthDatePicker"
                 [max]="today"
-                formControlName="birthDate"
+                [formField]="demographicForm.birthDate"
             >
             <mat-datepicker-toggle matIconSuffix [for]="birthDatePicker"></mat-datepicker-toggle>
             <mat-datepicker
@@ -71,7 +68,7 @@
 
     <div class="form-field">
         <label for="gender">{{ i18n.t('create.gender') }} <span class="required">*</span></label>
-        <select id="gender" formControlName="gender">
+        <select id="gender" [formField]="demographicForm.gender">
             <option value="" disabled selected>{{ i18n.t('create.selectPlaceholder') }}</option>
             <option value="1">{{ i18n.t('create.genderMale') }}</option>
             <option value="2">{{ i18n.t('create.genderFemale') }}</option>
@@ -83,9 +80,8 @@
         <input
             id="fatherName"
             type="text"
-            formControlName="fatherName"
+            [formField]="demographicForm.fatherName"
             [placeholder]="i18n.t('create.fatherName')"
-            (input)="sanitizeLetters($event, 'fatherName')"
             (blur)="setLetterFieldError('fatherName', false)"
         >
         @if (letterFieldErrors().fatherName) {
@@ -98,9 +94,8 @@
         <input
             id="motherName"
             type="text"
-            formControlName="motherName"
+            [formField]="demographicForm.motherName"
             [placeholder]="i18n.t('create.motherName')"
-            (input)="sanitizeLetters($event, 'motherName')"
             (blur)="setLetterFieldError('motherName', false)"
         >
         @if (letterFieldErrors().motherName) {
@@ -114,10 +109,8 @@
             id="nationalId"
             type="text"
             inputmode="numeric"
-            maxlength="11"
-            formControlName="nationalId"
+            [formField]="demographicForm.nationalId"
             [placeholder]="i18n.t('create.nationalId')"
-            (input)="sanitizeNationalId($event)"
             (blur)="nationalIdError.set(false)"
         >
         @if (nationalIdError()) {

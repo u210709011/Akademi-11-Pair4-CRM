@@ -1,27 +1,37 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { form, FormField, required } from '@angular/forms/signals';
 import { I18nService } from '../../../../../core/i18n';
+
+interface AddressFormModel {
+  city: string;
+  street: string;
+  houseNumber: string;
+  description: string;
+}
+
+const EMPTY_ADDRESS: AddressFormModel = { city: '', street: '', houseNumber: '', description: '' };
 
 @Component({
   selector: 'app-address-tab',
-  imports: [ReactiveFormsModule],
+  imports: [FormField],
   templateUrl: './address-tab.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './address-tab.component.scss'
 })
 export class AddressTabComponent {
   protected readonly i18n = inject(I18nService);
-  private readonly formBuilder = inject(FormBuilder);
 
   protected readonly maxAddresses = 5;
-  protected readonly addresses = signal<unknown[]>([]);
+  protected readonly addresses = signal<AddressFormModel[]>([]);
   protected readonly isAddAddressModalOpen = signal(false);
 
-  protected readonly addressForm = this.formBuilder.nonNullable.group({
-    city: ['', Validators.required],
-    street: ['', Validators.required],
-    houseNumber: ['', Validators.required],
-    description: ['', Validators.required]
+  protected readonly addressModel = signal<AddressFormModel>({ ...EMPTY_ADDRESS });
+
+  protected readonly addressForm = form(this.addressModel, path => {
+    required(path.city);
+    required(path.street);
+    required(path.houseNumber);
+    required(path.description);
   });
 
   protected openAddAddressModal(): void {
@@ -30,14 +40,14 @@ export class AddressTabComponent {
 
   protected closeAddAddressModal(): void {
     this.isAddAddressModalOpen.set(false);
-    this.addressForm.reset();
+    this.addressForm().reset({ ...EMPTY_ADDRESS });
   }
 
   protected saveAddress(): void {
-    if (this.addressForm.invalid) {
+    if (this.addressForm().invalid()) {
       return;
     }
-    this.addresses.update(list => [...list, this.addressForm.getRawValue()]);
+    this.addresses.update(list => [...list, this.addressModel()]);
     this.closeAddAddressModal();
   }
 }
