@@ -2,7 +2,7 @@ import { NgComponentOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Injectable, Type, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
-import { CustomerService, IndividualInfo } from '../../../core/customer';
+import { AddressInfo, ContactInfo, CustomerService, IndividualInfo } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
 import { AddressTabComponent } from './tabs/address-tab/address-tab.component';
 import { ContactTabComponent } from './tabs/contact-tab/contact-tab.component';
@@ -16,13 +16,65 @@ interface TabDefinition {
   component: Type<unknown>;
 }
 
+// tab component'leri NgComponentOutlet ile dinamik olustugu icin, sekmeler arasi gidip gelince eski
+// component instance yok edilip yenisi yaratiliyor - bu yuzden asil form verisi (draft'lar degil,
+// gonderilecek olan model) component'in kendi icinde degil, bu servis icinde tutulur ki kaybolmasin.
+export interface DemographicFormModel {
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  birthDate: Date | null;
+  gender: string;
+  fatherName: string;
+  motherName: string;
+  nationalId: string;
+}
+
+export interface AddressFormModel {
+  city: string;
+  street: string;
+  houseNumber: string;
+  description: string;
+}
+
+export interface ContactFormModel {
+  email: string;
+  homePhone: string;
+  mobilePhone: string;
+  fax: string;
+}
+
+const EMPTY_DEMOGRAPHIC: DemographicFormModel = {
+  firstName: '',
+  middleName: '',
+  lastName: '',
+  birthDate: null,
+  gender: '',
+  fatherName: '',
+  motherName: '',
+  nationalId: ''
+};
+
+const EMPTY_CONTACT: ContactFormModel = { email: '', homePhone: '', mobilePhone: '', fax: '' };
+
 @Injectable()
 export class CreateCustomerFormStateService {
+  readonly demographicModel = signal<DemographicFormModel>({ ...EMPTY_DEMOGRAPHIC });
   readonly demographicValid = signal(false);
-
   readonly demographicValue = signal<IndividualInfo | null>(null);
   readonly isVerifyingIdentity = signal(false);
   readonly identityVerificationError = signal<string | null>(null);
+
+  readonly addresses = signal<AddressFormModel[]>([]);
+  readonly addressesValid = signal(false);
+  readonly addressesValue = signal<AddressInfo[]>([]);
+
+  readonly contactModel = signal<ContactFormModel>({ ...EMPTY_CONTACT });
+  readonly contactValid = signal(false);
+  readonly contactValue = signal<ContactInfo | null>(null);
+
+  readonly isSubmitting = signal(false);
+  readonly submitError = signal<string | null>(null);
 }
 
 @Component({
@@ -57,14 +109,22 @@ export class CreateCustomerComponent {
   );
 
   protected readonly isNextDisabled = computed(() => {
-    if (this.formState.isVerifyingIdentity()) {
+    if (this.formState.isVerifyingIdentity() || this.formState.isSubmitting()) {
       return true;
     }
-    if (this.activeTab() === 'demographic') {
-      return !this.formState.demographicValid();
+    switch (this.activeTab()) {
+      case 'demographic':
+        return !this.formState.demographicValid();
+      case 'address':
+        return !this.formState.addressesValid();
+      case 'contact':
+        return !this.formState.contactValid();
     }
-    return false;
   });
+
+  protected readonly nextButtonLabel = computed(() =>
+    this.activeTab() === 'contact' ? this.i18n.t('create.createBtn') : this.i18n.t('create.nextBtn')
+  );
 
   protected selectTab(tab: CreateCustomerTab): void {
     this.activeTab.set(tab);
@@ -73,6 +133,10 @@ export class CreateCustomerComponent {
   protected nextTab(): void {
     if (this.activeTab() === 'demographic') {
       this.verifyIdentityThenAdvance();
+      return;
+    }
+    if (this.activeTab() === 'contact') {
+      this.submitOnboarding();
       return;
     }
     this.advanceTab();
@@ -102,6 +166,35 @@ export class CreateCustomerComponent {
           httpError.status === 409
             ? this.i18n.t('create.identityDuplicate')
             : this.i18n.t('create.identityError')
+        );
+      }
+    });
+  }
+
+  // ACC-023: Contact tab'da Next/Create tiklandiginda tum sihirbaz verisini tek istekte backend'e gonderir.
+  private submitOnboarding(): void {
+    const individual = this.formState.demographicValue();
+    const addresses = this.formState.addressesValue();
+    const contact = this.formState.contactValue();
+
+    if (!individual || !contact || addresses.length === 0) {
+      return;
+    }
+
+    this.formState.isSubmitting.set(true);
+    this.formState.submitError.set(null);
+
+    this.customerService.onboard({ individual, addresses, contact }).subscribe({
+      next: response => {
+        this.formState.isSubmitting.set(false);
+        this.router.navigate(['/detail-customer', response.custId]);
+      },
+      error: (httpError: HttpErrorResponse) => {
+        this.formState.isSubmitting.set(false);
+        this.formState.submitError.set(
+          httpError.status === 409
+            ? this.i18n.t('create.identityDuplicate')
+            : this.i18n.t('create.submitError')
         );
       }
     });

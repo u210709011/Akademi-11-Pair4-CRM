@@ -9,7 +9,9 @@ import {
   CustomerSearchResult,
   IdentityVerificationResponse,
   IndividualInfo,
-  IndividualResponse
+  IndividualResponse,
+  OnboardCustomerRequest,
+  OnboardCustomerResponse
 } from './customer.model';
 // to align with the object logic implemented on the backend.
 interface PagedResponse<T> {
@@ -56,5 +58,10 @@ export class CustomerService {
   // customer-service proxies this to contact-info-service internally.
   getContact(custId: number): Observable<ContactInfo> {
     return this.http.get<ContactInfo>(`${environment.apiGatewayUrl}/api/v1/customers/${custId}/contact`);
+  }
+
+  // ACC-023: Create butonu - tek istekte party+customer(+hesap)+contact/adres yazar (saga, backend tarafında geri alinir).
+  onboard(request: OnboardCustomerRequest): Observable<OnboardCustomerResponse> {
+    return this.http.post<OnboardCustomerResponse>(`${environment.apiGatewayUrl}/api/v1/customers/onboarding`, request);
   }
 }

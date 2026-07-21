@@ -1,13 +1,8 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
+import { AddressInfo } from '../../../../../core/customer';
 import { I18nService } from '../../../../../core/i18n';
-
-interface AddressFormModel {
-  city: string;
-  street: string;
-  houseNumber: string;
-  description: string;
-}
+import { AddressFormModel, CreateCustomerFormStateService } from '../../create-customer.component';
 
 const EMPTY_ADDRESS: AddressFormModel = { city: '', street: '', houseNumber: '', description: '' };
 
@@ -20,11 +15,14 @@ const EMPTY_ADDRESS: AddressFormModel = { city: '', street: '', houseNumber: '',
 })
 export class AddressTabComponent {
   protected readonly i18n = inject(I18nService);
+  private readonly formState = inject(CreateCustomerFormStateService);
 
   protected readonly maxAddresses = 5;
-  protected readonly addresses = signal<AddressFormModel[]>([]);
+  // eklenen adresler sekmeler arasi gecince kaybolmamasi icin CreateCustomerFormStateService'te tutulur
+  protected readonly addresses = this.formState.addresses;
   protected readonly isAddAddressModalOpen = signal(false);
 
+  // "yeni adres ekle" modalindaki taslak veri gecicidir, kaydedilmeden sekme degisirse kaybolmasi beklenir
   protected readonly addressModel = signal<AddressFormModel>({ ...EMPTY_ADDRESS });
 
   protected readonly addressForm = form(this.addressModel, path => {
@@ -33,6 +31,15 @@ export class AddressTabComponent {
     required(path.houseNumber);
     required(path.description);
   });
+
+  constructor() {
+    // ACC-011: en az bir adres eklenmeden sonraki adima gecilemez - sihirbazin ortak state'ine yansitilir.
+    effect(() => {
+      const addresses = this.addresses();
+      this.formState.addressesValid.set(addresses.length > 0);
+      this.formState.addressesValue.set(addresses.map(toAddressInfo));
+    });
+  }
 
   protected openAddAddressModal(): void {
     this.isAddAddressModalOpen.set(true);
@@ -50,4 +57,13 @@ export class AddressTabComponent {
     this.addresses.update(list => [...list, this.addressModel()]);
     this.closeAddAddressModal();
   }
+}
+
+function toAddressInfo(address: AddressFormModel): AddressInfo {
+  return {
+    cityId: Number(address.city),
+    streetName: address.street,
+    buildingName: address.houseNumber,
+    addressDesc: address.description
+  };
 }

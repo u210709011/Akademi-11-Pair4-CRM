@@ -1,17 +1,12 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { email, form, FormField, maxLength, required } from '@angular/forms/signals';
+import { ContactInfo } from '../../../../../core/customer';
 import { I18nService } from '../../../../../core/i18n';
+import { CreateCustomerFormStateService } from '../../create-customer.component';
 
 type PhoneFieldName = 'homePhone' | 'mobilePhone' | 'fax';
 
 const PHONE_FIELDS: PhoneFieldName[] = ['homePhone', 'mobilePhone', 'fax'];
-
-interface ContactFormModel {
-  email: string;
-  homePhone: string;
-  mobilePhone: string;
-  fax: string;
-}
 
 @Component({
   selector: 'app-contact-tab',
@@ -22,13 +17,10 @@ interface ContactFormModel {
 })
 export class ContactTabComponent {
   protected readonly i18n = inject(I18nService);
+  private readonly formState = inject(CreateCustomerFormStateService);
 
-  protected readonly contactModel = signal<ContactFormModel>({
-    email: '',
-    homePhone: '',
-    mobilePhone: '',
-    fax: ''
-  });
+  // model, sekmeler arasi gecince kaybolmamasi icin CreateCustomerFormStateService'te tutulur
+  protected readonly contactModel = this.formState.contactModel;
 
   protected readonly contactForm = form(this.contactModel, path => {
     required(path.email);
@@ -44,6 +36,23 @@ export class ContactTabComponent {
     for (const field of PHONE_FIELDS) {
       effect(() => this.sanitizePhoneField(field));
     }
+
+    // form gecerliligi/degeri degistikce sihirbazin ortak state'ine (CreateCustomerFormStateService) yansitilir
+    effect(() => {
+      const valid = this.contactForm().valid();
+      this.formState.contactValid.set(valid);
+      this.formState.contactValue.set(valid ? this.toContactInfo() : null);
+    });
+  }
+
+  private toContactInfo(): ContactInfo {
+    const value = this.contactModel();
+    return {
+      email: value.email,
+      mobilePhone: value.mobilePhone,
+      homePhone: value.homePhone || null,
+      fax: value.fax || null
+    };
   }
 
   private sanitizePhoneField(field: PhoneFieldName): void {

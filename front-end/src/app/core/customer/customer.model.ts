@@ -73,3 +73,27 @@ export interface ContactInfo {
   homePhone: string | null;
   fax: string | null;
 }
+
+// address entry inside the onboarding request body - first address in the list becomes primary server-side.
+export interface AddressInfo {
+  cityId: number;
+  streetName: string;
+  buildingName: string;
+  addressDesc: string;
+}
+
+// POST /api/v1/customers/onboarding request body.
+export interface OnboardCustomerRequest {
+  individual: IndividualInfo;
+  addresses: AddressInfo[];
+  contact: ContactInfo;
+}
+
+// POST /api/v1/customers/onboarding response body.
+export interface OnboardCustomerResponse {
+  custId: number;
+  partyRoleId: number;
+  custTpId: number | null;
+  active: boolean;
+  accounts: CustomerAccountSummary[];
+}
