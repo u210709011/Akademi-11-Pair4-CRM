@@ -12,17 +12,6 @@ type LetterFieldName = 'firstName' | 'middleName' | 'lastName' | 'fatherName' | 
 
 const LETTER_FIELDS: LetterFieldName[] = ['firstName', 'middleName', 'lastName', 'fatherName', 'motherName'];
 
-interface DemographicFormModel {
-  firstName: string;
-  middleName: string;
-  lastName: string;
-  birthDate: Date | null;
-  gender: string;
-  fatherName: string;
-  motherName: string;
-  nationalId: string;
-}
-
 @Component({
   selector: 'app-demographic-tab',
   imports: [FormField, MatDatepickerModule, MatFormFieldModule, MatInputModule],
@@ -46,16 +35,8 @@ export class DemographicTabComponent {
     motherName: false
   });
 
-  protected readonly demographicModel = signal<DemographicFormModel>({
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    birthDate: null,
-    gender: '',
-    fatherName: '',
-    motherName: '',
-    nationalId: ''
-  });
+  // model, sekmeler arasi gecince kaybolmamasi icin CreateCustomerFormStateService'te tutulur
+  protected readonly demographicModel = this.formState.demographicModel;
 
   protected readonly demographicForm = form(this.demographicModel, path => {
     required(path.firstName);
