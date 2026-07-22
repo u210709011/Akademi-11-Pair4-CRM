@@ -1,9 +1,9 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
 import com.etiya.crm.lookupservice.business.abstracts.GnlCharService;
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateGnlCharRequest;
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateGnlCharRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.GnlCharResponse;
+import com.etiya.crm.shared.contracts.gnlchar.CreateGnlCharRequest;
+import com.etiya.crm.shared.contracts.gnlchar.UpdateGnlCharRequest;
+import com.etiya.crm.shared.contracts.gnlchar.GnlCharResponse;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlCharRepository;
 import com.etiya.crm.lookupservice.entities.concretes.GnlChar;

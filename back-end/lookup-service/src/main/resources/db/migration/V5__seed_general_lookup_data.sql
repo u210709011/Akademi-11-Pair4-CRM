@@ -1,66 +1,45 @@
--- Yeni semanin ilk (sifirdan) seed verisi. Eski 'lookup' tablosundan veri tasinmiyor, id'leri
--- korunmuyor - id'ler bu tablonun kendi sequence'inden normal sekilde atanir.
+-- Yeni semanin sifirdan seed verisi.
+--
+-- GNL_TP/GNL_ST: her satir tek bir deger, ent_code_name o degerin grubunu belirtir. Asagidaki
+-- CNTC_MEDIUM (Sabit Hat/PSTN, Faks/FAX, Mobil Hat/GSM, E Posta/EML) ve ACCOUNT_TYPE
+-- (Musteri Hesap/CUST_ACCT, Fatura Hesap/BILL_ACCT) gruplari gercek veriden alinmistir.
+-- Diger gruplarin (PARTY_TYPE, PARTY_ROLE_TYPE, GENDER, CITY, CUSTOMER_TYPE, CUST_STATUS,
+-- ACCOUNT_STATUS) ent_code_name degerleri TAHMINIDIR - gercek DB'deki karsiliklariyla
+-- (DBeaver) karsilastirilip gerekirse duzeltilmelidir.
+--
+-- TYPE_VALUE: GNL_TP/GNL_ST'den bagimsiz, gercek veriden alinan tablo->tip-etiketi kaydi.
 
--- ---- GNL_TP: "type" stilindeki gruplar ----
+-- ---- GNL_TP ----
 INSERT INTO gnl_tp (name, descr, shrt_code, ent_code_name, ent_name, is_actv, cuser) VALUES
-    ('Party Type',          'Bireysel/Kurumsal parti tipi', 'PARTY_TYPE',       'PARTY_TYPE',       'Party',         true, 'system'),
-    ('Party Role Type',     'Partinin sistemdeki rolu',     'PARTY_ROLE_TYPE',  'PARTY_ROLE_TYPE',  'PartyRole',     true, 'system'),
-    ('Gender',              'Cinsiyet',                     'GENDER',           'GENDER',           'Individual',    true, 'system'),
-    ('City',                'Sehir',                        'CITY',             'CITY',             'Address',       true, 'system'),
-    ('Data Type',           'Polimorfik veri sahibi tipi',  'DATA_TYPE',        'DATA_TYPE',         NULL,           true, 'system'),
-    ('Contact Medium Type', 'Iletisim kanali tipi',         'CNTC_MEDIUM_TYPE', 'CNTC_MEDIUM_TYPE',  'ContactMedium', true, 'system'),
-    ('Account Type',        'Musteri hesap tipi',           'ACCT_TP',          'ACCT_TP',           'CustAcct',      true, 'system'),
-    ('Customer Type',       'Musteri segment tipi',         'CUST_TP',          'CUST_TP',            NULL,           true, 'system');
+    ('Sabit Hat',        'Sabit Hat',        'PSTN',      'CNTC_MEDIUM',   'CNTC_MEDIUM',   true, 'system'),
+    ('Faks',             'Faks',             'FAX',       'CNTC_MEDIUM',   'CNTC_MEDIUM',   true, 'system'),
+    ('Mobil Hat',        'Mobil Hat',        'GSM',       'CNTC_MEDIUM',   'CNTC_MEDIUM',   true, 'system'),
+    ('E Posta',          'E Posta',          'EML',       'CNTC_MEDIUM',   'CNTC_MEDIUM',   true, 'system'),
+    ('Musteri Hesap',    'Musteri Hesap',    'CUST_ACCT', 'ACCOUNT_TYPE',  'ACCOUNT_TYPE',  true, 'system'),
+    ('Fatura Hesap',     'Fatura Hesap',     'BILL_ACCT', 'ACCOUNT_TYPE',  'ACCOUNT_TYPE',  true, 'system'),
+    ('Bireysel',         'Bireysel',         'INDIVIDUAL','PARTY_TYPE',    'PARTY_TYPE',    true, 'system'),
+    ('Kurumsal',         'Kurumsal',         'CORPORATE', 'PARTY_TYPE',    'PARTY_TYPE',    true, 'system'),
+    ('Musteri',          'Musteri',          'CUSTOMER',  'PARTY_ROLE_TYPE','PARTY_ROLE_TYPE', true, 'system'),
+    ('Tedarikci/Partner','Tedarikci/Partner','PARTNER',   'PARTY_ROLE_TYPE','PARTY_ROLE_TYPE', true, 'system'),
+    ('Erkek',            'Erkek',            'MALE',      'GENDER',        'GENDER',        true, 'system'),
+    ('Bayan',            'Bayan',            'FEMALE',    'GENDER',        'GENDER',        true, 'system'),
+    ('Ankara',           'Ankara',           'ANKARA',    'CITY',          'CITY',          true, 'system'),
+    ('Genc Musteri',     'Genc Musteri',     'YOUNG',     'CUSTOMER_TYPE', 'CUSTOMER_TYPE', true, 'system'),
+    ('Emekli Musteri',   'Emekli Musteri',   'RETIRED',   'CUSTOMER_TYPE', 'CUSTOMER_TYPE', true, 'system');
 
--- ---- GNL_ST: "status" stilindeki gruplar ----
+-- ---- GNL_ST ----
 INSERT INTO gnl_st (name, descr, shrt_code, is_actv, ent_code_name, ent_name, cuser) VALUES
-    ('Customer Status', 'Musteri durumu', 'CUST_STATUS', true, 'CUST_STATUS', 'Cust',     'system'),
-    ('Account Status',  'Hesap durumu',   'ACCT_STATUS', true, 'ACCT_STATUS', 'CustAcct', 'system');
+    ('Aktif',    'Aktif',    'ACTIVE',  true, 'CUST_STATUS',    'CUST_STATUS',    'system'),
+    ('Pasif',    'Pasif',    'PASSIVE', true, 'CUST_STATUS',    'CUST_STATUS',    'system'),
+    ('Silinmis', 'Silinmis', 'DELETED', true, 'CUST_STATUS',    'CUST_STATUS',    'system'),
+    ('Aktif',    'Aktif',    'ACTIVE',  true, 'ACCOUNT_STATUS', 'ACCOUNT_STATUS', 'system'),
+    ('Pasif',    'Pasif',    'PASSIVE', true, 'ACCOUNT_STATUS', 'ACCOUNT_STATUS', 'system');
 
--- ---- TYPE_VALUE: GNL_TP altindaki degerler ----
-INSERT INTO type_value (table_name, field_name, description, value, using_module_name, cuser)
-SELECT 'GNL_TP', gnl_tp_id, 'Bireysel', 'INDIVIDUAL', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'PARTY_TYPE'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Kurumsal', 'CORPORATE', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'PARTY_TYPE'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Musteri', 'CUSTOMER', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'PARTY_ROLE_TYPE'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Tedarikci/Partner', 'PARTNER', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'PARTY_ROLE_TYPE'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Erkek', 'MALE', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'GENDER'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Bayan', 'FEMALE', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'GENDER'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Ankara', NULL, NULL, 'system' FROM gnl_tp WHERE shrt_code = 'CITY'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Party', 'PARTY', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'DATA_TYPE'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Musteri', 'CUST', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'DATA_TYPE'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'E-Posta', 'EMAIL', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'CNTC_MEDIUM_TYPE'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Cep Telefonu', 'MOBILE_PHONE', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'CNTC_MEDIUM_TYPE'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Ev Telefonu', 'HOME_PHONE', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'CNTC_MEDIUM_TYPE'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Faks', 'FAX', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'CNTC_MEDIUM_TYPE'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Standart Hesap', 'STANDARD', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'ACCT_TP'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Fatura Hesabi', 'BILLING', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'ACCT_TP'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Genc Musteri', 'YOUNG', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'CUST_TP'
-UNION ALL
-SELECT 'GNL_TP', gnl_tp_id, 'Emekli Musteri', 'RETIRED', NULL, 'system' FROM gnl_tp WHERE shrt_code = 'CUST_TP';
-
--- ---- TYPE_VALUE: GNL_ST altindaki degerler ----
-INSERT INTO type_value (table_name, field_name, description, value, using_module_name, cuser)
-SELECT 'GNL_ST', gnl_st_id, 'Aktif', 'ACTIVE', NULL, 'system' FROM gnl_st WHERE shrt_code = 'CUST_STATUS'
-UNION ALL
-SELECT 'GNL_ST', gnl_st_id, 'Pasif', 'PASSIVE', NULL, 'system' FROM gnl_st WHERE shrt_code = 'CUST_STATUS'
-UNION ALL
-SELECT 'GNL_ST', gnl_st_id, 'Silinmis', 'DELETED', NULL, 'system' FROM gnl_st WHERE shrt_code = 'CUST_STATUS'
-UNION ALL
-SELECT 'GNL_ST', gnl_st_id, 'Aktif', 'ACTIVE', NULL, 'system' FROM gnl_st WHERE shrt_code = 'ACCT_STATUS'
-UNION ALL
-SELECT 'GNL_ST', gnl_st_id, 'Pasif', 'PASSIVE', NULL, 'system' FROM gnl_st WHERE shrt_code = 'ACCT_STATUS';
+-- ---- TYPE_VALUE ----
+-- Gercek veriden: PROD/20, PARTY/9, CUST_ACCT/13, CUST/12 (field_name = o tabloya atanmis
+-- polimorfik tip etiketi numarasi).
+INSERT INTO type_value (table_name, field_name, description, cuser) VALUES
+    ('PARTY',     9,  'Party_id',     'system'),
+    ('CUST_ACCT', 13, 'Cust_acct_id', 'system'),
+    ('PROD',      20, 'Prod_id',      'system'),
+    ('CUST',      12, 'Cust_id',      'system');

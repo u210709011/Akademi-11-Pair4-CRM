@@ -1,40 +1,46 @@
--- Kurumsal genel lookup semasi: GNL_TP/GNL_ST (grup tanimlari) + TYPE_VALUE (deger satirlari)
+-- Kurumsal genel lookup semasi: GNL_TP/GNL_ST duz deger tablolaridir (her satir tek bir deger,
+-- ent_code_name o degerin ait oldugu grubu belirtir - eski lookup.group_code'un yerini alir).
+-- TYPE_VALUE ise GNL_TP/GNL_ST'den BAGIMSIZ, herhangi bir is tablosu icin polimorfik sahiplik
+-- etiketi (row_id + type_id) uretmekte kullanilan genel bir tablo->numeric-tip kayit defteridir
+-- (eski DATA_TYPE grubunun genellestirilmis hali - bkz. contact-info-service ADDR.data_type_id).
 -- + GNL_CHAR/GNL_CHAR_VAL (karakteristik tanim/deger) + RSRC_SPEC/SRVC_SPEC (kaynak/servis spec).
--- Eski duz 'lookup' tablosunun yerini alir (bkz. V5/V6).
+-- Eski duz 'lookup' tablosunun yerini alir (bkz. V5/V6). Lookup-service'teki hicbir tablo
+-- digerine gercek FK ile baglanmaz - butun capraz referanslar mantiksaldir.
 
 CREATE TABLE gnl_tp (
     gnl_tp_id     BIGSERIAL PRIMARY KEY,
     name          VARCHAR(100) NOT NULL,
     descr         VARCHAR(100) NOT NULL,
-    shrt_code     VARCHAR(64)  NOT NULL,
-    ent_code_name VARCHAR(100) NOT NULL,
-    ent_name      VARCHAR(100),
+    shrt_code     VARCHAR(64)  NOT NULL,  -- bu degerin kendi kisa kodu (orn. PSTN, GSM, CUST_ACCT)
+    ent_code_name VARCHAR(100) NOT NULL,  -- grup anahtari (orn. CNTC_MEDIUM, ACCOUNT_TYPE)
+    ent_name      VARCHAR(100),           -- pratikte ent_code_name ile ayni deger seed edilir
     is_actv       BOOLEAN      NOT NULL DEFAULT true,
     cdate         TIMESTAMP,
     cuser         VARCHAR(100),
     udate         TIMESTAMP,
     uuser         VARCHAR(100),
-    CONSTRAINT uq_gnl_tp_shrt_code UNIQUE (shrt_code)
+    CONSTRAINT uq_gnl_tp_group_code UNIQUE (ent_code_name, shrt_code)
 );
 
 CREATE TABLE gnl_st (
     gnl_st_id     BIGSERIAL PRIMARY KEY,
     name          VARCHAR(100) NOT NULL,
     descr         VARCHAR(100) NOT NULL,
-    shrt_code     VARCHAR(15)  NOT NULL,
+    shrt_code     VARCHAR(15)  NOT NULL,  -- bu degerin kendi kisa kodu (orn. ACTIVE, PASSIVE)
     is_actv       BOOLEAN      NOT NULL DEFAULT true,
-    ent_code_name VARCHAR(100) NOT NULL,
-    ent_name      VARCHAR(100),
+    ent_code_name VARCHAR(100) NOT NULL,  -- grup anahtari (orn. CUST, CUST_ACCT)
+    ent_name      VARCHAR(100),           -- pratikte ent_code_name ile ayni deger seed edilir
     cdate         TIMESTAMP,
     cuser         VARCHAR(100),
     udate         TIMESTAMP,
     uuser         VARCHAR(100),
-    CONSTRAINT uq_gnl_st_shrt_code UNIQUE (shrt_code)
+    CONSTRAINT uq_gnl_st_group_code UNIQUE (ent_code_name, shrt_code)
 );
 
--- Polimorfik referans: table_name ('GNL_TP'/'GNL_ST') + field_name (o tablodaki satirin id'si)
--- birlikte "bu deger hangi gruba ait" sorusunu cevaplar - iki farkli tabloya isaret edebildigi
--- icin gercek bir FK kurulamaz (ayni desen contact-info-service'teki ADDR.row_id/data_type_id).
+-- GNL_TP/GNL_ST'den bagimsiz: table_name gercek bir is tablosunun adi (orn. PROD, PARTY, CUST,
+-- CUST_ACCT), field_name o tabloya atanmis polimorfik tip etiketi (orn. PARTY->9, CUST->12).
+-- Baska bir servis, kendi tablosunda row_id + bu numarayi tasiyarak "bu satir hangi tabloya ait"
+-- sorusunu cevaplar (ayni desen contact-info-service ADDR.row_id/data_type_id).
 CREATE TABLE type_value (
     type_value_id     BIGSERIAL PRIMARY KEY,
     table_name        VARCHAR(40)  NOT NULL,
@@ -46,11 +52,10 @@ CREATE TABLE type_value (
     cuser             VARCHAR(100),
     udate             TIMESTAMP,
     uuser             VARCHAR(100),
-    CONSTRAINT ck_type_value_table_name CHECK (table_name IN ('GNL_TP', 'GNL_ST')),
-    CONSTRAINT uq_type_value_group_value UNIQUE (table_name, field_name, value)
+    CONSTRAINT uq_type_value_table_name UNIQUE (table_name)
 );
 
-CREATE INDEX idx_type_value_group ON type_value (table_name, field_name);
+CREATE INDEX idx_type_value_field_name ON type_value (field_name);
 
 CREATE TABLE gnl_char (
     char_id   BIGSERIAL PRIMARY KEY,
@@ -67,7 +72,7 @@ CREATE TABLE gnl_char (
 
 CREATE TABLE gnl_char_val (
     char_val_id BIGSERIAL PRIMARY KEY,
-    char_id     BIGINT       NOT NULL REFERENCES gnl_char (char_id),
+    char_id     BIGINT       NOT NULL,  -- mantiksal referans -> gnl_char.char_id, gercek FK yok
     is_dflt     BOOLEAN      NOT NULL DEFAULT false,
     val         VARCHAR(100),
     shrt_code   VARCHAR(100) NOT NULL,

@@ -1,4 +1,4 @@
-package com.etiya.crm.lookupservice.business.dtos.requests;
+package com.etiya.crm.shared.contracts.gnlcharval;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -7,9 +7,12 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
-/** charId kasten yok - hangi GNL_CHAR'a ait oldugu degistirilemez. */
-@Schema(description = "PUT /api/v1/characteristic-values/{id} istek govdesi.")
-public record UpdateGnlCharValRequest(
+@Schema(description = "lookup-service POST /api/v1/characteristic-values istek govdesi.")
+public record CreateGnlCharValRequest(
+
+        @Schema(description = "Ait oldugu GNL_CHAR id'si.", example = "1")
+        @NotNull
+        Long charId,
 
         @Schema(description = "Varsayilan deger mi.", example = "false")
         @NotNull

@@ -1,4 +1,4 @@
-package com.etiya.crm.lookupservice.business.dtos.responses;
+package com.etiya.crm.shared.contracts.rsrcspec;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

@@ -1,11 +1,11 @@
-package com.etiya.crm.lookupservice.business.dtos.requests;
+package com.etiya.crm.shared.contracts.srvcspec;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-@Schema(description = "POST /api/v1/service-specs istek govdesi.")
+@Schema(description = "lookup-service POST /api/v1/service-specs istek govdesi.")
 public record CreateSrvcSpecRequest(
 
         @Schema(description = "Servis spec adi.", example = "Mobil Hat Aktivasyonu")

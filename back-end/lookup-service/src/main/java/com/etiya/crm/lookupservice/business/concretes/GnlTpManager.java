@@ -1,9 +1,9 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
 import com.etiya.crm.lookupservice.business.abstracts.GnlTpService;
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateGnlTpRequest;
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateGnlTpRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.GnlTpResponse;
+import com.etiya.crm.shared.contracts.gnltp.CreateGnlTpRequest;
+import com.etiya.crm.shared.contracts.gnltp.UpdateGnlTpRequest;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpResponse;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlTpRepository;
 import com.etiya.crm.lookupservice.entities.concretes.GnlTp;
@@ -28,8 +28,20 @@ public class GnlTpManager implements GnlTpService {
     }
 
     @Override
+    public List<GnlTpResponse> getAllByEntCodeName(String entCodeName) {
+        return gnlTpRepository.findAllByEntCodeName(entCodeName).stream().map(gnlTpMapper::toResponse).toList();
+    }
+
+    @Override
     public GnlTpResponse getById(Long id) {
         return gnlTpMapper.toResponse(getEntity(id));
+    }
+
+    @Override
+    public GnlTpResponse getByEntCodeNameAndShrtCode(String entCodeName, String shrtCode) {
+        GnlTp gnlTp = gnlTpRepository.findByEntCodeNameAndShrtCode(entCodeName, shrtCode)
+                .orElseThrow(() -> new EntityNotFoundException("GnlTp", entCodeName + "/" + shrtCode));
+        return gnlTpMapper.toResponse(gnlTp);
     }
 
     @Override

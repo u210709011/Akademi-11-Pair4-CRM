@@ -1,11 +1,11 @@
-package com.etiya.crm.lookupservice.business.dtos.requests;
+package com.etiya.crm.shared.contracts.rsrcspec;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-@Schema(description = "PUT /api/v1/resource-specs/{id} istek govdesi.")
+@Schema(description = "lookup-service PUT /api/v1/resource-specs/{id} istek govdesi.")
 public record UpdateRsrcSpecRequest(
 
         @Schema(description = "Kaynak spec adi.", example = "SIM Kart")

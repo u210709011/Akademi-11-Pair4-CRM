@@ -1,6 +1,6 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateSrvcSpecRequest;
+import com.etiya.crm.shared.contracts.srvcspec.CreateSrvcSpecRequest;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlStRepository;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.SrvcSpecRepository;
