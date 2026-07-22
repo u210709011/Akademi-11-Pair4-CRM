@@ -1,4 +1,4 @@
-package com.etiya.crm.lookupservice.business.dtos.responses;
+package com.etiya.crm.shared.contracts.gnlcharval;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

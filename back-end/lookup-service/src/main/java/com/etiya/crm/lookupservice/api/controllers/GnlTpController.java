@@ -1,9 +1,9 @@
 package com.etiya.crm.lookupservice.api.controllers;
 
 import com.etiya.crm.lookupservice.business.abstracts.GnlTpService;
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateGnlTpRequest;
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateGnlTpRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.GnlTpResponse;
+import com.etiya.crm.shared.contracts.gnltp.CreateGnlTpRequest;
+import com.etiya.crm.shared.contracts.gnltp.UpdateGnlTpRequest;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -29,16 +30,30 @@ public class GnlTpController {
 
     private final GnlTpService gnlTpService;
 
-    @Operation(summary = "Tum tip gruplarini listele")
+    @Operation(summary = "Tip degerlerini listele",
+            description = "entCodeName verilirse sadece o gruba ait degerler doner (orn. CNTC_MEDIUM); "
+                    + "verilmezse TUMU doner.")
     @GetMapping
-    public ResponseEntity<List<GnlTpResponse>> getAll() {
+    public ResponseEntity<List<GnlTpResponse>> getAll(@RequestParam(required = false) String entCodeName) {
+        if (entCodeName != null) {
+            return ResponseEntity.ok(gnlTpService.getAllByEntCodeName(entCodeName));
+        }
         return ResponseEntity.ok(gnlTpService.getAll());
     }
 
-    @Operation(summary = "Tip grubunu id ile getir")
+    @Operation(summary = "Tip degerini id ile getir")
     @GetMapping("/{id}")
     public ResponseEntity<GnlTpResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(gnlTpService.getById(id));
+    }
+
+    @Operation(summary = "Tip degerini grup+kisa kod ile coz",
+            description = "Kod bazli erisim - caller numeric id'yi hardcode etmek yerine "
+                    + "(entCodeName, shrtCode) ile id'yi coder. Ornek: GET /api/v1/general-types/resolve/CNTC_MEDIUM/GSM")
+    @GetMapping("/resolve/{entCodeName}/{shrtCode}")
+    public ResponseEntity<GnlTpResponse> getByEntCodeNameAndShrtCode(
+            @PathVariable String entCodeName, @PathVariable String shrtCode) {
+        return ResponseEntity.ok(gnlTpService.getByEntCodeNameAndShrtCode(entCodeName, shrtCode));
     }
 
     @Operation(summary = "Yeni tip grubu ekle")

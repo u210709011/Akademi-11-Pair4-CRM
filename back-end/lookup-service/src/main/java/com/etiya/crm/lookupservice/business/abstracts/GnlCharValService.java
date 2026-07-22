@@ -1,8 +1,8 @@
 package com.etiya.crm.lookupservice.business.abstracts;
 
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateGnlCharValRequest;
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateGnlCharValRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.GnlCharValResponse;
+import com.etiya.crm.shared.contracts.gnlcharval.CreateGnlCharValRequest;
+import com.etiya.crm.shared.contracts.gnlcharval.UpdateGnlCharValRequest;
+import com.etiya.crm.shared.contracts.gnlcharval.GnlCharValResponse;
 
 import java.util.List;
 

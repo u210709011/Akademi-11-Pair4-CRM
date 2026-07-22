@@ -1,7 +1,7 @@
 package com.etiya.crm.lookupservice.mapper;
 
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateGnlCharValRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.GnlCharValResponse;
+import com.etiya.crm.shared.contracts.gnlcharval.CreateGnlCharValRequest;
+import com.etiya.crm.shared.contracts.gnlcharval.GnlCharValResponse;
 import com.etiya.crm.lookupservice.entities.concretes.GnlCharVal;
 import org.mapstruct.Mapper;
 

@@ -1,12 +1,10 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
 import com.etiya.crm.lookupservice.business.abstracts.TypeValueService;
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateTypeValueRequest;
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateTypeValueRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.TypeValueResponse;
+import com.etiya.crm.shared.contracts.typevalue.CreateTypeValueRequest;
+import com.etiya.crm.shared.contracts.typevalue.UpdateTypeValueRequest;
+import com.etiya.crm.shared.contracts.typevalue.TypeValueResponse;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
-import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlStRepository;
-import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlTpRepository;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.TypeValueRepository;
 import com.etiya.crm.lookupservice.entities.concretes.TypeValue;
 import com.etiya.crm.lookupservice.mapper.TypeValueMapper;
@@ -16,14 +14,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * TYPE_VALUE, GNL_TP/GNL_ST'den bagimsizdir - herhangi bir is tablosu (PROD, PARTY, CUST, CUST_ACCT...)
+ * icin polimorfik sahiplik etiketi (row_id + tip numarasi) uretmekte kullanilan genel bir
+ * tablo->numeric-tip kayit defteridir (eski DATA_TYPE grubunun genellestirilmis hali).
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class TypeValueManager implements TypeValueService {
 
     private final TypeValueRepository typeValueRepository;
-    private final GnlTpRepository gnlTpRepository;
-    private final GnlStRepository gnlStRepository;
     private final TypeValueMapper typeValueMapper;
 
     @Override
@@ -39,7 +40,6 @@ public class TypeValueManager implements TypeValueService {
     @Override
     @Transactional
     public TypeValueResponse add(CreateTypeValueRequest request) {
-        checkParentExists(request.tableName(), request.fieldName());
         TypeValue typeValue = typeValueMapper.toEntity(request);
         return typeValueMapper.toResponse(typeValueRepository.save(typeValue));
     }
@@ -63,14 +63,5 @@ public class TypeValueManager implements TypeValueService {
 
     private TypeValue getEntity(Long id) {
         return typeValueRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("TypeValue", id));
-    }
-
-    private void checkParentExists(String tableName, Long fieldName) {
-        boolean exists = "GNL_TP".equals(tableName)
-                ? gnlTpRepository.existsById(fieldName)
-                : gnlStRepository.existsById(fieldName);
-        if (!exists) {
-            throw new EntityNotFoundException(tableName, fieldName);
-        }
     }
 }

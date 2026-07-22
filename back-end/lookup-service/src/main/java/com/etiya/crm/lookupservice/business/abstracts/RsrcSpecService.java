@@ -1,8 +1,8 @@
 package com.etiya.crm.lookupservice.business.abstracts;
 
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateRsrcSpecRequest;
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateRsrcSpecRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.RsrcSpecResponse;
+import com.etiya.crm.shared.contracts.rsrcspec.CreateRsrcSpecRequest;
+import com.etiya.crm.shared.contracts.rsrcspec.UpdateRsrcSpecRequest;
+import com.etiya.crm.shared.contracts.rsrcspec.RsrcSpecResponse;
 
 import java.util.List;
 
