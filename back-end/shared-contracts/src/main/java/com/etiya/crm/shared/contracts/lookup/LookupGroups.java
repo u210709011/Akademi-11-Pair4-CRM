@@ -1,6 +1,14 @@
 package com.etiya.crm.shared.contracts.lookup;
 
-/** lookup-service'teki deger gruplarinin kodlari. */
+/**
+ * lookup-service'teki eski duz "group_code" modelinin kodlari.
+ *
+ * @deprecated lookup-service artik bu grup/group_code modelini kullanmiyor - GNL_TP/GNL_ST/
+ * TYPE_VALUE semasina gecti (bkz. lookup-service V4/V5 migration'lari). Bu sinif sadece
+ * party-service/customer-service/contact-info-service henuz yeni semaya gecmedigi icin duruyor;
+ * o servisler guncellenince kaldirilmali. Yeni kod bunu kullanmamali.
+ */
+@Deprecated(forRemoval = true)
 public final class LookupGroups {
 
 	public static final String CUSTOMER_TYPE = "CUST_TP";

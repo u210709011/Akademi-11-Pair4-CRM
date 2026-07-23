@@ -1,6 +1,13 @@
 package com.etiya.crm.shared.contracts.lookup;
 
-/** Lookup grup'lari icindeki iyi-bilinen kod (CODE) degerleri. */
+/**
+ * Eski duz lookup grup'lari icindeki iyi-bilinen kod (CODE) degerleri.
+ *
+ * @deprecated {@link LookupGroups} ile ayni sebep - lookup-service artik bu modeli kullanmiyor.
+ * party-service/customer-service/contact-info-service yeni semaya (GNL_TP/GNL_ST/TYPE_VALUE)
+ * gecince kaldirilmali.
+ */
+@Deprecated(forRemoval = true)
 public final class LookupCodes {
 
 	public static final String STATUS_ACTIVE = "ACTIVE";
