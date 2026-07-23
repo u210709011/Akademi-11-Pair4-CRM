@@ -26,12 +26,12 @@
       "webOrigins": ["*"]
     },
     {
-      "clientId": "crm-client-short-lived",
+      "clientId": "crm-client-short",
       "name": "CRM Client (30s JWT - test)",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": false,
-      "secret": "crm-client-short-lived-secret",
+      "secret": "crm-client-short",
       "serviceAccountsEnabled": true,
       "directAccessGrantsEnabled": true,
       "standardFlowEnabled": true,
@@ -68,17 +68,6 @@
       "email": "salesperson@example.com",
       "firstName": "Sales",
       "lastName": "Person",
-      "credentials": [
-        { "type": "password", "value": "password", "temporary": false }
-      ],
-      "realmRoles": ["CRM_AGENT"]
-    },
-    {
-      "username": "short-lived-test",
-      "enabled": true,
-      "email": "short-lived-test@example.com",
-      "firstName": "Short",
-      "lastName": "Lived",
       "credentials": [
         { "type": "password", "value": "password", "temporary": false }
       ],
