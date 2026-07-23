@@ -26,6 +26,22 @@
       "webOrigins": ["*"]
     },
     {
+      "clientId": "crm-client-short",
+      "name": "CRM Client (30s JWT - test)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "crm-client-short",
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "attributes": {
+        "access.token.lifespan": "30"
+      }
+    },
+    {
       "clientId": "customer-service-m2m",
       "name": "customer-service (machine-to-machine)",
       "description": "PartyEventListener/ContactMediumEventListener gibi Kafka consumer'larin lookup-service'e erismek icin kullandigi service-account client'i. crm-client (interaktif login) ile karistirilmaz - ayri secret, ayri blast radius.",
