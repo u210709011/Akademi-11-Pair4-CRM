@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, HostListener, Output, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { I18nService, Lang } from '../../../core/i18n';
+import { I18nService } from '../../../core/i18n';
 
 @Component({
   selector: 'app-navbar',
@@ -14,21 +14,10 @@ export class NavbarComponent {
   protected readonly i18n = inject(I18nService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
 
-  protected readonly langMenuOpen = signal(false);
   protected readonly profileMenuOpen = signal(false);
 
-  protected readonly languages: { code: Lang; label: string }[] = [
-    { code: 'en', label: 'English' },
-    { code: 'tr', label: 'Türkçe' }
-  ];
-
   protected toggleLangMenu(): void {
-    this.langMenuOpen.update(open => !open);
-  }
-
-  protected selectLang(lang: Lang): void {
-    this.i18n.setLang(lang);
-    this.langMenuOpen.set(false);
+    this.i18n.setLang(this.i18n.lang() === 'en' ? 'tr' : 'en');
   }
 
   protected toggleProfileMenu(): void {
@@ -38,7 +27,6 @@ export class NavbarComponent {
   @HostListener('document:click', ['$event'])
   protected onDocumentClick(event: MouseEvent): void {
     if (!this.elementRef.nativeElement.contains(event.target as Node)) {
-      this.langMenuOpen.set(false);
       this.profileMenuOpen.set(false);
     }
   }

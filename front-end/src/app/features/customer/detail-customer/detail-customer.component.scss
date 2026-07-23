@@ -307,6 +307,10 @@
   color: var(--etiya-orange);
 }
 
+.info-panel-title-dark {
+  color: #1f2937;
+}
+
 .info-panel-actions {
   display: flex;
   align-items: center;
@@ -474,6 +478,7 @@
 .address-card-primary {
   background: rgba(244, 121, 32, 0.06);
   border-color: var(--etiya-orange);
+  border-left: 4px solid var(--etiya-orange);
 }
 
 .address-card-header {
