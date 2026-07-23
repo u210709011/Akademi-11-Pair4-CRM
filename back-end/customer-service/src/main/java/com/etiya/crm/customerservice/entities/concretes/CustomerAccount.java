@@ -45,4 +45,9 @@ public class CustomerAccount extends BaseEntity {
 	// adresi). FK DEGIL, sadece Long.
 	@Column(name = "address_id")
 	private Long addressId;
+
+	// lookup-service GNL_ST/ACCOUNT_STATUS grubuna logical referans (FK DEGIL). null ise
+	// migration oncesi olusturulmus kayittir, ACTIVE olarak yorumlanir (bkz. V5 migration).
+	@Column(name = "acct_st_id")
+	private Long acctStId;
 }

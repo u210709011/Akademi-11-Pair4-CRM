@@ -15,16 +15,19 @@ import com.etiya.crm.customerservice.business.abstracts.CustomerService;
 import com.etiya.crm.customerservice.business.abstracts.IdentityVerificationService;
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.business.dtos.requests.AddressEditRequest;
+import com.etiya.crm.customerservice.business.dtos.requests.AddressInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.ContactInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.CustomerSearchRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.IndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerRequest;
+import com.etiya.crm.customerservice.business.dtos.requests.UpdateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateIndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.IdentityVerificationResponse;
+import com.etiya.crm.customerservice.business.exceptions.BillingAccountNotFoundException;
 import com.etiya.crm.customerservice.business.exceptions.CustomerNotFoundException;
 import com.etiya.crm.customerservice.business.exceptions.OnboardingFailedException;
 import com.etiya.crm.customerservice.business.rules.CustomerBusinessRules;
@@ -44,7 +47,6 @@ import com.etiya.crm.shared.contracts.individual.IndividualResponse;
 import com.etiya.crm.shared.contracts.individual.PartyRoleResponse;
 import com.etiya.crm.customerservice.constants.AccountDefaults;
 import com.etiya.crm.customerservice.constants.CacheNames;
-import com.etiya.crm.customerservice.constants.DefaultLookupValues;
 import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.shared.contracts.lookup.LookupCodes;
 import com.etiya.crm.shared.contracts.lookup.LookupGroups;
@@ -148,6 +150,11 @@ public class CustomerServiceImpl implements CustomerService {
 	@CacheEvict(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
 	public void softDelete(Long custId) {
 		Customer customer = getActiveCustomerOrThrow(custId);
+		List<CustomerAccount> accounts = customerAccountRepository.findByCustomer_CustIdAndActiveTrue(custId);
+		rules.ensureNoActiveBillingAccount(accounts,
+				lookupCacheService.resolveTypeId(LookupGroups.ACCOUNT_TYPE, LookupCodes.ACCOUNT_TYPE_BILL_ACCT),
+				lookupCacheService.resolveStatusId(LookupGroups.ACCOUNT_STATUS, LookupCodes.ACCOUNT_STATUS_ACTIVE));
+
 		customer.setActive(false);
 		customerRepository.save(customer);
 		customerAccountRepository.softDeleteByCustId(custId);
@@ -216,6 +223,19 @@ public class CustomerServiceImpl implements CustomerService {
 
 	@Override
 	@Transactional(readOnly = true)
+	public void deleteAddress(Long custId, Long addressId) {
+		getActiveCustomerOrThrow(custId);
+		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, resolveCustomerDataTypeId());
+		AddressResponse address = rules.ensureAddressBelongsToCustomer(custId, addressId, existing);
+
+		rules.ensureAddressNotPrimary(address);
+		rules.ensureAddressNotLinkedToBillingAccount(customerAccountRepository.existsByAddressIdAndActiveTrue(addressId));
+
+		contactAddressClient.deleteAddress(addressId);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public ContactInfo getContact(Long custId) {
 		getActiveCustomerOrThrow(custId);
 		List<ContactMediumResponse> mediums = contactAddressClient.getContactMediumsByCustomer(custId,
@@ -249,27 +269,30 @@ public class CustomerServiceImpl implements CustomerService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<CustomerAccountResponse> getAccounts(Long custId) {
+	public Page<CustomerAccountResponse> getAccounts(Long custId, Pageable pageable) {
 		getActiveCustomerOrThrow(custId);
-		return customerAccountRepository.findByCustomer_CustIdAndActiveTrue(custId).stream()
-				.map(customerMapper::toResponse)
-				.toList();
+		return customerAccountRepository.findByCustomer_CustIdAndActiveTrue(custId, pageable)
+				.map(customerMapper::toResponse);
 	}
 
 	@Override
 	@Transactional
+	@CacheEvict(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
 	public CustomerAccountResponse createBillingAccount(Long custId, CreateBillingAccountRequest request) {
 		Customer customer = getActiveCustomerOrThrow(custId);
 		rules.ensureAddressProvided(request.addressId(), request.newAddress());
 
-		Long addressId = resolveBillingAddressId(custId, request);
+		Long addressId = resolveBillingAddressId(custId, request.addressId(), request.newAddress());
 
 		CustomerAccount account = new CustomerAccount();
 		account.setCustomer(customer);
 		account.setAccountName(request.accountName());
 		account.setAccountDesc(request.accountDesc());
-		account.setAccountTpId(DefaultLookupValues.BILLING_ACCOUNT_TYPE_ID);
+		account.setAccountTpId(
+				lookupCacheService.resolveTypeId(LookupGroups.ACCOUNT_TYPE, LookupCodes.ACCOUNT_TYPE_BILL_ACCT));
 		account.setAddressId(addressId);
+		account.setAcctStId(
+				lookupCacheService.resolveStatusId(LookupGroups.ACCOUNT_STATUS, LookupCodes.ACCOUNT_STATUS_ACTIVE));
 		// acct_no NOT NULL+UNIQUE oldugu icin gecici bir deger ile ilk kayit yapilir,
 		// IDENTITY'den donen custAcctId ile asil numara ikinci kayitta yazilir.
 		account.setAccountNo(UUID.randomUUID().toString());
@@ -281,22 +304,61 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	@Override
+	@Transactional
+	@CacheEvict(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
+	public CustomerAccountResponse updateBillingAccount(Long custId, Long accountId,
+			UpdateBillingAccountRequest request) {
+		getActiveCustomerOrThrow(custId);
+		rules.ensureAddressProvided(request.addressId(), request.newAddress());
+		CustomerAccount account = customerAccountRepository
+				.findByCustAcctIdAndCustomer_CustIdAndActiveTrue(accountId, custId)
+				.orElseThrow(() -> new BillingAccountNotFoundException(custId, accountId));
+
+		Long addressId = resolveBillingAddressId(custId, request.addressId(), request.newAddress());
+
+		// accountNo/accountTpId burada DEGISTIRILMEZ - sadece name/desc/adres guncellenebilir.
+		account.setAccountName(request.accountName());
+		account.setAccountDesc(request.accountDesc());
+		account.setAddressId(addressId);
+		account = customerAccountRepository.save(account);
+
+		return customerMapper.toResponse(account);
+	}
+
+	@Override
+	@Transactional
+	@CacheEvict(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
+	public void deleteBillingAccount(Long custId, Long accountId) {
+		getActiveCustomerOrThrow(custId);
+		CustomerAccount account = customerAccountRepository
+				.findByCustAcctIdAndCustomer_CustIdAndActiveTrue(accountId, custId)
+				.orElseThrow(() -> new BillingAccountNotFoundException(custId, accountId));
+
+		// Urun guard'i (ACC-004, pasif hesaba bagli urun) order-service'i bekliyor - TODO,
+		// burada uygulanmiyor (bkz. BRAIN SS3 FR-011).
+		rules.ensureBillingAccountNotActive(account,
+				lookupCacheService.resolveStatusId(LookupGroups.ACCOUNT_STATUS, LookupCodes.ACCOUNT_STATUS_ACTIVE));
+
+		account.setActive(false);
+		customerAccountRepository.save(account);
+	}
+
+	@Override
 	@Transactional(readOnly = true)
 	public boolean existsAccountByAddressId(Long addressId) {
 		return customerAccountRepository.existsByAddressIdAndActiveTrue(addressId);
 	}
 
-	private Long resolveBillingAddressId(Long custId, CreateBillingAccountRequest request) {
+	private Long resolveBillingAddressId(Long custId, Long addressId, AddressInfo newAddress) {
 		Long dataTypeId = resolveCustomerDataTypeId();
-		if (request.newAddress() != null) {
-			CreateAddressRequest command = new CreateAddressRequest(custId, dataTypeId, request.newAddress().cityId(),
-					request.newAddress().streetName(), request.newAddress().buildingName(),
-					request.newAddress().addressDesc(), false);
+		if (newAddress != null) {
+			CreateAddressRequest command = new CreateAddressRequest(custId, dataTypeId, newAddress.cityId(),
+					newAddress.streetName(), newAddress.buildingName(), newAddress.addressDesc(), false);
 			return contactAddressClient.addAddress(command).id();
 		}
 		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, dataTypeId);
-		rules.ensureAddressBelongsToCustomer(custId, request.addressId(), existing);
-		return request.addressId();
+		rules.ensureAddressBelongsToCustomer(custId, addressId, existing);
+		return addressId;
 	}
 
 	/**
@@ -336,11 +398,11 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	private Long resolveCustomerDataTypeId() {
-		return lookupCacheService.resolveId(LookupGroups.DATA_TYPE, LookupCodes.DATA_TYPE_CUSTOMER);
+		return lookupCacheService.resolveDataTypeId(LookupCodes.TABLE_NAME_CUSTOMER);
 	}
 
 	private Long resolveContactMediumTypeId(String code) {
-		return lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, code);
+		return lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, code);
 	}
 
 	private Customer getActiveCustomerOrThrow(Long custId) {
@@ -357,7 +419,10 @@ public class CustomerServiceImpl implements CustomerService {
 		CustomerAccount account = new CustomerAccount();
 		account.setCustomer(customer);
 		account.setAccountNo(AccountDefaults.formatAccountNo(customer.getCustId()));
-		account.setAccountTpId(DefaultLookupValues.DEFAULT_ACCOUNT_TYPE_ID);
+		account.setAccountTpId(
+				lookupCacheService.resolveTypeId(LookupGroups.ACCOUNT_TYPE, LookupCodes.ACCOUNT_TYPE_CUST_ACCT));
+		account.setAcctStId(
+				lookupCacheService.resolveStatusId(LookupGroups.ACCOUNT_STATUS, LookupCodes.ACCOUNT_STATUS_ACTIVE));
 		account = customerAccountRepository.save(account);
 
 		customer.getAccounts().add(account);
@@ -410,21 +475,21 @@ public class CustomerServiceImpl implements CustomerService {
 	private List<ContactMediumCommand> toContactMediumCommands(ContactInfo contact) {
 		List<ContactMediumCommand> mediums = new ArrayList<>();
 		mediums.add(new ContactMediumCommand(
-				lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_EMAIL),
+				lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_EMAIL),
 				contact.email()));
 		mediums.add(new ContactMediumCommand(
-				lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE,
+				lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE,
 						LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE),
 				contact.mobilePhone()));
 		if (StringUtils.hasText(contact.homePhone())) {
 			mediums.add(new ContactMediumCommand(
-					lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE,
+					lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE,
 							LookupCodes.CONTACT_MEDIUM_HOME_PHONE),
 					contact.homePhone()));
 		}
 		if (StringUtils.hasText(contact.fax())) {
 			mediums.add(new ContactMediumCommand(
-					lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_FAX),
+					lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_FAX),
 					contact.fax()));
 		}
 		return mediums;

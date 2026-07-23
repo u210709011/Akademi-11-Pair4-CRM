@@ -60,7 +60,7 @@ class ContactMediumEventListenerTest {
 				ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, 10L, DataTypeIds.PARTY, MOBILE_PHONE_TYPE_ID,
 				"5551234567");
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
 				.thenReturn(MOBILE_PHONE_TYPE_ID);
 
 		listener.onContactMediumEvent(event);
@@ -74,7 +74,7 @@ class ContactMediumEventListenerTest {
 				ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, 10L, DataTypeIds.CUSTOMER, OTHER_TYPE_ID,
 				"ahmet@example.com");
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
 				.thenReturn(MOBILE_PHONE_TYPE_ID);
 
 		listener.onContactMediumEvent(event);
@@ -88,7 +88,7 @@ class ContactMediumEventListenerTest {
 		CustomerSearchView view = new CustomerSearchView();
 		view.setCustId(10L);
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
 				.thenReturn(MOBILE_PHONE_TYPE_ID);
 		when(customerSearchViewRepository.findById(10L)).thenReturn(Optional.of(view));
 
@@ -105,7 +105,7 @@ class ContactMediumEventListenerTest {
 		view.setCustId(10L);
 		view.setGsm("5551234567");
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
 				.thenReturn(MOBILE_PHONE_TYPE_ID);
 		when(customerSearchViewRepository.findById(10L)).thenReturn(Optional.of(view));
 
@@ -121,7 +121,7 @@ class ContactMediumEventListenerTest {
 		view.setCustId(10L);
 		view.setGsm("5551234567");
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
 				.thenReturn(MOBILE_PHONE_TYPE_ID);
 		when(customerSearchViewRepository.findById(10L)).thenReturn(Optional.of(view));
 
@@ -134,7 +134,7 @@ class ContactMediumEventListenerTest {
 	void onContactMediumEvent_skipsSync_whenCustomerSearchViewNotFound() {
 		ContactMediumEvent event = mobilePhoneEvent(ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, "5551234567");
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
 				.thenReturn(MOBILE_PHONE_TYPE_ID);
 		when(customerSearchViewRepository.findById(10L)).thenReturn(Optional.empty());
 
@@ -147,7 +147,7 @@ class ContactMediumEventListenerTest {
 	void onContactMediumEvent_throwsLookupServiceUnavailable_whenLookupCacheFails() {
 		ContactMediumEvent event = mobilePhoneEvent(ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, "5551234567");
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
 				.thenThrow(new RuntimeException("401 Unauthorized"));
 
 		assertThatThrownBy(() -> listener.onContactMediumEvent(event))
