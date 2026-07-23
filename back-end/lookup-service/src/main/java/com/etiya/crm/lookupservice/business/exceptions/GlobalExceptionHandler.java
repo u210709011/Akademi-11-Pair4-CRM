@@ -1,5 +1,6 @@
 package com.etiya.crm.lookupservice.business.exceptions;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -16,10 +17,16 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-	@ExceptionHandler(LookupNotFoundException.class)
-	public ResponseEntity<ErrorResponse> handleLookupNotFoundException(LookupNotFoundException ex,
+	@ExceptionHandler(EntityNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleEntityNotFoundException(EntityNotFoundException ex,
 			HttpServletRequest request) {
 		return build(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+	}
+
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.CONFLICT, "Veri butunlugu ihlali (benzersizlik/FK kisiti).", request);
 	}
 
 	@ExceptionHandler(BusinessException.class)
