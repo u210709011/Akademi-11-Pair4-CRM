@@ -95,4 +95,9 @@ export class CustomerService {
   onboard(request: OnboardCustomerRequest): Observable<OnboardCustomerResponse> {
     return this.http.post<OnboardCustomerResponse>(`${environment.apiGatewayUrl}/api/v1/customers/onboarding`, request);
   }
+
+  // FR-007: musteri + hesaplarini soft-delete eder. Aktif hesap guard'i backend'de henuz yok (bkz. backend notlari).
+  deleteCustomer(custId: number): Observable<void> {
+    return this.http.delete<void>(`${environment.apiGatewayUrl}/api/v1/customers/${custId}`);
+  }
 }

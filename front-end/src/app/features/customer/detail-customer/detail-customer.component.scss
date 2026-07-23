@@ -652,6 +652,65 @@
   color: #dc2626;
 }
 
+.delete-confirm-card {
+  max-width: 460px;
+}
+
+.delete-confirm-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px;
+}
+
+.delete-confirm-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+  border-radius: 50%;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+.delete-confirm-message {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.delete-confirm-error {
+  padding: 0 24px;
+}
+
+.delete-confirm-button {
+  color: #fff;
+  background: #dc2626;
+  border: none;
+
+  &:hover {
+    filter: brightness(1.05);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background: #f3a5a5;
+  }
+}
+
 .field-error {
   font-size: 10px;
   font-weight: 600;

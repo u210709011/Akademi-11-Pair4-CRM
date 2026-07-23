@@ -99,6 +99,10 @@ export class DetailCustomerComponent {
   protected readonly addressSaveError = signal<string | null>(null);
   protected readonly addressActionError = signal<string | null>(null);
 
+  protected readonly isDeleteConfirmOpen = signal(false);
+  protected readonly isDeletingCustomer = signal(false);
+  protected readonly deleteError = signal<string | null>(null);
+
   protected readonly addressModel = signal<AddressFormModel>({ ...EMPTY_ADDRESS_FORM });
 
   protected readonly addressForm = form(this.addressModel, path => {
@@ -159,6 +163,32 @@ export class DetailCustomerComponent {
 
   protected goToUpdate(): void {
     this.router.navigate(['/detail-customer', this.custId, 'update']);
+  }
+
+  protected openDeleteConfirm(): void {
+    this.deleteError.set(null);
+    this.isDeleteConfirmOpen.set(true);
+  }
+
+  protected closeDeleteConfirm(): void {
+    this.isDeleteConfirmOpen.set(false);
+  }
+
+  protected confirmDeleteCustomer(): void {
+    this.isDeletingCustomer.set(true);
+    this.deleteError.set(null);
+
+    this.customerService.deleteCustomer(this.custId).subscribe({
+      next: () => {
+        this.isDeletingCustomer.set(false);
+        this.isDeleteConfirmOpen.set(false);
+        this.router.navigateByUrl('/search-customer');
+      },
+      error: () => {
+        this.isDeletingCustomer.set(false);
+        this.deleteError.set(this.i18n.t('detail.deleteError'));
+      }
+    });
   }
 
   protected genderLabel(genderId: number): string {
