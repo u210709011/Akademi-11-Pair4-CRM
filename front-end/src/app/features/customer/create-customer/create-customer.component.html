@@ -40,9 +40,32 @@
     </div>
   </div>
 
+  @if (formState.submitError()) {
+      <div class="identity-error-banner">{{ formState.submitError() }}</div>
+  }
+
   <div class="wizard-actions">
       <button type="button" class="cancel-button" (click)="cancel()">{{ i18n.t('create.cancelBtn') }}</button>
-      <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="nextTab()">{{ i18n.t('create.nextBtn') }}</button>
+
+      <div class="next-button-group">
+          @if (formState.isVerifyingIdentity()) {
+              <span class="verifying-indicator">
+                  <svg class="verifying-spinner" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                  </svg>
+                  {{ i18n.t('create.verifyingIdentity') }}
+              </span>
+          } @else if (formState.isSubmitting()) {
+              <span class="verifying-indicator">
+                  <svg class="verifying-spinner" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                  </svg>
+                  {{ i18n.t('create.submitting') }}
+              </span>
+          }
+
+          <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="nextTab()">{{ nextButtonLabel() }}</button>
+      </div>
   </div>
 
 </div>

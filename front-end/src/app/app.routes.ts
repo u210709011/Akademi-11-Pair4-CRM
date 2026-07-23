@@ -16,6 +16,11 @@ export const routes: Routes = [
     component: AuthLayoutComponent,
     children: [
       {
+        path: '',
+        redirectTo: 'login',
+        pathMatch: 'full'
+      },
+      {
         path: 'login',
         component: LoginComponent
       }
@@ -34,7 +39,7 @@ export const routes: Routes = [
         component: CreateCustomerComponent
       },
       {
-        path: 'detail-customer',
+        path: 'detail-customer/:custId',
         component: DetailCustomerComponent
       },
       {
@@ -46,10 +51,5 @@ export const routes: Routes = [
         component: B2bComponent
       }
     ]
-  },
-  {
-    path: '',
-    redirectTo: 'login',
-    pathMatch: 'full'
   }
 ];

@@ -73,7 +73,11 @@ html {
   }
 
   // gunlerin sola kaymasina sebep oluyordu - hucre yerinde kalsin diye
+  // ayın ilk günü pazarsa yukarıda row ekli şekilde geliyorsu, importantla ezmek gerekti
   .mat-calendar-body-label {
     visibility: hidden;
+    height: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
   }
 }

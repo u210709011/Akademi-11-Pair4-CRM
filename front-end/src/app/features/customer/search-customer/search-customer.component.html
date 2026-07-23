@@ -178,7 +178,20 @@
                 </div>
             } @else if (searchResults().length === 0) {
                 <div class="results-empty-state">
-                    <p class="results-empty-description">{{ i18n.t('search.noResults') }}</p>
+                    <span class="results-empty-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <ellipse cx="10" cy="5" rx="7" ry="2.5" />
+                            <path d="M3 5v10c0 1.4 3.1 2.5 7 2.5" />
+                            <path d="M3 10c0 1.4 3.1 2.5 7 2.5" />
+                            <circle cx="16.5" cy="16.5" r="4" />
+                            <path d="M19.5 19.5 22 22" />
+                        </svg>
+                    </span>
+                    <h3 class="results-empty-title">{{ i18n.t('search.noResults') }}</h3>
+                    <p class="results-empty-description">{{ i18n.t('search.noResultsSubtitle') }}</p>
+                    <button type="button" class="create-customer-button" (click)="goToCreateCustomer()">
+                        {{ i18n.t('search.createCustomerBtn') }}
+                    </button>
                 </div>
             } @else {
                 <table class="results-table">
@@ -243,7 +256,9 @@
                     <tbody>
                         @for (customer of sortedResults(); track customer.custId) {
                             <tr>
-                                <td>{{ customer.custId }}</td>
+                                <td>
+                                    <button type="button" class="customer-id-link" (click)="viewCustomerDetail(customer)">{{ customer.custId }}</button>
+                                </td>
                                 <td>{{ customer.firstName }}</td>
                                 <td>{{ customer.middleName ?? '-' }}</td>
                                 <td>{{ customer.lastName }}</td>
