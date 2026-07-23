@@ -1,11 +1,11 @@
-package com.etiya.crm.lookupservice.business.dtos.requests;
+package com.etiya.crm.shared.contracts.gnlchar;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-@Schema(description = "POST /api/v1/characteristics istek govdesi.")
+@Schema(description = "lookup-service POST /api/v1/characteristics istek govdesi.")
 public record CreateGnlCharRequest(
 
         @Schema(description = "Karakteristik adi.", example = "Renk")

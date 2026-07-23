@@ -1,10 +1,10 @@
-package com.etiya.crm.lookupservice.business.dtos.responses;
+package com.etiya.crm.shared.contracts.typevalue;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 
-@Schema(description = "Bir GNL_TP/GNL_ST grubuna ait deger.")
+@Schema(description = "Bir is tablosuna atanmis polimorfik tip etiketi.")
 public record TypeValueResponse(
 
         Long typeValueId,

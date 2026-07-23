@@ -1,11 +1,9 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateTypeValueRequest;
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateTypeValueRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.TypeValueResponse;
+import com.etiya.crm.shared.contracts.typevalue.CreateTypeValueRequest;
+import com.etiya.crm.shared.contracts.typevalue.UpdateTypeValueRequest;
+import com.etiya.crm.shared.contracts.typevalue.TypeValueResponse;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
-import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlStRepository;
-import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlTpRepository;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.TypeValueRepository;
 import com.etiya.crm.lookupservice.entities.concretes.TypeValue;
 import com.etiya.crm.lookupservice.mapper.TypeValueMapper;
@@ -30,48 +28,30 @@ class TypeValueManagerTest {
     @Mock
     private TypeValueRepository typeValueRepository;
 
-    @Mock
-    private GnlTpRepository gnlTpRepository;
-
-    @Mock
-    private GnlStRepository gnlStRepository;
-
     private final TypeValueMapper typeValueMapper = new TypeValueMapperImpl();
 
     private TypeValueManager manager() {
-        return new TypeValueManager(typeValueRepository, gnlTpRepository, gnlStRepository, typeValueMapper);
+        return new TypeValueManager(typeValueRepository, typeValueMapper);
     }
 
     private TypeValue typeValue(Long id) {
         TypeValue typeValue = new TypeValue();
         typeValue.setTypeValueId(id);
-        typeValue.setTableName("GNL_TP");
-        typeValue.setFieldName(1L);
-        typeValue.setValue("CODE");
-        typeValue.setDescription("Description");
+        typeValue.setTableName("PARTY");
+        typeValue.setFieldName(9L);
+        typeValue.setDescription("Party_id");
         return typeValue;
     }
 
     @Test
-    void add_throwsEntityNotFoundException_whenParentGnlTpMissing() {
-        CreateTypeValueRequest request = new CreateTypeValueRequest("GNL_TP", 1L, "Yeni deger", "NEW", null);
-        when(gnlTpRepository.existsById(1L)).thenReturn(false);
-
-        assertThatThrownBy(() -> manager().add(request)).isInstanceOf(EntityNotFoundException.class);
-
-        verify(typeValueRepository, never()).save(any());
-    }
-
-    @Test
-    void add_savesTypeValue_whenParentExists() {
-        CreateTypeValueRequest request = new CreateTypeValueRequest("GNL_ST", 2L, "Yeni deger", "NEW", null);
-        when(gnlStRepository.existsById(2L)).thenReturn(true);
+    void add_savesTypeValue() {
+        CreateTypeValueRequest request = new CreateTypeValueRequest("CUST", 12L, "Cust_id", null, null);
         when(typeValueRepository.save(any(TypeValue.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         TypeValueResponse response = manager().add(request);
 
-        assertThat(response.tableName()).isEqualTo("GNL_ST");
-        assertThat(response.fieldName()).isEqualTo(2L);
+        assertThat(response.tableName()).isEqualTo("CUST");
+        assertThat(response.fieldName()).isEqualTo(12L);
     }
 
     @Test
@@ -83,24 +63,33 @@ class TypeValueManagerTest {
 
     @Test
     void delete_deletesTypeValue() {
-        when(typeValueRepository.findById(500L)).thenReturn(Optional.of(typeValue(500L)));
+        when(typeValueRepository.findById(9L)).thenReturn(Optional.of(typeValue(9L)));
 
-        manager().delete(500L);
+        manager().delete(9L);
 
-        verify(typeValueRepository).deleteById(500L);
+        verify(typeValueRepository).deleteById(9L);
+    }
+
+    @Test
+    void delete_throwsEntityNotFoundException_whenMissing() {
+        when(typeValueRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> manager().delete(999L)).isInstanceOf(EntityNotFoundException.class);
+
+        verify(typeValueRepository, never()).deleteById(any());
     }
 
     @Test
     void update_changesDescriptionValueAndUsingModuleName() {
-        TypeValue existing = typeValue(4001L);
-        when(typeValueRepository.findById(4001L)).thenReturn(Optional.of(existing));
+        TypeValue existing = typeValue(9L);
+        when(typeValueRepository.findById(9L)).thenReturn(Optional.of(existing));
         when(typeValueRepository.save(any(TypeValue.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UpdateTypeValueRequest request = new UpdateTypeValueRequest("Degisen aciklama", "CHANGED", "customer-service");
-        TypeValueResponse response = manager().update(4001L, request);
+        UpdateTypeValueRequest request = new UpdateTypeValueRequest("Degisen aciklama", "CHANGED", "party-service");
+        TypeValueResponse response = manager().update(9L, request);
 
         assertThat(response.description()).isEqualTo("Degisen aciklama");
         assertThat(response.value()).isEqualTo("CHANGED");
-        assertThat(response.usingModuleName()).isEqualTo("customer-service");
+        assertThat(response.usingModuleName()).isEqualTo("party-service");
     }
 }

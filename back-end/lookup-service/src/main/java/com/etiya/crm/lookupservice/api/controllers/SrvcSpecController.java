@@ -1,9 +1,9 @@
 package com.etiya.crm.lookupservice.api.controllers;
 
 import com.etiya.crm.lookupservice.business.abstracts.SrvcSpecService;
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateSrvcSpecRequest;
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateSrvcSpecRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.SrvcSpecResponse;
+import com.etiya.crm.shared.contracts.srvcspec.CreateSrvcSpecRequest;
+import com.etiya.crm.shared.contracts.srvcspec.UpdateSrvcSpecRequest;
+import com.etiya.crm.shared.contracts.srvcspec.SrvcSpecResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

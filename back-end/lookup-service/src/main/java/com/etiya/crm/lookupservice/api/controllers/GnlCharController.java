@@ -1,9 +1,9 @@
 package com.etiya.crm.lookupservice.api.controllers;
 
 import com.etiya.crm.lookupservice.business.abstracts.GnlCharService;
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateGnlCharRequest;
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateGnlCharRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.GnlCharResponse;
+import com.etiya.crm.shared.contracts.gnlchar.CreateGnlCharRequest;
+import com.etiya.crm.shared.contracts.gnlchar.UpdateGnlCharRequest;
+import com.etiya.crm.shared.contracts.gnlchar.GnlCharResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

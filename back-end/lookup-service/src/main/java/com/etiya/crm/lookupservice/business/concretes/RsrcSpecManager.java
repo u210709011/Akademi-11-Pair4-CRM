@@ -1,9 +1,9 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
 import com.etiya.crm.lookupservice.business.abstracts.RsrcSpecService;
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateRsrcSpecRequest;
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateRsrcSpecRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.RsrcSpecResponse;
+import com.etiya.crm.shared.contracts.rsrcspec.CreateRsrcSpecRequest;
+import com.etiya.crm.shared.contracts.rsrcspec.UpdateRsrcSpecRequest;
+import com.etiya.crm.shared.contracts.rsrcspec.RsrcSpecResponse;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlStRepository;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.RsrcSpecRepository;

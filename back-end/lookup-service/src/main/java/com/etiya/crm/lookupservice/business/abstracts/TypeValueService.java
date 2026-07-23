@@ -1,8 +1,8 @@
 package com.etiya.crm.lookupservice.business.abstracts;
 
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateTypeValueRequest;
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateTypeValueRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.TypeValueResponse;
+import com.etiya.crm.shared.contracts.typevalue.CreateTypeValueRequest;
+import com.etiya.crm.shared.contracts.typevalue.UpdateTypeValueRequest;
+import com.etiya.crm.shared.contracts.typevalue.TypeValueResponse;
 
 import java.util.List;
 

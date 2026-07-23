@@ -1,9 +1,9 @@
 package com.etiya.crm.lookupservice.api.controllers;
 
 import com.etiya.crm.lookupservice.business.abstracts.TypeValueService;
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateTypeValueRequest;
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateTypeValueRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.TypeValueResponse;
+import com.etiya.crm.shared.contracts.typevalue.CreateTypeValueRequest;
+import com.etiya.crm.shared.contracts.typevalue.UpdateTypeValueRequest;
+import com.etiya.crm.shared.contracts.typevalue.TypeValueResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -21,7 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Type Values (TYPE_VALUE)", description = "GNL_TP/GNL_ST grup degerleri CRUD")
+@Tag(name = "Type Values (TYPE_VALUE)",
+        description = "Is tablolarina (PROD, PARTY, CUST, CUST_ACCT...) atanan polimorfik tip etiketleri CRUD")
 @RestController
 @RequestMapping("/api/v1/type-values")
 @RequiredArgsConstructor
@@ -41,7 +42,7 @@ public class TypeValueController {
         return ResponseEntity.ok(typeValueService.getById(id));
     }
 
-    @Operation(summary = "Yeni deger ekle", description = "tableName+fieldName ile isaret edilen GNL_TP/GNL_ST satiri var olmali.")
+    @Operation(summary = "Yeni tip etiketi ekle", description = "tableName benzersiz olmali - her is tablosunun tek bir tip etiketi olur.")
     @PostMapping
     public ResponseEntity<TypeValueResponse> add(@Valid @RequestBody CreateTypeValueRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(typeValueService.add(request));

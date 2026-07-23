@@ -1,30 +1,30 @@
-package com.etiya.crm.lookupservice.business.dtos.requests;
+package com.etiya.crm.shared.contracts.gnltp;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-@Schema(description = "POST /api/v1/general-types istek govdesi.")
+@Schema(description = "lookup-service POST /api/v1/general-types istek govdesi.")
 public record CreateGnlTpRequest(
 
-        @Schema(description = "Grup adi.", example = "Account Type")
+        @Schema(description = "Bu degerin gosterim adi.", example = "Musteri Hesap")
         @NotBlank @Size(max = 100)
         String name,
 
-        @Schema(description = "Aciklama.", example = "Musteri hesap tipi")
+        @Schema(description = "Aciklama.", example = "Musteri Hesap")
         @NotBlank @Size(max = 100)
         String descr,
 
-        @Schema(description = "Grup kodu - TYPE_VALUE'nun join anahtari, benzersiz olmali.", example = "ACCT_TP")
+        @Schema(description = "Bu degerin kendi kisa kodu (ent_code_name ile birlikte benzersiz olmali).", example = "CUST_ACCT")
         @NotBlank @Size(max = 64)
         String shrtCode,
 
-        @Schema(description = "Bu tipi kullanan entity'nin kod adi.", example = "ACCT_TP")
+        @Schema(description = "Grup anahtari - bu degerin ait oldugu grup.", example = "ACCOUNT_TYPE")
         @NotBlank @Size(max = 100)
         String entCodeName,
 
-        @Schema(description = "Bu tipi kullanan entity'nin adi (opsiyonel).", example = "CustAcct")
+        @Schema(description = "Pratikte entCodeName ile ayni deger girilir.", example = "ACCOUNT_TYPE")
         @Size(max = 100)
         String entName,
 

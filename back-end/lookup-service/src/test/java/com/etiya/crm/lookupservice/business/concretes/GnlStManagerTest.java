@@ -50,4 +50,25 @@ class GnlStManagerTest {
         assertThat(gnlSt.isActive()).isFalse();
         verify(gnlStRepository).save(gnlSt);
     }
+
+    @Test
+    void getByEntCodeNameAndShrtCode_returnsMappedResponse() {
+        GnlSt gnlSt = new GnlSt();
+        gnlSt.setGnlStId(5L);
+        gnlSt.setEntCodeName("CUST_STATUS");
+        gnlSt.setShrtCode("ACTIVE");
+        when(gnlStRepository.findByEntCodeNameAndShrtCode("CUST_STATUS", "ACTIVE")).thenReturn(Optional.of(gnlSt));
+
+        var response = manager().getByEntCodeNameAndShrtCode("CUST_STATUS", "ACTIVE");
+
+        assertThat(response.gnlStId()).isEqualTo(5L);
+    }
+
+    @Test
+    void getByEntCodeNameAndShrtCode_throwsEntityNotFoundException_whenMissing() {
+        when(gnlStRepository.findByEntCodeNameAndShrtCode("CUST_STATUS", "UNKNOWN")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> manager().getByEntCodeNameAndShrtCode("CUST_STATUS", "UNKNOWN"))
+                .isInstanceOf(EntityNotFoundException.class);
+    }
 }

@@ -1,18 +1,17 @@
-package com.etiya.crm.lookupservice.business.dtos.responses;
+package com.etiya.crm.shared.contracts.gnlchar;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 
-@Schema(description = "Genel tip grubu.")
-public record GnlTpResponse(
+@Schema(description = "Karakteristik tanimi.")
+public record GnlCharResponse(
 
-        Long gnlTpId,
+        Long charId,
         String name,
         String descr,
+        String prvdrCls,
         String shrtCode,
-        String entCodeName,
-        String entName,
         boolean active,
         Instant cdate,
         String cuser,

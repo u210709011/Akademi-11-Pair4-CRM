@@ -1,7 +1,7 @@
 package com.etiya.crm.lookupservice.mapper;
 
-import com.etiya.crm.lookupservice.business.dtos.requests.CreateTypeValueRequest;
-import com.etiya.crm.lookupservice.business.dtos.responses.TypeValueResponse;
+import com.etiya.crm.shared.contracts.typevalue.CreateTypeValueRequest;
+import com.etiya.crm.shared.contracts.typevalue.TypeValueResponse;
 import com.etiya.crm.lookupservice.entities.concretes.TypeValue;
 import org.mapstruct.Mapper;
 

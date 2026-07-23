@@ -1,6 +1,6 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
-import com.etiya.crm.lookupservice.business.dtos.requests.UpdateGnlTpRequest;
+import com.etiya.crm.shared.contracts.gnltp.UpdateGnlTpRequest;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlTpRepository;
 import com.etiya.crm.lookupservice.entities.concretes.GnlTp;
@@ -64,5 +64,26 @@ class GnlTpManagerTest {
         manager().update(1L, request);
 
         assertThat(gnlTp.getShrtCode()).isEqualTo("NEW_CODE");
+    }
+
+    @Test
+    void getByEntCodeNameAndShrtCode_returnsMappedResponse() {
+        GnlTp gnlTp = new GnlTp();
+        gnlTp.setGnlTpId(5L);
+        gnlTp.setEntCodeName("CNTC_MEDIUM");
+        gnlTp.setShrtCode("GSM");
+        when(gnlTpRepository.findByEntCodeNameAndShrtCode("CNTC_MEDIUM", "GSM")).thenReturn(Optional.of(gnlTp));
+
+        var response = manager().getByEntCodeNameAndShrtCode("CNTC_MEDIUM", "GSM");
+
+        assertThat(response.gnlTpId()).isEqualTo(5L);
+    }
+
+    @Test
+    void getByEntCodeNameAndShrtCode_throwsEntityNotFoundException_whenMissing() {
+        when(gnlTpRepository.findByEntCodeNameAndShrtCode("CNTC_MEDIUM", "UNKNOWN")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> manager().getByEntCodeNameAndShrtCode("CNTC_MEDIUM", "UNKNOWN"))
+                .isInstanceOf(EntityNotFoundException.class);
     }
 }
