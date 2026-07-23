@@ -8,10 +8,15 @@ import org.springframework.stereotype.Component;
 
 import com.etiya.crm.customerservice.business.dtos.requests.AddressInfo;
 import com.etiya.crm.customerservice.business.exceptions.AddressLimitExceededException;
+import com.etiya.crm.customerservice.business.exceptions.AddressLinkedToAccountException;
 import com.etiya.crm.customerservice.business.exceptions.AddressNotFoundException;
+import com.etiya.crm.customerservice.business.exceptions.BillingAccountActiveCannotBeDeletedException;
 import com.etiya.crm.customerservice.business.exceptions.BillingAccountAddressRequiredException;
+import com.etiya.crm.customerservice.business.exceptions.CustomerHasActiveBillingAccountException;
 import com.etiya.crm.customerservice.business.exceptions.DuplicateNationalIdException;
 import com.etiya.crm.customerservice.business.exceptions.InvalidBirthDateException;
+import com.etiya.crm.customerservice.business.exceptions.PrimaryAddressCannotBeDeletedException;
+import com.etiya.crm.customerservice.entities.concretes.CustomerAccount;
 import com.etiya.crm.shared.contracts.contactmedium.AddressCommand;
 import com.etiya.crm.shared.contracts.address.AddressResponse;
 
@@ -72,6 +77,50 @@ public class CustomerBusinessRules {
 	public void ensureAddressProvided(Long addressId, AddressInfo newAddress) {
 		if (addressId == null && newAddress == null) {
 			throw new BillingAccountAddressRequiredException();
+		}
+	}
+
+	/** FR-005 ACC-009: birincil adres silinemez. */
+	public void ensureAddressNotPrimary(AddressResponse address) {
+		if (address.primary()) {
+			throw new PrimaryAddressCannotBeDeletedException();
+		}
+	}
+
+	/** FR-005 ACC-010/011: bir fatura hesabina bagli adres silinemez. */
+	public void ensureAddressNotLinkedToBillingAccount(boolean linkedToBillingAccount) {
+		if (linkedToBillingAccount) {
+			throw new AddressLinkedToAccountException();
+		}
+	}
+
+	/**
+	 * FR-007 ACC-003: aktif fatura hesabi (BILL_ACCT tipi, acct_st_id null ya da ACTIVE)
+	 * bulunan musteri silinemez. "Fatura hesabi" burada FR-008..011'deki Billing Account
+	 * (BILL_ACCT) ile ayni kavram sayilir - onboarding'de acilan varsayilan CUST_ACCT tipi
+	 * hesap DAHIL DEGILDIR. BRAIN SS6 madde 2 hala acik soru: ekip varsayilan hesabin da
+	 * sayilmasina karar verirse burada sadece billingAccountTypeId filtresi kaldirilir.
+	 * Urun guard'i (ACC-004, pasif hesaba bagli urun) order-service bekliyor - TODO,
+	 * bu metotta uygulanmiyor.
+	 */
+	public void ensureNoActiveBillingAccount(List<CustomerAccount> accounts, Long billingAccountTypeId,
+			Long activeStatusId) {
+		boolean hasActiveBillingAccount = accounts.stream()
+				.anyMatch(account -> billingAccountTypeId.equals(account.getAccountTpId())
+						&& (account.getAcctStId() == null || activeStatusId.equals(account.getAcctStId())));
+		if (hasActiveBillingAccount) {
+			throw new CustomerHasActiveBillingAccountException();
+		}
+	}
+
+	/**
+	 * FR-011 ACC-003: aktif (acct_st_id null ya da ACTIVE) fatura hesabi silinemez.
+	 * Urun guard'i (ACC-004) order-service bekliyor - TODO, bu metotta uygulanmiyor.
+	 */
+	public void ensureBillingAccountNotActive(CustomerAccount account, Long activeStatusId) {
+		boolean isActive = account.getAcctStId() == null || activeStatusId.equals(account.getAcctStId());
+		if (isActive) {
+			throw new BillingAccountActiveCannotBeDeletedException();
 		}
 	}
 }
