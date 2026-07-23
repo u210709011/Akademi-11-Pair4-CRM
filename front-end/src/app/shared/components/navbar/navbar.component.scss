@@ -40,7 +40,7 @@
     }
 
     &:hover {
-      color: #fff;
+      color: var(--text-on-navy);
     }
   }
 
@@ -75,7 +75,7 @@
     font-size: 12px;
     font-weight: 600;
     line-height: 1.5;
-    color: #fff;
+    color: var(--text-on-navy);
     text-align: right;
   }
 }
@@ -84,7 +84,7 @@
   width: 14px;
   height: 14px;
   fill: none;
-  stroke:  #fff;
+  stroke:  var(--text-on-navy);
   stroke-width: 2;
   transition: transform 0.15s ease;
 }
@@ -103,7 +103,7 @@
     padding: 8px 12px;
     font-size: 13px;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-on-navy);
     cursor: pointer;
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.16);
@@ -122,7 +122,7 @@
     z-index: 20;
     overflow: hidden;
     min-width: 160px;
-    background: #fff;
+    background: var(--surface-card);
     border-radius: 12px;
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
   }
@@ -164,11 +164,11 @@
     }
 
     &.active {
-      color: #F47920;
+      color: var(--etiya-orange);
       background: rgba(244, 121, 32, 0.08);
 
       .lang-code {
-        color: #F47920;
+        color: var(--etiya-orange);
       }
     }
   }
@@ -202,7 +202,7 @@
       justify-content: center;
       width: 28px;
       height: 28px;
-      color: #F47920;
+      color: var(--etiya-orange);
       border: 1px solid rgba(244, 121, 32, 0.5);
       border-radius: 50%;
 
@@ -220,7 +220,7 @@
     .profile-name {
       font-size: 14px;
       font-weight: 700;
-      color: #fff;
+      color: var(--text-on-navy);
     }
   }
 
@@ -231,7 +231,7 @@
     z-index: 20;
     overflow: hidden;
     min-width: 170px;
-    background: #fff;
+    background: var(--surface-card);
     border-radius: 12px;
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
   }
@@ -244,7 +244,7 @@
     padding: 12px 16px;
     font-size: 14px;
     font-weight: 600;
-    color: #262830;
+    color: var(--text-body);
     text-align: left;
     cursor: pointer;
     background: none;
@@ -267,7 +267,7 @@
     }
 
     &.logout {
-      color: #DC2626;
+      color: var(--error);
     }
   }
 }

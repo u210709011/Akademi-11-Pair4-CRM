@@ -19,7 +19,7 @@
 
   .required {
     font-size: 12px;
-    color: #F47920;
+    color: var(--etiya-orange);
     vertical-align: super;
   }
 }
@@ -33,7 +33,7 @@
     padding: 10px 40px 10px 12px;
     font-size: 14px;
     color: #111827;
-    background: #fff;
+    background: var(--surface-card);
     border: 1px solid #d1d5db;
     border-radius: 8px;
     box-sizing: border-box;
@@ -45,7 +45,7 @@
 
     &:focus {
       outline: none;
-      border-color: #F47920;
+      border-color: var(--etiya-orange);
       box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15);
     }
   }
@@ -57,7 +57,7 @@
     transform: translateY(-50%);
     width: 18px;
     height: 18px;
-    color: #6b7280;
+    color: var(--text-placeholder);
     pointer-events: none;
   }
 }
@@ -66,14 +66,14 @@
   display: flex;
   align-items: center;
   height: 44px;
-  background: #fff;
+  background: var(--surface-card);
   border: 1px solid #d1d5db;
   border-radius: 8px;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:focus-within {
-    border-color: #F47920;
+    border-color: var(--etiya-orange);
     box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15);
   }
 

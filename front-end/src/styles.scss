@@ -28,9 +28,67 @@ body {
 
 
 :root {
+  // Renkler
+  --etiya-navy: #1B2340;
+  --etiya-navy-deep: #10182E;
+  --etiya-navy-border: #262B38;
+  --etiya-orange: #F47920;
+  --etiya-orange-hover: #DD6912;
+  --etiya-orange-soft: #FEF6F0;
+  --page-bg: #F4F5F7;
+  --surface-card: #FFFFFF;
+  --surface-muted: #F8F9FB;
+  --surface-overlay: rgba(0, 0, 0, 0.40);
+  --border-input: #D0D5DD;
+  --border-subtle: #E2E8F0;
+  --border-hairline: #F3F4F6;
+  --text-primary: #1B2340;
+  --text-body: #262830;
+  --text-secondary: #667085;
+  --text-placeholder: #6B7280;
+  --text-muted: #98A2B3;
+  --text-on-navy: #FFFFFF;
+  --text-on-navy-dim: rgba(255, 255, 255, 0.70);
+  --text-link: #F47920;
+  --error: #DC2626;
+  --error-border: #DC2626;
+  --success: #1F8A5B;
+  --accent-info: #3B6FE0;
+  --accent-info-soft: #EEF3FE;
+  --btn-primary-bg: var(--etiya-orange);
+  --btn-primary-bg-hover: var(--etiya-orange-hover);
+  --btn-primary-fg: #FFFFFF;
+  --btn-secondary-fg: var(--etiya-navy);
+  --btn-disabled-bg: #E5E7EB;
+  --btn-disabled-fg: #98A2B3;
+  --focus-ring: rgba(244, 121, 32, 0.35);
+
+  // Fontlar
   --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-alt: 'Plus Jakarta Sans', sans-serif;
+  --fs-page-title: 28px;
+  --fs-modal-title: 22px;
+  --fs-section: 16px;
+  --fs-tab: 14px;
+  --fs-body: 14px;
+  --fs-info: 15px;
+  --fs-label: 13px;
+  --fs-helper: 12px;
+  --fs-chip: 11px;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --lh-tight: 1;
+  --lh-heading: 1.15;
+  --lh-body: 1.5;
+  --ls-heading: -0.02em;
+  --ls-title: -0.01em;
+  --ls-label: 0.005em;
+  --ls-caps: 0.06em;
+  --text-page-title-size: var(--fs-page-title);
+  --text-label-size: var(--fs-label);
 }
 
 * {
@@ -47,6 +105,16 @@ body {
 body {
   font-family: var(--font-ui);
   font-variant-ligatures: none;
+}
+
+// Tarayicilar button/input/select/textarea'ya body'nin font-family'sini otomatik miras
+// vermez (kendi UA font stack'lerini kullanirlar) - bu yuzden acikca inherit ettiriyoruz.
+button,
+input,
+select,
+textarea,
+optgroup {
+  font-family: inherit;
 }
 
 html {
@@ -87,7 +155,7 @@ html {
 
 .modal-title {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--fs-modal-title);
   font-weight: 800;
   color: #1f2937;
 }

@@ -3,7 +3,7 @@
   flex-direction: column;
   padding: 20px 32px 40px;
   box-sizing: border-box;
-  background-color: #F4F5F7;
+  background-color: var(--page-bg);
 }
 
 .breadcrumb {
@@ -18,7 +18,7 @@
   align-items: center;
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--text-placeholder);
   text-decoration: none;
 
   &:hover {
@@ -49,25 +49,25 @@
 .breadcrumb-current {
   font-size: 13px;
   font-weight: 700;
-  color: #F47920;
+  color: var(--etiya-orange);
 }
 
 .page-title {
   margin: 0 0 20px;
-  font-size: 32px;
+  font-size: var(--fs-page-title);
   font-weight: 800;
-  color: #F47920;
+  color: var(--etiya-orange);
 }
 
 .status-message {
   padding: 24px;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text-placeholder);
 }
 
 .update-card {
   padding: 28px;
-  background: #fff;
+  background: var(--surface-card);
   border-radius: 12px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
@@ -84,7 +84,7 @@
   margin-bottom: 16px;
   font-size: 13px;
   font-weight: 600;
-  color: #dc2626;
+  color: var(--error);
   background: rgba(220, 38, 38, 0.08);
   border: 1px solid rgba(220, 38, 38, 0.3);
   border-radius: 8px;
@@ -116,7 +116,7 @@
     padding: 10px 12px;
     font-size: 14px;
     color: #111827;
-    background: #fff;
+    background: var(--surface-card);
     border: 1px solid #d1d5db;
     border-radius: 8px;
     box-sizing: border-box;
@@ -124,7 +124,7 @@
 
     &:focus {
       outline: none;
-      border-color: #F47920;
+      border-color: var(--etiya-orange);
       box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15);
     }
   }
@@ -132,12 +132,12 @@
   .field-error {
     font-size: 12px;
     font-weight: 600;
-    color: #dc2626;
+    color: var(--error);
   }
 
   .required {
     font-size: 12px;
-    color: #F47920;
+    color: var(--etiya-orange);
     vertical-align: super;
   }
 }
@@ -166,17 +166,17 @@
   --mat-form-field-outlined-outline-width: 1px;
   --mat-form-field-outlined-outline-color: #d1d5db;
   --mat-form-field-outlined-hover-outline-color: #9ca3af;
-  --mat-form-field-outlined-focus-outline-color: #F47920;
+  --mat-form-field-outlined-focus-outline-color: var(--etiya-orange);
   --mat-form-field-outlined-focus-outline-width: 1px;
   --mat-form-field-outlined-label-text-color: #9ca3af;
   --mat-form-field-outlined-input-text-placeholder-color: #9ca3af;
 
-  --mat-datepicker-toggle-icon-color: #6b7280;
-  --mat-datepicker-toggle-active-state-icon-color: #F47920;
+  --mat-datepicker-toggle-icon-color: var(--text-placeholder);
+  --mat-datepicker-toggle-active-state-icon-color: var(--etiya-orange);
 
   ::ng-deep .mat-mdc-text-field-wrapper {
     height: 44px;
-    background-color: #fff;
+    background-color: var(--surface-card);
   }
 
   ::ng-deep .mat-mdc-form-field-flex {
@@ -218,7 +218,7 @@
 
 .previous-button {
   color: #374151;
-  background: #fff;
+  background: var(--surface-card);
   border: 1px solid #d1d5db;
 
   &:hover {
@@ -228,7 +228,7 @@
 
 .save-button {
   color: #fff;
-  background: #F47920;
+  background: var(--etiya-orange);
   border: none;
 
   &:hover {
