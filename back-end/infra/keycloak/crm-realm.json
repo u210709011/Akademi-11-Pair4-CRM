@@ -24,6 +24,22 @@
       "standardFlowEnabled": true,
       "redirectUris": ["*"],
       "webOrigins": ["*"]
+    },
+    {
+      "clientId": "crm-client-short-lived",
+      "name": "CRM Client (30s JWT - test)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "crm-client-short-lived-secret",
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "attributes": {
+        "access.token.lifespan": "30"
+      }
     }
   ],
   "roles": {
@@ -38,6 +54,17 @@
       "email": "salesperson@example.com",
       "firstName": "Sales",
       "lastName": "Person",
+      "credentials": [
+        { "type": "password", "value": "password", "temporary": false }
+      ],
+      "realmRoles": ["CRM_AGENT"]
+    },
+    {
+      "username": "short-lived-test",
+      "enabled": true,
+      "email": "short-lived-test@example.com",
+      "firstName": "Short",
+      "lastName": "Lived",
       "credentials": [
         { "type": "password", "value": "password", "temporary": false }
       ],
