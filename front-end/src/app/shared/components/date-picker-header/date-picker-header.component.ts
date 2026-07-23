@@ -27,4 +27,12 @@ export class DatePickerHeaderComponent<D> {
   protected nextClicked(): void {
     this.calendar.activeDate = this.dateAdapter.addCalendarMonths(this.calendar.activeDate, 1);
   }
+
+  protected openMonthView(): void {
+    this.calendar.currentView = 'year';
+  }
+
+  protected openYearView(): void {
+    this.calendar.currentView = 'multi-year';
+  }
 }

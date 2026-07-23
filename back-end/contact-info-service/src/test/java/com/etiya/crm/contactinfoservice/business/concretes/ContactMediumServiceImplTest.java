@@ -1,11 +1,12 @@
 package com.etiya.crm.contactinfoservice.business.concretes;
 
-import com.etiya.crm.contactinfoservice.business.dtos.requests.CreateContactMediumRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.UpdateContactMediumRequest;
+import com.etiya.crm.shared.contracts.contactmedium.CreateContactMediumRequest;
+import com.etiya.crm.shared.contracts.contactmedium.UpdateContactMediumRequest;
 import com.etiya.crm.contactinfoservice.business.exceptions.InvalidContactMediumFormatException;
 import com.etiya.crm.contactinfoservice.business.rules.ContactMediumBusinessRules;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.ContactMediumRepository;
 import com.etiya.crm.contactinfoservice.entities.concretes.ContactMedium;
+import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,6 +31,9 @@ class ContactMediumServiceImplTest {
 
     @Mock
     private ContactMediumBusinessRules contactMediumBusinessRules;
+
+    @Mock
+    private OutboxEventPublisher outboxEventPublisher;
 
     @InjectMocks
     private ContactMediumServiceImpl contactMediumService;
@@ -79,6 +83,7 @@ class ContactMediumServiceImplTest {
         contactMedium.setId(1L);
         contactMedium.setActive(true);
         when(contactMediumBusinessRules.checkIfContactMediumExists(1L)).thenReturn(contactMedium);
+        when(contactMediumRepository.save(contactMedium)).thenReturn(contactMedium);
 
         contactMediumService.delete(1L);
 

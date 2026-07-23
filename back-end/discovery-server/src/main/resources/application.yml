@@ -8,4 +8,3 @@ spring:
     # Config Server zorunludur: ayakta degilse (veya bu import basarisiz olursa) uygulama
     # BASLAMAZ. Yerel varsayilan/fallback deger tutulmaz - asil degerler configs/discovery-server/ altindadir.
     import: configserver:${CONFIG_SERVER_URL:http://localhost:8888}
-

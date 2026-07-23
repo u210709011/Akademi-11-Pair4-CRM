@@ -38,11 +38,18 @@
   align-items: center;
   justify-content: center;
   padding: 6px 10px;
+  font: inherit;
   font-size: 14px;
   font-weight: 700;
   color: #1f2937;
+  cursor: pointer;
+  background: none;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
+
+  &:hover {
+    background: #f9fafb;
+  }
 }
 
 .month-box {

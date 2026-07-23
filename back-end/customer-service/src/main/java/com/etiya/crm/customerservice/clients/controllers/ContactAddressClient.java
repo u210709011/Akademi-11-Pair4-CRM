@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.etiya.crm.customerservice.clients.commands.CreateAddressCommand;
-import com.etiya.crm.customerservice.clients.commands.CreateContactCommand;
-import com.etiya.crm.customerservice.clients.commands.CreateContactMediumCommand;
-import com.etiya.crm.customerservice.clients.commands.UpdateAddressCommand;
-import com.etiya.crm.customerservice.clients.commands.UpdateContactMediumCommand;
-import com.etiya.crm.customerservice.clients.responses.AddressResponse;
-import com.etiya.crm.customerservice.clients.responses.ContactMediumResponse;
+import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.contactmedium.CreateContactCommand;
+import com.etiya.crm.shared.contracts.contactmedium.CreateContactMediumRequest;
+import com.etiya.crm.shared.contracts.address.UpdateAddressRequest;
+import com.etiya.crm.shared.contracts.contactmedium.UpdateContactMediumRequest;
+import com.etiya.crm.shared.contracts.address.AddressResponse;
+import com.etiya.crm.shared.contracts.contactmedium.ContactMediumResponse;
 
 /**
  * contact-info-service ile haberlesme kontrati. Eureka'daki gercek servis adi
@@ -49,10 +49,10 @@ public interface ContactAddressClient {
 			@RequestParam("dataTypeId") Long dataTypeId);
 
 	@PostMapping("/api/v1/addresses")
-	AddressResponse addAddress(@RequestBody CreateAddressCommand request);
+	AddressResponse addAddress(@RequestBody CreateAddressRequest request);
 
 	@PutMapping("/api/v1/addresses/{id}")
-	AddressResponse updateAddress(@PathVariable("id") Long id, @RequestBody UpdateAddressCommand request);
+	AddressResponse updateAddress(@PathVariable("id") Long id, @RequestBody UpdateAddressRequest request);
 
 	@GetMapping("/api/v1/contact-mediums")
 	List<ContactMediumResponse> getContactMediumsByCustomer(@RequestParam("rowId") Long rowId,
@@ -60,10 +60,10 @@ public interface ContactAddressClient {
 
 	@PutMapping("/api/v1/contact-mediums/{id}")
 	ContactMediumResponse updateContactMedium(@PathVariable("id") Long id,
-			@RequestBody UpdateContactMediumCommand request);
+			@RequestBody UpdateContactMediumRequest request);
 
 	// homePhone/fax edit sirasinda ilk kez ekleniyorsa kullanilir. /single: root
 	// POST artik ContactMediumController'da composite createContact'a ait.
 	@PostMapping("/api/v1/contact-mediums/single")
-	ContactMediumResponse addContactMedium(@RequestBody CreateContactMediumCommand request);
+	ContactMediumResponse addContactMedium(@RequestBody CreateContactMediumRequest request);
 }

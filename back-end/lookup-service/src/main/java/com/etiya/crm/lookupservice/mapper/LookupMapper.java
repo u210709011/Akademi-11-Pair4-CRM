@@ -1,6 +1,6 @@
 package com.etiya.crm.lookupservice.mapper;
 
-import com.etiya.crm.lookupservice.business.dtos.responses.LookupValueResponse;
+import com.etiya.crm.shared.contracts.lookup.LookupValueResponse;
 import com.etiya.crm.lookupservice.entities.concretes.Lookup;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

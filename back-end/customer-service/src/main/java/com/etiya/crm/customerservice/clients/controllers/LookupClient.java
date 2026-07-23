@@ -4,7 +4,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import com.etiya.crm.customerservice.clients.responses.LookupValueResponse;
+import com.etiya.crm.shared.contracts.lookup.LookupValueResponse;
 
 @FeignClient(name = "lookup-service")
 public interface LookupClient {
