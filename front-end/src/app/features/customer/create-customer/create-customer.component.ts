@@ -99,6 +99,10 @@ export class CreateCustomerComponent {
 
   protected readonly activeTab = signal<CreateCustomerTab>('demographic');
 
+  // Next butonuyla ilerlenmeden tab basligina tiklayarak ileri sekmeye atlanamasin diye - sadece
+  // simdiye kadar Next ile ulasilmis en ileri sekmeye (ve geriye) tiklama serbest.
+  private readonly unlockedIndex = signal(0);
+
   protected readonly activeTabLabel = computed(() => {
     const labelKey = this.tabs.find(tab => tab.key === this.activeTab())?.labelKey;
     return labelKey ? this.i18n.t(labelKey) : '';
@@ -126,7 +130,14 @@ export class CreateCustomerComponent {
     this.activeTab() === 'contact' ? this.i18n.t('create.createBtn') : this.i18n.t('create.nextBtn')
   );
 
+  protected isTabLocked(tab: CreateCustomerTab): boolean {
+    return this.tabs.findIndex(t => t.key === tab) > this.unlockedIndex();
+  }
+
   protected selectTab(tab: CreateCustomerTab): void {
+    if (this.isTabLocked(tab)) {
+      return;
+    }
     this.activeTab.set(tab);
   }
 
@@ -205,6 +216,7 @@ export class CreateCustomerComponent {
     const nextTab = this.tabs[currentIndex + 1];
     if (nextTab) {
       this.activeTab.set(nextTab.key);
+      this.unlockedIndex.update(index => Math.max(index, currentIndex + 1));
     }
   }
 

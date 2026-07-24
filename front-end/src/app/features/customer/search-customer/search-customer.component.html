@@ -83,7 +83,15 @@
                 <div class="filter-field">
                     <label for="gsmNumber">{{ i18n.t('search.gsm') }}</label>
                     <div class="gsm-field">
-                        <span class="gsm-country-code">TR +90</span>
+                        <span class="gsm-country-code">
+                            <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
+                                <rect width="28" height="20" fill="#E30A17"></rect>
+                                <circle cx="11.5" cy="10" r="5" fill="#fff"></circle>
+                                <circle cx="13" cy="10" r="4" fill="#E30A17"></circle>
+                                <path fill="#fff" d="M17.6 10l3.1-1.1-1.9 2.6V8.4l1.9 2.6z"></path>
+                            </svg>
+                            +90
+                        </span>
                         <input
                             id="gsmNumber"
                             type="text"
@@ -152,7 +160,17 @@
         </section>
 
         <section class="results-panel">
-            <h2 class="panel-title">{{ i18n.t('search.results') }}</h2>
+            <div class="results-panel-header">
+                <h2 class="panel-title">
+                    {{ i18n.t('search.results') }}
+                    @if (hasSearched() && !searchError() && totalElements() > 0) {
+                        <span class="results-count">{{ resultsCountLabel() }}</span>
+                    }
+                </h2>
+                <button type="button" class="create-customer-button-header" (click)="goToCreateCustomer()">
+                    <span class="create-customer-icon">+</span> {{ i18n.t('search.createCustomerBtn') }}
+                </button>
+            </div>
 
             @if (isSearching()) {
                 <div class="results-empty-state">
@@ -197,59 +215,29 @@
                 <table class="results-table">
                     <thead>
                         <tr>
-                            <th class="sortable" (click)="toggleSort('custId')">
+                            <th class="sortable" [class.active]="sortColumn() === 'custId'" (click)="toggleSort('custId')">
                                 {{ i18n.t('search.custId') }}
-                                @if (sortColumn() === 'custId') {
-                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-                                }
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'custId'">{{ sortColumn() === 'custId' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
                             </th>
-                            <th class="sortable" (click)="toggleSort('firstName')">
+                            <th class="sortable" [class.active]="sortColumn() === 'firstName'" (click)="toggleSort('firstName')">
                                 {{ i18n.t('search.firstName') }}
-                                @if (sortColumn() === 'firstName') {
-                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-                                }
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'firstName'">{{ sortColumn() === 'firstName' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
                             </th>
-                            <th class="sortable" (click)="toggleSort('middleName')">
+                            <th class="sortable" [class.active]="sortColumn() === 'middleName'" (click)="toggleSort('middleName')">
                                 {{ i18n.t('search.middleName') }}
-                                @if (sortColumn() === 'middleName') {
-                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-                                }
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'middleName'">{{ sortColumn() === 'middleName' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
                             </th>
-                            <th class="sortable" (click)="toggleSort('lastName')">
+                            <th class="sortable" [class.active]="sortColumn() === 'lastName'" (click)="toggleSort('lastName')">
                                 {{ i18n.t('search.lastName') }}
-                                @if (sortColumn() === 'lastName') {
-                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-                                }
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'lastName'">{{ sortColumn() === 'lastName' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
                             </th>
-                            <th class="sortable" (click)="toggleSort('role')">
+                            <th class="sortable" [class.active]="sortColumn() === 'role'" (click)="toggleSort('role')">
                                 {{ i18n.t('search.role') }}
-                                @if (sortColumn() === 'role') {
-                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-                                }
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'role'">{{ sortColumn() === 'role' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
                             </th>
-                            <th class="sortable" (click)="toggleSort('tcNo')">
+                            <th class="sortable" [class.active]="sortColumn() === 'tcNo'" (click)="toggleSort('tcNo')">
                                 {{ i18n.t('search.natId') }}
-                                @if (sortColumn() === 'tcNo') {
-                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-                                }
-                            </th>
-                            <th class="sortable" (click)="toggleSort('acctNo')">
-                                {{ i18n.t('search.accNum') }}
-                                @if (sortColumn() === 'acctNo') {
-                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-                                }
-                            </th>
-                            <th class="sortable" (click)="toggleSort('gsm')">
-                                {{ i18n.t('search.gsm') }}
-                                @if (sortColumn() === 'gsm') {
-                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-                                }
-                            </th>
-                            <th class="sortable" (click)="toggleSort('status')">
-                                {{ i18n.t('search.status') }}
-                                @if (sortColumn() === 'status') {
-                                    <span class="sort-indicator">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-                                }
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'tcNo'">{{ sortColumn() === 'tcNo' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
                             </th>
                         </tr>
                     </thead>
@@ -264,13 +252,44 @@
                                 <td>{{ customer.lastName }}</td>
                                 <td>{{ customer.role ?? '-' }}</td>
                                 <td>{{ customer.tcNo }}</td>
-                                <td>{{ customer.acctNo }}</td>
-                                <td>{{ customer.gsm ?? '-' }}</td>
-                                <td>{{ customer.status }}</td>
                             </tr>
                         }
                     </tbody>
                 </table>
+
+                @if (totalPages() > 1) {
+                    <div class="pagination">
+                        <span class="pagination-range">{{ rangeLabel() }}</span>
+                        <div class="pagination-controls">
+                            <button
+                                type="button"
+                                class="pagination-arrow"
+                                [disabled]="currentPage() === 0"
+                                (click)="goToPage(currentPage() - 1)"
+                                [attr.aria-label]="i18n.t('search.previousPage')"
+                            >
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+                            </button>
+                            @for (page of pageNumbers(); track page) {
+                                <button
+                                    type="button"
+                                    class="pagination-page"
+                                    [class.active]="page === currentPage()"
+                                    (click)="goToPage(page)"
+                                >{{ page + 1 }}</button>
+                            }
+                            <button
+                                type="button"
+                                class="pagination-arrow"
+                                [disabled]="currentPage() >= totalPages() - 1"
+                                (click)="goToPage(currentPage() + 1)"
+                                [attr.aria-label]="i18n.t('search.nextPage')"
+                            >
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                }
             }
         </section>
 

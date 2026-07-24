@@ -26,21 +26,9 @@ interface AddressFormModel {
   street: string;
   houseNumber: string;
   description: string;
-  details: string;
 }
 
-const EMPTY_ADDRESS_FORM: AddressFormModel = { city: '', street: '', houseNumber: '', description: '', details: '' };
-
-// Backend'in addrDesc alani tek bir string - "Address Name" ve "Address Details" iki ayri
-// form alani olsa da tek alanda bu ayirici ile birlestirilip saklanir, duzenlemede geri ayrilir.
-const ADDRESS_DESC_SEPARATOR = ' | ';
-
-function splitAddressDesc(addrDesc: string): { description: string; details: string } {
-  const separatorIndex = addrDesc.indexOf(ADDRESS_DESC_SEPARATOR);
-  return separatorIndex === -1
-    ? { description: addrDesc, details: '' }
-    : { description: addrDesc.slice(0, separatorIndex), details: addrDesc.slice(separatorIndex + ADDRESS_DESC_SEPARATOR.length) };
-}
+const EMPTY_ADDRESS_FORM: AddressFormModel = { city: '', street: '', houseNumber: '', description: '' };
 
 type DetailTab = 'information' | 'accounts' | 'address' | 'contact';
 
@@ -103,6 +91,10 @@ export class DetailCustomerComponent {
   protected readonly isDeletingCustomer = signal(false);
   protected readonly deleteError = signal<string | null>(null);
 
+  protected readonly addressToDelete = signal<AddressResponse | null>(null);
+  protected readonly isDeletingAddress = signal(false);
+  protected readonly deleteAddressError = signal<string | null>(null);
+
   protected readonly addressModel = signal<AddressFormModel>({ ...EMPTY_ADDRESS_FORM });
 
   protected readonly addressForm = form(this.addressModel, path => {
@@ -110,7 +102,6 @@ export class DetailCustomerComponent {
     required(path.street);
     required(path.houseNumber);
     required(path.description);
-    required(path.details);
   });
 
   protected readonly tabs: { key: DetailTab; labelKey: string }[] = [
@@ -199,10 +190,6 @@ export class DetailCustomerComponent {
     return CITY_NAMES[cityId] ?? UNKNOWN;
   }
 
-  protected addressName(addrDesc: string): string {
-    return splitAddressDesc(addrDesc).description;
-  }
-
   protected toggleAddressMenu(addressId: number, event: Event): void {
     event.stopPropagation();
     this.openAddressMenuId.set(this.openAddressMenuId() === addressId ? null : addressId);
@@ -239,6 +226,40 @@ export class DetailCustomerComponent {
     });
   }
 
+  protected openDeleteAddressConfirm(address: AddressResponse): void {
+    this.openAddressMenuId.set(null);
+    this.deleteAddressError.set(null);
+    this.addressToDelete.set(address);
+  }
+
+  protected closeDeleteAddressConfirm(): void {
+    this.addressToDelete.set(null);
+  }
+
+  protected confirmDeleteAddress(): void {
+    const address = this.addressToDelete();
+    if (!address) {
+      return;
+    }
+
+    this.isDeletingAddress.set(true);
+    this.deleteAddressError.set(null);
+
+    this.customerService.deleteAddress(this.custId, address.id).subscribe({
+      next: () => {
+        this.isDeletingAddress.set(false);
+        this.addressToDelete.set(null);
+        this.refreshAddresses();
+      },
+      error: (httpError: HttpErrorResponse) => {
+        this.isDeletingAddress.set(false);
+        this.deleteAddressError.set(
+          (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('detail.addressSaveError')
+        );
+      }
+    });
+  }
+
   protected openAddAddressModal(): void {
     this.openAddressMenuId.set(null);
     this.editingAddressId.set(null);
@@ -257,7 +278,7 @@ export class DetailCustomerComponent {
       city: String(address.cityId),
       street: address.streetName,
       houseNumber: address.houseName,
-      ...splitAddressDesc(address.addrDesc)
+      description: address.addrDesc
     });
     this.isAddressModalOpen.set(true);
   }
@@ -314,7 +335,7 @@ export class DetailCustomerComponent {
       cityId: Number(value.city),
       streetName: value.street,
       buildingName: value.houseNumber,
-      addressDesc: `${value.description}${ADDRESS_DESC_SEPARATOR}${value.details}`,
+      addressDesc: value.description,
       primary
     };
   }
