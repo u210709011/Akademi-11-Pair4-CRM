@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.etiya.crm.orderservice.clients.responses.GnlStResponse;
-import com.etiya.crm.orderservice.clients.responses.GnlTpResponse;
-import com.etiya.crm.orderservice.clients.responses.TypeValueResponse;
+import com.etiya.crm.shared.contracts.gnlst.GnlStResponse;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpResponse;
+import com.etiya.crm.shared.contracts.typevalue.TypeValueResponse;
 
 @FeignClient(name = "lookup-service")
 public interface LookupClient {
