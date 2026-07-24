@@ -9,6 +9,7 @@ public final class GnlTpGroups {
 
 	public static final String CONTACT_MEDIUM = "CNTC_MEDIUM";
 	public static final String ACCOUNT_TYPE = "ACCOUNT_TYPE";
+	public static final String PARTY_TYPE = "PARTY_TYPE";
 
 	/** Gercek veride "PARTY_TYPE" degil "CAM_PARTY_TYPE" (bkz. DBeaver: id=163 Kurumsal/ORG, id=164 Bireysel/INDV). */
 	public static final String PARTY_TYPE = "CAM_PARTY_TYPE";

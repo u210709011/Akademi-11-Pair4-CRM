@@ -18,6 +18,25 @@ public final class GnlTpCodes {
 	public static final String CUSTOMER_ACCOUNT = "CUST_ACCT";
 	public static final String BILLING_ACCOUNT = "BILL_ACCT";
 
+	// GnlTpGroups.PARTY_TYPE altinda
+	public static final String INDIVIDUAL = "INDIVIDUAL";
+	public static final String CORPORATE = "CORPORATE";
+
+	// GnlTpGroups.PARTY_ROLE_TYPE altinda
+	public static final String CUSTOMER_ROLE = "CUSTOMER";
+	public static final String PARTNER = "PARTNER";
+
+	// GnlTpGroups.GENDER altinda
+	public static final String MALE = "MALE";
+	public static final String FEMALE = "FEMALE";
+
+	// GnlTpGroups.CITY altinda
+	public static final String ANKARA = "ANKARA";
+
+	// GnlTpGroups.CUSTOMER_TYPE altinda
+	public static final String YOUNG = "YOUNG";
+	public static final String RETIRED = "RETIRED";
+
 	// GnlTpGroups.PARTY_TYPE (gercek ent_code_name: CAM_PARTY_TYPE) altinda
 	public static final String INDIVIDUAL = "INDV";
 	public static final String CORPORATE = "ORG";

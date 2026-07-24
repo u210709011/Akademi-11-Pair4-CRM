@@ -4,6 +4,11 @@ package com.etiya.crm.shared.contracts.gnlst;
  * lookup-service GNL_ST tablosundaki ent_code_name (grup) degerleri - GET
  * /api/v1/general-statuses/resolve/{entCodeName}/{shrtCode} ve
  * /api/v1/general-statuses?entCodeName=... cagrilarinda kullanilir.
+ */
+public final class GnlStGroups {
+
+	public static final String CUST_STATUS = "CUST_STATUS";
+	public static final String ACCOUNT_STATUS = "ACCOUNT_STATUS";
  *
  * Gercek DBeaver verisinden: ent_code_name genelde durumu tasinan is tablosunun kendi adi
  * (orn. PROD, CUST, CUST_ACCT) - TYPE_VALUE.table_name ile ayni isimlendirme mantigi.

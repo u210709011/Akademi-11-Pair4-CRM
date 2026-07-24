@@ -1,14 +1,15 @@
 package com.etiya.crm.partyservice.clients;
 
+import com.etiya.crm.shared.contracts.gnltp.GnlTpResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-/** lookup-service REST kontrati (CUSTOMER_SERVICE_CONTRACTS.md SS4). */
+/** lookup-service GNL_TP REST kontrati - bkz. back-end/lookup-service/LOOKUP_SERVICE_INTEGRATION.md. */
 @FeignClient(name = "lookup-service")
 public interface LookupClient {
 
-    @GetMapping("/api/v1/lookups/{groupCode}/code/{code}")
-    LookupValueResponse getByCode(@PathVariable("groupCode") String groupCode,
-                                  @PathVariable("code") String code);
+    @GetMapping("/api/v1/general-types/resolve/{entCodeName}/{shrtCode}")
+    GnlTpResponse resolveType(@PathVariable("entCodeName") String entCodeName,
+                              @PathVariable("shrtCode") String shrtCode);
 }
