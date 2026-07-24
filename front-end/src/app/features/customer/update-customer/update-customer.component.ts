@@ -35,9 +35,9 @@ const EMPTY_MODEL: UpdateCustomerFormModel = {
   nationalId: ''
 };
 
-// GET /individual, backend'in aksine (PUT istegi dd/MM/yyyy bekliyor), birthDate'i ISO (yyyy-MM-dd) formatinda donuyor.
+// GET /individual, PUT istegiyle ayni sekilde birthDate'i dd/MM/yyyy formatinda donuyor.
 function parseBirthDate(value: string): Date {
-  const [year, month, day] = value.split('-').map(Number);
+  const [day, month, year] = value.split('/').map(Number);
   return new Date(year, month - 1, day);
 }
 

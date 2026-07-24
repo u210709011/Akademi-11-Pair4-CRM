@@ -92,21 +92,33 @@
                         </select>
                         <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
                     </div>
+                    @if (addressForm.city().invalid() && addressForm.city().touched()) {
+                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                    }
                 </div>
 
                 <div class="modal-field">
                     <label for="street">{{ i18n.t('create.street') }} <span class="required">*</span></label>
                     <input id="street" type="text" [formField]="addressForm.street" [placeholder]="i18n.t('create.streetPlaceholder')">
+                    @if (addressForm.street().invalid() && addressForm.street().touched()) {
+                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                    }
                 </div>
 
                 <div class="modal-field">
                     <label for="houseNumber">{{ i18n.t('create.houseNumber') }} <span class="required">*</span></label>
                     <input id="houseNumber" type="text" [formField]="addressForm.houseNumber" [placeholder]="i18n.t('create.houseNumberPlaceholder')">
+                    @if (addressForm.houseNumber().invalid() && addressForm.houseNumber().touched()) {
+                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                    }
                 </div>
 
                 <div class="modal-field">
                     <label for="addressDescription">{{ i18n.t('create.addressDescription') }} <span class="required">*</span></label>
                     <input id="addressDescription" type="text" [formField]="addressForm.description" [placeholder]="i18n.t('create.addressDescriptionPlaceholder')">
+                    @if (addressForm.description().invalid() && addressForm.description().touched()) {
+                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                    }
                 </div>
 
             </form>

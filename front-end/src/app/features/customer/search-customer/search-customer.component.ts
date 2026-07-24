@@ -174,6 +174,13 @@ export class SearchCustomerComponent {
     this.fieldErrors.update(errors => ({ ...errors, [field]: hasError }));
   }
 
+  // NAT ID zorunlu degil ama girildiyse tam 11 hane olmali - sadece gecersiz karakter yazildiginda
+  // degil, alandan cikildiginda eksik/uzun hane sayisi da hata olarak gosterilir.
+  protected onNatIdBlur(): void {
+    const raw: string = this.searchForm.controls.natIdNumber.value;
+    this.setFieldError('natIdNumber', raw.length > 0 && raw.length !== 11);
+  }
+
   protected sanitizeDigits(
     event: Event,
     controlName: 'natIdNumber' | 'customerId' | 'accountNumber' | 'orderNumber',

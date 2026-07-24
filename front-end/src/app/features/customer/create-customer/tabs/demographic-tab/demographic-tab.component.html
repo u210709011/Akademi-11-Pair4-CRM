@@ -15,6 +15,8 @@
         >
         @if (letterFieldErrors().firstName) {
             <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+        } @else if (demographicForm.firstName().invalid() && demographicForm.firstName().touched()) {
+            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
         }
     </div>
 
@@ -43,6 +45,8 @@
         >
         @if (letterFieldErrors().lastName) {
             <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+        } @else if (demographicForm.lastName().invalid() && demographicForm.lastName().touched()) {
+            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
         }
     </div>
 
@@ -64,6 +68,9 @@
                 panelClass="app-date-picker-panel"
             ></mat-datepicker>
         </mat-form-field>
+        @if (demographicForm.birthDate().invalid() && demographicForm.birthDate().touched()) {
+            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+        }
     </div>
 
     <div class="form-field">
@@ -73,6 +80,9 @@
             <option value="1">{{ i18n.t('create.genderMale') }}</option>
             <option value="2">{{ i18n.t('create.genderFemale') }}</option>
         </select>
+        @if (demographicForm.gender().invalid() && demographicForm.gender().touched()) {
+            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+        }
     </div>
 
     <div class="form-field">
@@ -115,6 +125,8 @@
         >
         @if (nationalIdError()) {
             <span class="field-error">{{ i18n.t('create.nationalIdError') }}</span>
+        } @else if (demographicForm.nationalId().invalid() && demographicForm.nationalId().touched()) {
+            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
         }
     </div>
 

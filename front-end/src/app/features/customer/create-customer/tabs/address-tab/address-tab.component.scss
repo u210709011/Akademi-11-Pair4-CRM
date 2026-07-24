@@ -94,6 +94,12 @@
 // .modal-* / .select-wrapper / .cancel-button / .save-button paylasilan adres modal
 // stilleri src/styles.scss'e tasindi (detail-customer.component.scss ile ayni modal duzeni).
 
+.field-error {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--error);
+}
+
 .address-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

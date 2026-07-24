@@ -37,7 +37,7 @@
                         formControlName="natIdNumber"
                         placeholder="NAT ID Number"
                         (input)="sanitizeDigits($event, 'natIdNumber', 11)"
-                        (blur)="setFieldError('natIdNumber', false)"
+                        (blur)="onNatIdBlur()"
                     >
                     @if (fieldErrors().natIdNumber) {
                         <span class="field-error">{{ i18n.t('search.natIdError') }}</span>
