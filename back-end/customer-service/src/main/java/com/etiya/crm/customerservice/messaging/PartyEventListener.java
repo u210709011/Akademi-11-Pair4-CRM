@@ -12,7 +12,6 @@ import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchViewRepository;
 import com.etiya.crm.customerservice.entities.concretes.Customer;
 import com.etiya.crm.customerservice.entities.concretes.CustomerSearchView;
-import com.etiya.crm.shared.contracts.lookup.LookupGroups;
 import com.etiya.crm.shared.events.KafkaTopics;
 import com.etiya.crm.shared.events.inbox.InboxEvent;
 import com.etiya.crm.shared.events.inbox.InboxEventRepository;
@@ -86,7 +85,7 @@ public class PartyEventListener {
 			return null;
 		}
 		try {
-			return lookupCacheService.resolveValue(LookupGroups.PARTY_ROLE_TYPE, partyRoleTypeId);
+			return lookupCacheService.resolveTypeValue(partyRoleTypeId);
 		} catch (RuntimeException ex) {
 			log.warn(LogMessages.LOOKUP_SERVICE_CALL_FAILED, ex.getMessage());
 			throw new LookupServiceUnavailableException(

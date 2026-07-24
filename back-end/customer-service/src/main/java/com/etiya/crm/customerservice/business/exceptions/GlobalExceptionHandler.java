@@ -54,6 +54,18 @@ public class GlobalExceptionHandler {
 		return build(HttpStatus.BAD_REQUEST, ex, request);
 	}
 
+	@ExceptionHandler(BillingAccountNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleBillingAccountNotFound(BillingAccountNotFoundException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.NOT_FOUND, ex, request);
+	}
+
+	@ExceptionHandler({ PrimaryAddressCannotBeDeletedException.class, AddressLinkedToAccountException.class,
+			BillingAccountActiveCannotBeDeletedException.class, CustomerHasActiveBillingAccountException.class })
+	public ResponseEntity<ErrorResponse> handleGuardViolation(BusinessException ex, HttpServletRequest request) {
+		return build(HttpStatus.CONFLICT, ex, request);
+	}
+
 	@ExceptionHandler(IdentityVerificationFailedException.class)
 	public ResponseEntity<ErrorResponse> handleIdentityVerificationFailed(IdentityVerificationFailedException ex,
 			HttpServletRequest request) {

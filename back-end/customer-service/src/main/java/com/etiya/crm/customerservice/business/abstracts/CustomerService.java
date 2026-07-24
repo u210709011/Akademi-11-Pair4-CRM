@@ -11,6 +11,7 @@ import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccount
 import com.etiya.crm.customerservice.business.dtos.requests.CustomerSearchRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.IndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerRequest;
+import com.etiya.crm.customerservice.business.dtos.requests.UpdateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateIndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
@@ -46,15 +47,25 @@ public interface CustomerService {
 
 	AddressResponse updateAddress(Long custId, Long addressId, AddressEditRequest request);
 
+	/** FR-005 ACC-008..012: IDOR + primary guard + faturaya bagli adres guard'i. */
+	void deleteAddress(Long custId, Long addressId);
+
 	ContactInfo getContact(Long custId);
 
 	ContactInfo updateContact(Long custId, ContactInfo request);
 
 	// --- ACC-001..014: Customer Account tab / Create Billing Account ---
 
-	List<CustomerAccountResponse> getAccounts(Long custId);
+	/** FR-009 ACC-009: varsayilan sayfa boyutu 5, ilk 5 kayit + sayfalama. */
+	Page<CustomerAccountResponse> getAccounts(Long custId, Pageable pageable);
 
 	CustomerAccountResponse createBillingAccount(Long custId, CreateBillingAccountRequest request);
+
+	/** FR-010: sadece accountName/accountDesc/adres guncellenebilir; accountNo/accountTpId sabit. IDOR: baska musterinin hesabi 404. */
+	CustomerAccountResponse updateBillingAccount(Long custId, Long accountId, UpdateBillingAccountRequest request);
+
+	/** FR-011: aktiflik guard'i gecen hesap soft-delete edilir. IDOR: baska musterinin hesabi 404. */
+	void deleteBillingAccount(Long custId, Long accountId);
 
 	/** contact-info-service'in adres silmeden once soracagi varlik kontrolu. */
 	boolean existsAccountByAddressId(Long addressId);
