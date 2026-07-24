@@ -12,8 +12,17 @@ package com.etiya.crm.shared.contracts.lookup;
 public final class LookupGroups {
 
 	public static final String CUSTOMER_TYPE = "CUST_TP";
+
+	/** gnl_tp / ent_code_name=ACCOUNT_TYPE (shrt_code: CUST_ACCT/BILL_ACCT). */
 	public static final String ACCOUNT_TYPE = "ACCOUNT_TYPE";
-	public static final String ACCOUNT_STATUS = "ACCOUNT_STATUS";
+
+	/**
+	 * gnl_st / ent_code_name=CUST_ACCT (shrt_code: ACTV/PASS/DEL). "ACCOUNT_STATUS" diye bir
+	 * grup YOK - lookup-service statuleri tablo adina gore gruplar, tiplerden (ACCOUNT_TYPE)
+	 * farkli bir isimlendirme. Bu tutarsizlik lookup-service'in gercegi, birine uydurulmaz.
+	 */
+	public static final String CUST_ACCT_STATUS = "CUST_ACCT";
+
 	public static final String GENDER = "GENDER";
 	public static final String CITY = "CITY";
 	public static final String CONTACT_MEDIUM_TYPE = "CNTC_MEDIUM";
