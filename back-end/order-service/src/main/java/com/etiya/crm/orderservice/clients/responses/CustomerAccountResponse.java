@@ -8,6 +8,7 @@ public record CustomerAccountResponse(
     String accountDesc,
     Long addressId,
     Long accountTpId,
+    Long acctStId,
     boolean active
 ) {
 

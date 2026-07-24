@@ -29,4 +29,7 @@ public interface LookupClient {
     @GetMapping("/api/v1/type-values")
     List<TypeValueResponse> getAllTypeValues();
 
+    @GetMapping("/api/v1/type-values/by-table/{tableName}")
+    TypeValueResponse getTypeValueByTable(@PathVariable String tableName);
+
 }
