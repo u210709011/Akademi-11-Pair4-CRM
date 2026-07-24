@@ -27,6 +27,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers("/actuator/**", "/eureka/**", "/api/v1/auth/**").permitAll()
+                        .pathMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll()
                         .anyExchange().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {
                 }));

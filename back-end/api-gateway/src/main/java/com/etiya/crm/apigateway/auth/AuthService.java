@@ -28,8 +28,8 @@ public class AuthService {
 		this.keycloakProperties = keycloakProperties;
 	}
 
-	public Mono<TokenResponse> login(String username, String password) {
-		MultiValueMap<String, String> form = baseForm();
+	public Mono<TokenResponse> login(String username, String password, String clientId) {
+		MultiValueMap<String, String> form = baseForm(clientId);
 		form.add("grant_type", "password");
 		form.add("username", username);
 		form.add("password", password);
@@ -70,9 +70,23 @@ public class AuthService {
 	}
 
 	private MultiValueMap<String, String> baseForm() {
+		return baseForm(null);
+	}
+
+	/**
+	 * clientId caller'dan gelen bir ALIAS'tir ("default"/"short-lived"), gercek Keycloak
+	 * client_id/secret degildir - secret'in caller'dan gelmesine asla izin verilmez, sadece
+	 * onceden tanimli iki client arasindan secim yapilabilir (bkz. crm-realm.json).
+	 */
+	private MultiValueMap<String, String> baseForm(String clientId) {
 		MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-		form.add("client_id", keycloakProperties.getClientId());
-		form.add("client_secret", keycloakProperties.getClientSecret());
+		if ("short-lived".equalsIgnoreCase(clientId)) {
+			form.add("client_id", keycloakProperties.getShortLivedClientId());
+			form.add("client_secret", keycloakProperties.getShortLivedClientSecret());
+		} else {
+			form.add("client_id", keycloakProperties.getClientId());
+			form.add("client_secret", keycloakProperties.getClientSecret());
+		}
 		return form;
 	}
 }

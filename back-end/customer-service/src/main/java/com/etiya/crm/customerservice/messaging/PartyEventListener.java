@@ -6,6 +6,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchViewRepository;
@@ -36,6 +37,7 @@ public class PartyEventListener {
 	private final InboxEventRepository inboxEventRepository;
 	private final CustomerRepository customerRepository;
 	private final CustomerSearchViewRepository customerSearchViewRepository;
+	private final LookupCacheService lookupCacheService;
 
 	@RetryableTopic(
 			attempts = "4",
@@ -70,9 +72,24 @@ public class PartyEventListener {
 		view.setCustId(customer.getCustId());
 		view.setPartyRoleId(event.partyRoleId());
 		view.setFirstName(event.firstName());
+		view.setMiddleName(event.middleName());
 		view.setLastName(event.lastName());
 		view.setTcNo(event.nationalId());
+		view.setRole(resolveRole(event.partyRoleTypeId()));
 		view.setDeleted(!customer.isActive());
 		customerSearchViewRepository.save(view);
+	}
+
+	private String resolveRole(Long partyRoleTypeId) {
+		if (partyRoleTypeId == null) {
+			return null;
+		}
+		try {
+			return lookupCacheService.resolveTypeValue(partyRoleTypeId);
+		} catch (RuntimeException ex) {
+			log.warn(LogMessages.LOOKUP_SERVICE_CALL_FAILED, ex.getMessage());
+			throw new LookupServiceUnavailableException(
+					"Could not resolve PARTY_ROLE_TYPE/" + partyRoleTypeId + " from lookup-service", ex);
+		}
 	}
 }

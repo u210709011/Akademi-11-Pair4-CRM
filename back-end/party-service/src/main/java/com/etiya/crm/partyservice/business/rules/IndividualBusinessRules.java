@@ -16,4 +16,11 @@ public class IndividualBusinessRules {
             throw new BusinessException("Bu nationalId ile kayitli bir birey zaten mevcut: " + nationalId);
         }
     }
+
+    /** FR-004 ACC-006/007: guncelleme sirasinda nationalId, kendi kaydi disinda baska bir bireyle cakismamali. */
+    public void checkNationalIdNotDuplicateForUpdate(String nationalId, Long currentIndividualId) {
+        if (individualRepository.existsByNationalIdAndIndividualIdNot(nationalId, currentIndividualId)) {
+            throw new BusinessException("Bu nationalId ile kayitli baska bir birey zaten mevcut: " + nationalId);
+        }
+    }
 }

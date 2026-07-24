@@ -83,7 +83,15 @@
                 <div class="filter-field">
                     <label for="gsmNumber">{{ i18n.t('search.gsm') }}</label>
                     <div class="gsm-field">
-                        <span class="gsm-country-code">TR +90</span>
+                        <span class="gsm-country-code">
+                            <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
+                                <rect width="28" height="20" fill="#E30A17"></rect>
+                                <circle cx="11.5" cy="10" r="5" fill="#fff"></circle>
+                                <circle cx="13" cy="10" r="4" fill="#E30A17"></circle>
+                                <path fill="#fff" d="M17.6 10l3.1-1.1-1.9 2.6V8.4l1.9 2.6z"></path>
+                            </svg>
+                            +90
+                        </span>
                         <input
                             id="gsmNumber"
                             type="text"
@@ -152,7 +160,17 @@
         </section>
 
         <section class="results-panel">
-            <h2 class="panel-title">{{ i18n.t('search.results') }}</h2>
+            <div class="results-panel-header">
+                <h2 class="panel-title">
+                    {{ i18n.t('search.results') }}
+                    @if (hasSearched() && !searchError() && totalElements() > 0) {
+                        <span class="results-count">{{ resultsCountLabel() }}</span>
+                    }
+                </h2>
+                <button type="button" class="create-customer-button-header" (click)="goToCreateCustomer()">
+                    <span class="create-customer-icon">+</span> {{ i18n.t('search.createCustomerBtn') }}
+                </button>
+            </div>
 
             @if (isSearching()) {
                 <div class="results-empty-state">
@@ -178,33 +196,100 @@
                 </div>
             } @else if (searchResults().length === 0) {
                 <div class="results-empty-state">
-                    <p class="results-empty-description">{{ i18n.t('search.noResults') }}</p>
+                    <span class="results-empty-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <ellipse cx="10" cy="5" rx="7" ry="2.5" />
+                            <path d="M3 5v10c0 1.4 3.1 2.5 7 2.5" />
+                            <path d="M3 10c0 1.4 3.1 2.5 7 2.5" />
+                            <circle cx="16.5" cy="16.5" r="4" />
+                            <path d="M19.5 19.5 22 22" />
+                        </svg>
+                    </span>
+                    <h3 class="results-empty-title">{{ i18n.t('search.noResults') }}</h3>
+                    <p class="results-empty-description">{{ i18n.t('search.noResultsSubtitle') }}</p>
+                    <button type="button" class="create-customer-button" (click)="goToCreateCustomer()">
+                        {{ i18n.t('search.createCustomerBtn') }}
+                    </button>
                 </div>
             } @else {
                 <table class="results-table">
                     <thead>
                         <tr>
-                            <th>{{ i18n.t('search.custId') }}</th>
-                            <th>{{ i18n.t('search.firstName') }}</th>
-                            <th>{{ i18n.t('search.lastName') }}</th>
-                            <th>{{ i18n.t('search.natId') }}</th>
-                            <th>{{ i18n.t('search.accNum') }}</th>
-                            <th>{{ i18n.t('search.status') }}</th>
+                            <th class="sortable" [class.active]="sortColumn() === 'custId'" (click)="toggleSort('custId')">
+                                {{ i18n.t('search.custId') }}
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'custId'">{{ sortColumn() === 'custId' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                            </th>
+                            <th class="sortable" [class.active]="sortColumn() === 'firstName'" (click)="toggleSort('firstName')">
+                                {{ i18n.t('search.firstName') }}
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'firstName'">{{ sortColumn() === 'firstName' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                            </th>
+                            <th class="sortable" [class.active]="sortColumn() === 'middleName'" (click)="toggleSort('middleName')">
+                                {{ i18n.t('search.middleName') }}
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'middleName'">{{ sortColumn() === 'middleName' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                            </th>
+                            <th class="sortable" [class.active]="sortColumn() === 'lastName'" (click)="toggleSort('lastName')">
+                                {{ i18n.t('search.lastName') }}
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'lastName'">{{ sortColumn() === 'lastName' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                            </th>
+                            <th class="sortable" [class.active]="sortColumn() === 'role'" (click)="toggleSort('role')">
+                                {{ i18n.t('search.role') }}
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'role'">{{ sortColumn() === 'role' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                            </th>
+                            <th class="sortable" [class.active]="sortColumn() === 'tcNo'" (click)="toggleSort('tcNo')">
+                                {{ i18n.t('search.natId') }}
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'tcNo'">{{ sortColumn() === 'tcNo' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        @for (customer of searchResults(); track customer.custId) {
+                        @for (customer of sortedResults(); track customer.custId) {
                             <tr>
-                                <td>{{ customer.custId }}</td>
+                                <td>
+                                    <button type="button" class="customer-id-link" (click)="viewCustomerDetail(customer)">{{ customer.custId }}</button>
+                                </td>
                                 <td>{{ customer.firstName }}</td>
+                                <td>{{ customer.middleName ?? '-' }}</td>
                                 <td>{{ customer.lastName }}</td>
+                                <td>{{ customer.role ?? '-' }}</td>
                                 <td>{{ customer.tcNo }}</td>
-                                <td>{{ customer.acctNo }}</td>
-                                <td>{{ customer.status }}</td>
                             </tr>
                         }
                     </tbody>
                 </table>
+
+                @if (totalPages() > 1) {
+                    <div class="pagination">
+                        <span class="pagination-range">{{ rangeLabel() }}</span>
+                        <div class="pagination-controls">
+                            <button
+                                type="button"
+                                class="pagination-arrow"
+                                [disabled]="currentPage() === 0"
+                                (click)="goToPage(currentPage() - 1)"
+                                [attr.aria-label]="i18n.t('search.previousPage')"
+                            >
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+                            </button>
+                            @for (page of pageNumbers(); track page) {
+                                <button
+                                    type="button"
+                                    class="pagination-page"
+                                    [class.active]="page === currentPage()"
+                                    (click)="goToPage(page)"
+                                >{{ page + 1 }}</button>
+                            }
+                            <button
+                                type="button"
+                                class="pagination-arrow"
+                                [disabled]="currentPage() >= totalPages() - 1"
+                                (click)="goToPage(currentPage() + 1)"
+                                [attr.aria-label]="i18n.t('search.nextPage')"
+                            >
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                }
             }
         </section>
 

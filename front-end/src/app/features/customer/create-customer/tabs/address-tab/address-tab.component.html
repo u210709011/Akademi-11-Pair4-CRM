@@ -33,13 +33,14 @@
                 </button>
             </div>
 
-            <form class="modal-form" [formGroup]="addressForm">
+            <form class="modal-form">
 
                 <div class="modal-field">
                     <label for="city">{{ i18n.t('create.city') }} <span class="required">*</span></label>
                     <div class="select-wrapper">
-                        <select id="city" formControlName="city">
+                        <select id="city" [formField]="addressForm.city">
                             <option value="" disabled selected>{{ i18n.t('create.selectCity') }}</option>
+                            <option value="201">Ankara</option>
                         </select>
                         <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
                     </div>
@@ -47,24 +48,24 @@
 
                 <div class="modal-field">
                     <label for="street">{{ i18n.t('create.street') }} <span class="required">*</span></label>
-                    <input id="street" type="text" formControlName="street" [placeholder]="i18n.t('create.streetPlaceholder')">
+                    <input id="street" type="text" [formField]="addressForm.street" [placeholder]="i18n.t('create.streetPlaceholder')">
                 </div>
 
                 <div class="modal-field">
                     <label for="houseNumber">{{ i18n.t('create.houseNumber') }} <span class="required">*</span></label>
-                    <input id="houseNumber" type="text" formControlName="houseNumber" [placeholder]="i18n.t('create.houseNumberPlaceholder')">
+                    <input id="houseNumber" type="text" [formField]="addressForm.houseNumber" [placeholder]="i18n.t('create.houseNumberPlaceholder')">
                 </div>
 
                 <div class="modal-field">
                     <label for="addressDescription">{{ i18n.t('create.addressDescription') }} <span class="required">*</span></label>
-                    <input id="addressDescription" type="text" formControlName="description" [placeholder]="i18n.t('create.addressDescriptionPlaceholder')">
+                    <input id="addressDescription" type="text" [formField]="addressForm.description" [placeholder]="i18n.t('create.addressDescriptionPlaceholder')">
                 </div>
 
             </form>
 
             <div class="modal-actions">
                 <button type="button" class="cancel-button" (click)="closeAddAddressModal()">{{ i18n.t('create.cancelBtn') }}</button>
-                <button type="button" class="save-button" [disabled]="addressForm.invalid" (click)="saveAddress()">{{ i18n.t('create.saveBtn') }}</button>
+                <button type="button" class="save-button" [disabled]="addressForm().invalid()" (click)="saveAddress()">{{ i18n.t('create.saveBtn') }}</button>
             </div>
 
         </div>

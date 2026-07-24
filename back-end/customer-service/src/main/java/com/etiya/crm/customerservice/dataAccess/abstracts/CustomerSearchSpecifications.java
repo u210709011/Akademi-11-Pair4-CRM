@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
+import com.etiya.crm.customerservice.constants.AccountDefaults;
 import com.etiya.crm.customerservice.entities.concretes.CustomerSearchView;
 
 import jakarta.persistence.criteria.Predicate;
@@ -22,7 +23,7 @@ public final class CustomerSearchSpecifications {
 	}
 
 	public static Specification<CustomerSearchView> search(String firstName, String lastName, String tcNo,
-			String acctNo) {
+			String acctNo, Long custId, String gsm) {
 		return (root, query, cb) -> {
 			List<Predicate> orGroup = new ArrayList<>();
 
@@ -43,7 +44,13 @@ public final class CustomerSearchSpecifications {
 				orGroup.add(cb.equal(root.get("tcNo"), tcNo));
 			}
 			if (StringUtils.hasText(acctNo)) {
-				orGroup.add(cb.equal(root.get("acctNo"), acctNo));
+				orGroup.add(cb.equal(root.get("acctNo"), normalizeAccountNo(acctNo)));
+			}
+			if (custId != null) {
+				orGroup.add(cb.equal(root.get("custId"), custId));
+			}
+			if (StringUtils.hasText(gsm)) {
+				orGroup.add(cb.equal(root.get("gsm"), gsm));
 			}
 
 			Predicate notDeleted = cb.isFalse(root.get("deleted"));
@@ -56,5 +63,22 @@ public final class CustomerSearchSpecifications {
 
 	private static String like(String value) {
 		return "%" + value.toLowerCase() + "%";
+	}
+
+	/**
+	 * acctNo artik ACC-/CUST- gibi bir onek TASIMAZ, sadece ACCOUNT_NO_LENGTH
+	 * haneli sifirla soldan doldurulmus bir sayidir (bkz. AccountDefaults).
+	 * Arama kutusuna kullanici "42" yazarsa bunu saklanan "000042" ile
+	 * eslestirmek icin ayni sekilde soldan sifirla doldurulur; olasi bir onek/
+	 * rakam-disi karakter yazilirsa da (ornn. eski "ACC-42" aliskanligi) once
+	 * sadece rakamlar birakilir.
+	 */
+	private static String normalizeAccountNo(String value) {
+		String digitsOnly = value.replaceAll("\\D", "");
+		if (digitsOnly.isEmpty()) {
+			return value;
+		}
+		int padding = AccountDefaults.ACCOUNT_NO_LENGTH - digitsOnly.length();
+		return padding > 0 ? "0".repeat(padding) + digitsOnly : digitsOnly;
 	}
 }

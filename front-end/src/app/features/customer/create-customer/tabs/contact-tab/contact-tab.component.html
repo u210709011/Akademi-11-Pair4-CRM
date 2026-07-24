@@ -1,4 +1,4 @@
-<form class="contact-form" [formGroup]="createForm">
+<form class="contact-form">
 
     <div class="form-field">
         <label for="email">{{ i18n.t('create.email') }} <span class="required">*</span></label>
@@ -6,7 +6,7 @@
             <input
                 id="email"
                 type="email"
-                formControlName="email"
+                [formField]="contactForm.email"
                 [placeholder]="i18n.t('create.emailPlaceholder')"
             >
             <svg class="mail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -19,14 +19,21 @@
     <div class="form-field">
         <label for="homePhone">{{ i18n.t('create.homePhone') }}</label>
         <div class="phone-field">
-            <span class="phone-prefix">TR <strong>+90</strong></span>
+            <span class="phone-prefix">
+                <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
+                    <rect width="28" height="20" fill="#E30A17"></rect>
+                    <circle cx="11.5" cy="10" r="5" fill="#fff"></circle>
+                    <circle cx="13" cy="10" r="4" fill="#E30A17"></circle>
+                    <path fill="#fff" d="M17.6 10l3.1-1.1-1.9 2.6V8.4l1.9 2.6z"></path>
+                </svg>
+                <strong>+90</strong>
+            </span>
             <input
                 id="homePhone"
                 type="text"
                 inputmode="numeric"
-                formControlName="homePhone"
+                [formField]="contactForm.homePhone"
                 placeholder="XXX XXX XX XX"
-                (input)="sanitizePhone($event, 'homePhone')"
             >
         </div>
     </div>
@@ -34,14 +41,21 @@
     <div class="form-field">
         <label for="mobilePhone">{{ i18n.t('create.mobilePhone') }} <span class="required">*</span></label>
         <div class="phone-field">
-            <span class="phone-prefix">TR <strong>+90</strong></span>
+            <span class="phone-prefix">
+                <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
+                    <rect width="28" height="20" fill="#E30A17"></rect>
+                    <circle cx="11.5" cy="10" r="5" fill="#fff"></circle>
+                    <circle cx="13" cy="10" r="4" fill="#E30A17"></circle>
+                    <path fill="#fff" d="M17.6 10l3.1-1.1-1.9 2.6V8.4l1.9 2.6z"></path>
+                </svg>
+                <strong>+90</strong>
+            </span>
             <input
                 id="mobilePhone"
                 type="text"
                 inputmode="numeric"
-                formControlName="mobilePhone"
+                [formField]="contactForm.mobilePhone"
                 placeholder="5XX XXX XX XX"
-                (input)="sanitizePhone($event, 'mobilePhone')"
             >
         </div>
     </div>
@@ -49,14 +63,21 @@
     <div class="form-field">
         <label for="fax">{{ i18n.t('create.fax') }}</label>
         <div class="phone-field">
-            <span class="phone-prefix">TR <strong>+90</strong></span>
+            <span class="phone-prefix">
+                <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
+                    <rect width="28" height="20" fill="#E30A17"></rect>
+                    <circle cx="11.5" cy="10" r="5" fill="#fff"></circle>
+                    <circle cx="13" cy="10" r="4" fill="#E30A17"></circle>
+                    <path fill="#fff" d="M17.6 10l3.1-1.1-1.9 2.6V8.4l1.9 2.6z"></path>
+                </svg>
+                <strong>+90</strong>
+            </span>
             <input
                 id="fax"
                 type="text"
                 inputmode="numeric"
-                formControlName="fax"
+                [formField]="contactForm.fax"
                 placeholder="XXX XXX XX XX"
-                (input)="sanitizePhone($event, 'fax')"
             >
         </div>
     </div>

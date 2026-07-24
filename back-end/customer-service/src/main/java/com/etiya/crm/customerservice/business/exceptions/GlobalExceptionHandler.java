@@ -1,5 +1,6 @@
 package com.etiya.crm.customerservice.business.exceptions;
 
+import com.etiya.crm.shared.contracts.error.ErrorResponse;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
@@ -51,6 +52,19 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErrorResponse> handleBillingAccountAddressRequired(BillingAccountAddressRequiredException ex,
 			HttpServletRequest request) {
 		return build(HttpStatus.BAD_REQUEST, ex, request);
+	}
+
+	@ExceptionHandler(BillingAccountNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleBillingAccountNotFound(BillingAccountNotFoundException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.NOT_FOUND, ex, request);
+	}
+
+	@ExceptionHandler({ PrimaryAddressCannotBeDeletedException.class, AddressLinkedToAccountException.class,
+			BillingAccountActiveCannotBeDeletedException.class, CustomerHasActiveBillingAccountException.class,
+			DefaultAccountCannotBeDeletedException.class })
+	public ResponseEntity<ErrorResponse> handleGuardViolation(BusinessException ex, HttpServletRequest request) {
+		return build(HttpStatus.CONFLICT, ex, request);
 	}
 
 	@ExceptionHandler(IdentityVerificationFailedException.class)
