@@ -1,6 +1,6 @@
 -- Bu servis suraya kadar Flyway kullanmiyordu, semasi Hibernate ddl-auto: update
--- ile senkronize ediliyordu (bkz. entities/concretes/Address.java, ContactMedium.java,
--- inbox/Inbox.java). Bu migration iki amaca hizmet eder:
+-- ile senkronize ediliyordu (bkz. entities/concretes/Address.java, ContactMedium.java).
+-- Bu migration iki amaca hizmet eder:
 --   1) Fresh/bos bir DB'de (yeni ortam, CI) semayi sifirdan doğru kurar.
 --   2) Halihazirda Hibernate'in olusturdugu, dolu bir DB'de ise hicbir sey
 --      yapmaz - application*.yml'deki spring.flyway.baseline-on-migrate=true
@@ -45,7 +45,8 @@ CREATE TABLE IF NOT EXISTS cntc_medium (
 CREATE INDEX IF NOT EXISTS idx_cntc_medium_row_data_type ON cntc_medium (row_id, data_type_id);
 
 -- Inbox: idempotent consumer (CustomerEventListener - "customer-events" topic'i).
--- shared-events'teki InboxEvent DEGIL, bu servise ozel yerel entity (bkz. inbox/Inbox.java).
+-- shared-events'teki InboxEvent entity'si bu tabloyu kullanir (ayni sema, party-service/
+-- customer-service ile ortak).
 CREATE TABLE IF NOT EXISTS inbox (
     event_id     UUID PRIMARY KEY,
     event_type   VARCHAR(255) NOT NULL,

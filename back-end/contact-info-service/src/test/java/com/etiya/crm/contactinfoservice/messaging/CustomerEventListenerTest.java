@@ -2,9 +2,9 @@ package com.etiya.crm.contactinfoservice.messaging;
 
 import com.etiya.crm.contactinfoservice.business.abstracts.AddressService;
 import com.etiya.crm.contactinfoservice.business.abstracts.ContactMediumService;
-import com.etiya.crm.contactinfoservice.inbox.Inbox;
-import com.etiya.crm.contactinfoservice.inbox.InboxRepository;
 import com.etiya.crm.shared.contracts.lookup.DataTypeIds;
+import com.etiya.crm.shared.events.inbox.InboxEvent;
+import com.etiya.crm.shared.events.inbox.InboxEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ class CustomerEventListenerTest {
     private ContactMediumService contactMediumService;
 
     @Mock
-    private InboxRepository inboxRepository;
+    private InboxEventRepository inboxEventRepository;
 
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -41,25 +41,25 @@ class CustomerEventListenerTest {
     @Test
     void onMessage_deactivatesAddressAndContactMedium_whenCustomerDeletedEventReceived() {
         ConsumerRecord<String, String> record = recordWithType("CustomerDeleted");
-        when(inboxRepository.existsById(any())).thenReturn(false);
+        when(inboxEventRepository.existsById(any())).thenReturn(false);
 
         customerEventListener.onMessage(record);
 
         verify(addressService).deactivateAllForRow(10L, DataTypeIds.CUSTOMER);
         verify(contactMediumService).deactivateAllForRow(10L, DataTypeIds.CUSTOMER);
-        verify(inboxRepository).save(any(Inbox.class));
+        verify(inboxEventRepository).save(any(InboxEvent.class));
     }
 
     @Test
     void onMessage_skips_whenEventAlreadyProcessed() {
         ConsumerRecord<String, String> record = recordWithType("CustomerDeleted");
-        when(inboxRepository.existsById(any())).thenReturn(true);
+        when(inboxEventRepository.existsById(any())).thenReturn(true);
 
         customerEventListener.onMessage(record);
 
         verify(addressService, never()).deactivateAllForRow(anyLong(), anyLong());
         verify(contactMediumService, never()).deactivateAllForRow(anyLong(), anyLong());
-        verify(inboxRepository, never()).save(any());
+        verify(inboxEventRepository, never()).save(any());
     }
 
     @Test
@@ -69,7 +69,7 @@ class CustomerEventListenerTest {
         customerEventListener.onMessage(record);
 
         verify(addressService, never()).deactivateAllForRow(anyLong(), anyLong());
-        verify(inboxRepository, never()).existsById(any());
+        verify(inboxEventRepository, never()).existsById(any());
     }
 
     @Test
@@ -79,7 +79,7 @@ class CustomerEventListenerTest {
         customerEventListener.onMessage(record);
 
         verify(addressService, never()).deactivateAllForRow(anyLong(), anyLong());
-        verify(inboxRepository, never()).existsById(any());
+        verify(inboxEventRepository, never()).existsById(any());
     }
 
     private ConsumerRecord<String, String> recordWithType(String type) {
