@@ -26,21 +26,9 @@ interface AddressFormModel {
   street: string;
   houseNumber: string;
   description: string;
-  details: string;
 }
 
-const EMPTY_ADDRESS_FORM: AddressFormModel = { city: '', street: '', houseNumber: '', description: '', details: '' };
-
-// Backend'in addrDesc alani tek bir string - "Address Name" ve "Address Details" iki ayri
-// form alani olsa da tek alanda bu ayirici ile birlestirilip saklanir, duzenlemede geri ayrilir.
-const ADDRESS_DESC_SEPARATOR = ' | ';
-
-function splitAddressDesc(addrDesc: string): { description: string; details: string } {
-  const separatorIndex = addrDesc.indexOf(ADDRESS_DESC_SEPARATOR);
-  return separatorIndex === -1
-    ? { description: addrDesc, details: '' }
-    : { description: addrDesc.slice(0, separatorIndex), details: addrDesc.slice(separatorIndex + ADDRESS_DESC_SEPARATOR.length) };
-}
+const EMPTY_ADDRESS_FORM: AddressFormModel = { city: '', street: '', houseNumber: '', description: '' };
 
 type DetailTab = 'information' | 'accounts' | 'address' | 'contact';
 
@@ -110,7 +98,6 @@ export class DetailCustomerComponent {
     required(path.street);
     required(path.houseNumber);
     required(path.description);
-    required(path.details);
   });
 
   protected readonly tabs: { key: DetailTab; labelKey: string }[] = [
@@ -199,10 +186,6 @@ export class DetailCustomerComponent {
     return CITY_NAMES[cityId] ?? UNKNOWN;
   }
 
-  protected addressName(addrDesc: string): string {
-    return splitAddressDesc(addrDesc).description;
-  }
-
   protected toggleAddressMenu(addressId: number, event: Event): void {
     event.stopPropagation();
     this.openAddressMenuId.set(this.openAddressMenuId() === addressId ? null : addressId);
@@ -257,7 +240,7 @@ export class DetailCustomerComponent {
       city: String(address.cityId),
       street: address.streetName,
       houseNumber: address.houseName,
-      ...splitAddressDesc(address.addrDesc)
+      description: address.addrDesc
     });
     this.isAddressModalOpen.set(true);
   }
@@ -314,7 +297,7 @@ export class DetailCustomerComponent {
       cityId: Number(value.city),
       streetName: value.street,
       buildingName: value.houseNumber,
-      addressDesc: `${value.description}${ADDRESS_DESC_SEPARATOR}${value.details}`,
+      addressDesc: value.description,
       primary
     };
   }
