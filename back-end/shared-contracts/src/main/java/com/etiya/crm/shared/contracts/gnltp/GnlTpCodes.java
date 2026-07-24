@@ -3,6 +3,8 @@ package com.etiya.crm.shared.contracts.gnltp;
 /**
  * lookup-service GNL_TP tablosundaki shrt_code (deger) degerleri - her biri {@link GnlTpGroups}'taki
  * bir grubun altinda yasar, GET /api/v1/general-types/resolve/{entCodeName}/{shrtCode} icin kullanilir.
+ * Prefix sadece iki grup arasinda gercek bir isim carpismasi varsa eklenir - onun disinda hangi
+ * gruba ait oldugu yandaki yorumdan zaten belli.
  * Prefix sadece iki grup arasinda gercek bir isim carpismasi varsa eklenir (bkz. CUSTOMER_ACCOUNT/
  * CUSTOMER_ROLE) - onun disinda hangi gruba ait oldugu yandaki yorumdan zaten belli.
  */
