@@ -14,30 +14,16 @@
 
   <div class="navbar-right">
 
-    <div class="lang-switcher" [class.open]="langMenuOpen()">
+    <div class="lang-switcher">
       <button class="language-btn" type="button" (click)="toggleLangMenu()">
+        <span class="language-btn-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z" />
+          </svg>
+        </span>
         {{ i18n.lang().toUpperCase() }}
-        <svg class="chevron-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
       </button>
-
-      @if (langMenuOpen()) {
-        <div class="lang-menu">
-          @for (option of languages; track option.code) {
-            <button
-              type="button"
-              class="lang-option"
-              [class.active]="option.code === i18n.lang()"
-              (click)="selectLang(option.code)"
-            >
-              <span class="lang-name">{{ option.label }}</span>
-              <span class="lang-code">{{ option.code.toUpperCase() }}</span>
-              @if (option.code === i18n.lang()) {
-                <svg class="check-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7" /></svg>
-              }
-            </button>
-          }
-        </div>
-      }
     </div>
 
     <span class="divider" aria-hidden="true"></span>

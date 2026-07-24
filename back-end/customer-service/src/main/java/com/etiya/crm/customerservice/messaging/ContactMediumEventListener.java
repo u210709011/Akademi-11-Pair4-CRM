@@ -71,7 +71,7 @@ public class ContactMediumEventListener {
 	private boolean isCustomerMobilePhone(ContactMediumEvent event) {
 		Long mobilePhoneTypeId;
 		try {
-			mobilePhoneTypeId = lookupCacheService.resolveId(LookupGroups.CONTACT_MEDIUM_TYPE,
+			mobilePhoneTypeId = lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE,
 					LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE);
 		} catch (RuntimeException ex) {
 			log.warn(LogMessages.LOOKUP_SERVICE_CALL_FAILED, ex.getMessage());

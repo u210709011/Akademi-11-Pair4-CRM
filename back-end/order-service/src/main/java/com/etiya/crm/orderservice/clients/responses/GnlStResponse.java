@@ -6,6 +6,8 @@ public record GnlStResponse(
     String name,
     String descr,
     String shrtCode,
-    boolean active
+    boolean active,
+    String entCodeName,
+    String entName
 ) {
 }

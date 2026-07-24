@@ -62,6 +62,23 @@ class TypeValueManagerTest {
     }
 
     @Test
+    void getByTableName_returnsMappedResponse() {
+        when(typeValueRepository.findByTableName("PARTY")).thenReturn(Optional.of(typeValue(1L)));
+
+        TypeValueResponse response = manager().getByTableName("PARTY");
+
+        assertThat(response.tableName()).isEqualTo("PARTY");
+        assertThat(response.fieldName()).isEqualTo(9L);
+    }
+
+    @Test
+    void getByTableName_throwsEntityNotFoundException_whenMissing() {
+        when(typeValueRepository.findByTableName("ORDER")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> manager().getByTableName("ORDER")).isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
     void delete_deletesTypeValue() {
         when(typeValueRepository.findById(9L)).thenReturn(Optional.of(typeValue(9L)));
 
