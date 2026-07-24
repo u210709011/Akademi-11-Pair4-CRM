@@ -91,6 +91,10 @@ export class DetailCustomerComponent {
   protected readonly isDeletingCustomer = signal(false);
   protected readonly deleteError = signal<string | null>(null);
 
+  protected readonly addressToDelete = signal<AddressResponse | null>(null);
+  protected readonly isDeletingAddress = signal(false);
+  protected readonly deleteAddressError = signal<string | null>(null);
+
   protected readonly addressModel = signal<AddressFormModel>({ ...EMPTY_ADDRESS_FORM });
 
   protected readonly addressForm = form(this.addressModel, path => {
@@ -219,6 +223,40 @@ export class DetailCustomerComponent {
     this.customerService.updateAddress(this.custId, address.id, request).subscribe({
       next: () => this.refreshAddresses(),
       error: () => this.addressActionError.set(this.i18n.t('detail.addressSaveError'))
+    });
+  }
+
+  protected openDeleteAddressConfirm(address: AddressResponse): void {
+    this.openAddressMenuId.set(null);
+    this.deleteAddressError.set(null);
+    this.addressToDelete.set(address);
+  }
+
+  protected closeDeleteAddressConfirm(): void {
+    this.addressToDelete.set(null);
+  }
+
+  protected confirmDeleteAddress(): void {
+    const address = this.addressToDelete();
+    if (!address) {
+      return;
+    }
+
+    this.isDeletingAddress.set(true);
+    this.deleteAddressError.set(null);
+
+    this.customerService.deleteAddress(this.custId, address.id).subscribe({
+      next: () => {
+        this.isDeletingAddress.set(false);
+        this.addressToDelete.set(null);
+        this.refreshAddresses();
+      },
+      error: (httpError: HttpErrorResponse) => {
+        this.isDeletingAddress.set(false);
+        this.deleteAddressError.set(
+          (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('detail.addressSaveError')
+        );
+      }
     });
   }
 

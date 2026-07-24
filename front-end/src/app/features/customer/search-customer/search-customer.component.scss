@@ -94,6 +94,115 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
+.results-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5e7eb;
+
+  .panel-title {
+    margin: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+}
+
+.results-count {
+  margin-left: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-placeholder);
+}
+
+.create-customer-button-header {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: var(--etiya-orange);
+  border: none;
+  border-radius: 8px;
+  transition: filter 0.2s ease;
+
+  &:hover {
+    filter: brightness(1.05);
+  }
+}
+
+.create-customer-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.pagination-range {
+  font-size: 13px;
+  color: var(--text-placeholder);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagination-arrow,
+.pagination-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #f9fafb;
+  }
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+}
+
+.pagination-arrow svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pagination-page.active {
+  color: #fff;
+  background: var(--etiya-orange);
+  border-color: var(--etiya-orange);
+}
+
 .filters-form {
   display: flex;
   flex: 1;
@@ -151,6 +260,7 @@
   .gsm-country-code {
     display: flex;
     align-items: center;
+    gap: 4px;
     padding: 0 10px;
     font-size: 13px;
     font-weight: 700;
@@ -159,6 +269,11 @@
     background: #f9fafb;
     border: 1px solid #d1d5db;
     border-right: none;
+
+    .flag-icon {
+      font-size: 15px;
+      line-height: 1;
+    }
     border-radius: 8px 0 0 8px;
   }
 
@@ -329,8 +444,12 @@
   }
 
   th {
+    font-size: 11px;
     font-weight: 700;
-    color: #1f2937;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+    text-transform: uppercase;
+    background: #f9fafb;
   }
 
   th.sortable {
@@ -339,13 +458,22 @@
     white-space: nowrap;
 
     &:hover {
-      color: #111827;
+      color: #6b7280;
+    }
+
+    &.active {
+      color: var(--etiya-orange);
     }
   }
 
   .sort-indicator {
     margin-left: 4px;
-    font-size: 11px;
+    font-size: 10px;
+    color: #d1d5db;
+
+    &.active {
+      color: var(--etiya-orange);
+    }
   }
 
   td {
