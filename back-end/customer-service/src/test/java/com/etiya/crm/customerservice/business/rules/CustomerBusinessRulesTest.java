@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import com.etiya.crm.customerservice.business.exceptions.BillingAccountActiveCannotBeDeletedException;
 import com.etiya.crm.customerservice.business.exceptions.CustomerHasActiveBillingAccountException;
+import com.etiya.crm.customerservice.business.exceptions.DefaultAccountCannotBeDeletedException;
 import com.etiya.crm.customerservice.entities.concretes.CustomerAccount;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -86,6 +87,24 @@ class CustomerBusinessRulesTest {
 		List<CustomerAccount> accounts = List.of(account(OTHER_TYPE_ID, null));
 
 		assertThatCode(() -> rules.ensureNoActiveBillingAccount(accounts, BILL_ACCT_TYPE_ID, ACTIVE_STATUS_ID))
+				.doesNotThrowAnyException();
+	}
+
+	// --- FR-011 Madde 2: ensureAccountIsBillingType (onboarding hesabi silinemez) ---
+
+	@Test
+	void ensureAccountIsBillingType_throws_whenAccountIsDefaultCustAcctType() {
+		CustomerAccount account = account(OTHER_TYPE_ID, ACTIVE_STATUS_ID); // OTHER_TYPE_ID = varsayilan CUST_ACCT
+
+		assertThatThrownBy(() -> rules.ensureAccountIsBillingType(account, BILL_ACCT_TYPE_ID))
+				.isInstanceOf(DefaultAccountCannotBeDeletedException.class);
+	}
+
+	@Test
+	void ensureAccountIsBillingType_passes_whenAccountIsBillAcctType() {
+		CustomerAccount account = billingAccount(ACTIVE_STATUS_ID);
+
+		assertThatCode(() -> rules.ensureAccountIsBillingType(account, BILL_ACCT_TYPE_ID))
 				.doesNotThrowAnyException();
 	}
 
