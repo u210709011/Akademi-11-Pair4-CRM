@@ -8,6 +8,7 @@ public record LoginRequest(
 
 		@Schema(example = "salesperson")
 		@NotBlank
+		@Pattern(regexp = "\\S(.*\\S)?", message = "username bastaki/sondaki bosluklarla gonderilemez.")
 		String username,
 
 		@Schema(example = "password")

@@ -24,7 +24,7 @@ public class ProductSpec extends BaseEntity {
     private String name; // ürün isim
 
     @Column(name = "descr", nullable = false)
-    private String description; // ürün açıklama
+    private String descr; // ürün açıklama
 
     @Column(name = "st_id", nullable = false)
     private Long statusId; // ürün durumu

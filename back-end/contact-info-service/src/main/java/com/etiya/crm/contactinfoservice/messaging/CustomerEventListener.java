@@ -3,10 +3,10 @@ package com.etiya.crm.contactinfoservice.messaging;
 import com.etiya.crm.contactinfoservice.business.abstracts.AddressService;
 import com.etiya.crm.contactinfoservice.business.abstracts.ContactMediumService;
 import com.etiya.crm.shared.contracts.lookup.DataTypeIds;
-import com.etiya.crm.contactinfoservice.inbox.Inbox;
-import com.etiya.crm.contactinfoservice.inbox.InboxRepository;
 import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
 import com.etiya.crm.shared.events.customer.CustomerEventTypes;
+import com.etiya.crm.shared.events.inbox.InboxEvent;
+import com.etiya.crm.shared.events.inbox.InboxEventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class CustomerEventListener {
 
     private final AddressService addressService;
     private final ContactMediumService contactMediumService;
-    private final InboxRepository inboxRepository;
+    private final InboxEventRepository inboxEventRepository;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "customer-events", groupId = "contact-info-service")
@@ -55,14 +55,14 @@ public class CustomerEventListener {
             return;
         }
 
-        if (inboxRepository.existsById(event.eventId())) {
+        if (inboxEventRepository.existsById(event.eventId())) {
             log.info("customer-events mesaji zaten islenmis, atlaniyor: custId={}", event.custId());
             return;
         }
 
         addressService.deactivateAllForRow(event.custId(), DataTypeIds.CUSTOMER);
         contactMediumService.deactivateAllForRow(event.custId(), DataTypeIds.CUSTOMER);
-        inboxRepository.save(new Inbox(event.eventId(), CustomerEventTypes.CUSTOMER_DELETED, null));
+        inboxEventRepository.save(InboxEvent.of(event.eventId(), CustomerEventTypes.CUSTOMER_DELETED));
     }
 
 }

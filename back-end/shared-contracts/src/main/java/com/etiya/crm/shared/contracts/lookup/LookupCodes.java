@@ -26,9 +26,10 @@ public final class LookupCodes {
 	public static final String ACCOUNT_TYPE_CUST_ACCT = "CUST_ACCT";
 	public static final String ACCOUNT_TYPE_BILL_ACCT = "BILL_ACCT";
 
-	/** GNL_ST.CUST_ACCT grubundaki gercek shrt_code degerleri (bkz. shared-contracts.gnlst.GnlStCodes). */
-	public static final String ACCOUNT_STATUS_ACTIVE = "ACTV";
-	public static final String ACCOUNT_STATUS_PASSIVE = "PASS";
+	/** gnl_st / ent_code_name=CUST_ACCT altindaki shrt_code degerleri (bkz. LookupGroups.CUST_ACCT_STATUS). */
+	public static final String CUST_ACCT_STATUS_ACTIVE = "ACTV";
+	public static final String CUST_ACCT_STATUS_PASSIVE = "PASS";
+	public static final String CUST_ACCT_STATUS_DELETED = "DEL";
 
 	private LookupCodes() {
 	}

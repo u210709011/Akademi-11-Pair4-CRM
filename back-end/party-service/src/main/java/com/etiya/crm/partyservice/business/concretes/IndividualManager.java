@@ -15,8 +15,8 @@ import com.etiya.crm.shared.contracts.individual.CreateIndividualCommand;
 import com.etiya.crm.shared.contracts.individual.IndividualResponse;
 import com.etiya.crm.shared.contracts.individual.PartyRoleResponse;
 import com.etiya.crm.shared.contracts.individual.UpdateIndividualCommand;
-import com.etiya.crm.shared.contracts.lookup.LookupCodes;
-import com.etiya.crm.shared.contracts.lookup.LookupGroups;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpCodes;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpGroups;
 import com.etiya.crm.shared.events.KafkaTopics;
 import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
 import com.etiya.crm.shared.events.party.PartyEvent;
@@ -30,9 +30,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class IndividualManager implements IndividualService {
-
-    private static final String LOOKUP_GROUP_PARTY_TYPE = "PARTY_TYPE";
-    private static final String LOOKUP_CODE_INDIVIDUAL = "INDIVIDUAL";
 
     private final PartyRepository partyRepository;
     private final IndividualRepository individualRepository;
@@ -48,7 +45,7 @@ public class IndividualManager implements IndividualService {
         individualBusinessRules.checkNationalIdNotDuplicate(command.nationalId());
 
         Party party = new Party();
-        party.setPartyTypeId(lookupCacheService.resolveIdByCode(LOOKUP_GROUP_PARTY_TYPE, LOOKUP_CODE_INDIVIDUAL));
+        party.setPartyTypeId(lookupCacheService.resolveIdByCode(GnlTpGroups.PARTY_TYPE, GnlTpCodes.INDIVIDUAL));
         party = partyRepository.save(party);
 
         Individual individual = individualMapper.toEntity(command);
@@ -57,7 +54,7 @@ public class IndividualManager implements IndividualService {
 
         PartyRole partyRole = new PartyRole();
         partyRole.setPartyRoleTypeId(
-                lookupCacheService.resolveIdByCode(LookupGroups.PARTY_ROLE_TYPE, LookupCodes.PARTY_ROLE_CUSTOMER));
+                lookupCacheService.resolveIdByCode(GnlTpGroups.PARTY_ROLE_TYPE, GnlTpCodes.CUSTOMER_ROLE));
         partyRole.setParty(party);
         partyRole = partyRoleRepository.save(partyRole);
 

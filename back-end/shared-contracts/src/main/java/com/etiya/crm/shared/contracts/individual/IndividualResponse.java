@@ -2,6 +2,7 @@ package com.etiya.crm.shared.contracts.individual;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -14,7 +15,10 @@ public record IndividualResponse(
 		String firstName,
 		String middleName,
 		String lastName,
+
+		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
 		LocalDate birthDate,
+
 		Long genderId,
 		String motherName,
 		String fatherName,

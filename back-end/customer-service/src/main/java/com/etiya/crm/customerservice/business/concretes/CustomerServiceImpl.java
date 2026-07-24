@@ -141,7 +141,8 @@ public class CustomerServiceImpl implements CustomerService {
 	@Cacheable(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
 	public CustomerResponse getById(Long custId) {
 		Customer customer = getActiveCustomerOrThrow(custId);
-		List<CustomerAccount> accounts = customerAccountRepository.findByCustomer_CustIdAndActiveTrue(custId);
+		List<CustomerAccount> accounts = customerAccountRepository
+				.findByCustomer_CustIdAndAcctStIdNotDeleted(custId, resolveDeletedAccountStatusId());
 		return customerMapper.toResponse(customer, accounts);
 	}
 
@@ -150,14 +151,15 @@ public class CustomerServiceImpl implements CustomerService {
 	@CacheEvict(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
 	public void softDelete(Long custId) {
 		Customer customer = getActiveCustomerOrThrow(custId);
-		List<CustomerAccount> accounts = customerAccountRepository.findByCustomer_CustIdAndActiveTrue(custId);
+		List<CustomerAccount> accounts = customerAccountRepository
+				.findByCustomer_CustIdAndAcctStIdNotDeleted(custId, resolveDeletedAccountStatusId());
 		rules.ensureNoActiveBillingAccount(accounts,
 				lookupCacheService.resolveTypeId(LookupGroups.ACCOUNT_TYPE, LookupCodes.ACCOUNT_TYPE_BILL_ACCT),
-				lookupCacheService.resolveStatusId(LookupGroups.ACCOUNT_STATUS, LookupCodes.ACCOUNT_STATUS_ACTIVE));
+				resolveActiveAccountStatusId());
 
 		customer.setActive(false);
 		customerRepository.save(customer);
-		customerAccountRepository.softDeleteByCustId(custId);
+		customerAccountRepository.softDeleteByCustId(custId, resolveDeletedAccountStatusId());
 		customerSearchViewRepository.findById(custId).ifPresent(view -> {
 			view.setDeleted(true);
 			customerSearchViewRepository.save(view);
@@ -229,7 +231,8 @@ public class CustomerServiceImpl implements CustomerService {
 		AddressResponse address = rules.ensureAddressBelongsToCustomer(custId, addressId, existing);
 
 		rules.ensureAddressNotPrimary(address);
-		rules.ensureAddressNotLinkedToBillingAccount(customerAccountRepository.existsByAddressIdAndActiveTrue(addressId));
+		rules.ensureAddressNotLinkedToBillingAccount(
+				customerAccountRepository.existsByAddressIdAndAcctStIdNotDeleted(addressId, resolveDeletedAccountStatusId()));
 
 		contactAddressClient.deleteAddress(addressId);
 	}
@@ -271,7 +274,8 @@ public class CustomerServiceImpl implements CustomerService {
 	@Transactional(readOnly = true)
 	public Page<CustomerAccountResponse> getAccounts(Long custId, Pageable pageable) {
 		getActiveCustomerOrThrow(custId);
-		return customerAccountRepository.findByCustomer_CustIdAndActiveTrue(custId, pageable)
+		return customerAccountRepository
+				.findByCustomer_CustIdAndAcctStIdNotDeleted(custId, resolveDeletedAccountStatusId(), pageable)
 				.map(customerMapper::toResponse);
 	}
 
@@ -291,8 +295,7 @@ public class CustomerServiceImpl implements CustomerService {
 		account.setAccountTpId(
 				lookupCacheService.resolveTypeId(LookupGroups.ACCOUNT_TYPE, LookupCodes.ACCOUNT_TYPE_BILL_ACCT));
 		account.setAddressId(addressId);
-		account.setAcctStId(
-				lookupCacheService.resolveStatusId(LookupGroups.ACCOUNT_STATUS, LookupCodes.ACCOUNT_STATUS_ACTIVE));
+		account.setAcctStId(resolveActiveAccountStatusId());
 		// acct_no NOT NULL+UNIQUE oldugu icin gecici bir deger ile ilk kayit yapilir,
 		// IDENTITY'den donen custAcctId ile asil numara ikinci kayitta yazilir.
 		account.setAccountNo(UUID.randomUUID().toString());
@@ -311,7 +314,8 @@ public class CustomerServiceImpl implements CustomerService {
 		getActiveCustomerOrThrow(custId);
 		rules.ensureAddressProvided(request.addressId(), request.newAddress());
 		CustomerAccount account = customerAccountRepository
-				.findByCustAcctIdAndCustomer_CustIdAndActiveTrue(accountId, custId)
+				.findByCustAcctIdAndCustomer_CustIdAndAcctStIdNotDeleted(accountId, custId,
+						resolveDeletedAccountStatusId())
 				.orElseThrow(() -> new BillingAccountNotFoundException(custId, accountId));
 
 		Long addressId = resolveBillingAddressId(custId, request.addressId(), request.newAddress());
@@ -331,22 +335,28 @@ public class CustomerServiceImpl implements CustomerService {
 	public void deleteBillingAccount(Long custId, Long accountId) {
 		getActiveCustomerOrThrow(custId);
 		CustomerAccount account = customerAccountRepository
-				.findByCustAcctIdAndCustomer_CustIdAndActiveTrue(accountId, custId)
+				.findByCustAcctIdAndCustomer_CustIdAndAcctStIdNotDeleted(accountId, custId,
+						resolveDeletedAccountStatusId())
 				.orElseThrow(() -> new BillingAccountNotFoundException(custId, accountId));
+
+		// Onboarding'de acilan varsayilan CUST_ACCT tipi hesap "fatura hesabi" degildir, hicbir
+		// zaman FR-011 ile silinemez.
+		rules.ensureAccountIsBillingType(account,
+				lookupCacheService.resolveTypeId(LookupGroups.ACCOUNT_TYPE, LookupCodes.ACCOUNT_TYPE_BILL_ACCT));
 
 		// Urun guard'i (ACC-004, pasif hesaba bagli urun) order-service'i bekliyor - TODO,
 		// burada uygulanmiyor (bkz. BRAIN SS3 FR-011).
-		rules.ensureBillingAccountNotActive(account,
-				lookupCacheService.resolveStatusId(LookupGroups.ACCOUNT_STATUS, LookupCodes.ACCOUNT_STATUS_ACTIVE));
+		rules.ensureBillingAccountNotActive(account, resolveActiveAccountStatusId());
 
-		account.setActive(false);
+		account.setAcctStId(resolveDeletedAccountStatusId());
 		customerAccountRepository.save(account);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public boolean existsAccountByAddressId(Long addressId) {
-		return customerAccountRepository.existsByAddressIdAndActiveTrue(addressId);
+		return customerAccountRepository.existsByAddressIdAndAcctStIdNotDeleted(addressId,
+				resolveDeletedAccountStatusId());
 	}
 
 	private Long resolveBillingAddressId(Long custId, Long addressId, AddressInfo newAddress) {
@@ -405,6 +415,14 @@ public class CustomerServiceImpl implements CustomerService {
 		return lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, code);
 	}
 
+	private Long resolveActiveAccountStatusId() {
+		return lookupCacheService.resolveStatusId(LookupGroups.CUST_ACCT_STATUS, LookupCodes.CUST_ACCT_STATUS_ACTIVE);
+	}
+
+	private Long resolveDeletedAccountStatusId() {
+		return lookupCacheService.resolveStatusId(LookupGroups.CUST_ACCT_STATUS, LookupCodes.CUST_ACCT_STATUS_DELETED);
+	}
+
 	private Customer getActiveCustomerOrThrow(Long custId) {
 		return customerRepository.findByCustIdAndActiveTrue(custId)
 				.orElseThrow(() -> new CustomerNotFoundException(custId));
@@ -421,8 +439,7 @@ public class CustomerServiceImpl implements CustomerService {
 		account.setAccountNo(AccountDefaults.formatAccountNo(customer.getCustId()));
 		account.setAccountTpId(
 				lookupCacheService.resolveTypeId(LookupGroups.ACCOUNT_TYPE, LookupCodes.ACCOUNT_TYPE_CUST_ACCT));
-		account.setAcctStId(
-				lookupCacheService.resolveStatusId(LookupGroups.ACCOUNT_STATUS, LookupCodes.ACCOUNT_STATUS_ACTIVE));
+		account.setAcctStId(resolveActiveAccountStatusId());
 		account = customerAccountRepository.save(account);
 
 		customer.getAccounts().add(account);
@@ -430,7 +447,7 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	private void compensateCustomer(Long custId) {
-		customerAccountRepository.softDeleteByCustId(custId);
+		customerAccountRepository.softDeleteByCustId(custId, resolveDeletedAccountStatusId());
 		customerSearchViewRepository.deleteById(custId);
 		customerRepository.findByCustIdAndActiveTrue(custId).ifPresent(customer -> {
 			customer.setActive(false);
