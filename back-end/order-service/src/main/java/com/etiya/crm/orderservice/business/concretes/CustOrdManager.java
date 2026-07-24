@@ -11,6 +11,7 @@ import com.etiya.crm.orderservice.business.exceptions.BusinessException;
 import com.etiya.crm.orderservice.business.rules.BasketValidationRules;
 import com.etiya.crm.orderservice.clients.controllers.ContactAddressClient;
 import com.etiya.crm.orderservice.clients.controllers.CustomerClient;
+import com.etiya.crm.orderservice.clients.controllers.LookupClient;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
 import com.etiya.crm.orderservice.constants.OrderEventTypes;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
@@ -26,6 +27,8 @@ import com.etiya.crm.orderservice.entities.concretes.CustOrdItem;
 import com.etiya.crm.orderservice.messaging.OrderSubmittedEvent;
 import com.etiya.crm.shared.contracts.address.AddressResponse;
 import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
+import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -50,6 +53,7 @@ public class CustOrdManager implements CustOrdService {
     private final BsnInterSpecRepository bsnInterSpecRepository;
     private final CustomerClient customerClient;
     private final ContactAddressClient contactAddressClient;
+    private final LookupClient lookupClient;
     private final BasketValidationRules basketValidationRules;
     private final OutboxEventPublisher outboxEventPublisher;
 
@@ -61,7 +65,7 @@ public class CustOrdManager implements CustOrdService {
 
         //is account belong to that customer
 
-        List<CustomerAccountResponse> accounts = customerClient.getAccounts(request.custId());
+        List<CustomerAccountResponse> accounts = customerClient.getAccounts(request.custId(), 1000).content();
         basketValidationRules.ensureAccountBelongsToCustomer(request.custAcctId(), accounts);
         basketValidationRules.ensureAddressProvided(request);
 
@@ -74,9 +78,15 @@ public class CustOrdManager implements CustOrdService {
         bsnInter.setDescr("New sales order");
         bsnInter = bsnInterRepository.save(bsnInter);
         
+        // FR-021: siparis olusturulunca "Siparis Alindi, Isleniyor" (CUST_ORD/MIDLWARE) statusune alinir
+        Long orderStatusId = lookupClient
+                .resolveGeneralStatus(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING)
+                .gnlStId();
+
         //create order
         CustOrd custOrd = new CustOrd();
         custOrd.setCustId(request.custId());
+        custOrd.setOrdStId(orderStatusId);
         custOrd.setBsnInter(bsnInter);
         custOrd.setBsnInterSpec(spec);
         custOrd = custOrdRepository.save(custOrd);
