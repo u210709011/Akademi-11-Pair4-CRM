@@ -25,8 +25,10 @@ public final class LookupCodes {
 
 	public static final String ACCOUNT_TYPE_CUST_ACCT = "CUST_ACCT";
 	public static final String ACCOUNT_TYPE_BILL_ACCT = "BILL_ACCT";
-	public static final String ACCOUNT_STATUS_ACTIVE = "ACTIVE";
-	public static final String ACCOUNT_STATUS_PASSIVE = "PASSIVE";
+
+	/** GNL_ST.CUST_ACCT grubundaki gercek shrt_code degerleri (bkz. shared-contracts.gnlst.GnlStCodes). */
+	public static final String ACCOUNT_STATUS_ACTIVE = "ACTV";
+	public static final String ACCOUNT_STATUS_PASSIVE = "PASS";
 
 	private LookupCodes() {
 	}

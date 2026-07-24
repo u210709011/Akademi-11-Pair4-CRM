@@ -18,6 +18,54 @@
             <h4 class="address-empty-title">{{ i18n.t('create.noAddressTitle') }}</h4>
             <p class="address-empty-description">{{ i18n.t('create.noAddressDescription') }}</p>
         </div>
+    } @else {
+        <div class="address-list">
+            @for (address of addresses(); track $index) {
+                <div class="address-tile">
+                    <div class="address-card" [class.address-card-primary]="$index === 0">
+                        <div class="address-card-header">
+                            <span class="address-card-city">
+                                @if ($index === 0) {
+                                    <svg class="address-pin-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M12 22s7-7.5 7-12A7 7 0 0 0 5 10c0 4.5 7 12 7 12Z" />
+                                        <circle cx="12" cy="10" r="2.5" />
+                                    </svg>
+                                }
+                                {{ cityName(address.city) }}
+                            </span>
+                            <div class="address-card-menu">
+                                <button type="button" class="menu-trigger" [attr.aria-label]="i18n.t('detail.editAddress')" (click)="toggleAddressMenu($index, $event)">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <circle cx="12" cy="5" r="1.5" />
+                                        <circle cx="12" cy="12" r="1.5" />
+                                        <circle cx="12" cy="19" r="1.5" />
+                                    </svg>
+                                </button>
+                                @if (openAddressMenuIndex() === $index) {
+                                    <div class="menu-dropdown" (click)="$event.stopPropagation()">
+                                        <button type="button" class="menu-item-danger" (click)="removeAddress($index)">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                <path d="M3 6h18" />
+                                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                                <path d="M10 11v6" />
+                                                <path d="M14 11v6" />
+                                            </svg>
+                                            {{ i18n.t('create.removeBtn') }}
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <p class="address-card-line">{{ address.street }} No: {{ address.houseNumber }}</p>
+                        <p class="address-card-city-sub">{{ cityName(address.city) }}</p>
+                        <span class="address-card-tag">
+                            {{ address.description }}{{ $index === 0 ? ' · ' + i18n.t('detail.primaryBadge') : '' }}
+                        </span>
+                    </div>
+                </div>
+            }
+        </div>
     }
 
 </section>

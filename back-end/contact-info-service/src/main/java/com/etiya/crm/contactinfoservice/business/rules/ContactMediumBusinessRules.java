@@ -4,7 +4,6 @@ import com.etiya.crm.contactinfoservice.business.exceptions.ContactMediumNotFoun
 import com.etiya.crm.contactinfoservice.business.exceptions.InvalidContactMediumFormatException;
 import com.etiya.crm.contactinfoservice.clients.LookupClient;
 import com.etiya.crm.contactinfoservice.constants.LookupCodes;
-import com.etiya.crm.contactinfoservice.constants.LookupGroups;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.ContactMediumRepository;
 import com.etiya.crm.contactinfoservice.entities.concretes.ContactMedium;
 import org.springframework.stereotype.Component;
@@ -32,7 +31,7 @@ public class ContactMediumBusinessRules {
     }
 
     public void checkDataFormat(String cntcData, Long cntcMediumTypeId) {
-        String typeCode = lookupClient.getById(LookupGroups.CONTACT_MEDIUM_TYPE, cntcMediumTypeId).code();
+        String typeCode = lookupClient.getTypeById(cntcMediumTypeId).shrtCode();
 
         if (LookupCodes.CONTACT_MEDIUM_EMAIL.equals(typeCode)) {
             if (!EMAIL_PATTERN.matcher(cntcData).matches()) {

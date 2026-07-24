@@ -13,7 +13,9 @@ public final class LookupGroups {
 
 	public static final String CUSTOMER_TYPE = "CUST_TP";
 	public static final String ACCOUNT_TYPE = "ACCOUNT_TYPE";
-	public static final String ACCOUNT_STATUS = "ACCOUNT_STATUS";
+
+	/** GNL_ST tablosunda hesap durumu icin ent_code_name, tablonun kendi adiyla ayni ("CUST_ACCT"). */
+	public static final String ACCOUNT_STATUS = "CUST_ACCT";
 	public static final String GENDER = "GENDER";
 	public static final String CITY = "CITY";
 	public static final String CONTACT_MEDIUM_TYPE = "CNTC_MEDIUM";
