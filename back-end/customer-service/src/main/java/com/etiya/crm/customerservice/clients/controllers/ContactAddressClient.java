@@ -54,6 +54,11 @@ public interface ContactAddressClient {
 	@PutMapping("/api/v1/addresses/{id}")
 	AddressResponse updateAddress(@PathVariable("id") Long id, @RequestBody UpdateAddressRequest request);
 
+	// FR-005 ACC-008..012: guard'lar (primary/faturaya bagli) customer-service'te lokal
+	// veriyle onceden kontrol edilir - bu cagri sadece guard'lar gectikten sonra yapilir.
+	@DeleteMapping("/api/v1/addresses/{id}")
+	void deleteAddress(@PathVariable("id") Long id);
+
 	@GetMapping("/api/v1/contact-mediums")
 	List<ContactMediumResponse> getContactMediumsByCustomer(@RequestParam("rowId") Long rowId,
 			@RequestParam("dataTypeId") Long dataTypeId);

@@ -5,7 +5,7 @@
   height: 100%;
   padding: 20px 32px 40px;
   box-sizing: border-box;
-  background-color: #F4F5F7;
+  background-color: var(--page-bg);
 
 }
 .breadcrumb {
@@ -20,7 +20,7 @@
   align-items: center;
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--text-placeholder);
   text-decoration: none;
 
   &:hover {
@@ -51,14 +51,14 @@
 .breadcrumb-current {
   font-size: 13px;
   font-weight: 700;
-  color: #F47920;
+  color: var(--etiya-orange);
 }
 
 .page-title {
   margin: 0 0 20px;
-  font-size: 32px;
+  font-size: var(--fs-page-title);
   font-weight: 800;
-  color: #F47920;
+  color: var(--etiya-orange);
 }
 
 .create-customer-layout {
@@ -75,15 +75,15 @@
 }
 .tab {
     flex: 1 1 0%;
-    border: 1px solid #E2E8F0;
+    border: 1px solid var(--border-subtle);
     background-color:rgb(255, 255, 255);
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
-    color: #667085;
-    
+    color: var(--text-secondary);
+
     &.active {
-      background-color: #F47920;
+      background-color: var(--etiya-orange);
       color: white;
     }
 }
@@ -113,7 +113,7 @@
 
 .cancel-button {
   color: #374151;
-  background: #fff;
+  background: var(--surface-card);
   border: 1px solid #d1d5db;
 
   &:hover {
@@ -123,7 +123,7 @@
 
 .next-button {
   color: #fff;
-  background: #F47920;
+  background: var(--etiya-orange);
   border: none;
 
   &:hover {
@@ -149,14 +149,14 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--text-placeholder);
   white-space: nowrap;
 }
 
 .verifying-spinner {
   width: 16px;
   height: 16px;
-  color: #F47920;
+  color: var(--etiya-orange);
   fill: none;
   stroke: currentColor;
   stroke-width: 2.5;

@@ -28,9 +28,67 @@ body {
 
 
 :root {
+  // Renkler
+  --etiya-navy: #1B2340;
+  --etiya-navy-deep: #10182E;
+  --etiya-navy-border: #262B38;
+  --etiya-orange: #F47920;
+  --etiya-orange-hover: #DD6912;
+  --etiya-orange-soft: #FEF6F0;
+  --page-bg: #F4F5F7;
+  --surface-card: #FFFFFF;
+  --surface-muted: #F8F9FB;
+  --surface-overlay: rgba(0, 0, 0, 0.40);
+  --border-input: #D0D5DD;
+  --border-subtle: #E2E8F0;
+  --border-hairline: #F3F4F6;
+  --text-primary: #1B2340;
+  --text-body: #262830;
+  --text-secondary: #667085;
+  --text-placeholder: #6B7280;
+  --text-muted: #98A2B3;
+  --text-on-navy: #FFFFFF;
+  --text-on-navy-dim: rgba(255, 255, 255, 0.70);
+  --text-link: #F47920;
+  --error: #DC2626;
+  --error-border: #DC2626;
+  --success: #1F8A5B;
+  --accent-info: #3B6FE0;
+  --accent-info-soft: #EEF3FE;
+  --btn-primary-bg: var(--etiya-orange);
+  --btn-primary-bg-hover: var(--etiya-orange-hover);
+  --btn-primary-fg: #FFFFFF;
+  --btn-secondary-fg: var(--etiya-navy);
+  --btn-disabled-bg: #E5E7EB;
+  --btn-disabled-fg: #98A2B3;
+  --focus-ring: rgba(244, 121, 32, 0.35);
+
+  // Fontlar
   --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-alt: 'Plus Jakarta Sans', sans-serif;
+  --fs-page-title: 28px;
+  --fs-modal-title: 22px;
+  --fs-section: 16px;
+  --fs-tab: 14px;
+  --fs-body: 14px;
+  --fs-info: 15px;
+  --fs-label: 13px;
+  --fs-helper: 12px;
+  --fs-chip: 11px;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --lh-tight: 1;
+  --lh-heading: 1.15;
+  --lh-body: 1.5;
+  --ls-heading: -0.02em;
+  --ls-title: -0.01em;
+  --ls-label: 0.005em;
+  --ls-caps: 0.06em;
+  --text-page-title-size: var(--fs-page-title);
+  --text-label-size: var(--fs-label);
 }
 
 * {
@@ -49,11 +107,200 @@ body {
   font-variant-ligatures: none;
 }
 
+// Tarayicilar button/input/select/textarea'ya body'nin font-family'sini otomatik miras
+// vermez (kendi UA font stack'lerini kullanirlar) - bu yuzden acikca inherit ettiriyoruz.
+button,
+input,
+select,
+textarea,
+optgroup {
+  font-family: inherit;
+}
+
 html {
   --mat-datepicker-calendar-container-background-color: #fff;
   --mat-datepicker-calendar-container-shape: 12px;
 }
 
+
+// Onboarding (address-tab) ve Customer Detail (address tab) ayni "adres ekle/duzenle"
+// modalini kullaniyor - iki component'e ayri ayri kopyalamak yerine burada paylasilir.
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 24, 39, 0.5);
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 480px;
+  margin: 24px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: var(--fs-modal-title);
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: #6b7280;
+  cursor: pointer;
+  background: none;
+  border: none;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  &:hover {
+    color: #1f2937;
+  }
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .required {
+    font-size: 12px;
+    color: #F47920;
+    vertical-align: super;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #111827;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #F47920;
+      box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15);
+    }
+  }
+}
+
+.select-wrapper {
+  position: relative;
+
+  select {
+    appearance: none;
+    padding-right: 36px;
+  }
+
+  .select-chevron {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: #6b7280;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #e5e7eb;
+
+  button {
+    min-width: 140px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: filter 0.2s ease, background 0.2s ease;
+  }
+}
+
+.cancel-button {
+  color: #374151;
+  background: #fff;
+  border: 1px solid #d1d5db;
+
+  &:hover {
+    background: #f9fafb;
+  }
+}
+
+.save-button {
+  color: #fff;
+  background: #F47920;
+  border: none;
+
+  &:hover {
+    filter: brightness(1.05);
+  }
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+    background: #e5e7eb;
+  }
+}
 
 .app-date-picker-panel {
   --mat-datepicker-calendar-date-selected-state-background-color: #F47920;
