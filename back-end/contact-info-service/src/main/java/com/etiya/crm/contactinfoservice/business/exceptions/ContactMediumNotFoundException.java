@@ -1,9 +1,11 @@
 package com.etiya.crm.contactinfoservice.business.exceptions;
 
-public class ContactMediumNotFoundException extends RuntimeException {
+import com.etiya.crm.contactinfoservice.constants.MessageKeys;
 
-    public ContactMediumNotFoundException(String message) {
-        super(message);
+public class ContactMediumNotFoundException extends BusinessException {
+
+    public ContactMediumNotFoundException(Long id) {
+        super(MessageKeys.CONTACT_MEDIUM_NOT_FOUND, id);
     }
 
 }
