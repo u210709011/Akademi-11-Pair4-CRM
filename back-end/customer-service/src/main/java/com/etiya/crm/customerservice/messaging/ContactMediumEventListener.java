@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchViewRepository;
-import com.etiya.crm.shared.contracts.lookup.DataTypeIds;
 import com.etiya.crm.shared.contracts.lookup.LookupCodes;
 import com.etiya.crm.shared.contracts.lookup.LookupGroups;
 import com.etiya.crm.shared.events.KafkaTopics;
@@ -67,18 +66,21 @@ public class ContactMediumEventListener {
 		}
 	}
 
-	/** DATA_TYPE=CUST sabit kontrattir (bkz. DataTypeIds), MOBILE_PHONE ise lookup-service'ten cozulur. */
+	/** Hicbir lookup ID'si hardcode edilmez - hem CUST'un data-type id'si hem MOBILE_PHONE'un
+	 * medium-type id'si lookup-service'ten cozulur (ikisi de Caffeine'de cache'lidir). */
 	private boolean isCustomerMobilePhone(ContactMediumEvent event) {
+		Long customerDataTypeId;
 		Long mobilePhoneTypeId;
 		try {
+			customerDataTypeId = lookupCacheService.resolveDataTypeId(LookupCodes.TABLE_NAME_CUSTOMER);
 			mobilePhoneTypeId = lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE,
 					LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE);
 		} catch (RuntimeException ex) {
 			log.warn(LogMessages.LOOKUP_SERVICE_CALL_FAILED, ex.getMessage());
 			throw new LookupServiceUnavailableException(
-					"Could not resolve CNTC_MEDIUM_TYPE/MOBILE_PHONE from lookup-service", ex);
+					"Could not resolve CUST data-type or CNTC_MEDIUM_TYPE/MOBILE_PHONE from lookup-service", ex);
 		}
-		return DataTypeIds.CUSTOMER.equals(event.dataTypeId()) && mobilePhoneTypeId.equals(event.cntcMediumTypeId());
+		return customerDataTypeId.equals(event.dataTypeId()) && mobilePhoneTypeId.equals(event.cntcMediumTypeId());
 	}
 
 	private void syncGsm(Long custId, String gsm) {

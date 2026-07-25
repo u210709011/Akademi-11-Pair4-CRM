@@ -1,7 +1,5 @@
 package com.etiya.crm.customerservice.clients.controllers;
 
-import java.util.List;
-
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,7 +22,6 @@ public interface LookupClient {
 	GnlStResponse resolveStatus(@PathVariable("entCodeName") String entCodeName,
 			@PathVariable("shrtCode") String shrtCode);
 
-	// /resolve/{tableName} ucu yok - tum satirlari cekip bellekte tableName'e gore filtrelenir.
-	@GetMapping("/api/v1/type-values")
-	List<TypeValueResponse> getAllTypeValues();
+	@GetMapping("/api/v1/type-values/by-table/{tableName}")
+	TypeValueResponse getTypeValueByTableName(@PathVariable("tableName") String tableName);
 }

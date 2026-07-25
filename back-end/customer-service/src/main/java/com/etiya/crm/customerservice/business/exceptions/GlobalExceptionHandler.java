@@ -61,7 +61,8 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler({ PrimaryAddressCannotBeDeletedException.class, AddressLinkedToAccountException.class,
-			BillingAccountActiveCannotBeDeletedException.class, CustomerHasActiveBillingAccountException.class })
+			BillingAccountActiveCannotBeDeletedException.class, CustomerHasActiveBillingAccountException.class,
+			DefaultAccountCannotBeDeletedException.class })
 	public ResponseEntity<ErrorResponse> handleGuardViolation(BusinessException ex, HttpServletRequest request) {
 		return build(HttpStatus.CONFLICT, ex, request);
 	}
