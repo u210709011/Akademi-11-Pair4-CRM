@@ -11,6 +11,7 @@ public final class MessageKeys {
 	public static final String PARTY_NOT_FOUND = "error.party.not-found";
 	public static final String LOOKUP_VALUE_NOT_FOUND = "error.lookup.value-not-found";
 	public static final String DUPLICATE_NATIONAL_ID = "error.individual.duplicate-national-id";
+	public static final String VALIDATION_FAILED = "error.validation.failed";
 
 	private MessageKeys() {
 	}
