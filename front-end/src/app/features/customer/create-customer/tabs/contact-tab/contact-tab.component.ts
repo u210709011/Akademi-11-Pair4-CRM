@@ -26,9 +26,11 @@ export class ContactTabComponent {
     required(path.email);
     email(path.email);
     required(path.mobilePhone);
-    maxLength(path.homePhone, 10);
+    // Backend (ContactInfo.homePhone/fax) 10-11 haneyi de kabul eder (^[0-9]{10,11}$),
+    // mobilePhone ise her zaman tam 10 hane olmali (5 ile baslar).
+    maxLength(path.homePhone, 11);
     maxLength(path.mobilePhone, 10);
-    maxLength(path.fax, 10);
+    maxLength(path.fax, 11);
   });
 
   constructor() {
@@ -57,7 +59,8 @@ export class ContactTabComponent {
 
   private sanitizePhoneField(field: PhoneFieldName): void {
     const raw = this.contactForm[field]().value();
-    let digitsOnly = raw.replace(/\D/g, '').slice(0, 10);
+    const maxDigits = field === 'mobilePhone' ? 10 : 11;
+    let digitsOnly = raw.replace(/\D/g, '').slice(0, maxDigits);
 
     if (field === 'mobilePhone') {
       while (digitsOnly.length > 0 && digitsOnly[0] !== '5') {

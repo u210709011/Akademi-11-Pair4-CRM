@@ -1,5 +1,5 @@
-import { Component, HostListener, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { form, FormField, required } from '@angular/forms/signals';
+import { Component, HostListener, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { form, FormField, maxLength, required } from '@angular/forms/signals';
 import { AddressInfo } from '../../../../../core/customer';
 import { I18nService } from '../../../../../core/i18n';
 import { AddressFormModel, CreateCustomerFormStateService } from '../../create-customer.component';
@@ -32,9 +32,12 @@ export class AddressTabComponent {
   protected readonly addressForm = form(this.addressModel, path => {
     required(path.city);
     required(path.street);
+    maxLength(path.street, 200);
     required(path.houseNumber);
     required(path.description);
   });
+
+  protected readonly addressLimitReached = computed(() => this.addresses().length >= this.maxAddresses);
 
   constructor() {
     // ACC-011: en az bir adres eklenmeden sonraki adima gecilemez - sihirbazin ortak state'ine yansitilir.
@@ -65,6 +68,9 @@ export class AddressTabComponent {
   }
 
   protected openAddAddressModal(): void {
+    if (this.addressLimitReached()) {
+      return;
+    }
     this.openAddressMenuIndex.set(null);
     this.isAddAddressModalOpen.set(true);
   }

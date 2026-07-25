@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { form, FormField, maxLength, required } from '@angular/forms/signals';
+import { form, FormField, maxLength, minDate, minLength, required } from '@angular/forms/signals';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -63,6 +63,8 @@ export class UpdateCustomerComponent {
   protected readonly customerName = signal('');
 
   protected readonly today = new Date();
+  // ACC: 01/01/1900 oncesinden tarih girilemez.
+  protected readonly minBirthDate = new Date(1900, 0, 1);
   protected readonly datePickerHeader = DatePickerHeaderComponent;
 
   protected readonly nationalIdError = signal(false);
@@ -83,10 +85,12 @@ export class UpdateCustomerComponent {
     required(path.lastName);
     maxLength(path.lastName, 50);
     required(path.birthDate);
+    minDate(path.birthDate, this.minBirthDate);
     required(path.gender);
     maxLength(path.fatherName, 50);
     maxLength(path.motherName, 50);
     required(path.nationalId);
+    minLength(path.nationalId, 11);
     maxLength(path.nationalId, 11);
   });
 

@@ -2,10 +2,14 @@
 
     <div class="address-panel-header">
         <h3 class="address-count">{{ i18n.t('create.myAddresses') }} ({{ addresses().length }}/{{ maxAddresses }})</h3>
-        <button type="button" class="add-address-button" (click)="openAddAddressModal()">
+        <button type="button" class="add-address-button" [disabled]="addressLimitReached()" (click)="openAddAddressModal()">
             <span class="add-address-icon">+</span> {{ i18n.t('create.addNewAddress') }}
         </button>
     </div>
+
+    @if (addressLimitReached()) {
+        <p class="address-limit-message">{{ i18n.t('create.addressLimitReached') }}</p>
+    }
 
     @if (addresses().length === 0) {
         <div class="address-empty-state">
