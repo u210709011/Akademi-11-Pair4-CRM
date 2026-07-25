@@ -31,8 +31,20 @@ export class CustomerService {
   private readonly http = inject(HttpClient);
 
   // page/size: FR-002 ilk sayfada 10 kayit gosterir (bkz. search-customer.component.ts), kalani sayfalama ile.
-  search(criteria: CustomerSearchCriteria, page: number, size: number): Observable<CustomerSearchPage> {
+  // sortBy/sortDir: backend'de PageRequest.of(page, size, Sort) olarak uygulanir - tum sonuc kumesini
+  // sirlar, sadece o an yuklu sayfayi degil (bkz. CustomerController.buildPageable).
+  search(
+    criteria: CustomerSearchCriteria,
+    page: number,
+    size: number,
+    sortBy?: string | null,
+    sortDir?: 'asc' | 'desc' | null
+  ): Observable<CustomerSearchPage> {
     let params = new HttpParams().set('page', page).set('size', size);
+
+    if (sortBy) {
+      params = params.set('sortBy', sortBy).set('sortDir', sortDir ?? 'asc');
+    }
 
     for (const [key, value] of Object.entries(criteria)) {
       if (value) {

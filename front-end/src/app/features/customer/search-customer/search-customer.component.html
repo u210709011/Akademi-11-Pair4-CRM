@@ -242,7 +242,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (customer of sortedResults(); track customer.custId) {
+                        @for (customer of searchResults(); track customer.custId) {
                             <tr>
                                 <td>
                                     <button type="button" class="customer-id-link" (click)="viewCustomerDetail(customer)">{{ customer.custId }}</button>
