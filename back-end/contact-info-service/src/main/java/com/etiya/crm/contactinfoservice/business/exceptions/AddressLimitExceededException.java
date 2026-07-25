@@ -1,9 +1,11 @@
 package com.etiya.crm.contactinfoservice.business.exceptions;
 
-public class AddressLimitExceededException extends RuntimeException {
+import com.etiya.crm.contactinfoservice.constants.MessageKeys;
 
-    public AddressLimitExceededException(String message) {
-        super(message);
+public class AddressLimitExceededException extends BusinessException {
+
+    public AddressLimitExceededException() {
+        super(MessageKeys.ADDRESS_MAX_EXCEEDED);
     }
 
 }

@@ -66,7 +66,7 @@ class AddressServiceImplTest {
         CreateAddressRequest request = new CreateAddressRequest(10L, 1L, 5L, "Street", "12", "Desc", false);
         List<Address> fiveAddresses = List.of(new Address(), new Address(), new Address(), new Address(), new Address());
         when(addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(10L, 1L)).thenReturn(fiveAddresses);
-        doThrow(new AddressLimitExceededException("You can add up to 5 addresses."))
+        doThrow(new AddressLimitExceededException())
                 .when(addressBusinessRules).checkAddressLimitNotExceeded(fiveAddresses);
 
         assertThatThrownBy(() -> addressService.add(request))
@@ -100,7 +100,7 @@ class AddressServiceImplTest {
         address.setPrimary(true);
 
         when(addressBusinessRules.checkIfAddressExists(1L)).thenReturn(address);
-        doThrow(new PrimaryAddressDeletionException("Primary address cannot be deleted."))
+        doThrow(new PrimaryAddressDeletionException())
                 .when(addressBusinessRules).checkIfNotPrimary(address);
 
         assertThatThrownBy(() -> addressService.delete(1L))
@@ -132,8 +132,7 @@ class AddressServiceImplTest {
         address.setPrimary(false);
 
         when(addressBusinessRules.checkIfAddressExists(1L)).thenReturn(address);
-        doThrow(new AddressLinkedToAccountException(
-                "Please change the billing address on the related customer account first."))
+        doThrow(new AddressLinkedToAccountException())
                 .when(addressBusinessRules).checkNotLinkedToAccount(1L);
 
         assertThatThrownBy(() -> addressService.delete(1L))

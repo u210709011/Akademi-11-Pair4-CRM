@@ -1,9 +1,11 @@
 package com.etiya.crm.contactinfoservice.business.exceptions;
 
-public class PrimaryAddressDeletionException extends RuntimeException {
+import com.etiya.crm.contactinfoservice.constants.MessageKeys;
 
-    public PrimaryAddressDeletionException(String message) {
-        super(message);
+public class PrimaryAddressDeletionException extends BusinessException {
+
+    public PrimaryAddressDeletionException() {
+        super(MessageKeys.PRIMARY_ADDRESS_CANNOT_BE_DELETED);
     }
 
 }

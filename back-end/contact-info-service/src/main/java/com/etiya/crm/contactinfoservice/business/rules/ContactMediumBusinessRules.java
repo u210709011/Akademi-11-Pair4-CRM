@@ -3,6 +3,7 @@ package com.etiya.crm.contactinfoservice.business.rules;
 import com.etiya.crm.contactinfoservice.business.exceptions.ContactMediumNotFoundException;
 import com.etiya.crm.contactinfoservice.business.exceptions.InvalidContactMediumFormatException;
 import com.etiya.crm.contactinfoservice.clients.LookupClient;
+import com.etiya.crm.contactinfoservice.constants.MessageKeys;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.ContactMediumRepository;
 import com.etiya.crm.shared.contracts.gnltp.GnlTpCodes;
 import com.etiya.crm.contactinfoservice.entities.concretes.ContactMedium;
@@ -27,7 +28,7 @@ public class ContactMediumBusinessRules {
 
     public ContactMedium checkIfContactMediumExists(Long id) {
         return contactMediumRepository.findByIdAndActiveTrue(id)
-                .orElseThrow(() -> new ContactMediumNotFoundException("ContactMedium not found with id: " + id));
+                .orElseThrow(() -> new ContactMediumNotFoundException(id));
     }
 
     public void checkDataFormat(String cntcData, Long cntcMediumTypeId) {
@@ -35,16 +36,16 @@ public class ContactMediumBusinessRules {
 
         if (GnlTpCodes.EMAIL.equals(typeCode)) {
             if (!EMAIL_PATTERN.matcher(cntcData).matches()) {
-                throw new InvalidContactMediumFormatException("Invalid email format");
+                throw new InvalidContactMediumFormatException(MessageKeys.CONTACT_MEDIUM_INVALID_EMAIL_FORMAT);
             }
         } else if (GnlTpCodes.MOBILE.equals(typeCode)) {
             if (!MOBILE_PHONE_PATTERN.matcher(cntcData).matches()) {
-                throw new InvalidContactMediumFormatException("Invalid phone number format");
+                throw new InvalidContactMediumFormatException(MessageKeys.CONTACT_MEDIUM_INVALID_PHONE_FORMAT);
             }
         } else if (GnlTpCodes.LANDLINE.equals(typeCode)
                 || GnlTpCodes.FAX.equals(typeCode)) {
             if (!LANDLINE_PHONE_PATTERN.matcher(cntcData).matches()) {
-                throw new InvalidContactMediumFormatException("Invalid phone number format");
+                throw new InvalidContactMediumFormatException(MessageKeys.CONTACT_MEDIUM_INVALID_PHONE_FORMAT);
             }
         }
     }
