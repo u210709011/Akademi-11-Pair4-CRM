@@ -43,8 +43,10 @@ public class AddressBusinessRules {
 
     public void checkNotLinkedToAccount(Long addressId) {
         if (customerAccountClient.existsByAddressId(addressId)) {
+            // customer-service'teki ayni kural (CustomerBusinessRules/messages.properties)
+            // ile birebir ayni metin - iki servis ayni hatayi farkli sozcuklerle anlatmasin.
             throw new AddressLinkedToAccountException(
-                    "Please change the billing address on the related customer account first.");
+                    "Please change the related billing address in customer account.");
         }
     }
 
