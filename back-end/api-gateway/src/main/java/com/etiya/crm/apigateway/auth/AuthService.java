@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.etiya.crm.apigateway.auth.constants.MessageKeys;
 import com.etiya.crm.apigateway.auth.dtos.KeycloakErrorResponse;
 import com.etiya.crm.apigateway.auth.dtos.KeycloakTokenResponse;
 import com.etiya.crm.apigateway.auth.dtos.TokenResponse;
@@ -57,7 +58,7 @@ public class AuthService {
 				.body(BodyInserters.fromFormData(form))
 				.retrieve()
 				.onStatus(HttpStatusCode::isError,
-						response -> Mono.error(new InvalidCredentialsException("Logout failed.")))
+						response -> Mono.error(new InvalidCredentialsException(MessageKeys.LOGOUT_FAILED)))
 				.toBodilessEntity()
 				.then();
 	}
@@ -85,9 +86,8 @@ public class AuthService {
 		return response.bodyToMono(KeycloakErrorResponse.class)
 				.defaultIfEmpty(new KeycloakErrorResponse(null, null))
 				.map(error -> isAccountLocked(error.errorDescription())
-						? new AccountLockedException(
-								"Account is temporarily locked due to too many failed login attempts.")
-						: new InvalidCredentialsException("Invalid credentials or token."));
+						? new AccountLockedException(MessageKeys.ACCOUNT_LOCKED)
+						: new InvalidCredentialsException(MessageKeys.INVALID_CREDENTIALS));
 	}
 
 	private boolean isAccountLocked(String errorDescription) {
