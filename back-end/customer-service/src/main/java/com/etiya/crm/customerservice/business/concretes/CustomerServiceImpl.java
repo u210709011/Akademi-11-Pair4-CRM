@@ -110,6 +110,7 @@ public class CustomerServiceImpl implements CustomerService {
 				contactAddressClient.createContact(toContactCommand(customer.getCustId(), request));
 			} catch (Exception ex) {
 				log.error(LogMessages.ONBOARDING_CONTACT_FAILED, customer.getCustId(), ex);
+				compensateContactInfo(customer.getCustId());
 				compensateCustomer(customer.getCustId());
 				throw ex;
 			}
@@ -453,6 +454,21 @@ public class CustomerServiceImpl implements CustomerService {
 			customer.setActive(false);
 			customerRepository.save(customer);
 		});
+	}
+
+	/**
+	 * createContact basarisiz olsa bile contact-info-service tarafinda kismen commit edilmis
+	 * olabilir (orn. adresler yazildi ama yanit deserialize edilirken/timeout'ta hata olustu) -
+	 * bu satirlar aksi halde hic temizlenmezdi (ContactAddressClient.deleteByCustomerId tam da
+	 * bunun icin var ama onboarding hicbir zaman cagirmiyordu). Best-effort: bu cagri basarisiz
+	 * olsa da asil onboarding hatasini maskelememesi icin sadece loglanir, yeniden firlatilmaz.
+	 */
+	private void compensateContactInfo(Long custId) {
+		try {
+			contactAddressClient.deleteByCustomerId(custId);
+		} catch (Exception ex) {
+			log.error(LogMessages.ONBOARDING_CONTACT_COMPENSATION_FAILED, custId, ex);
+		}
 	}
 
 	/**

@@ -88,8 +88,9 @@ public class CustomerController {
 					+ "bu grup ile tcNo/acctNo/custId birbirine ve isim grubuna her zaman OR ile baglanir "
 					+ "(ör. hem ad-soyad hem tcNo verilirse, ya ada-soyada UYAN ya da o tcNo'ya sahip "
 					+ "musteriler doner). Hicbir parametre verilmezse tum (aktif) musteriler doner. "
-					+ "Soft-delete edilmis musteriler sonuca dahil olmaz. ACC-007: varsayilan sayfa "
-					+ "boyutu 50 - ilk 50 kayit dogrudan doner, kalani page/size ile sayfalanir.")
+					+ "Soft-delete edilmis musteriler sonuca dahil olmaz. Varsayilan sayfa boyutu "
+					+ "10 (front-end'in sayfa basina gosterdigi kayit sayisiyla ayni) - ilk 10 kayit "
+					+ "dogrudan doner, kalani page/size ile sayfalanir.")
 	@GetMapping("/search")
 	public ResponseEntity<Page<CustomerSearchResponse>> search(
 			@Parameter(description = "Ad (kismi/prefix eslesme)", example = "Ahmet")
@@ -106,8 +107,8 @@ public class CustomerController {
 			@RequestParam(required = false) String gsm,
 			@Parameter(description = "Sayfa numarasi (0'dan baslar)", example = "0")
 			@RequestParam(defaultValue = "0") int page,
-			@Parameter(description = "Sayfa basina kayit sayisi", example = "50")
-			@RequestParam(defaultValue = "50") int size) {
+			@Parameter(description = "Sayfa basina kayit sayisi", example = "10")
+			@RequestParam(defaultValue = "10") int size) {
 		CustomerSearchRequest request = new CustomerSearchRequest(firstName, lastName, tcNo, acctNo, custId, gsm);
 		return ResponseEntity.ok(customerService.search(request, PageRequest.of(page, size)));
 	}
