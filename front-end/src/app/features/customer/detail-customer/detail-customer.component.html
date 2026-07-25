@@ -226,7 +226,13 @@
                                                         {{ i18n.t('detail.editAddress') }}
                                                     </button>
                                                     <div class="menu-divider"></div>
-                                                    <button type="button" class="menu-item-danger" disabled [attr.title]="i18n.t('detail.deleteAddressUnavailable')">
+                                                    <button
+                                                        type="button"
+                                                        class="menu-item-danger"
+                                                        [disabled]="address.primary || linkedAccountCount(address.id) > 0"
+                                                        [attr.title]="address.primary ? i18n.t('detail.primaryAddressCannotDelete') : (linkedAccountCount(address.id) > 0 ? i18n.t('detail.addressLinkedCannotDelete') : null)"
+                                                        (click)="openDeleteAddressConfirm(address)"
+                                                    >
                                                         <svg viewBox="0 0 24 24" aria-hidden="true">
                                                             <path d="M3 6h18" />
                                                             <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -243,7 +249,7 @@
                                     <p class="address-card-line">{{ address.streetName }} {{ address.houseName }}</p>
                                     <p class="address-card-city-sub">{{ cityName(address.cityId) }}</p>
                                     <span class="address-card-tag">
-                                        {{ addressName(address.addrDesc) }}{{ address.primary ? ' · ' + i18n.t('detail.primaryBadge') : '' }}
+                                        {{ address.addrDesc }}{{ address.primary ? ' · ' + i18n.t('detail.primaryBadge') : '' }}
                                     </span>
                                 </div>
                                 @if (linkedAccountCount(address.id) > 0) {
@@ -355,14 +361,6 @@
                     }
                 </div>
 
-                <div class="modal-field">
-                    <label for="addr-details">{{ i18n.t('create.addressDetails') }} <span class="required">*</span></label>
-                    <input id="addr-details" type="text" [formField]="addressForm.details" [placeholder]="i18n.t('create.addressDetailsPlaceholder')">
-                    @if (addressForm.details().invalid() && addressForm.details().touched()) {
-                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
-                    }
-                </div>
-
             </form>
 
             <div class="modal-actions">
@@ -408,6 +406,47 @@
                 <button type="button" class="cancel-button" (click)="closeDeleteConfirm()">{{ i18n.t('detail.deleteCancelBtn') }}</button>
                 <button type="button" class="delete-confirm-button" [disabled]="isDeletingCustomer()" (click)="confirmDeleteCustomer()">
                     {{ isDeletingCustomer() ? i18n.t('detail.deleting') : i18n.t('detail.deleteConfirmBtn') }}
+                </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@if (addressToDelete(); as address) {
+    <div class="modal-backdrop" (click)="closeDeleteAddressConfirm()">
+        <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+                <h3 class="modal-title">{{ i18n.t('detail.deleteAddressConfirmTitle') }}</h3>
+                <button type="button" class="modal-close" (click)="closeDeleteAddressConfirm()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+            </div>
+
+            <div class="delete-confirm-body">
+                <span class="delete-confirm-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 6h18" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                    </svg>
+                </span>
+                <p class="delete-confirm-message">
+                    {{ i18n.t('detail.deleteAddressConfirmMessage').replace('{address}', address.streetName + ' ' + address.houseName) }}
+                </p>
+            </div>
+
+            @if (deleteAddressError()) {
+                <p class="address-save-error delete-confirm-error">{{ deleteAddressError() }}</p>
+            }
+
+            <div class="modal-actions">
+                <button type="button" class="cancel-button" (click)="closeDeleteAddressConfirm()">{{ i18n.t('detail.deleteCancelBtn') }}</button>
+                <button type="button" class="delete-confirm-button" [disabled]="isDeletingAddress()" (click)="confirmDeleteAddress()">
+                    {{ isDeletingAddress() ? i18n.t('detail.deleting') : i18n.t('detail.deleteConfirmBtn') }}
                 </button>
             </div>
 

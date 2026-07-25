@@ -55,6 +55,19 @@
     height: 32px;
     width: auto;
   }
+
+  .app-title-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .app-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-on-navy);
+    white-space: nowrap;
+  }
 }
 
 .navbar-right {

@@ -18,6 +18,9 @@ public final class KafkaTopics {
 	/** contact-info-service'in yayinladigi, customer-service'in (CUSTOMER_SEARCH_VIEW.gsm) dinledigi topic. */
 	public static final String CONTACT_MEDIUM_EVENTS = "contact-medium-events";
 
+	/** order-service'in yayinladigi topic (henuz tuketen yok). */
+	public static final String ORDER_EVENTS = "order-events";
+
 	/** party-service outbox.aggregate_type degeri. */
 	public static final String PARTY_AGGREGATE_TYPE = "party";
 
@@ -26,6 +29,9 @@ public final class KafkaTopics {
 
 	/** contact-info-service outbox.aggregate_type degeri. */
 	public static final String CONTACT_MEDIUM_AGGREGATE_TYPE = "contact-medium";
+
+	/** order-service outbox.aggregate_type degeri. */
+	public static final String ORDER_AGGREGATE_TYPE = "order";
 
 	private KafkaTopics() {
 	}
