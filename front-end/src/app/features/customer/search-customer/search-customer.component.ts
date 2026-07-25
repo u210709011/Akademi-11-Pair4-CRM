@@ -1,13 +1,15 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CustomerSearchResult, CustomerService } from '../../../core/customer';
+import { CustomerSearchCriteria, CustomerSearchResult, CustomerService } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
 
 type DigitFieldName = 'natIdNumber' | 'customerId' | 'accountNumber' | 'gsmNumber' | 'orderNumber';
 
-type SortColumn = 'custId' | 'firstName' | 'middleName' | 'lastName' | 'tcNo' | 'acctNo' | 'role' | 'gsm' | 'status';
+type SortColumn = 'custId' | 'firstName' | 'middleName' | 'lastName' | 'tcNo' | 'role';
 type SortDirection = 'asc' | 'desc';
+
+const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-search-customer',
@@ -27,6 +29,20 @@ export class SearchCustomerComponent {
   protected readonly hasSearched = signal(false);
   protected readonly searchError = signal(false);
   protected readonly searchResults = signal<CustomerSearchResult[]>([]);
+
+  protected readonly pageSize = PAGE_SIZE;
+  protected readonly currentPage = signal(0);
+  protected readonly totalElements = signal(0);
+  protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalElements() / this.pageSize)));
+  protected readonly rangeStart = computed(() => this.totalElements() === 0 ? 0 : this.currentPage() * this.pageSize + 1);
+  protected readonly rangeEnd = computed(() => Math.min(this.totalElements(), (this.currentPage() + 1) * this.pageSize));
+  protected readonly resultsCountLabel = computed(() =>
+    this.i18n.t('search.resultsCount').replace('{count}', `${this.totalElements()}`)
+  );
+  protected readonly rangeLabel = computed(() => `${this.rangeStart()}-${this.rangeEnd()} of ${this.totalElements()}`);
+  protected readonly pageNumbers = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i));
+
+  private lastCriteria: CustomerSearchCriteria | null = null;
 
   protected readonly sortColumn = signal<SortColumn | null>(null);
   protected readonly sortDirection = signal<SortDirection>('asc');
@@ -87,6 +103,9 @@ export class SearchCustomerComponent {
     this.searchResults.set([]);
     this.sortColumn.set(null);
     this.sortDirection.set('asc');
+    this.currentPage.set(0);
+    this.totalElements.set(0);
+    this.lastCriteria = null;
   }
 
   protected search(): void {
@@ -95,26 +114,42 @@ export class SearchCustomerComponent {
     }
 
     const { natIdNumber, accountNumber, customerId, gsmNumber, firstName, lastName } = this.searchForm.getRawValue();
+    this.lastCriteria = { firstName, lastName, tcNo: natIdNumber, acctNo: accountNumber, custId: customerId, gsm: gsmNumber };
+    this.currentPage.set(0);
+    this.sortColumn.set(null);
+    this.sortDirection.set('asc');
+    this.runSearch();
+  }
+
+  protected goToPage(page: number): void {
+    if (page < 0 || page >= this.totalPages() || page === this.currentPage()) {
+      return;
+    }
+    this.currentPage.set(page);
+    this.runSearch();
+  }
+
+  private runSearch(): void {
+    if (!this.lastCriteria) {
+      return;
+    }
 
     this.isSearching.set(true);
     this.searchError.set(false);
-    this.sortColumn.set(null);
-    this.sortDirection.set('asc');
 
-    this.customerService
-      .search({ firstName, lastName, tcNo: natIdNumber, acctNo: accountNumber, custId: customerId, gsm: gsmNumber })
-      .subscribe({
-        next: results => {
-          this.searchResults.set(results);
-          this.hasSearched.set(true);
-          this.isSearching.set(false);
-        },
-        error: () => {
-          this.searchError.set(true);
-          this.hasSearched.set(true);
-          this.isSearching.set(false);
-        }
-      });
+    this.customerService.search(this.lastCriteria, this.currentPage(), this.pageSize).subscribe({
+      next: ({ results, totalElements }) => {
+        this.searchResults.set(results);
+        this.totalElements.set(totalElements);
+        this.hasSearched.set(true);
+        this.isSearching.set(false);
+      },
+      error: () => {
+        this.searchError.set(true);
+        this.hasSearched.set(true);
+        this.isSearching.set(false);
+      }
+    });
   }
 
   protected viewCustomerDetail(customer: CustomerSearchResult): void {
