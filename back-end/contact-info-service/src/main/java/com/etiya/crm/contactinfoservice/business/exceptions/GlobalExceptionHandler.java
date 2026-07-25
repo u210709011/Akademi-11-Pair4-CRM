@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.etiya.crm.contactinfoservice.constants.MessageKeys;
 import com.etiya.crm.shared.contracts.error.ErrorResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,15 +56,15 @@ public class GlobalExceptionHandler {
 		}
 
 		ErrorResponse errorResponse = ErrorResponse.of(HttpStatus.BAD_REQUEST.value(),
-				HttpStatus.BAD_REQUEST.getReasonPhrase(), "Validation failed", request.getRequestURI(),
-				validationErrors);
+				HttpStatus.BAD_REQUEST.getReasonPhrase(), resolve(MessageKeys.VALIDATION_FAILED),
+				request.getRequestURI(), validationErrors);
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
 	}
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
 		logger.error("Unexpected error", ex);
-		return build(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred", request);
+		return build(HttpStatus.INTERNAL_SERVER_ERROR, resolve(MessageKeys.UNEXPECTED_ERROR), request);
 	}
 
 	private ResponseEntity<ErrorResponse> build(HttpStatus status, BusinessException ex, HttpServletRequest request) {
