@@ -90,6 +90,7 @@
                         placeholder="DD/MM/YYYY"
                         [matDatepicker]="birthDatePicker"
                         [max]="today"
+                        [min]="minBirthDate"
                         [formField]="updateForm.birthDate"
                     >
                     <mat-datepicker-toggle matIconSuffix [for]="birthDatePicker"></mat-datepicker-toggle>
@@ -146,6 +147,8 @@
                     (blur)="nationalIdError.set(false)"
                 >
                 @if (nationalIdError()) {
+                    <span class="field-error">{{ i18n.t('create.nationalIdError') }}</span>
+                } @else if (updateForm.nationalId().touched() && updateForm.nationalId().value().length > 0 && updateForm.nationalId().value().length < 11) {
                     <span class="field-error">{{ i18n.t('create.nationalIdError') }}</span>
                 }
             </div>
