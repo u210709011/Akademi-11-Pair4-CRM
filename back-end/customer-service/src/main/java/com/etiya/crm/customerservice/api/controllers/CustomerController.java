@@ -24,6 +24,7 @@ import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccount
 import com.etiya.crm.customerservice.business.dtos.requests.CustomerSearchRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.IndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerRequest;
+import com.etiya.crm.customerservice.business.dtos.requests.UpdateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateIndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
@@ -164,6 +165,17 @@ public class CustomerController {
 		return ResponseEntity.ok(customerService.updateAddress(custId, addressId, request));
 	}
 
+	@Operation(summary = "Adresi sil",
+			description = "contact-info-service'e proxy. Birincil adres silinemez (409). Bir fatura "
+					+ "hesabina bagli (billing) adres de silinemez (409) - once ilgili hesabin adresi "
+					+ "degistirilmelidir. IDOR: baska musterinin adresi 404 doner.")
+	@DeleteMapping("/{custId}/addresses/{addressId}")
+	public ResponseEntity<Void> deleteAddress(@PathVariable Long custId,
+			@Parameter(description = "Silinecek adresin id'si (GET .../addresses cevabindaki 'id')") @PathVariable Long addressId) {
+		customerService.deleteAddress(custId, addressId);
+		return ResponseEntity.noContent().build();
+	}
+
 	@Operation(summary = "Contact bilgisini getir", description = "contact-info-service'e proxy (musteri basina tek contact bilgisi).")
 	@GetMapping("/{custId}/contact")
 	public ResponseEntity<ContactInfo> getContact(@PathVariable Long custId) {
@@ -181,10 +193,17 @@ public class CustomerController {
 
 	// --- ACC-001..014: Customer Account tab / Create Billing Account ---
 
-	@Operation(summary = "Musterinin hesaplarini listele", description = "Onboarding'de otomatik acilan varsayilan hesap + sonradan eklenen billing account'lar.")
+	@Operation(summary = "Musterinin hesaplarini listele",
+			description = "Onboarding'de otomatik acilan varsayilan hesap + sonradan eklenen billing "
+					+ "account'lar. ACC-009: varsayilan sayfa boyutu 5, ilk 5 kayit dogrudan doner, kalani "
+					+ "page/size ile sayfalanir.")
 	@GetMapping("/{custId}/accounts")
-	public ResponseEntity<List<CustomerAccountResponse>> getAccounts(@PathVariable Long custId) {
-		return ResponseEntity.ok(customerService.getAccounts(custId));
+	public ResponseEntity<Page<CustomerAccountResponse>> getAccounts(@PathVariable Long custId,
+			@Parameter(description = "Sayfa numarasi (0'dan baslar)", example = "0")
+			@RequestParam(defaultValue = "0") int page,
+			@Parameter(description = "Sayfa basina kayit sayisi", example = "5")
+			@RequestParam(defaultValue = "5") int size) {
+		return ResponseEntity.ok(customerService.getAccounts(custId, PageRequest.of(page, size)));
 	}
 
 	@Operation(summary = "Musteriye yeni billing account ekle",
@@ -195,6 +214,28 @@ public class CustomerController {
 			@Valid @RequestBody CreateBillingAccountRequest request) {
 		CustomerAccountResponse response = customerService.createBillingAccount(custId, request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
+	}
+
+	@Operation(summary = "Billing account guncelle",
+			description = "Sadece Account Name/Account Description/adres guncellenebilir - accountNo ve "
+					+ "accountTpId DEGISTIRILEMEZ. addressId (var olan adres) veya newAddress (yeni adres) "
+					+ "alanlarindan tam olarak biri doldurulmali. IDOR: baska musterinin hesabi 404 doner.")
+	@PutMapping("/{custId}/accounts/{accountId}")
+	public ResponseEntity<CustomerAccountResponse> updateBillingAccount(@PathVariable Long custId,
+			@Parameter(description = "Guncellenecek hesabin id'si") @PathVariable Long accountId,
+			@Valid @RequestBody UpdateBillingAccountRequest request) {
+		return ResponseEntity.ok(customerService.updateBillingAccount(custId, accountId, request));
+	}
+
+	@Operation(summary = "Billing account sil (soft-delete)",
+			description = "Aktif hesap silinemez (409, 'This billing account is active and cannot be "
+					+ "deleted.'). Urun guard'i (pasif hesaba bagli urun) order-service'i bekliyor, henuz "
+					+ "uygulanmadi - TODO. IDOR: baska musterinin hesabi 404 doner.")
+	@DeleteMapping("/{custId}/accounts/{accountId}")
+	public ResponseEntity<Void> deleteBillingAccount(@PathVariable Long custId,
+			@Parameter(description = "Silinecek hesabin id'si") @PathVariable Long accountId) {
+		customerService.deleteBillingAccount(custId, accountId);
+		return ResponseEntity.noContent().build();
 	}
 
 	@Operation(summary = "Bir adresin herhangi bir hesapta kullanilip kullanilmadigini kontrol et",

@@ -42,6 +42,15 @@ public class TypeValueController {
         return ResponseEntity.ok(typeValueService.getById(id));
     }
 
+    @Operation(summary = "Bir is tablosunun polimorfik tip etiketini coz",
+            description = "Kod bazli erisim - caller bir tabloya (orn. CUST) atanmis tip etiketi "
+                    + "numarasini (field_name) numeric id hardcode etmeden coder. "
+                    + "Ornek: GET /api/v1/type-values/by-table/CUST")
+    @GetMapping("/by-table/{tableName}")
+    public ResponseEntity<TypeValueResponse> getByTableName(@PathVariable String tableName) {
+        return ResponseEntity.ok(typeValueService.getByTableName(tableName));
+    }
+
     @Operation(summary = "Yeni tip etiketi ekle", description = "tableName benzersiz olmali - her is tablosunun tek bir tip etiketi olur.")
     @PostMapping
     public ResponseEntity<TypeValueResponse> add(@Valid @RequestBody CreateTypeValueRequest request) {

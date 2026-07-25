@@ -1,0 +1,165 @@
+<div class="update-customer-page">
+
+    <nav class="breadcrumb">
+        <a class="breadcrumb-link" routerLink="/search-customer">
+            <svg class="breadcrumb-home-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+        </a>
+        <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+        <a class="breadcrumb-link" routerLink="/search-customer">{{ i18n.t('search.searchCustomer') }}</a>
+        <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+        <a class="breadcrumb-link" [routerLink]="['/detail-customer', custId]">{{ customerName() }}</a>
+        <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+        <span class="breadcrumb-current">{{ i18n.t('update.breadcrumb') }}</span>
+    </nav>
+
+    <h1 class="page-title">{{ i18n.t('update.pageTitle') }}</h1>
+
+    @if (isLoading()) {
+        <p class="status-message">{{ i18n.t('detail.loading') }}</p>
+    } @else if (loadError()) {
+        <p class="status-message">{{ i18n.t('detail.loadError') }}</p>
+    } @else {
+
+    <div class="update-card">
+        <h2 class="section-title">{{ i18n.t('create.tabDemographic') }}</h2>
+
+        @if (saveError()) {
+            <div class="identity-error-banner">{{ saveError() }}</div>
+        }
+
+        <form class="update-form">
+
+            <div class="form-field">
+                <div class="field-label-row">
+                    <label for="firstName">{{ i18n.t('create.firstName') }} <span class="required">*</span></label>
+                    <span class="char-counter">{{ updateModel().firstName.length }}/50</span>
+                </div>
+                <input
+                    id="firstName"
+                    type="text"
+                    [formField]="updateForm.firstName"
+                    (blur)="setLetterFieldError('firstName', false)"
+                >
+                @if (letterFieldErrors().firstName) {
+                    <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                }
+            </div>
+
+            <div class="form-field">
+                <div class="field-label-row">
+                    <label for="middleName">{{ i18n.t('create.middleName') }}</label>
+                    <span class="char-counter">{{ updateModel().middleName.length }}/50</span>
+                </div>
+                <input
+                    id="middleName"
+                    type="text"
+                    [formField]="updateForm.middleName"
+                    (blur)="setLetterFieldError('middleName', false)"
+                >
+                @if (letterFieldErrors().middleName) {
+                    <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                }
+            </div>
+
+            <div class="form-field">
+                <div class="field-label-row">
+                    <label for="lastName">{{ i18n.t('create.lastName') }} <span class="required">*</span></label>
+                    <span class="char-counter">{{ updateModel().lastName.length }}/50</span>
+                </div>
+                <input
+                    id="lastName"
+                    type="text"
+                    [formField]="updateForm.lastName"
+                    (blur)="setLetterFieldError('lastName', false)"
+                >
+                @if (letterFieldErrors().lastName) {
+                    <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                }
+            </div>
+
+            <div class="form-field">
+                <label for="birthDate">{{ i18n.t('create.birthDate') }} <span class="required">*</span></label>
+                <mat-form-field class="date-field" appearance="outline" subscriptSizing="dynamic">
+                    <input
+                        matInput
+                        id="birthDate"
+                        placeholder="DD/MM/YYYY"
+                        [matDatepicker]="birthDatePicker"
+                        [max]="today"
+                        [formField]="updateForm.birthDate"
+                    >
+                    <mat-datepicker-toggle matIconSuffix [for]="birthDatePicker"></mat-datepicker-toggle>
+                    <mat-datepicker
+                        #birthDatePicker
+                        [calendarHeaderComponent]="datePickerHeader"
+                        panelClass="app-date-picker-panel"
+                    ></mat-datepicker>
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label for="gender">{{ i18n.t('create.gender') }} <span class="required">*</span></label>
+                <select id="gender" [formField]="updateForm.gender">
+                    <option value="" disabled>{{ i18n.t('create.selectPlaceholder') }}</option>
+                    <option value="1">{{ i18n.t('create.genderMale') }}</option>
+                    <option value="2">{{ i18n.t('create.genderFemale') }}</option>
+                </select>
+            </div>
+
+            <div class="form-field">
+                <label for="fatherName">{{ i18n.t('create.fatherName') }}</label>
+                <input
+                    id="fatherName"
+                    type="text"
+                    [formField]="updateForm.fatherName"
+                    (blur)="setLetterFieldError('fatherName', false)"
+                >
+                @if (letterFieldErrors().fatherName) {
+                    <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                }
+            </div>
+
+            <div class="form-field">
+                <label for="motherName">{{ i18n.t('create.motherName') }}</label>
+                <input
+                    id="motherName"
+                    type="text"
+                    [formField]="updateForm.motherName"
+                    (blur)="setLetterFieldError('motherName', false)"
+                >
+                @if (letterFieldErrors().motherName) {
+                    <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                }
+            </div>
+
+            <div class="form-field">
+                <label for="nationalId">{{ i18n.t('create.nationalId') }} <span class="required">*</span></label>
+                <input
+                    id="nationalId"
+                    type="text"
+                    inputmode="numeric"
+                    [formField]="updateForm.nationalId"
+                    (blur)="nationalIdError.set(false)"
+                >
+                @if (nationalIdError()) {
+                    <span class="field-error">{{ i18n.t('create.nationalIdError') }}</span>
+                }
+            </div>
+
+        </form>
+
+        <div class="update-actions">
+            <button type="button" class="previous-button" (click)="previous()">{{ i18n.t('update.previousBtn') }}</button>
+            <button type="button" class="save-button" [disabled]="updateForm().invalid() || isSaving()" (click)="save()">
+                {{ isSaving() ? i18n.t('create.submitting') : i18n.t('create.saveBtn') }}
+            </button>
+        </div>
+    </div>
+
+    }
+
+</div>

@@ -18,15 +18,29 @@ public class LookupCacheServiceImpl implements LookupCacheService {
 
 	@Override
 	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
-			key = "#groupCode + '_id_' + #valueId")
-	public String resolveValue(String groupCode, Long valueId) {
-		return lookupClient.getById(groupCode, valueId).value();
+			key = "'type_' + #entCodeName + '_' + #shrtCode")
+	public Long resolveTypeId(String entCodeName, String shrtCode) {
+		return lookupClient.resolveType(entCodeName, shrtCode).gnlTpId();
 	}
 
 	@Override
 	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
-			key = "#groupCode + '_code_' + #code")
-	public Long resolveId(String groupCode, String code) {
-		return lookupClient.getByCode(groupCode, code).id();
+			key = "'status_' + #entCodeName + '_' + #shrtCode")
+	public Long resolveStatusId(String entCodeName, String shrtCode) {
+		return lookupClient.resolveStatus(entCodeName, shrtCode).gnlStId();
+	}
+
+	@Override
+	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
+			key = "'datatype_' + #tableName")
+	public Long resolveDataTypeId(String tableName) {
+		return lookupClient.getTypeValueByTableName(tableName).fieldName();
+	}
+
+	@Override
+	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
+			key = "'value_' + #id")
+	public String resolveTypeValue(Long id) {
+		return lookupClient.getTypeById(id).name();
 	}
 }

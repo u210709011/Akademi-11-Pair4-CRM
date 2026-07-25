@@ -27,7 +27,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 @EnableCaching
 public class CacheConfig {
 
-	// Şu anda kullanılmıyor. CAFFEINE
+	// LookupCacheServiceImpl'in lookup-service sonuclarini local'de tuttugu cache. CAFFEINE
 	@Bean(CacheNames.CAFFEINE_CACHE_MANAGER)
 	public CacheManager caffeineCacheManager() {
 		CaffeineCacheManager manager = new CaffeineCacheManager(CacheNames.LOOKUPS);

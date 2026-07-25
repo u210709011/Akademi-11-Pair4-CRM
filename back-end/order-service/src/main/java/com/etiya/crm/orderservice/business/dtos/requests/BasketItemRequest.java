@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 //single item in the cart, which offer belong to which campaign and characteristics of that item
 public record BasketItemRequest(
 
-    @NotNull Long prodOfrId,
+    @NotNull(message = "prodOfrId is required") Long prodOfrId,
     Long cmpgId,
     @Valid List<ProdCharValRequest> charVals
 ) {

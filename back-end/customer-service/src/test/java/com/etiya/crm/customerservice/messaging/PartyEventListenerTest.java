@@ -15,7 +15,6 @@ import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchViewRepository;
 import com.etiya.crm.customerservice.entities.concretes.Customer;
 import com.etiya.crm.customerservice.entities.concretes.CustomerSearchView;
-import com.etiya.crm.shared.contracts.lookup.LookupGroups;
 import com.etiya.crm.shared.events.inbox.InboxEvent;
 import com.etiya.crm.shared.events.party.PartyEvent;
 import com.etiya.crm.shared.events.party.PartyEventTypes;
@@ -89,7 +88,7 @@ class PartyEventListenerTest {
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
 		when(customerRepository.findByPartyRoleId(event.partyRoleId())).thenReturn(Optional.of(customer));
 		when(customerSearchViewRepository.findById(42L)).thenReturn(Optional.empty());
-		when(lookupCacheService.resolveValue(LookupGroups.PARTY_ROLE_TYPE, event.partyRoleTypeId()))
+		when(lookupCacheService.resolveTypeValue(event.partyRoleTypeId()))
 				.thenReturn("Musteri");
 
 		listener.onPartyEvent(event);
@@ -117,7 +116,7 @@ class PartyEventListenerTest {
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
 		when(customerRepository.findByPartyRoleId(event.partyRoleId())).thenReturn(Optional.of(customer));
 		when(customerSearchViewRepository.findById(42L)).thenReturn(Optional.of(existing));
-		when(lookupCacheService.resolveValue(LookupGroups.PARTY_ROLE_TYPE, event.partyRoleTypeId()))
+		when(lookupCacheService.resolveTypeValue(event.partyRoleTypeId()))
 				.thenReturn("Musteri");
 
 		listener.onPartyEvent(event);
@@ -134,7 +133,7 @@ class PartyEventListenerTest {
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
 		when(customerRepository.findByPartyRoleId(event.partyRoleId())).thenReturn(Optional.of(inactiveCustomer));
 		when(customerSearchViewRepository.findById(42L)).thenReturn(Optional.empty());
-		when(lookupCacheService.resolveValue(LookupGroups.PARTY_ROLE_TYPE, event.partyRoleTypeId()))
+		when(lookupCacheService.resolveTypeValue(event.partyRoleTypeId()))
 				.thenReturn("Musteri");
 
 		listener.onPartyEvent(event);
@@ -158,7 +157,7 @@ class PartyEventListenerTest {
 		ArgumentCaptor<CustomerSearchView> captor = ArgumentCaptor.forClass(CustomerSearchView.class);
 		verify(customerSearchViewRepository).save(captor.capture());
 		assertThat(captor.getValue().getRole()).isNull();
-		verify(lookupCacheService, never()).resolveValue(any(), any());
+		verify(lookupCacheService, never()).resolveTypeValue(any());
 	}
 
 	@Test
@@ -168,7 +167,7 @@ class PartyEventListenerTest {
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
 		when(customerRepository.findByPartyRoleId(event.partyRoleId())).thenReturn(Optional.of(customer));
 		when(customerSearchViewRepository.findById(42L)).thenReturn(Optional.empty());
-		when(lookupCacheService.resolveValue(LookupGroups.PARTY_ROLE_TYPE, event.partyRoleTypeId()))
+		when(lookupCacheService.resolveTypeValue(event.partyRoleTypeId()))
 				.thenThrow(new RuntimeException("401 Unauthorized"));
 
 		assertThatThrownBy(() -> listener.onPartyEvent(event))

@@ -10,9 +10,9 @@ import jakarta.validation.constraints.NotNull;
 //addressId or newAddress must be full, it wil be check later in BasketValidationRules
 public record SubmitOrderRequest(
 
-    @NotNull Long custId,
-    @NotNull Long custAcctId,
-    @NotEmpty @Valid List<BasketItemRequest> items,
+    @NotNull(message = "custId is required") Long custId,
+    @NotNull(message = "custAcctId is required") Long custAcctId,
+    @NotEmpty(message = "items must contain at least one item") @Valid List<BasketItemRequest> items,
     Long addressId,
     @Valid AddressInfoRequest newAddress
 ) {

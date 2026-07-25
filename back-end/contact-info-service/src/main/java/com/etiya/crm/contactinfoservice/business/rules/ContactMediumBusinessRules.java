@@ -3,9 +3,8 @@ package com.etiya.crm.contactinfoservice.business.rules;
 import com.etiya.crm.contactinfoservice.business.exceptions.ContactMediumNotFoundException;
 import com.etiya.crm.contactinfoservice.business.exceptions.InvalidContactMediumFormatException;
 import com.etiya.crm.contactinfoservice.clients.LookupClient;
-import com.etiya.crm.contactinfoservice.constants.LookupCodes;
-import com.etiya.crm.contactinfoservice.constants.LookupGroups;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.ContactMediumRepository;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpCodes;
 import com.etiya.crm.contactinfoservice.entities.concretes.ContactMedium;
 import org.springframework.stereotype.Component;
 
@@ -32,18 +31,18 @@ public class ContactMediumBusinessRules {
     }
 
     public void checkDataFormat(String cntcData, Long cntcMediumTypeId) {
-        String typeCode = lookupClient.getById(LookupGroups.CONTACT_MEDIUM_TYPE, cntcMediumTypeId).code();
+        String typeCode = lookupClient.getById(cntcMediumTypeId).shrtCode();
 
-        if (LookupCodes.CONTACT_MEDIUM_EMAIL.equals(typeCode)) {
+        if (GnlTpCodes.EMAIL.equals(typeCode)) {
             if (!EMAIL_PATTERN.matcher(cntcData).matches()) {
                 throw new InvalidContactMediumFormatException("Invalid email format");
             }
-        } else if (LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE.equals(typeCode)) {
+        } else if (GnlTpCodes.MOBILE.equals(typeCode)) {
             if (!MOBILE_PHONE_PATTERN.matcher(cntcData).matches()) {
                 throw new InvalidContactMediumFormatException("Invalid phone number format");
             }
-        } else if (LookupCodes.CONTACT_MEDIUM_HOME_PHONE.equals(typeCode)
-                || LookupCodes.CONTACT_MEDIUM_FAX.equals(typeCode)) {
+        } else if (GnlTpCodes.LANDLINE.equals(typeCode)
+                || GnlTpCodes.FAX.equals(typeCode)) {
             if (!LANDLINE_PHONE_PATTERN.matcher(cntcData).matches()) {
                 throw new InvalidContactMediumFormatException("Invalid phone number format");
             }

@@ -2,13 +2,23 @@
 // /individual to party-service and /contact to contact-info-service, so this file only
 // talks to core/customer types. This mapper just reshapes those responses into the flat
 // view-model the detail page renders, keeping that transformation out of the component.
-import { ContactInfo, CustomerDetailResponse, IndividualResponse } from '../../../core/customer';
+import { AddressResponse, ContactInfo, CustomerDetailResponse, IndividualResponse } from '../../../core/customer';
 
 const UNKNOWN = '—';
+
+// lookup-service CITY grubunda seed'de tek deger var: 201=Ankara.
+export const CITY_NAMES: Record<number, string> = { 201: 'Ankara' };
+
+// GET /individual birthDate'i ISO (yyyy-MM-dd) formatinda donuyor, ekranda dd/MM/yyyy gosterilir.
+function formatBirthDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-');
+  return `${day}/${month}/${year}`;
+}
 
 export interface CustomerDetail {
   customerId: string;
   fullName: string;
+  active: boolean;
   accountsCount: number;
   addressCount: number;
   maxAddresses: number;
@@ -17,7 +27,7 @@ export interface CustomerDetail {
   middleName: string;
   lastName: string;
   dateOfBirth: string;
-  gender: string;
+  genderId: number;
   fatherName: string;
   motherName: string;
   nationalId: string;
@@ -37,19 +47,26 @@ export interface CustomerContact {
   fax: string;
 }
 
-export function mapToCustomerDetail(customerDetail: CustomerDetailResponse, individual: IndividualResponse): CustomerDetail {
+export function mapToCustomerDetail(
+  customerDetail: CustomerDetailResponse,
+  individual: IndividualResponse,
+  addresses: AddressResponse[]
+): CustomerDetail {
+  const primaryAddress = addresses.find(address => address.primary) ?? addresses[0];
+
   return {
     customerId: `CUST-${customerDetail.custId}`,
     fullName: `${individual.firstName} ${individual.lastName}`,
+    active: customerDetail.active,
     accountsCount: customerDetail.accounts.length,
-    addressCount: 0,
+    addressCount: addresses.length,
     maxAddresses: 5,
-    primaryCity: UNKNOWN,
+    primaryCity: primaryAddress ? CITY_NAMES[primaryAddress.cityId] ?? UNKNOWN : UNKNOWN,
     firstName: individual.firstName,
     middleName: individual.middleName ?? UNKNOWN,
     lastName: individual.lastName,
-    dateOfBirth: individual.birthDate,
-    gender: `Gender #${individual.genderId}`,
+    dateOfBirth: formatBirthDate(individual.birthDate),
+    genderId: individual.genderId,
     fatherName: individual.fatherName ?? UNKNOWN,
     motherName: individual.motherName ?? UNKNOWN,
     nationalId: individual.nationalId

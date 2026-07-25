@@ -38,6 +38,13 @@ public class TypeValueManager implements TypeValueService {
     }
 
     @Override
+    public TypeValueResponse getByTableName(String tableName) {
+        TypeValue typeValue = typeValueRepository.findByTableName(tableName)
+                .orElseThrow(() -> new EntityNotFoundException("TypeValue", tableName));
+        return typeValueMapper.toResponse(typeValue);
+    }
+
+    @Override
     @Transactional
     public TypeValueResponse add(CreateTypeValueRequest request) {
         TypeValue typeValue = typeValueMapper.toEntity(request);

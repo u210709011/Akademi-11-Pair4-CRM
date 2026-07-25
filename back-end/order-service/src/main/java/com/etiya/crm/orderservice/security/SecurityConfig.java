@@ -3,6 +3,7 @@ package com.etiya.crm.orderservice.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -18,11 +19,12 @@ import java.util.Map;
 /**
  * api-gateway'deki SecurityConfig ile uyumlu: Keycloak JWT resource server.
  * Gateway zaten JWT dogrulamasini yapiyor olsa da, order-service dogrudan da
- * cagrilabilecegi icin (Feign/servis ici) kendi resource server dogrulamasini
+ * cagrilabilecegi icinFeign kendi resource server dogrulamasini
  * da yapar.
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean

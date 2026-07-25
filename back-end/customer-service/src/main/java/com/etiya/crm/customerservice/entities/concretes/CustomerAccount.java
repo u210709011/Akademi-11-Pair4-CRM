@@ -14,6 +14,12 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * BaseEntity.active bu entity icin ARTIK ANLAMSIZ - hicbir yerde false yapilmiyor, hep
+ * varsayilan true kalir. Silinme/aktiflik tamamen acctStId (ACTV/PASS/DEL) ile ifade edilir;
+ * iki ayri "silinmis" kavraminin bir arada olmasini onlemek icin tek kaynak acctStId'dir.
+ * (Customer.active bundan tamamen ayri ve hala CUST icin gercek soft-delete bayragidir.)
+ */
 @Getter
 @Setter
 @Entity
@@ -45,4 +51,11 @@ public class CustomerAccount extends BaseEntity {
 	// adresi). FK DEGIL, sadece Long.
 	@Column(name = "address_id")
 	private Long addressId;
+
+	// lookup-service GNL_ST/CUST_ACCT grubuna logical referans (FK DEGIL, ent_code_name=CUST_ACCT,
+	// shrt_code: ACTV/PASS/DEL). null = ACTV/silinmemis olarak yorumlanir (bkz.
+	// CustomerAccountRepository'deki null-safe sorgular) - hicbir backfill migration'i yok,
+	// bu yorum kalicidir, DB'de gercekten ACTV yazilmasi gerekmez.
+	@Column(name = "acct_st_id")
+	private Long acctStId;
 }

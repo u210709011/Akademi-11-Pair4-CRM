@@ -54,7 +54,7 @@
       width: 30px;
       height: 30px;
       fill: none;
-      stroke: #fff;
+      stroke: var(--text-on-navy);
       stroke-width: 2;
       stroke-linecap: round;
       stroke-linejoin: round;
@@ -69,18 +69,18 @@
   }
 
   &:hover .nav-icon {
-    color: #fff;
+    color: var(--text-on-navy);
     background: rgba(255, 255, 255, 0.08);
   }
 
   &.active {
     .nav-icon {
       color: #fff;
-      background: #F47920;
+      background: var(--etiya-orange);
     }
 
     .nav-label {
-      color: #F47920;
+      color: var(--etiya-orange);
     }
   }
 }

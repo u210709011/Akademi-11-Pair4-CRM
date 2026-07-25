@@ -8,7 +8,7 @@
   display: flex;
   min-height: 100vh;
   overflow: hidden;
-  color: #fff;
+  color: var(--text-on-navy);
   background:
   radial-gradient(120% 140% at 12% 10%, rgba(255, 106, 0, 0.16), transparent 45%),
   radial-gradient(90% 120% at 12% 10%, rgba(45, 108, 223, 0.10), transparent 55%),
@@ -61,7 +61,7 @@
   padding: 8px 14px;
   font-size: 13px;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-on-navy);
   cursor: pointer;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -102,7 +102,7 @@
   right: 0;
   overflow: hidden;
   min-width: 180px;
-  background: #fff;
+  background: var(--surface-card);
   border-radius: 12px;
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
 }
@@ -144,11 +144,11 @@
   }
 
   &.active {
-    color: #F47920;
+    color: var(--etiya-orange);
     background: rgba(244, 121, 32, 0.08);
 
     .lang-code {
-      color: #F47920;
+      color: var(--etiya-orange);
     }
   }
 }
@@ -173,7 +173,7 @@
 .tagline-rule {
   flex: 1;
   height: 2px;
-  background: #F47920;
+  background: var(--etiya-orange);
   margin: 0 30px;
 }
 
@@ -181,7 +181,7 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.35em;
-  color: #F47920;
+  color: var(--etiya-orange);
   white-space: nowrap;
 }
 
@@ -195,7 +195,7 @@
     line-height: 1;
 
     span {
-      color: #F47920;
+      color: var(--etiya-orange);
     }
   }
 
@@ -212,7 +212,7 @@
   width: 48px;
   height: 2px;
   margin: 20px 0;
-  background: #F47920;
+  background: var(--etiya-orange);
   p {
     font-size: 15px;
     line-height: 1.6;

@@ -97,3 +97,24 @@ export interface OnboardCustomerResponse {
   active: boolean;
   accounts: CustomerAccountSummary[];
 }
+
+// GET/POST/PUT /api/v1/customers/{custId}/addresses(/{addressId}) response body.
+export interface AddressResponse {
+  id: number;
+  rowId: number;
+  dataTypeId: number;
+  cityId: number;
+  streetName: string;
+  houseName: string;
+  addrDesc: string;
+  primary: boolean;
+}
+
+// POST/PUT /api/v1/customers/{custId}/addresses(/{addressId}) request body.
+export interface AddressEditRequest {
+  cityId: number;
+  streetName: string;
+  buildingName: string;
+  addressDesc: string;
+  primary: boolean;
+}

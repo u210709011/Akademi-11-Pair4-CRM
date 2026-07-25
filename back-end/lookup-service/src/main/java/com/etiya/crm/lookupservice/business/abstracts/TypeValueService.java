@@ -12,6 +12,8 @@ public interface TypeValueService {
 
     TypeValueResponse getById(Long id);
 
+    TypeValueResponse getByTableName(String tableName);
+
     TypeValueResponse add(CreateTypeValueRequest request);
 
     TypeValueResponse update(Long id, UpdateTypeValueRequest request);

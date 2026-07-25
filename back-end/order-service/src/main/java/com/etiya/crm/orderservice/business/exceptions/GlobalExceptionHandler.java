@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.etiya.crm.shared.contracts.error.ErrorResponse;
 
+import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.HashMap;
@@ -19,6 +20,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    // Feign ile cagirdigimiz servislerden (customer-service, contact-info-service, ileride
+    // product-service) gelen hatalari (404/409/vb.) oldugu statu ile taniyip forward eder -
+    // aksi halde her downstream hatasi bize ulasinca ham 500 donerdi.
+    @ExceptionHandler(FeignException.class)
+    public ResponseEntity<ErrorResponse> handleFeignException(FeignException ex, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.resolve(ex.status());
+        if (status == null) {
+            status = HttpStatus.BAD_GATEWAY;
+        }
+        return build(status, "Downstream servis hatasi: " + ex.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
