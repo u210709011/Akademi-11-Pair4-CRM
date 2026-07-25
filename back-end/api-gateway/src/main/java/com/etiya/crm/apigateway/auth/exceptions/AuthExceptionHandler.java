@@ -18,6 +18,11 @@ public class AuthExceptionHandler {
 		return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), exchange);
 	}
 
+	@ExceptionHandler(AccountLockedException.class)
+	public ResponseEntity<ErrorResponse> handleAccountLocked(AccountLockedException ex, ServerWebExchange exchange) {
+		return build(HttpStatus.LOCKED, ex.getMessage(), exchange);
+	}
+
 	@ExceptionHandler(WebExchangeBindException.class)
 	public ResponseEntity<ErrorResponse> handleValidation(WebExchangeBindException ex, ServerWebExchange exchange) {
 		String message = ex.getFieldErrors().stream()
