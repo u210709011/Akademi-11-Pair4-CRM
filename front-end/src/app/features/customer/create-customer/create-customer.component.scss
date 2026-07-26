@@ -2,7 +2,6 @@
 .create-customer-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
   padding: 20px 32px 40px;
   box-sizing: border-box;
   background-color: var(--page-bg);
@@ -64,8 +63,6 @@
 .create-customer-layout {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
   gap: 24px;
 
 }
