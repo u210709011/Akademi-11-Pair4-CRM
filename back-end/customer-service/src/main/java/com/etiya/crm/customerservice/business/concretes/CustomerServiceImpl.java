@@ -169,7 +169,7 @@ public class CustomerServiceImpl implements CustomerService {
 		outboxEventPublisher.publish(KafkaTopics.CUSTOMER_AGGREGATE_TYPE, custId.toString(),
 				CustomerEventTypes.CUSTOMER_DELETED,
 				new CustomerDeletedEvent(UUID.randomUUID(), CustomerEventTypes.CUSTOMER_DELETED, custId,
-						customer.getPartyRoleId()));
+						customer.getPartyRoleId(), resolveCustomerDataTypeId()));
 	}
 
 	@Override
@@ -465,7 +465,7 @@ public class CustomerServiceImpl implements CustomerService {
 	 */
 	private void compensateContactInfo(Long custId) {
 		try {
-			contactAddressClient.deleteByCustomerId(custId);
+			contactAddressClient.deleteByCustomerId(custId, resolveCustomerDataTypeId());
 		} catch (Exception ex) {
 			log.error(LogMessages.ONBOARDING_CONTACT_COMPENSATION_FAILED, custId, ex);
 		}
@@ -501,8 +501,8 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	private CreateContactCommand toContactCommand(Long custId, OnboardCustomerRequest request) {
-		return new CreateContactCommand(custId, rules.toAddressCommandsWithPrimaryRule(request.addresses()),
-				toContactMediumCommands(request.contact()));
+		return new CreateContactCommand(custId, resolveCustomerDataTypeId(),
+				rules.toAddressCommandsWithPrimaryRule(request.addresses()), toContactMediumCommands(request.contact()));
 	}
 
 	private List<ContactMediumCommand> toContactMediumCommands(ContactInfo contact) {
