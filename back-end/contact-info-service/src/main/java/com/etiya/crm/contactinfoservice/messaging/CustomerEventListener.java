@@ -2,7 +2,6 @@ package com.etiya.crm.contactinfoservice.messaging;
 
 import com.etiya.crm.contactinfoservice.business.abstracts.AddressService;
 import com.etiya.crm.contactinfoservice.business.abstracts.ContactMediumService;
-import com.etiya.crm.shared.contracts.lookup.DataTypeIds;
 import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
 import com.etiya.crm.shared.events.customer.CustomerEventTypes;
 import com.etiya.crm.shared.events.inbox.InboxEvent;
@@ -18,9 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * "customer-events" topic'ini (Debezium outbox, yayinci customer-service)
- * dinler; sadece CustomerDeleted{eventId, type, custId, partyRoleId} ile
- * ilgilenir ve musteriye ait adres/iletisim kayitlarini pasife ceker (AS-002:
- * silme = statu guncellemesi). "type" ve "eventId" payload'un icine gomulu
+ * dinler; sadece CustomerDeleted{eventId, type, custId, partyRoleId, dataTypeId}
+ * ile ilgilenir ve musteriye ait adres/iletisim kayitlarini pasife ceker (AS-002:
+ * silme = statu guncellemesi). dataTypeId customer-service tarafinda dinamik
+ * cozulmus gelir, burada hardcode edilmez. "type" ve "eventId" payload'un icine gomulu
  * (self-describing, bkz. shared-events CustomerDeletedEvent, party-service'teki
  * ayni desen) - eskiden burada bir "eventType" Kafka header'ina bakiliyordu,
  * ama Debezium EventRouter bu header'i hic yaymiyordu (connector config'inde
@@ -60,8 +60,8 @@ public class CustomerEventListener {
             return;
         }
 
-        addressService.deactivateAllForRow(event.custId(), DataTypeIds.CUSTOMER);
-        contactMediumService.deactivateAllForRow(event.custId(), DataTypeIds.CUSTOMER);
+        addressService.deactivateAllForRow(event.custId(), event.dataTypeId());
+        contactMediumService.deactivateAllForRow(event.custId(), event.dataTypeId());
         inboxEventRepository.save(InboxEvent.of(event.eventId(), CustomerEventTypes.CUSTOMER_DELETED));
     }
 
