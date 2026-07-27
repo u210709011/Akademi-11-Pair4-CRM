@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
-import { form, FormField, maxLength, required } from '@angular/forms/signals';
+import { form, FormField, maxLength, minDate, minLength, required } from '@angular/forms/signals';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -25,6 +25,8 @@ export class DemographicTabComponent {
 
   protected readonly nationalIdError = signal(false);
   protected readonly today = new Date();
+  // ACC: 01/01/1900 oncesinden tarih girilemez.
+  protected readonly minBirthDate = new Date(1900, 0, 1);
   protected readonly datePickerHeader = DatePickerHeaderComponent;
 
   protected readonly letterFieldErrors = signal<Record<LetterFieldName, boolean>>({
@@ -42,8 +44,10 @@ export class DemographicTabComponent {
     required(path.firstName);
     required(path.lastName);
     required(path.birthDate);
+    minDate(path.birthDate, this.minBirthDate);
     required(path.gender);
     required(path.nationalId);
+    minLength(path.nationalId, 11);
     maxLength(path.nationalId, 11);
   });
 

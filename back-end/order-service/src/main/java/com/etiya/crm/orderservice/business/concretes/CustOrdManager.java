@@ -13,7 +13,6 @@ import com.etiya.crm.orderservice.clients.controllers.ContactAddressClient;
 import com.etiya.crm.orderservice.clients.controllers.CustomerClient;
 import com.etiya.crm.orderservice.clients.controllers.LookupClient;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
-import com.etiya.crm.orderservice.constants.OrderEventTypes;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterSpecRepository;
@@ -24,11 +23,13 @@ import com.etiya.crm.orderservice.entities.concretes.BsnInterItem;
 import com.etiya.crm.orderservice.entities.concretes.BsnInterSpec;
 import com.etiya.crm.orderservice.entities.concretes.CustOrd;
 import com.etiya.crm.orderservice.entities.concretes.CustOrdItem;
-import com.etiya.crm.orderservice.messaging.OrderSubmittedEvent;
 import com.etiya.crm.shared.contracts.address.AddressResponse;
 import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
 import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
+import com.etiya.crm.shared.events.KafkaTopics;
+import com.etiya.crm.shared.events.order.OrderEventTypes;
+import com.etiya.crm.shared.events.order.OrderSubmittedEvent;
 import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -145,7 +146,7 @@ public class CustOrdManager implements CustOrdService {
                 custOrd.getCustId(),
                 custAcctId);
 
-        outboxEventPublisher.publish(OrderEventTypes.AGGREGATE_TYPE, custOrd.getCustOrdId().toString(),
+        outboxEventPublisher.publish(KafkaTopics.ORDER_AGGREGATE_TYPE, custOrd.getCustOrdId().toString(),
                 OrderEventTypes.ORDER_SUBMITTED, payload);
     }
 

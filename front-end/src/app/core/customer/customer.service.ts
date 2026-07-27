@@ -15,17 +15,36 @@ import {
   OnboardCustomerRequest,
   OnboardCustomerResponse
 } from './customer.model';
-// to align with the object logic implemented on the backend.
+// to align with the object logic implemented on the backend (Spring Data Page).
 interface PagedResponse<T> {
   content: T[];
+  totalElements: number;
+}
+
+export interface CustomerSearchPage {
+  results: CustomerSearchResult[];
+  totalElements: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class CustomerService {
   private readonly http = inject(HttpClient);
 
-  search(criteria: CustomerSearchCriteria): Observable<CustomerSearchResult[]> {
-    let params = new HttpParams();
+  // page/size: FR-002 ilk sayfada 10 kayit gosterir (bkz. search-customer.component.ts), kalani sayfalama ile.
+  // sortBy/sortDir: backend'de PageRequest.of(page, size, Sort) olarak uygulanir - tum sonuc kumesini
+  // sirlar, sadece o an yuklu sayfayi degil (bkz. CustomerController.buildPageable).
+  search(
+    criteria: CustomerSearchCriteria,
+    page: number,
+    size: number,
+    sortBy?: string | null,
+    sortDir?: 'asc' | 'desc' | null
+  ): Observable<CustomerSearchPage> {
+    let params = new HttpParams().set('page', page).set('size', size);
+
+    if (sortBy) {
+      params = params.set('sortBy', sortBy).set('sortDir', sortDir ?? 'asc');
+    }
 
     for (const [key, value] of Object.entries(criteria)) {
       if (value) {
@@ -37,7 +56,7 @@ export class CustomerService {
       .get<PagedResponse<CustomerSearchResult>>(`${environment.apiGatewayUrl}/api/v1/customers/search`, {
         params
       })
-      .pipe(map(response => response.content));
+      .pipe(map(response => ({ results: response.content, totalElements: response.totalElements })));
   }
   //get result by customer id, connects to the detail-customer page
   getById(custId: number): Observable<CustomerDetailResponse> {
@@ -89,6 +108,11 @@ export class CustomerService {
       `${environment.apiGatewayUrl}/api/v1/customers/${custId}/addresses/${addressId}`,
       request
     );
+  }
+
+  // FR-005: deletes an address. Backend returns 409 if the address is primary or linked to a billing account.
+  deleteAddress(custId: number, addressId: number): Observable<void> {
+    return this.http.delete<void>(`${environment.apiGatewayUrl}/api/v1/customers/${custId}/addresses/${addressId}`);
   }
 
   // ACC-023: Create butonu - tek istekte party+customer(+hesap)+contact/adres yazar (saga, backend tarafında geri alinir).

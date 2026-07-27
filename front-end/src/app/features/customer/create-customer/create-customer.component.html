@@ -27,6 +27,8 @@
                 type="button"
                 class="tab"
                 [class.active]="tab.key === activeTab()"
+                [class.locked]="isTabLocked(tab.key)"
+                [disabled]="isTabLocked(tab.key)"
                 (click)="selectTab(tab.key)"
             >
                 {{ i18n.t(tab.labelKey) }}

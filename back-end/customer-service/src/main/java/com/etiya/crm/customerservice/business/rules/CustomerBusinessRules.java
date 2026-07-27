@@ -13,6 +13,7 @@ import com.etiya.crm.customerservice.business.exceptions.AddressNotFoundExceptio
 import com.etiya.crm.customerservice.business.exceptions.BillingAccountActiveCannotBeDeletedException;
 import com.etiya.crm.customerservice.business.exceptions.BillingAccountAddressRequiredException;
 import com.etiya.crm.customerservice.business.exceptions.CustomerHasActiveBillingAccountException;
+import com.etiya.crm.customerservice.business.exceptions.DefaultAccountCannotBeDeletedException;
 import com.etiya.crm.customerservice.business.exceptions.DuplicateNationalIdException;
 import com.etiya.crm.customerservice.business.exceptions.InvalidBirthDateException;
 import com.etiya.crm.customerservice.business.exceptions.PrimaryAddressCannotBeDeletedException;
@@ -121,6 +122,16 @@ public class CustomerBusinessRules {
 		boolean isActive = account.getAcctStId() == null || activeStatusId.equals(account.getAcctStId());
 		if (isActive) {
 			throw new BillingAccountActiveCannotBeDeletedException();
+		}
+	}
+
+	/**
+	 * FR-011: onboarding'de acilan varsayilan CUST_ACCT tipi hesap fatura hesabi (BILL_ACCT)
+	 * degildir, hicbir zaman silinemez - bu kontrol aktiflik guard'indan ONCE calisir.
+	 */
+	public void ensureAccountIsBillingType(CustomerAccount account, Long billingAccountTypeId) {
+		if (!billingAccountTypeId.equals(account.getAccountTpId())) {
+			throw new DefaultAccountCannotBeDeletedException();
 		}
 	}
 }
