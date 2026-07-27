@@ -4,6 +4,7 @@ import com.etiya.crm.shared.contracts.contactmedium.CreateContactMediumRequest;
 import com.etiya.crm.shared.contracts.contactmedium.UpdateContactMediumRequest;
 import com.etiya.crm.contactinfoservice.business.exceptions.InvalidContactMediumFormatException;
 import com.etiya.crm.contactinfoservice.business.rules.ContactMediumBusinessRules;
+import com.etiya.crm.contactinfoservice.constants.MessageKeys;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.ContactMediumRepository;
 import com.etiya.crm.contactinfoservice.entities.concretes.ContactMedium;
 import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
@@ -52,7 +53,7 @@ class ContactMediumServiceImplTest {
     @Test
     void add_throws_whenFormatIsInvalid() {
         CreateContactMediumRequest request = new CreateContactMediumRequest(10L, 1L, "not-an-email", 1L);
-        doThrow(new InvalidContactMediumFormatException("Invalid email format"))
+        doThrow(new InvalidContactMediumFormatException(MessageKeys.CONTACT_MEDIUM_INVALID_EMAIL_FORMAT))
                 .when(contactMediumBusinessRules).checkDataFormat("not-an-email", 1L);
 
         assertThatThrownBy(() -> contactMediumService.add(request))
@@ -68,7 +69,7 @@ class ContactMediumServiceImplTest {
         when(contactMediumBusinessRules.checkIfContactMediumExists(1L)).thenReturn(existing);
 
         UpdateContactMediumRequest request = new UpdateContactMediumRequest("abc-phone", 2L);
-        doThrow(new InvalidContactMediumFormatException("Invalid phone number format"))
+        doThrow(new InvalidContactMediumFormatException(MessageKeys.CONTACT_MEDIUM_INVALID_PHONE_FORMAT))
                 .when(contactMediumBusinessRules).checkDataFormat("abc-phone", 2L);
 
         assertThatThrownBy(() -> contactMediumService.update(1L, request))

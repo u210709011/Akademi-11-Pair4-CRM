@@ -147,20 +147,21 @@ CUST, PROD_CATAL_PROD_OFR, CMPG, CNTC_MEDIUM (`GnlStGroups` sinifinda tam liste)
 
 ## Eski modelden gecis (deprecated siniflar)
 
-`shared-contracts.lookup` paketindeki `LookupGroups`, `LookupCodes`, `LookupValueResponse`,
-`DataTypeIds` `@Deprecated(forRemoval = true)` isaretlendi. Hala derleniyorlar (party-service/
-customer-service/contact-info-service hala kullaniyor) ama lookup-service artik bu API'yi
-sunmuyor - `GET /api/v1/lookups/...` endpoint'i kaldirildi.
+`shared-contracts.lookup` paketindeki `LookupGroups`, `LookupCodes`, `LookupValueResponse`
+hala `@Deprecated(forRemoval = true)` isaretli ve deriveniyorlar (party-service/customer-service/
+contact-info-service hala kullaniyor) ama lookup-service artik bu API'yi sunmuyor -
+`GET /api/v1/lookups/...` endpoint'i kaldirildi.
+
+`DataTypeIds` (`101`/`102` hardcoded degerleri) TAMAMEN KALDIRILDI - customer-service ve
+contact-info-service artik ikisi de `dataTypeId`'yi caller zincirinde (customer-service
+`LookupCacheServiceImpl` → lookup-service TYPE_VALUE) dinamik cozuyor; contact-info-service
+kendi tarafinda hicbir sey hardcode etmiyor, sadece caller'dan gelen degeri saklayip filtreliyor.
 
 | Eskiden | Simdi |
 |---|---|
 | `LookupClient.getByCode(groupCode, code)` → `LookupValueResponse` | `GET /api/v1/general-types/resolve/{entCodeName}/{shrtCode}` veya `/general-statuses/...` |
 | `LookupClient.getById(groupCode, valueId)` → `LookupValueResponse` | `GET /api/v1/general-types/{id}` veya `/general-statuses/{id}` |
-| `DataTypeIds.PARTY` / `DataTypeIds.CUSTOMER` (hardcoded 101/102) | `GET /api/v1/type-values/by-table/{tableName}` (gercek degerler artik farkli: PARTY=9, CUST=12) |
-
-**Onemli:** `DataTypeIds`'teki 101/102 degerleri artik lookup-service'in gercek verisiyle
-UYUSMUYOR (TYPE_VALUE'de PARTY=9, CUST=12). Bu siniflari kullanmaya devam eden servisler
-kendi tarafinda dinamik cozmeye gecene kadar bu tutarsizligin farkinda olmali.
+| `DataTypeIds.PARTY` / `DataTypeIds.CUSTOMER` (hardcoded 101/102, KALDIRILDI) | `GET /api/v1/type-values/by-table/{tableName}` (gercek degerler: PARTY=9, CUST=12) |
 
 ## Bilinen eksikler
 
