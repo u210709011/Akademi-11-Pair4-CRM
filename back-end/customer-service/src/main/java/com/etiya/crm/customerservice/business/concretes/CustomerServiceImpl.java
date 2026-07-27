@@ -110,6 +110,7 @@ public class CustomerServiceImpl implements CustomerService {
 				contactAddressClient.createContact(toContactCommand(customer.getCustId(), request));
 			} catch (Exception ex) {
 				log.error(LogMessages.ONBOARDING_CONTACT_FAILED, customer.getCustId(), ex);
+				compensateContactInfo(customer.getCustId());
 				compensateCustomer(customer.getCustId());
 				throw ex;
 			}
@@ -168,7 +169,7 @@ public class CustomerServiceImpl implements CustomerService {
 		outboxEventPublisher.publish(KafkaTopics.CUSTOMER_AGGREGATE_TYPE, custId.toString(),
 				CustomerEventTypes.CUSTOMER_DELETED,
 				new CustomerDeletedEvent(UUID.randomUUID(), CustomerEventTypes.CUSTOMER_DELETED, custId,
-						customer.getPartyRoleId()));
+						customer.getPartyRoleId(), resolveCustomerDataTypeId()));
 	}
 
 	@Override
@@ -456,6 +457,21 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	/**
+	 * createContact basarisiz olsa bile contact-info-service tarafinda kismen commit edilmis
+	 * olabilir (orn. adresler yazildi ama yanit deserialize edilirken/timeout'ta hata olustu) -
+	 * bu satirlar aksi halde hic temizlenmezdi (ContactAddressClient.deleteByCustomerId tam da
+	 * bunun icin var ama onboarding hicbir zaman cagirmiyordu). Best-effort: bu cagri basarisiz
+	 * olsa da asil onboarding hatasini maskelememesi icin sadece loglanir, yeniden firlatilmaz.
+	 */
+	private void compensateContactInfo(Long custId) {
+		try {
+			contactAddressClient.deleteByCustomerId(custId, resolveCustomerDataTypeId());
+		} catch (Exception ex) {
+			log.error(LogMessages.ONBOARDING_CONTACT_COMPENSATION_FAILED, custId, ex);
+		}
+	}
+
+	/**
 	 * firstName/middleName/lastName/tcNo/gsm burada senkron yazilir: hepsi bu
 	 * istekte customer-service'e caller tarafindan verilen degerlerdir, baska
 	 * bir servisin karari degildir. role BURADA YAZILMAZ: rol (partyRoleTypeId)
@@ -485,8 +501,8 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	private CreateContactCommand toContactCommand(Long custId, OnboardCustomerRequest request) {
-		return new CreateContactCommand(custId, rules.toAddressCommandsWithPrimaryRule(request.addresses()),
-				toContactMediumCommands(request.contact()));
+		return new CreateContactCommand(custId, resolveCustomerDataTypeId(),
+				rules.toAddressCommandsWithPrimaryRule(request.addresses()), toContactMediumCommands(request.contact()));
 	}
 
 	private List<ContactMediumCommand> toContactMediumCommands(ContactInfo contact) {

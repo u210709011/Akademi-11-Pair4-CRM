@@ -1,9 +1,12 @@
 package com.etiya.crm.customerservice.api.controllers;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -88,8 +91,9 @@ public class CustomerController {
 					+ "bu grup ile tcNo/acctNo/custId birbirine ve isim grubuna her zaman OR ile baglanir "
 					+ "(ör. hem ad-soyad hem tcNo verilirse, ya ada-soyada UYAN ya da o tcNo'ya sahip "
 					+ "musteriler doner). Hicbir parametre verilmezse tum (aktif) musteriler doner. "
-					+ "Soft-delete edilmis musteriler sonuca dahil olmaz. ACC-007: varsayilan sayfa "
-					+ "boyutu 50 - ilk 50 kayit dogrudan doner, kalani page/size ile sayfalanir.")
+					+ "Soft-delete edilmis musteriler sonuca dahil olmaz. Varsayilan sayfa boyutu "
+					+ "10 (front-end'in sayfa basina gosterdigi kayit sayisiyla ayni) - ilk 10 kayit "
+					+ "dogrudan doner, kalani page/size ile sayfalanir.")
 	@GetMapping("/search")
 	public ResponseEntity<Page<CustomerSearchResponse>> search(
 			@Parameter(description = "Ad (kismi/prefix eslesme)", example = "Ahmet")
@@ -106,10 +110,33 @@ public class CustomerController {
 			@RequestParam(required = false) String gsm,
 			@Parameter(description = "Sayfa numarasi (0'dan baslar)", example = "0")
 			@RequestParam(defaultValue = "0") int page,
-			@Parameter(description = "Sayfa basina kayit sayisi", example = "50")
-			@RequestParam(defaultValue = "50") int size) {
+			@Parameter(description = "Sayfa basina kayit sayisi", example = "10")
+			@RequestParam(defaultValue = "10") int size,
+			@Parameter(description = "Siralama alani - custId/firstName/middleName/lastName/tcNo/role disinda "
+					+ "bir deger verilirse ya da hic verilmezse siralama uygulanmaz.", example = "lastName")
+			@RequestParam(required = false) String sortBy,
+			@Parameter(description = "Siralama yonu", example = "asc")
+			@RequestParam(defaultValue = "asc") String sortDir) {
 		CustomerSearchRequest request = new CustomerSearchRequest(firstName, lastName, tcNo, acctNo, custId, gsm);
-		return ResponseEntity.ok(customerService.search(request, PageRequest.of(page, size)));
+		return ResponseEntity.ok(customerService.search(request, buildPageable(page, size, sortBy, sortDir)));
+	}
+
+	/**
+	 * sortBy, CustomerSearchView'in gercek alan adlariyla birebir sinirlanir (whitelist) -
+	 * hem gelisigüzel property-path'lerin JPA'ya sizmasini engeller hem de front-end'in
+	 * tikladigi kolonlarla (search-customer.component.ts SortColumn) ayni kumeyi tutar.
+	 * Tam sonuc kumesini (sayfa degil) siralar cunku sort, veritabani sorgusunun bir
+	 * parcasidir - front-end artik sadece o an ekrandaki sayfayi kendi tarafinda siralamaz.
+	 */
+	private static final Set<String> SORTABLE_FIELDS =
+			Set.of("custId", "firstName", "middleName", "lastName", "tcNo", "role");
+
+	private Pageable buildPageable(int page, int size, String sortBy, String sortDir) {
+		if (sortBy == null || !SORTABLE_FIELDS.contains(sortBy)) {
+			return PageRequest.of(page, size);
+		}
+		Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+		return PageRequest.of(page, size, Sort.by(direction, sortBy));
 	}
 
 	@Operation(summary = "Musteriyi sil (soft-delete)",
