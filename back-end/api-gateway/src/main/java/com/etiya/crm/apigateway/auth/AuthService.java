@@ -1,15 +1,21 @@
 package com.etiya.crm.apigateway.auth;
 
+import java.util.Locale;
+
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.etiya.crm.apigateway.auth.constants.MessageKeys;
+import com.etiya.crm.apigateway.auth.dtos.KeycloakErrorResponse;
 import com.etiya.crm.apigateway.auth.dtos.KeycloakTokenResponse;
 import com.etiya.crm.apigateway.auth.dtos.TokenResponse;
+import com.etiya.crm.apigateway.auth.exceptions.AccountLockedException;
 import com.etiya.crm.apigateway.auth.exceptions.InvalidCredentialsException;
 
 import reactor.core.publisher.Mono;
@@ -52,7 +58,7 @@ public class AuthService {
 				.body(BodyInserters.fromFormData(form))
 				.retrieve()
 				.onStatus(HttpStatusCode::isError,
-						response -> Mono.error(new InvalidCredentialsException("Logout failed.")))
+						response -> Mono.error(new InvalidCredentialsException(MessageKeys.LOGOUT_FAILED)))
 				.toBodilessEntity()
 				.then();
 	}
@@ -63,10 +69,29 @@ public class AuthService {
 				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 				.body(BodyInserters.fromFormData(form))
 				.retrieve()
-				.onStatus(HttpStatusCode::isError,
-						response -> Mono.error(new InvalidCredentialsException("Invalid credentials or token.")))
+				.onStatus(HttpStatusCode::isError, this::toAuthError)
 				.bodyToMono(KeycloakTokenResponse.class)
 				.map(KeycloakTokenResponse::toTokenResponse);
+	}
+
+	/**
+	 * Keycloak, hem yanlis sifrede hem de bruteforce kilitlemesinde (bkz. crm-realm.json
+	 * bruteForceProtected/failureFactor/waitIncrementSeconds) ayni HTTP durumunu
+	 * ("invalid_grant") doner - ikisini ayirt etmek icin error_description govdesine
+	 * bakmak gerekir. Bu ayrim olmadan caller (frontend) gercek kilitlenme durumunu asla
+	 * bilemez ve kendi basina, Keycloak'in gercek durumundan bagimsiz bir sayac tutmak
+	 * zorunda kalir.
+	 */
+	private Mono<? extends Throwable> toAuthError(ClientResponse response) {
+		return response.bodyToMono(KeycloakErrorResponse.class)
+				.defaultIfEmpty(new KeycloakErrorResponse(null, null))
+				.map(error -> isAccountLocked(error.errorDescription())
+						? new AccountLockedException(MessageKeys.ACCOUNT_LOCKED)
+						: new InvalidCredentialsException(MessageKeys.INVALID_CREDENTIALS));
+	}
+
+	private boolean isAccountLocked(String errorDescription) {
+		return errorDescription != null && errorDescription.toLowerCase(Locale.ROOT).contains("disabled");
 	}
 
 	private MultiValueMap<String, String> baseForm() {
