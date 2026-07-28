@@ -2,7 +2,6 @@ package com.etiya.crm.contactinfoservice.messaging;
 
 import com.etiya.crm.contactinfoservice.business.abstracts.AddressService;
 import com.etiya.crm.contactinfoservice.business.abstracts.ContactMediumService;
-import com.etiya.crm.shared.contracts.lookup.DataTypeIds;
 import com.etiya.crm.shared.events.inbox.InboxEvent;
 import com.etiya.crm.shared.events.inbox.InboxEventRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +21,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CustomerEventListenerTest {
+
+    private static final Long CUSTOMER_DATA_TYPE_ID = 12L;
 
     @Mock
     private AddressService addressService;
@@ -45,8 +46,8 @@ class CustomerEventListenerTest {
 
         customerEventListener.onMessage(record);
 
-        verify(addressService).deactivateAllForRow(10L, DataTypeIds.CUSTOMER);
-        verify(contactMediumService).deactivateAllForRow(10L, DataTypeIds.CUSTOMER);
+        verify(addressService).deactivateAllForRow(10L, CUSTOMER_DATA_TYPE_ID);
+        verify(contactMediumService).deactivateAllForRow(10L, CUSTOMER_DATA_TYPE_ID);
         verify(inboxEventRepository).save(any(InboxEvent.class));
     }
 
@@ -84,7 +85,7 @@ class CustomerEventListenerTest {
 
     private ConsumerRecord<String, String> recordWithType(String type) {
         String payload = "{\"eventId\":\"9c1e6e2a-1b2c-4d3e-8f4a-000000000001\",\"type\":\"" + type
-                + "\",\"custId\":10,\"partyRoleId\":20}";
+                + "\",\"custId\":10,\"partyRoleId\":20,\"dataTypeId\":" + CUSTOMER_DATA_TYPE_ID + "}";
         return new ConsumerRecord<>("customer-events", 0, 0L, "key", payload);
     }
 

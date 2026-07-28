@@ -2,6 +2,7 @@ package com.etiya.crm.orderservice.api.controllers;
 
 import com.etiya.crm.orderservice.business.abstracts.CustOrdService;
 import com.etiya.crm.orderservice.business.dtos.requests.SubmitOrderRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.ValidateBasketRequest;
 import com.etiya.crm.orderservice.business.dtos.responses.CustOrdItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderSummaryResponse;
 import jakarta.validation.Valid;
@@ -24,6 +25,13 @@ public class CustOrdController {
     @PostMapping("/submit")
     public ResponseEntity<OrderSummaryResponse> submit(@Valid @RequestBody SubmitOrderRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(custOrdService.submitOrder(request));
+    }
+
+    // FR-017: Offer Selection ekraninda "Next" - Product Configuration'a gecmeden once sepeti dogrular.
+    @PostMapping("/validate-basket")
+    public ResponseEntity<Void> validateBasket(@Valid @RequestBody ValidateBasketRequest request) {
+        custOrdService.validateBasket(request);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{custOrdId}")

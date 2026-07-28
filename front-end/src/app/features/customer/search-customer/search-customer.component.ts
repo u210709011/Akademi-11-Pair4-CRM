@@ -44,32 +44,10 @@ export class SearchCustomerComponent {
 
   private lastCriteria: CustomerSearchCriteria | null = null;
 
+  // Backend-driven: sort her zaman tum sonuc kumesi uzerinde uygulanir (bkz. customer.service.ts search()),
+  // sadece o an yuklu sayfa uzerinde degil. Kolon degistiginde/yon degistiginde yeni bir search istegi atilir.
   protected readonly sortColumn = signal<SortColumn | null>(null);
   protected readonly sortDirection = signal<SortDirection>('asc');
-
-  protected readonly sortedResults = computed(() => {
-    const column = this.sortColumn();
-    const results = this.searchResults();
-    if (!column) {
-      return results;
-    }
-
-    const direction = this.sortDirection() === 'asc' ? 1 : -1;
-    return [...results].sort((a, b) => {
-      const left = a[column];
-      const right = b[column];
-      if (left == null && right == null) {
-        return 0;
-      }
-      if (left == null) {
-        return direction;
-      }
-      if (right == null) {
-        return -direction;
-      }
-      return direction * String(left).localeCompare(String(right), undefined, { numeric: true });
-    });
-  });
 
   protected readonly fieldErrors = signal<Record<DigitFieldName, boolean>>({
     natIdNumber: false,
@@ -137,19 +115,21 @@ export class SearchCustomerComponent {
     this.isSearching.set(true);
     this.searchError.set(false);
 
-    this.customerService.search(this.lastCriteria, this.currentPage(), this.pageSize).subscribe({
-      next: ({ results, totalElements }) => {
-        this.searchResults.set(results);
-        this.totalElements.set(totalElements);
-        this.hasSearched.set(true);
-        this.isSearching.set(false);
-      },
-      error: () => {
-        this.searchError.set(true);
-        this.hasSearched.set(true);
-        this.isSearching.set(false);
-      }
-    });
+    this.customerService
+      .search(this.lastCriteria, this.currentPage(), this.pageSize, this.sortColumn(), this.sortDirection())
+      .subscribe({
+        next: ({ results, totalElements }) => {
+          this.searchResults.set(results);
+          this.totalElements.set(totalElements);
+          this.hasSearched.set(true);
+          this.isSearching.set(false);
+        },
+        error: () => {
+          this.searchError.set(true);
+          this.hasSearched.set(true);
+          this.isSearching.set(false);
+        }
+      });
   }
 
   protected viewCustomerDetail(customer: CustomerSearchResult): void {
@@ -160,18 +140,29 @@ export class SearchCustomerComponent {
     this.router.navigateByUrl('/create-customer');
   }
 
-  /** Tek kolonda sort: ilk tik ASC, ikinci tik DESC, farkli kolona tiklamak o kolonu ASC'den baslatir. */
+  // Tek kolonda sort: ilk tik ASC, ikinci tik DESC, farkli kolona tiklamak o kolonu ASC'den baslatir.
+  // Backend-driven oldugu icin her tikta sayfa 0'a donup yeni bir search istegi atilir (tum sonuc kumesi
+  // uzerinde siralanmis halde geri gelir - bkz. runSearch()).
   protected toggleSort(column: SortColumn): void {
     if (this.sortColumn() !== column) {
       this.sortColumn.set(column);
       this.sortDirection.set('asc');
-      return;
+    } else {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     }
-    this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    this.currentPage.set(0);
+    this.runSearch();
   }
 
   protected setFieldError(field: DigitFieldName, hasError: boolean): void {
     this.fieldErrors.update(errors => ({ ...errors, [field]: hasError }));
+  }
+
+  // NAT ID zorunlu degil ama girildiyse tam 11 hane olmali - sadece gecersiz karakter yazildiginda
+  // degil, alandan cikildiginda eksik/uzun hane sayisi da hata olarak gosterilir.
+  protected onNatIdBlur(): void {
+    const raw: string = this.searchForm.controls.natIdNumber.value;
+    this.setFieldError('natIdNumber', raw.length > 0 && raw.length !== 11);
   }
 
   protected sanitizeDigits(

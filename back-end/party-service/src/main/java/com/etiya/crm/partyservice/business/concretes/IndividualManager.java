@@ -2,7 +2,8 @@ package com.etiya.crm.partyservice.business.concretes;
 
 import com.etiya.crm.partyservice.business.abstracts.IndividualService;
 import com.etiya.crm.partyservice.business.abstracts.LookupCacheService;
-import com.etiya.crm.partyservice.business.exceptions.BusinessException;
+import com.etiya.crm.partyservice.business.exceptions.IndividualNotFoundException;
+import com.etiya.crm.partyservice.business.exceptions.PartyRoleNotFoundException;
 import com.etiya.crm.partyservice.business.rules.IndividualBusinessRules;
 import com.etiya.crm.partyservice.dataAccess.abstracts.IndividualRepository;
 import com.etiya.crm.partyservice.dataAccess.abstracts.PartyRepository;
@@ -91,11 +92,10 @@ public class IndividualManager implements IndividualService {
 
     private Individual findIndividualOrThrow(Long partyRoleId) {
         PartyRole partyRole = partyRoleRepository.findById(partyRoleId)
-                .orElseThrow(() -> new BusinessException("PartyRole bulunamadi: " + partyRoleId));
+                .orElseThrow(() -> new PartyRoleNotFoundException(partyRoleId));
 
         return individualRepository.findByParty_PartyId(partyRole.getParty().getPartyId())
-                .orElseThrow(() -> new BusinessException(
-                        "PartyRole " + partyRoleId + " icin individual bulunamadi (party bireysel degil olabilir)"));
+                .orElseThrow(() -> new IndividualNotFoundException(partyRoleId));
     }
 
     /**
