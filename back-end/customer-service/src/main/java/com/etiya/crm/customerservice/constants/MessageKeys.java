@@ -9,6 +9,7 @@ public final class MessageKeys {
 
 	public static final String FIELD_REQUIRED = "validation.field.required";
 	public static final String NATIONAL_ID_INVALID = "validation.national-id.invalid";
+	public static final String NAME_INVALID = "validation.name.invalid";
 	public static final String BIRTH_DATE_INVALID = "validation.birth-date.invalid";
 	public static final String EMAIL_INVALID = "validation.email.invalid";
 	public static final String PHONE_INVALID = "validation.phone.invalid";
