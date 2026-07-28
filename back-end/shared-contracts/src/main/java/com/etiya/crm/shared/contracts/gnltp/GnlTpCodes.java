@@ -33,9 +33,9 @@ public final class GnlTpCodes {
 	// GnlTpGroups.CITY altinda - HENUZ DBeaver ile dogrulanmadi, tahmini
 	public static final String ANKARA = "ANKARA";
 
-	// GnlTpGroups.CUSTOMER_TYPE altinda - HENUZ DBeaver ile dogrulanmadi, tahmini
-	public static final String YOUNG = "YOUNG";
-	public static final String RETIRED = "RETIRED";
+	// GnlTpGroups.CUSTOMER_TYPE altinda (bkz. lookup-service V7__resolve_cust_tp.sql)
+	public static final String INDIVIDUAL_CUSTOMER = "INDIVIDUAL";
+	public static final String CORPORATE_CUSTOMER = "CORPORATE";
 
 	// GnlTpGroups.PROD_SPEC_RSRC_SPEC / PROD_SPEC_SRVC_SPEC altinda
 	public static final String REALIZED = "REALIZED";

@@ -126,7 +126,7 @@ lookupClient.resolveType(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE); // "CNT
 | PARTY_ROLE_TYPE | `GnlTpGroups.PARTY_ROLE_TYPE` | CUSTOMER/PARTNER | ⚠️ |
 | GENDER | `GnlTpGroups.GENDER` | MALE/FEMALE | ⚠️ |
 | CITY | `GnlTpGroups.CITY` | ANKARA | ⚠️ |
-| CUSTOMER_TYPE | `GnlTpGroups.CUSTOMER_TYPE` | YOUNG/RETIRED | ⚠️ |
+| CUSTOMER_TYPE | `GnlTpGroups.CUSTOMER_TYPE` | INDIVIDUAL/CORPORATE | ✅ |
 
 **GNL_ST gruplari** (hepsi ✅ gercek veriden, hepsinde ACTV/PASS/DEL benzeri ortak kodlar var):
 

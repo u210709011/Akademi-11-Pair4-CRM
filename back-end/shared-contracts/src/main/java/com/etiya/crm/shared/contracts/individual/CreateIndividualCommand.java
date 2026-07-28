@@ -10,11 +10,14 @@ import jakarta.validation.constraints.Pattern;
 public record CreateIndividualCommand(
 
 		@NotBlank
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "isim sadece harflerden olusmalidir")
 		String firstName,
 
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "isim sadece harflerden olusmalidir")
 		String middleName,
 
 		@NotBlank
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "isim sadece harflerden olusmalidir")
 		String lastName,
 
 		@NotNull
@@ -23,8 +26,10 @@ public record CreateIndividualCommand(
 		@NotNull
 		Long genderId,
 
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "isim sadece harflerden olusmalidir")
 		String motherName,
 
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "isim sadece harflerden olusmalidir")
 		String fatherName,
 
 		@NotBlank

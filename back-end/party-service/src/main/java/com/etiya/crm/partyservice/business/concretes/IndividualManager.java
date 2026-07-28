@@ -66,7 +66,7 @@ public class IndividualManager implements IndividualService {
 
     @Override
     public boolean existsByNationalId(String nationalId) {
-        return individualRepository.existsByNationalId(nationalId);
+        return individualRepository.existsByNationalIdAndActiveTrue(nationalId);
     }
 
     @Override
