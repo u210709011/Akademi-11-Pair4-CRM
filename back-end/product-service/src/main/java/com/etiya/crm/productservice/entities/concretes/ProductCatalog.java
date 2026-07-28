@@ -24,7 +24,7 @@ public class ProductCatalog extends BaseEntity {
     private String name; // katalog ad
 
     @Column(name = "descr", nullable = false)
-    private String description; // katalog açıklama
+    private String descr; // katalog açıklama
 
     @Column(name = "st_id", nullable = false)
     private Long statusId; // durum kimliği
