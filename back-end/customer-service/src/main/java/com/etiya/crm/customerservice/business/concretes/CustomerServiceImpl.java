@@ -441,6 +441,10 @@ public class CustomerServiceImpl implements CustomerService {
 	private Customer createCustomerWithDefaultAccount(Long partyRoleId) {
 		Customer customer = new Customer();
 		customer.setPartyRoleId(partyRoleId);
+		// onboard() sadece bireysel musteri akisidir (party-service'e createIndividualWithRole
+		// cagrilir) - kurumsal onboarding henuz yok, bu yuzden CORPORATE_CUSTOMER burada hic
+		// kullanilmaz.
+		customer.setCustTpId(lookupCacheService.resolveTypeId(GnlTpGroups.CUSTOMER_TYPE, GnlTpCodes.INDIVIDUAL_CUSTOMER));
 		customer = customerRepository.save(customer); // IDENTITY: save sonrasi custId dolu gelir.
 
 		// ACC-025: musteri olusturulurken otomatik olarak varsayilan tipte tek bir hesap acilir.
