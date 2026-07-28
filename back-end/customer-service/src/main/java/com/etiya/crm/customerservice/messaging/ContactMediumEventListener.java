@@ -9,8 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchViewRepository;
-import com.etiya.crm.shared.contracts.lookup.LookupCodes;
-import com.etiya.crm.shared.contracts.lookup.LookupGroups;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpCodes;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpGroups;
+import com.etiya.crm.shared.contracts.typevalue.TypeValueTables;
 import com.etiya.crm.shared.events.KafkaTopics;
 import com.etiya.crm.shared.events.contactmedium.ContactMediumEvent;
 import com.etiya.crm.shared.events.contactmedium.ContactMediumEventTypes;
@@ -72,9 +73,8 @@ public class ContactMediumEventListener {
 		Long customerDataTypeId;
 		Long mobilePhoneTypeId;
 		try {
-			customerDataTypeId = lookupCacheService.resolveDataTypeId(LookupCodes.TABLE_NAME_CUSTOMER);
-			mobilePhoneTypeId = lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE,
-					LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE);
+			customerDataTypeId = lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER);
+			mobilePhoneTypeId = lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE);
 		} catch (RuntimeException ex) {
 			log.warn(LogMessages.LOOKUP_SERVICE_CALL_FAILED, ex.getMessage());
 			throw new LookupServiceUnavailableException(
