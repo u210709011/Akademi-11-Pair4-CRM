@@ -48,8 +48,11 @@ import com.etiya.crm.shared.contracts.individual.PartyRoleResponse;
 import com.etiya.crm.customerservice.constants.AccountDefaults;
 import com.etiya.crm.customerservice.constants.CacheNames;
 import com.etiya.crm.customerservice.constants.LogMessages;
-import com.etiya.crm.shared.contracts.lookup.LookupCodes;
-import com.etiya.crm.shared.contracts.lookup.LookupGroups;
+import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
+import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpCodes;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpGroups;
+import com.etiya.crm.shared.contracts.typevalue.TypeValueTables;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerAccountRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchSpecifications;
@@ -110,8 +113,10 @@ public class CustomerServiceImpl implements CustomerService {
 				contactAddressClient.createContact(toContactCommand(customer.getCustId(), request));
 			} catch (Exception ex) {
 				log.error(LogMessages.ONBOARDING_CONTACT_FAILED, customer.getCustId(), ex);
+				// Local customer/account/search-view yazimlari icin ayrica bir telafi GEREKMEZ:
+				// throw ex bu metodun @Transactional sinirini asip tum transaction'i rollback
+				// ettirir. Sadece contact-info-service (ayri DB, ayri transaction) icin telafi gerekli.
 				compensateContactInfo(customer.getCustId());
-				compensateCustomer(customer.getCustId());
 				throw ex;
 			}
 
@@ -123,7 +128,11 @@ public class CustomerServiceImpl implements CustomerService {
 			return customerMapper.toResponse(customer, List.of(account));
 		} catch (Exception ex) {
 			log.error(LogMessages.ONBOARDING_FAILED_COMPENSATING_PARTY, partyRole.partyId(), ex);
-			partyClient.deleteParty(partyRole.partyId());
+			try {
+				partyClient.deleteParty(partyRole.partyId());
+			} catch (Exception compensationEx) {
+				log.error(LogMessages.ONBOARDING_PARTY_COMPENSATION_FAILED, partyRole.partyId(), compensationEx);
+			}
 			throw new OnboardingFailedException(ex);
 		}
 	}
@@ -155,7 +164,7 @@ public class CustomerServiceImpl implements CustomerService {
 		List<CustomerAccount> accounts = customerAccountRepository
 				.findByCustomer_CustIdAndAcctStIdNotDeleted(custId, resolveDeletedAccountStatusId());
 		rules.ensureNoActiveBillingAccount(accounts,
-				lookupCacheService.resolveTypeId(LookupGroups.ACCOUNT_TYPE, LookupCodes.ACCOUNT_TYPE_BILL_ACCT),
+				lookupCacheService.resolveTypeId(GnlTpGroups.ACCOUNT_TYPE, GnlTpCodes.BILLING_ACCOUNT),
 				resolveActiveAccountStatusId());
 
 		customer.setActive(false);
@@ -245,10 +254,10 @@ public class CustomerServiceImpl implements CustomerService {
 		List<ContactMediumResponse> mediums = contactAddressClient.getContactMediumsByCustomer(custId,
 				resolveCustomerDataTypeId());
 		return new ContactInfo(
-				findMediumValue(mediums, resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_EMAIL)),
-				findMediumValue(mediums, resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE)),
-				findMediumValue(mediums, resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_HOME_PHONE)),
-				findMediumValue(mediums, resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_FAX)));
+				findMediumValue(mediums, resolveContactMediumTypeId(GnlTpCodes.EMAIL)),
+				findMediumValue(mediums, resolveContactMediumTypeId(GnlTpCodes.MOBILE)),
+				findMediumValue(mediums, resolveContactMediumTypeId(GnlTpCodes.LANDLINE)),
+				findMediumValue(mediums, resolveContactMediumTypeId(GnlTpCodes.FAX)));
 	}
 
 	@Override
@@ -259,13 +268,13 @@ public class CustomerServiceImpl implements CustomerService {
 		List<ContactMediumResponse> existing = contactAddressClient.getContactMediumsByCustomer(custId, dataTypeId);
 
 		ContactMediumResponse email = upsertMedium(custId, dataTypeId, existing,
-				resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_EMAIL), request.email(), true);
+				resolveContactMediumTypeId(GnlTpCodes.EMAIL), request.email(), true);
 		ContactMediumResponse mobile = upsertMedium(custId, dataTypeId, existing,
-				resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE), request.mobilePhone(), true);
+				resolveContactMediumTypeId(GnlTpCodes.MOBILE), request.mobilePhone(), true);
 		ContactMediumResponse home = upsertMedium(custId, dataTypeId, existing,
-				resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_HOME_PHONE), request.homePhone(), false);
+				resolveContactMediumTypeId(GnlTpCodes.LANDLINE), request.homePhone(), false);
 		ContactMediumResponse fax = upsertMedium(custId, dataTypeId, existing,
-				resolveContactMediumTypeId(LookupCodes.CONTACT_MEDIUM_FAX), request.fax(), false);
+				resolveContactMediumTypeId(GnlTpCodes.FAX), request.fax(), false);
 
 		return new ContactInfo(email.cntcData(), mobile.cntcData(), home != null ? home.cntcData() : null,
 				fax != null ? fax.cntcData() : null);
@@ -294,7 +303,7 @@ public class CustomerServiceImpl implements CustomerService {
 		account.setAccountName(request.accountName());
 		account.setAccountDesc(request.accountDesc());
 		account.setAccountTpId(
-				lookupCacheService.resolveTypeId(LookupGroups.ACCOUNT_TYPE, LookupCodes.ACCOUNT_TYPE_BILL_ACCT));
+				lookupCacheService.resolveTypeId(GnlTpGroups.ACCOUNT_TYPE, GnlTpCodes.BILLING_ACCOUNT));
 		account.setAddressId(addressId);
 		account.setAcctStId(resolveActiveAccountStatusId());
 		// acct_no NOT NULL+UNIQUE oldugu icin gecici bir deger ile ilk kayit yapilir,
@@ -343,7 +352,7 @@ public class CustomerServiceImpl implements CustomerService {
 		// Onboarding'de acilan varsayilan CUST_ACCT tipi hesap "fatura hesabi" degildir, hicbir
 		// zaman FR-011 ile silinemez.
 		rules.ensureAccountIsBillingType(account,
-				lookupCacheService.resolveTypeId(LookupGroups.ACCOUNT_TYPE, LookupCodes.ACCOUNT_TYPE_BILL_ACCT));
+				lookupCacheService.resolveTypeId(GnlTpGroups.ACCOUNT_TYPE, GnlTpCodes.BILLING_ACCOUNT));
 
 		// Urun guard'i (ACC-004, pasif hesaba bagli urun) order-service'i bekliyor - TODO,
 		// burada uygulanmiyor (bkz. BRAIN SS3 FR-011).
@@ -409,19 +418,19 @@ public class CustomerServiceImpl implements CustomerService {
 	}
 
 	private Long resolveCustomerDataTypeId() {
-		return lookupCacheService.resolveDataTypeId(LookupCodes.TABLE_NAME_CUSTOMER);
+		return lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER);
 	}
 
 	private Long resolveContactMediumTypeId(String code) {
-		return lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, code);
+		return lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, code);
 	}
 
 	private Long resolveActiveAccountStatusId() {
-		return lookupCacheService.resolveStatusId(LookupGroups.CUST_ACCT_STATUS, LookupCodes.CUST_ACCT_STATUS_ACTIVE);
+		return lookupCacheService.resolveStatusId(GnlStGroups.CUSTOMER_ACCOUNT, GnlStCodes.ACTIVE);
 	}
 
 	private Long resolveDeletedAccountStatusId() {
-		return lookupCacheService.resolveStatusId(LookupGroups.CUST_ACCT_STATUS, LookupCodes.CUST_ACCT_STATUS_DELETED);
+		return lookupCacheService.resolveStatusId(GnlStGroups.CUSTOMER_ACCOUNT, GnlStCodes.DELETED);
 	}
 
 	private Customer getActiveCustomerOrThrow(Long custId) {
@@ -439,21 +448,12 @@ public class CustomerServiceImpl implements CustomerService {
 		account.setCustomer(customer);
 		account.setAccountNo(AccountDefaults.formatAccountNo(customer.getCustId()));
 		account.setAccountTpId(
-				lookupCacheService.resolveTypeId(LookupGroups.ACCOUNT_TYPE, LookupCodes.ACCOUNT_TYPE_CUST_ACCT));
+				lookupCacheService.resolveTypeId(GnlTpGroups.ACCOUNT_TYPE, GnlTpCodes.CUSTOMER_ACCOUNT));
 		account.setAcctStId(resolveActiveAccountStatusId());
 		account = customerAccountRepository.save(account);
 
 		customer.getAccounts().add(account);
 		return customer;
-	}
-
-	private void compensateCustomer(Long custId) {
-		customerAccountRepository.softDeleteByCustId(custId, resolveDeletedAccountStatusId());
-		customerSearchViewRepository.deleteById(custId);
-		customerRepository.findByCustIdAndActiveTrue(custId).ifPresent(customer -> {
-			customer.setActive(false);
-			customerRepository.save(customer);
-		});
 	}
 
 	/**
@@ -489,7 +489,7 @@ public class CustomerServiceImpl implements CustomerService {
 		view.setTcNo(individual.nationalId());
 		view.setGsm(contact.mobilePhone());
 		view.setAcctNo(accountNo);
-		view.setStatus(LookupCodes.STATUS_ACTIVE);
+		view.setStatus("ACTIVE");
 		view.setDeleted(false);
 		customerSearchViewRepository.save(view);
 	}
@@ -508,21 +508,19 @@ public class CustomerServiceImpl implements CustomerService {
 	private List<ContactMediumCommand> toContactMediumCommands(ContactInfo contact) {
 		List<ContactMediumCommand> mediums = new ArrayList<>();
 		mediums.add(new ContactMediumCommand(
-				lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_EMAIL),
+				lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.EMAIL),
 				contact.email()));
 		mediums.add(new ContactMediumCommand(
-				lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE,
-						LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE),
+				lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE),
 				contact.mobilePhone()));
 		if (StringUtils.hasText(contact.homePhone())) {
 			mediums.add(new ContactMediumCommand(
-					lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE,
-							LookupCodes.CONTACT_MEDIUM_HOME_PHONE),
+					lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.LANDLINE),
 					contact.homePhone()));
 		}
 		if (StringUtils.hasText(contact.fax())) {
 			mediums.add(new ContactMediumCommand(
-					lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_FAX),
+					lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.FAX),
 					contact.fax()));
 		}
 		return mediums;

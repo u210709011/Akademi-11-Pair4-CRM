@@ -12,14 +12,14 @@ public class IndividualBusinessRules {
     private final IndividualRepository individualRepository;
 
     public void checkNationalIdNotDuplicate(String nationalId) {
-        if (individualRepository.existsByNationalId(nationalId)) {
+        if (individualRepository.existsByNationalIdAndActiveTrue(nationalId)) {
             throw new DuplicateNationalIdException();
         }
     }
 
     /** FR-004 ACC-006/007: guncelleme sirasinda nationalId, kendi kaydi disinda baska bir bireyle cakismamali. */
     public void checkNationalIdNotDuplicateForUpdate(String nationalId, Long currentIndividualId) {
-        if (individualRepository.existsByNationalIdAndIndividualIdNot(nationalId, currentIndividualId)) {
+        if (individualRepository.existsByNationalIdAndActiveTrueAndIndividualIdNot(nationalId, currentIndividualId)) {
             throw new DuplicateNationalIdException();
         }
     }

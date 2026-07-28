@@ -12,6 +12,9 @@ public final class LogMessages {
 	public static final String ONBOARDING_CONTACT_COMPENSATION_FAILED =
 			"contact-info-service compensation (deleteByCustomerId) failed for custId={} - manual cleanup may be required";
 
+	public static final String ONBOARDING_PARTY_COMPENSATION_FAILED =
+			"party-service compensation (deleteParty) failed for partyId={} - manual cleanup may be required";
+
 	public static final String FAKE_KPS_VERIFICATION = "Fake KPS verification for nationalId={} (always succeeds)";
 
 	public static final String PARTY_EVENT_CUSTOMER_NOT_FOUND =
