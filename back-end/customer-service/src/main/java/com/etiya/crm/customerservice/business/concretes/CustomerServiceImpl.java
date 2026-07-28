@@ -113,8 +113,10 @@ public class CustomerServiceImpl implements CustomerService {
 				contactAddressClient.createContact(toContactCommand(customer.getCustId(), request));
 			} catch (Exception ex) {
 				log.error(LogMessages.ONBOARDING_CONTACT_FAILED, customer.getCustId(), ex);
+				// Local customer/account/search-view yazimlari icin ayrica bir telafi GEREKMEZ:
+				// throw ex bu metodun @Transactional sinirini asip tum transaction'i rollback
+				// ettirir. Sadece contact-info-service (ayri DB, ayri transaction) icin telafi gerekli.
 				compensateContactInfo(customer.getCustId());
-				compensateCustomer(customer.getCustId());
 				throw ex;
 			}
 
@@ -126,7 +128,11 @@ public class CustomerServiceImpl implements CustomerService {
 			return customerMapper.toResponse(customer, List.of(account));
 		} catch (Exception ex) {
 			log.error(LogMessages.ONBOARDING_FAILED_COMPENSATING_PARTY, partyRole.partyId(), ex);
-			partyClient.deleteParty(partyRole.partyId());
+			try {
+				partyClient.deleteParty(partyRole.partyId());
+			} catch (Exception compensationEx) {
+				log.error(LogMessages.ONBOARDING_PARTY_COMPENSATION_FAILED, partyRole.partyId(), compensationEx);
+			}
 			throw new OnboardingFailedException(ex);
 		}
 	}
@@ -448,15 +454,6 @@ public class CustomerServiceImpl implements CustomerService {
 
 		customer.getAccounts().add(account);
 		return customer;
-	}
-
-	private void compensateCustomer(Long custId) {
-		customerAccountRepository.softDeleteByCustId(custId, resolveDeletedAccountStatusId());
-		customerSearchViewRepository.deleteById(custId);
-		customerRepository.findByCustIdAndActiveTrue(custId).ifPresent(customer -> {
-			customer.setActive(false);
-			customerRepository.save(customer);
-		});
 	}
 
 	/**
