@@ -127,8 +127,17 @@ public class GlobalExceptionHandler {
 						message, request.getRequestURI()));
 	}
 
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
+		log.error("Unexpected error", ex);
+		return build(HttpStatus.INTERNAL_SERVER_ERROR, resolve(MessageKeys.UNEXPECTED_ERROR), request);
+	}
+
 	private ResponseEntity<ErrorResponse> build(HttpStatus status, BusinessException ex, HttpServletRequest request) {
-		String message = resolve(ex.getMessageKey(), ex.getArgs());
+		return build(status, resolve(ex.getMessageKey(), ex.getArgs()), request);
+	}
+
+	private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, HttpServletRequest request) {
 		return ResponseEntity.status(status)
 				.body(ErrorResponse.of(status.value(), status.getReasonPhrase(), message, request.getRequestURI()));
 	}
