@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.constants.MessageKeys;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -109,7 +110,7 @@ public class GlobalExceptionHandler {
 			ErrorResponse downstream = objectMapper.readValue(ex.contentUTF8(), ErrorResponse.class);
 			return Optional.ofNullable(downstream.message());
 		} catch (Exception parseError) {
-			log.warn("Downstream Feign hata govdesi coz(ul)emedi: {}", ex.contentUTF8());
+			log.warn(LogMessages.DOWNSTREAM_ERROR_BODY_PARSE_FAILED, ex.contentUTF8());
 			return Optional.empty();
 		}
 	}

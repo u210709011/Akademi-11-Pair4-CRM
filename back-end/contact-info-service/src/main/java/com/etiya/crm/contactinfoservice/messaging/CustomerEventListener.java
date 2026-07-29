@@ -2,6 +2,8 @@ package com.etiya.crm.contactinfoservice.messaging;
 
 import com.etiya.crm.contactinfoservice.business.abstracts.AddressService;
 import com.etiya.crm.contactinfoservice.business.abstracts.ContactMediumService;
+import com.etiya.crm.contactinfoservice.constants.LogMessages;
+import com.etiya.crm.shared.events.KafkaTopics;
 import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
 import com.etiya.crm.shared.events.customer.CustomerEventTypes;
 import com.etiya.crm.shared.events.inbox.InboxEvent;
@@ -52,14 +54,14 @@ public class CustomerEventListener {
             retryTopicSuffix = "-retry-contact-info",
             dltTopicSuffix = "-dlt-contact-info",
             include = Exception.class)
-    @KafkaListener(topics = "customer-events", groupId = "contact-info-service")
+    @KafkaListener(topics = KafkaTopics.CUSTOMER_EVENTS, groupId = "contact-info-service")
     @Transactional
     public void onMessage(ConsumerRecord<String, String> record) {
         CustomerDeletedEvent event;
         try {
             event = objectMapper.readValue(record.value(), CustomerDeletedEvent.class);
         } catch (JsonProcessingException e) {
-            log.error("customer-events payload parse edilemedi: {}", record.value(), e);
+            log.error(LogMessages.CUSTOMER_EVENT_PAYLOAD_PARSE_FAILED, record.value(), e);
             return;
         }
 
@@ -68,7 +70,7 @@ public class CustomerEventListener {
         }
 
         if (inboxEventRepository.existsById(event.eventId())) {
-            log.info("customer-events mesaji zaten islenmis, atlaniyor: custId={}", event.custId());
+            log.info(LogMessages.CUSTOMER_EVENT_ALREADY_PROCESSED, event.custId());
             return;
         }
 

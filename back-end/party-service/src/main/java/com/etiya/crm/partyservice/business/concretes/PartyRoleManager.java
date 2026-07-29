@@ -1,6 +1,7 @@
 package com.etiya.crm.partyservice.business.concretes;
 
 import com.etiya.crm.partyservice.business.abstracts.PartyRoleService;
+import com.etiya.crm.partyservice.constants.LogMessages;
 import com.etiya.crm.partyservice.dataAccess.abstracts.PartyRoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,6 @@ public class PartyRoleManager implements PartyRoleService {
     public void deactivatePartyRole(Long partyRoleId) {
         partyRoleRepository.findById(partyRoleId).ifPresentOrElse(
                 role -> role.setActive(false),
-                () -> log.warn("CustomerDeleted event'i icin PartyRole bulunamadi: partyRoleId={}", partyRoleId));
+                () -> log.warn(LogMessages.CUSTOMER_DELETED_PARTY_ROLE_NOT_FOUND, partyRoleId));
     }
 }
