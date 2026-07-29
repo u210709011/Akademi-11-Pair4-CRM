@@ -4,7 +4,6 @@ import com.etiya.crm.contactinfoservice.business.exceptions.AddressLimitExceeded
 import com.etiya.crm.contactinfoservice.business.exceptions.AddressLinkedToAccountException;
 import com.etiya.crm.contactinfoservice.business.exceptions.AddressNotFoundException;
 import com.etiya.crm.contactinfoservice.business.exceptions.PrimaryAddressDeletionException;
-import com.etiya.crm.contactinfoservice.clients.CustomerAccountClient;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.AddressRepository;
 import com.etiya.crm.contactinfoservice.entities.concretes.Address;
 import org.junit.jupiter.api.Test;
@@ -25,14 +24,11 @@ class AddressBusinessRulesTest {
     @Mock
     private AddressRepository addressRepository;
 
-    @Mock
-    private CustomerAccountClient customerAccountClient;
-
     private AddressBusinessRules addressBusinessRules;
 
     @Test
     void checkIfAddressExists_returnsAddress_whenFound() {
-        addressBusinessRules = new AddressBusinessRules(addressRepository, customerAccountClient);
+        addressBusinessRules = new AddressBusinessRules(addressRepository);
         Address address = new Address();
         address.setId(1L);
         when(addressRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(address));
@@ -44,7 +40,7 @@ class AddressBusinessRulesTest {
 
     @Test
     void checkIfAddressExists_throws_whenNotFound() {
-        addressBusinessRules = new AddressBusinessRules(addressRepository, customerAccountClient);
+        addressBusinessRules = new AddressBusinessRules(addressRepository);
         when(addressRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> addressBusinessRules.checkIfAddressExists(1L))
@@ -53,7 +49,7 @@ class AddressBusinessRulesTest {
 
     @Test
     void checkAddressLimitNotExceeded_throws_whenFiveAddressesExist() {
-        addressBusinessRules = new AddressBusinessRules(addressRepository, customerAccountClient);
+        addressBusinessRules = new AddressBusinessRules(addressRepository);
         List<Address> fiveAddresses = List.of(new Address(), new Address(), new Address(), new Address(), new Address());
 
         assertThatThrownBy(() -> addressBusinessRules.checkAddressLimitNotExceeded(fiveAddresses))
@@ -62,7 +58,7 @@ class AddressBusinessRulesTest {
 
     @Test
     void checkAddressLimitNotExceeded_passes_whenUnderLimit() {
-        addressBusinessRules = new AddressBusinessRules(addressRepository, customerAccountClient);
+        addressBusinessRules = new AddressBusinessRules(addressRepository);
         List<Address> fourAddresses = List.of(new Address(), new Address(), new Address(), new Address());
 
         addressBusinessRules.checkAddressLimitNotExceeded(fourAddresses);
@@ -71,7 +67,7 @@ class AddressBusinessRulesTest {
 
     @Test
     void checkIfNotPrimary_throws_whenAddressIsPrimary() {
-        addressBusinessRules = new AddressBusinessRules(addressRepository, customerAccountClient);
+        addressBusinessRules = new AddressBusinessRules(addressRepository);
         Address primaryAddress = new Address();
         primaryAddress.setPrimary(true);
 
@@ -81,7 +77,7 @@ class AddressBusinessRulesTest {
 
     @Test
     void checkIfNotPrimary_passes_whenAddressIsNotPrimary() {
-        addressBusinessRules = new AddressBusinessRules(addressRepository, customerAccountClient);
+        addressBusinessRules = new AddressBusinessRules(addressRepository);
         Address nonPrimaryAddress = new Address();
         nonPrimaryAddress.setPrimary(false);
 
@@ -90,42 +86,19 @@ class AddressBusinessRulesTest {
     }
 
     @Test
-    void checkNotLinkedToAccount_throws_whenAddressIsLinkedToAccount() {
-        addressBusinessRules = new AddressBusinessRules(addressRepository, customerAccountClient);
-        when(customerAccountClient.existsByAddressId(1L)).thenReturn(true);
+    void ensureNotLinkedToAccount_throws_whenLinked() {
+        addressBusinessRules = new AddressBusinessRules(addressRepository);
 
-        assertThatThrownBy(() -> addressBusinessRules.checkNotLinkedToAccount(1L))
+        assertThatThrownBy(() -> addressBusinessRules.ensureNotLinkedToAccount(true))
                 .isInstanceOf(AddressLinkedToAccountException.class);
     }
 
     @Test
-    void checkNotLinkedToAccount_passes_whenAddressIsNotLinkedToAccount() {
-        addressBusinessRules = new AddressBusinessRules(addressRepository, customerAccountClient);
-        when(customerAccountClient.existsByAddressId(1L)).thenReturn(false);
+    void ensureNotLinkedToAccount_passes_whenNotLinked() {
+        addressBusinessRules = new AddressBusinessRules(addressRepository);
 
-        addressBusinessRules.checkNotLinkedToAccount(1L);
+        addressBusinessRules.ensureNotLinkedToAccount(false);
         // no exception thrown
-    }
-
-    @Test
-    void unsetOtherPrimaryAddresses_unsetsOnlyOtherPrimaryAddresses() {
-        addressBusinessRules = new AddressBusinessRules(addressRepository, customerAccountClient);
-
-        Address other = new Address();
-        other.setId(2L);
-        other.setPrimary(true);
-
-        Address excluded = new Address();
-        excluded.setId(1L);
-        excluded.setPrimary(true);
-
-        when(addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(10L, 1L))
-                .thenReturn(List.of(other, excluded));
-
-        addressBusinessRules.unsetOtherPrimaryAddresses(10L, 1L, 1L);
-
-        assertThat(other.isPrimary()).isFalse();
-        assertThat(excluded.isPrimary()).isTrue();
     }
 
 }
