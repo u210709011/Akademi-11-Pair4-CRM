@@ -29,7 +29,7 @@ public class ProductOffering extends BaseEntity {
     private String name;
 
     @Column(name = "descr", nullable = false)
-    private String description;
+    private String descr;
 
     @ManyToOne(fetch = FetchType.LAZY) // bir paketin kendi üst paketi olabilir. Süper paket teklifi içinde internet ve tv teklifi var gibi
     @JoinColumn(name = "prnt_ofr_id")

@@ -20,13 +20,16 @@ public record UpdateIndividualInfo(
 
 		@Schema(description = "Ad", example = "Ahmet")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String firstName,
 
 		@Schema(description = "Ikinci ad (opsiyonel)", example = "Can")
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String middleName,
 
 		@Schema(description = "Soyad", example = "Yilmazoglu")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String lastName,
 
 		@Schema(description = "lookup-service GENDER grubundaki deger id'si (1=MALE, 2=FEMALE).", example = "1")
@@ -34,9 +37,11 @@ public record UpdateIndividualInfo(
 		Long genderId,
 
 		@Schema(description = "Anne adi (opsiyonel)", example = "Ayse")
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String motherName,
 
 		@Schema(description = "Baba adi (opsiyonel)", example = "Mehmet")
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String fatherName,
 
 		@Schema(description = "Dogum tarihi, dd/MM/yyyy formatinda. 01/01/1900 oncesi ya da bugunden sonrasi gecersiz.",

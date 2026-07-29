@@ -4,7 +4,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.etiya.crm.partyservice.business.abstracts.LookupCacheService;
-import com.etiya.crm.partyservice.business.exceptions.BusinessException;
+import com.etiya.crm.partyservice.business.exceptions.LookupValueNotFoundException;
 import com.etiya.crm.partyservice.clients.LookupClient;
 import com.etiya.crm.shared.contracts.gnltp.GnlTpResponse;
 
@@ -21,7 +21,7 @@ public class LookupCacheServiceImpl implements LookupCacheService {
     public Long resolveIdByCode(String entCodeName, String shrtCode) {
         GnlTpResponse response = lookupClient.resolveType(entCodeName, shrtCode);
         if (response == null || response.gnlTpId() == null) {
-            throw new BusinessException("Lookup degeri bulunamadi: " + entCodeName + "/" + shrtCode);
+            throw new LookupValueNotFoundException(entCodeName, shrtCode);
         }
         return response.gnlTpId();
     }

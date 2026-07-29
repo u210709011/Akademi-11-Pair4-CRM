@@ -19,13 +19,13 @@ public class Campaign extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cmpg_id")
-    private Long campaignid; // kampanya kimliği
+    private Long campaignId; // kampanya kimliği
 
     @Column(name = "name", nullable = false)
     private String name; // kampanya isim
 
     @Column(name = "descr", nullable = false)
-    private String description; // kampanya tanımı
+    private String descr; // kampanya tanımı
 
     @Column(name = "cmpg_code", nullable = false)
     private String campaignCode; // kampanya kodu

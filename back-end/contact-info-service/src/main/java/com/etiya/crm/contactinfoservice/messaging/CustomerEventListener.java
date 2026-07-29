@@ -2,7 +2,6 @@ package com.etiya.crm.contactinfoservice.messaging;
 
 import com.etiya.crm.contactinfoservice.business.abstracts.AddressService;
 import com.etiya.crm.contactinfoservice.business.abstracts.ContactMediumService;
-import com.etiya.crm.shared.contracts.lookup.DataTypeIds;
 import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
 import com.etiya.crm.shared.events.customer.CustomerEventTypes;
 import com.etiya.crm.shared.events.inbox.InboxEvent;
@@ -13,14 +12,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * "customer-events" topic'ini (Debezium outbox, yayinci customer-service)
- * dinler; sadece CustomerDeleted{eventId, type, custId, partyRoleId} ile
- * ilgilenir ve musteriye ait adres/iletisim kayitlarini pasife ceker (AS-002:
- * silme = statu guncellemesi). "type" ve "eventId" payload'un icine gomulu
+ * dinler; sadece CustomerDeleted{eventId, type, custId, partyRoleId, dataTypeId}
+ * ile ilgilenir ve musteriye ait adres/iletisim kayitlarini pasife ceker (AS-002:
+ * silme = statu guncellemesi). dataTypeId customer-service tarafinda dinamik
+ * cozulmus gelir, burada hardcode edilmez. "type" ve "eventId" payload'un icine gomulu
  * (self-describing, bkz. shared-events CustomerDeletedEvent, party-service'teki
  * ayni desen) - eskiden burada bir "eventType" Kafka header'ina bakiliyordu,
  * ama Debezium EventRouter bu header'i hic yaymiyordu (connector config'inde
@@ -29,6 +31,10 @@ import org.springframework.transaction.annotation.Transactional;
  * Kafka consumer'i varsayilan StringDeserializer ile calisiyor (spring.json.value.default.type
  * yok), bu yuzden ConsumerRecord&lt;String,String&gt; + manuel ObjectMapper.readValue(...)
  * korunur (party-service'in aksine, orada JsonDeserializer default type ile calisiyor).
+ *
+ * "customer-events"in party-service ile ORTAK bir tuketicisi var - retry/dlt
+ * suffix'leri her iki tuketicide de FARKLI olmali, aksi halde ikisi de ayni
+ * "customer-events-dlt" topic'ini kullanmaya calisir ve mesajlar karisir.
  */
 @Component
 @RequiredArgsConstructor
@@ -40,6 +46,12 @@ public class CustomerEventListener {
     private final InboxEventRepository inboxEventRepository;
     private final ObjectMapper objectMapper;
 
+    @RetryableTopic(
+            attempts = "4",
+            backoff = @Backoff(delay = 1000, multiplier = 2.0),
+            retryTopicSuffix = "-retry-contact-info",
+            dltTopicSuffix = "-dlt-contact-info",
+            include = Exception.class)
     @KafkaListener(topics = "customer-events", groupId = "contact-info-service")
     @Transactional
     public void onMessage(ConsumerRecord<String, String> record) {
@@ -60,8 +72,8 @@ public class CustomerEventListener {
             return;
         }
 
-        addressService.deactivateAllForRow(event.custId(), DataTypeIds.CUSTOMER);
-        contactMediumService.deactivateAllForRow(event.custId(), DataTypeIds.CUSTOMER);
+        addressService.deactivateAllForRow(event.custId(), event.dataTypeId());
+        contactMediumService.deactivateAllForRow(event.custId(), event.dataTypeId());
         inboxEventRepository.save(InboxEvent.of(event.eventId(), CustomerEventTypes.CUSTOMER_DELETED));
     }
 

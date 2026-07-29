@@ -2,7 +2,7 @@ import { Component, HostListener, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { form, FormField, required } from '@angular/forms/signals';
+import { form, FormField, maxLength, required } from '@angular/forms/signals';
 import {
   AddressEditRequest,
   AddressResponse,
@@ -100,6 +100,7 @@ export class DetailCustomerComponent {
   protected readonly addressForm = form(this.addressModel, path => {
     required(path.city);
     required(path.street);
+    maxLength(path.street, 200);
     required(path.houseNumber);
     required(path.description);
   });
@@ -175,9 +176,11 @@ export class DetailCustomerComponent {
         this.isDeleteConfirmOpen.set(false);
         this.router.navigateByUrl('/search-customer');
       },
-      error: () => {
+      error: (httpError: HttpErrorResponse) => {
         this.isDeletingCustomer.set(false);
-        this.deleteError.set(this.i18n.t('detail.deleteError'));
+        this.deleteError.set(
+          (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('detail.deleteError')
+        );
       }
     });
   }

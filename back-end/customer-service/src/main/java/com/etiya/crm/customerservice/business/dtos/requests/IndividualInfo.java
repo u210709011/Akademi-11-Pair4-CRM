@@ -16,13 +16,16 @@ public record IndividualInfo(
 
 		@Schema(description = "Ad", example = "Ahmet")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String firstName,
 
 		@Schema(description = "Ikinci ad (opsiyonel)", example = "Can")
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String middleName,
 
 		@Schema(description = "Soyad", example = "Yilmaz")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String lastName,
 
 		@Schema(description = "Dogum tarihi, dd/MM/yyyy formatinda. 01/01/1900 oncesi ya da bugunden sonrasi gecersiz.",
@@ -36,9 +39,11 @@ public record IndividualInfo(
 		Long genderId,
 
 		@Schema(description = "Anne adi (opsiyonel)", example = "Ayse")
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String motherName,
 
 		@Schema(description = "Baba adi (opsiyonel)", example = "Mehmet")
+		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String fatherName,
 
 		@Schema(description = "T.C. Kimlik No - 11 haneli rakam. Sistemde tekil olmali (ayni nationalId ile ikinci kayit 409 doner).",

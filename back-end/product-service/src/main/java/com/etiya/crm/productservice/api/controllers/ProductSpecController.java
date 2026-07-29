@@ -55,6 +55,4 @@ public class ProductSpecController {
         productSpecService.delete(productSpecId);
         return ResponseEntity.noContent().build(); // işlem başarılı ama dönecek veri yok
     }
-
-
 }
