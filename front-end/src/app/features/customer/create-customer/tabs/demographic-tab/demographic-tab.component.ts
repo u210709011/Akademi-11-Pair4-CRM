@@ -100,6 +100,24 @@ export class DemographicTabComponent {
     this.letterFieldErrors.update(errors => ({ ...errors, [field]: hasError }));
   }
 
+  protected blockDigitKey(event: KeyboardEvent, field: LetterFieldName): void {
+    if (event.key.length === 1 && /[0-9]/.test(event.key)) {
+      event.preventDefault();
+      this.setLetterFieldError(field, true);
+    }
+  }
+
+  // TC kimlik no icin rakam olmayan tuslari daha yazilmadan engeller 
+  protected blockNonDigitKey(event: KeyboardEvent): void {
+    if (event.ctrlKey || event.metaKey) {
+      return;
+    }
+    if (event.key.length === 1 && !/[0-9]/.test(event.key)) {
+      event.preventDefault();
+      this.nationalIdError.set(true);
+    }
+  }
+
   private sanitizeLetterField(field: LetterFieldName): void {
     const raw = this.demographicForm[field]().value();
     const lettersOnly = raw.replace(/[^a-zA-ZçÇğĞıİöÖşŞüÜ\s]/g, '');

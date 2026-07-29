@@ -11,6 +11,7 @@
             type="text"
             [formField]="demographicForm.firstName"
             [placeholder]="i18n.t('create.firstName')"
+            (keydown)="blockDigitKey($event, 'firstName')"
             (blur)="setLetterFieldError('firstName', false)"
         >
         @if (letterFieldErrors().firstName) {
@@ -27,6 +28,7 @@
             type="text"
             [formField]="demographicForm.middleName"
             [placeholder]="i18n.t('create.middleName')"
+            (keydown)="blockDigitKey($event, 'middleName')"
             (blur)="setLetterFieldError('middleName', false)"
         >
         @if (letterFieldErrors().middleName) {
@@ -41,6 +43,7 @@
             type="text"
             [formField]="demographicForm.lastName"
             [placeholder]="i18n.t('create.lastName')"
+            (keydown)="blockDigitKey($event, 'lastName')"
             (blur)="setLetterFieldError('lastName', false)"
         >
         @if (letterFieldErrors().lastName) {
@@ -93,6 +96,7 @@
             type="text"
             [formField]="demographicForm.fatherName"
             [placeholder]="i18n.t('create.fatherName')"
+            (keydown)="blockDigitKey($event, 'fatherName')"
             (blur)="setLetterFieldError('fatherName', false)"
         >
         @if (letterFieldErrors().fatherName) {
@@ -107,6 +111,7 @@
             type="text"
             [formField]="demographicForm.motherName"
             [placeholder]="i18n.t('create.motherName')"
+            (keydown)="blockDigitKey($event, 'motherName')"
             (blur)="setLetterFieldError('motherName', false)"
         >
         @if (letterFieldErrors().motherName) {
@@ -122,6 +127,7 @@
             inputmode="numeric"
             [formField]="demographicForm.nationalId"
             [placeholder]="i18n.t('create.nationalId')"
+            (keydown)="blockNonDigitKey($event)"
             (blur)="nationalIdError.set(false)"
         >
         @if (nationalIdError()) {
