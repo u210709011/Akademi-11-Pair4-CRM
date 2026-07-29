@@ -17,7 +17,8 @@ import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerReque
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.IdentityVerificationResponse;
 import com.etiya.crm.customerservice.business.exceptions.OnboardingFailedException;
-import com.etiya.crm.customerservice.business.rules.CustomerBusinessRules;
+import com.etiya.crm.customerservice.business.rules.AddressBusinessRules;
+import com.etiya.crm.customerservice.business.rules.IdentityValidationRules;
 import com.etiya.crm.customerservice.clients.controllers.ContactAddressClient;
 import com.etiya.crm.customerservice.clients.controllers.PartyClient;
 import com.etiya.crm.customerservice.constants.AccountDefaults;
@@ -53,16 +54,17 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 	private final PartyClient partyClient;
 	private final ContactAddressClient contactAddressClient;
 	private final IdentityVerificationService identityVerificationService;
-	private final CustomerBusinessRules rules;
+	private final IdentityValidationRules identityRules;
+	private final AddressBusinessRules addressRules;
 	private final CustomerLookupResolver lookupResolver;
 	private final CustomerMapper customerMapper;
 	private final OutboxEventPublisher outboxEventPublisher;
 
 	@Override
 	public IdentityVerificationResponse verifyIdentity(IndividualInfo individual) {
-		rules.validateBirthDate(individual.birthDate());
+		identityRules.validateBirthDate(individual.birthDate());
 		identityVerificationService.verify(individual); // ACC-009/010 (fake KPS)
-		rules.ensureUniqueNationalId(partyClient.existsByNationalId(individual.nationalId())); // ACC-011/012
+		identityRules.ensureUniqueNationalId(partyClient.existsByNationalId(individual.nationalId())); // ACC-011/012
 		return IdentityVerificationResponse.ok();
 	}
 
@@ -174,7 +176,7 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 
 	private CreateContactCommand toContactCommand(Long custId, OnboardCustomerRequest request) {
 		return new CreateContactCommand(custId, lookupResolver.resolveCustomerDataTypeId(),
-				rules.toAddressCommandsWithPrimaryRule(request.addresses()), toContactMediumCommands(request.contact()));
+				addressRules.toAddressCommandsWithPrimaryRule(request.addresses()), toContactMediumCommands(request.contact()));
 	}
 
 	private List<ContactMediumCommand> toContactMediumCommands(ContactInfo contact) {

@@ -9,7 +9,7 @@ import com.etiya.crm.customerservice.business.abstracts.CustomerAddressService;
 import com.etiya.crm.customerservice.business.abstracts.CustomerLookupResolver;
 import com.etiya.crm.customerservice.business.dtos.requests.AddressEditRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.AddressInfo;
-import com.etiya.crm.customerservice.business.rules.CustomerBusinessRules;
+import com.etiya.crm.customerservice.business.rules.AddressBusinessRules;
 import com.etiya.crm.customerservice.clients.controllers.ContactAddressClient;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerAccountRepository;
 import com.etiya.crm.shared.contracts.address.AddressResponse;
@@ -24,7 +24,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
 
 	private final ContactAddressClient contactAddressClient;
 	private final CustomerAccountRepository customerAccountRepository;
-	private final CustomerBusinessRules rules;
+	private final AddressBusinessRules rules;
 	private final CustomerLookupResolver lookupResolver;
 
 	@Override

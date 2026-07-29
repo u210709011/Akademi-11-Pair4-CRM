@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 /**
  * ACC-001..014: "Create Billing Account" ekrani. addressId (mevcut adres
  * secimi) ile newAddress (yeni adres olusturma) alanlarindan tam olarak biri
- * doldurulmali - bkz. CustomerBusinessRules.ensureAddressProvided.
+ * doldurulmali - bkz. BillingAccountBusinessRules.ensureAddressProvided.
  */
 @Schema(description = "POST /api/v1/customers/{custId}/accounts istek govdesi. "
 		+ "addressId VEYA newAddress'ten TAM OLARAK BIRI doldurulmali - ikisi birden ya da hicbiri 400 doner.")

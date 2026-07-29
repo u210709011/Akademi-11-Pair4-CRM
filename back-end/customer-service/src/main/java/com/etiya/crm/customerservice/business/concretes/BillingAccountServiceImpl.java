@@ -16,7 +16,7 @@ import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccount
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.business.exceptions.BillingAccountNotFoundException;
-import com.etiya.crm.customerservice.business.rules.CustomerBusinessRules;
+import com.etiya.crm.customerservice.business.rules.BillingAccountBusinessRules;
 import com.etiya.crm.customerservice.constants.AccountDefaults;
 import com.etiya.crm.customerservice.constants.CacheNames;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerAccountRepository;
@@ -32,7 +32,7 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 
 	private final CustomerAccountRepository customerAccountRepository;
 	private final CustomerMapper customerMapper;
-	private final CustomerBusinessRules rules;
+	private final BillingAccountBusinessRules rules;
 	private final CustomerLookupResolver lookupResolver;
 	private final CustomerAddressService addressService;
 
