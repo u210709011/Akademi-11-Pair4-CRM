@@ -17,9 +17,11 @@ import lombok.Setter;
 @Entity
 @Table(name = "customer_search_view",
 		indexes = {
-				@Index(name = "idx_csv_lastname", columnList = "lastName"),
-				@Index(name = "idx_csv_tc", columnList = "tcNo"),
-				@Index(name = "idx_csv_gsm", columnList = "gsm")
+			@Index(name = "idx_csv_lastname", columnList = "lastName"),
+			@Index(name = "idx_csv_firstname", columnList = "firstName"),
+			@Index(name = "idx_csv_acctno", columnList = "acctNo"),
+			@Index(name = "idx_csv_tc", columnList = "tcNo"),
+			@Index(name = "idx_csv_gsm", columnList = "gsm")
 		})
 public class CustomerSearchView {
 

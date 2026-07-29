@@ -2,13 +2,17 @@ package com.etiya.crm.orderservice.business.concretes;
 
 import com.etiya.crm.orderservice.business.abstracts.CustOrdService;
 import com.etiya.crm.orderservice.business.dtos.requests.BasketItemRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.ProdCharValRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.SubmitOrderRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.ValidateBasketRequest;
 import com.etiya.crm.orderservice.business.dtos.responses.AddressSummaryResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.CustOrdItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderItemSummaryResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderSummaryResponse;
-import com.etiya.crm.orderservice.business.exceptions.BusinessException;
+import com.etiya.crm.orderservice.business.exceptions.BsnInterSpecNotFoundException;
+import com.etiya.crm.orderservice.business.exceptions.OrderNotFoundException;
 import com.etiya.crm.orderservice.business.rules.BasketValidationRules;
+import com.etiya.crm.orderservice.constants.LookupCodes;
 import com.etiya.crm.orderservice.clients.controllers.ContactAddressClient;
 import com.etiya.crm.orderservice.clients.controllers.CustomerClient;
 import com.etiya.crm.orderservice.clients.controllers.LookupClient;
@@ -16,13 +20,17 @@ import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterSpecRepository;
+import com.etiya.crm.orderservice.dataAccess.abstracts.CustOrdCharValRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.CustOrdItemRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.CustOrdRepository;
 import com.etiya.crm.orderservice.entities.concretes.BsnInter;
 import com.etiya.crm.orderservice.entities.concretes.BsnInterItem;
 import com.etiya.crm.orderservice.entities.concretes.BsnInterSpec;
 import com.etiya.crm.orderservice.entities.concretes.CustOrd;
+import com.etiya.crm.orderservice.entities.concretes.CustOrdCharVal;
 import com.etiya.crm.orderservice.entities.concretes.CustOrdItem;
+import com.etiya.crm.orderservice.mapper.CustOrdCharValMapper;
+import com.etiya.crm.orderservice.mapper.AddressMapper;
 import com.etiya.crm.shared.contracts.address.AddressResponse;
 import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
 import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
@@ -45,10 +53,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CustOrdManager implements CustOrdService {
 
-    private static final String NEW_SALE_SPEC_CODE = "NEW_SALE";
-
+    private final AddressMapper addressMapper;
+    private final CustOrdCharValMapper  custOrdCharValMapper ;
     private final CustOrdRepository custOrdRepository;
     private final CustOrdItemRepository custOrdItemRepository;
+    private final CustOrdCharValRepository custOrdCharValRepository;
     private final BsnInterRepository bsnInterRepository;
     private final BsnInterItemRepository bsnInterItemRepository;
     private final BsnInterSpecRepository bsnInterSpecRepository;
@@ -59,6 +68,8 @@ public class CustOrdManager implements CustOrdService {
     private final OutboxEventPublisher outboxEventPublisher;
 
 
+
+
     @Override
     @Transactional
     public OrderSummaryResponse submitOrder(SubmitOrderRequest request) {
@@ -66,12 +77,12 @@ public class CustOrdManager implements CustOrdService {
 
         //is account belong to that customer
 
-        List<CustomerAccountResponse> accounts = customerClient.getAccounts(request.custId(), 1000).content();
+        List<CustomerAccountResponse> accounts = customerClient.getAccounts(request.custId(), 1000);
         basketValidationRules.ensureAccountBelongsToCustomer(request.custAcctId(), accounts);
         basketValidationRules.ensureAddressProvided(request);
 
-        BsnInterSpec spec = bsnInterSpecRepository.findByShrtCode(NEW_SALE_SPEC_CODE)
-                .orElseThrow(() -> new BusinessException("can't find BSN_INTER_SPEC : " + NEW_SALE_SPEC_CODE));
+        BsnInterSpec spec = bsnInterSpecRepository.findByShrtCode(LookupCodes.BSN_INTER_SPEC_NEW_SALE)
+                .orElseThrow(() -> new BsnInterSpecNotFoundException(LookupCodes.BSN_INTER_SPEC_NEW_SALE));
         //create bsn_inter 
         BsnInter bsnInter = new BsnInter();
         bsnInter.setBsnInterSpec(spec);
@@ -107,19 +118,30 @@ public class CustOrdManager implements CustOrdService {
             // product-service tamamlanınca burada PROD instance olusturulup
             // dogan prodId/prodName/ofrName/price buraya yazilacak.
             item = custOrdItemRepository.save(item);
-            
+
             //create bsn_inter_item
             BsnInterItem bsnInterItem = new BsnInterItem();
             bsnInterItem.setBsnInter(bsnInter);
             bsnInterItem.setRowId(item.getCustOrdItemId());
             bsnInterItemRepository.save(bsnInterItem);
 
+            // FR-015: bu kalem icin girilen urun karakteristiklerini kaydet. Not: CUST_ORD_CHAR_VAL
+            // semasi cust_ord_id'ye bagli (cust_ord_item_id yok) - sepette birden fazla kalem varsa
+            // hangi karakteristigin hangi kaleme ait oldugu bu tablodan ayirt edilemez.
+            if (itemRequest.charVals() != null) {
+                for (ProdCharValRequest charValRequest : itemRequest.charVals()) {
+                    CustOrdCharVal charVal= custOrdCharValMapper.toEntity(charValRequest);
+                    charVal.setCustOrd(custOrd);
+                    custOrdCharValRepository.save(charVal);
+                }
+            }
+
             itemResponses.add(new OrderItemSummaryResponse(
                     item.getCustOrdItemId(), item.getProdId(), item.getProdOfrId(),
                     item.getOfrName(), item.getProdName(), item.getCmpgId(), item.getCmpgName(), null));
         }
         // address object that send to the frontend
-        AddressSummaryResponse addressSummary = toAddressSummary(resolvedAddress);
+        AddressSummaryResponse addressSummary = addressMapper.toSummaryResponse(resolvedAddress);
         
         publishOrderSubmittedEvent(custOrd, request.custAcctId());
         
@@ -154,7 +176,7 @@ public class CustOrdManager implements CustOrdService {
     @Transactional(readOnly = true)
     public OrderSummaryResponse getById(Long custOrdId) {
         CustOrd custOrd = custOrdRepository.findById(custOrdId)
-                .orElseThrow(() -> new BusinessException("Can't find order " + custOrdId));
+                .orElseThrow(() -> new OrderNotFoundException(custOrdId));
 
         List<OrderItemSummaryResponse> itemResponses = custOrd.getItems().stream()
                 .map(item -> new OrderItemSummaryResponse(
@@ -186,32 +208,39 @@ public class CustOrdManager implements CustOrdService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * FR-017: Offer Selection'da "Next" tiklandiginda Product Configuration'a gecmeden
+     * once cagrilir. BR-01/BR-02'ye karsilik gelen (sepet bos olamaz, duplicate urun
+     * olamaz) kontrolleri yapar. "Already Active" ve hizmet cakismasi kontrolleri
+     * (BR-03/BR-04) product-service'in musteri urun/kampanya verisini sunmasini
+     * bekliyor - henuz burada yok.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public void validateBasket(ValidateBasketRequest request) {
+        customerClient.getById(request.custId());
+
+        List<CustomerAccountResponse> accounts = customerClient.getAccounts(request.custId(), 1000);
+        basketValidationRules.ensureAccountBelongsToCustomer(request.custAcctId(), accounts);
+        basketValidationRules.ensureNoDuplicateItems(request.items());
+    }
+
     private AddressResponse resolveAddress(SubmitOrderRequest request, Long custOrdId) {
         if (request.addressId() != null) {
             // Var olan adres secildi - tam detaylarini contact-info-service'ten cekiyoruz
             return contactAddressClient.getById(request.addressId());
         }
 
-        // lookup-service DATA_TYPE grubuna CUST_ORD degeri eklenince
-        // buradaki null yerine gercek dataTypeId kullanilacak.
+        // lookup-service'in type_value seed'inde (V5__seed_general_lookup_data.sql) CUST_ORD icin
+        // henuz bir satir yok - dosyadaki not: "ORDER icin henuz gercek deger yok". O satir eklenene
+        // kadar bu cagri EntityNotFoundException/404 firlatir ve yeni-adresle siparis verme basarisiz
+        // olur (mevcut adres secme akisini etkilemez). Seed eklendiginde bu kod degismeden calisir.
+        Long dataTypeId = lookupClient.getTypeValueByTable(LookupCodes.DATA_TYPE_CUST_ORD).fieldName();
 
-        CreateAddressRequest addressRequest = new CreateAddressRequest(
-                custOrdId, null,
-                request.newAddress().cityId(),
-                request.newAddress().streetName(),
-                request.newAddress().buildingName(),
-                request.newAddress().addressDesc(),
-                true);
+        CreateAddressRequest addressRequest = addressMapper.toCreateAddressRequest(request.newAddress(), custOrdId, dataTypeId, true);
         return contactAddressClient.createAddress(addressRequest);
+
     }
 
-    private AddressSummaryResponse toAddressSummary(AddressResponse address) {
-        return new AddressSummaryResponse(
-                address.id(),
-                address.cityId(),
-                address.streetName(),
-                address.houseName(),
-                address.addrDesc()
-        );
-    }
+
 }
