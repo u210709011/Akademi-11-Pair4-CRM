@@ -6,7 +6,7 @@ import com.etiya.crm.shared.contracts.individual.IndividualResponse;
 /** Musterinin kisisel bilgisini (party-service'in sahip oldugu Individual) proxy'ler. */
 public interface CustomerIndividualService {
 
-	IndividualResponse getIndividual(Long partyRoleId);
+	IndividualResponse getIndividual(Long custId);
 
-	IndividualResponse updateIndividual(Long partyRoleId, UpdateIndividualInfo request);
+	IndividualResponse updateIndividual(Long custId, UpdateIndividualInfo request);
 }

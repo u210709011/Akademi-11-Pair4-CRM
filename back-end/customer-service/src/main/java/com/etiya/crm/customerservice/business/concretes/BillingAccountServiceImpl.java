@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.etiya.crm.customerservice.business.abstracts.BillingAccountService;
 import com.etiya.crm.customerservice.business.abstracts.CustomerAddressService;
+import com.etiya.crm.customerservice.business.abstracts.CustomerFinder;
 import com.etiya.crm.customerservice.business.abstracts.CustomerLookupResolver;
 import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateBillingAccountRequest;
@@ -35,6 +36,7 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 	private final BillingAccountBusinessRules rules;
 	private final CustomerLookupResolver lookupResolver;
 	private final CustomerAddressService addressService;
+	private final CustomerFinder customerFinder;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -47,11 +49,12 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 
 	@Override
 	@Transactional
-	@CacheEvict(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#customer.custId")
-	public CustomerAccountResponse createBillingAccount(Customer customer, CreateBillingAccountRequest request) {
+	@CacheEvict(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
+	public CustomerAccountResponse createBillingAccount(Long custId, CreateBillingAccountRequest request) {
+		Customer customer = customerFinder.getActiveCustomerOrThrow(custId);
 		rules.ensureAddressProvided(request.addressId(), request.newAddress());
 
-		Long addressId = addressService.resolveBillingAddressId(customer.getCustId(), request.addressId(),
+		Long addressId = addressService.resolveBillingAddressId(custId, request.addressId(),
 				request.newAddress());
 
 		CustomerAccount account = new CustomerAccount();
@@ -76,6 +79,7 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 	@CacheEvict(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
 	public CustomerAccountResponse updateBillingAccount(Long custId, Long accountId,
 			UpdateBillingAccountRequest request) {
+		customerFinder.getActiveCustomerOrThrow(custId);
 		rules.ensureAddressProvided(request.addressId(), request.newAddress());
 		CustomerAccount account = customerAccountRepository
 				.findByCustAcctIdAndCustomer_CustIdAndAcctStIdNotDeleted(accountId, custId,
@@ -97,6 +101,7 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 	@Transactional
 	@CacheEvict(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
 	public void deleteBillingAccount(Long custId, Long accountId) {
+		customerFinder.getActiveCustomerOrThrow(custId);
 		CustomerAccount account = customerAccountRepository
 				.findByCustAcctIdAndCustomer_CustIdAndAcctStIdNotDeleted(accountId, custId,
 						lookupResolver.resolveDeletedAccountStatusId())

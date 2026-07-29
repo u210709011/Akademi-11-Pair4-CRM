@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.etiya.crm.customerservice.business.abstracts.CustomerContactService;
+import com.etiya.crm.customerservice.business.abstracts.CustomerFinder;
 import com.etiya.crm.customerservice.business.abstracts.CustomerLookupResolver;
 import com.etiya.crm.customerservice.business.dtos.requests.ContactInfo;
 import com.etiya.crm.customerservice.clients.controllers.ContactAddressClient;
@@ -23,10 +24,12 @@ public class CustomerContactServiceImpl implements CustomerContactService {
 
 	private final ContactAddressClient contactAddressClient;
 	private final CustomerLookupResolver lookupResolver;
+	private final CustomerFinder customerFinder;
 
 	@Override
 	@Transactional(readOnly = true)
 	public ContactInfo getContact(Long custId) {
+		customerFinder.getActiveCustomerOrThrow(custId);
 		List<ContactMediumResponse> mediums = contactAddressClient.getContactMediumsByCustomer(custId,
 				lookupResolver.resolveCustomerDataTypeId());
 		return new ContactInfo(
@@ -39,6 +42,7 @@ public class CustomerContactServiceImpl implements CustomerContactService {
 	@Override
 	@Transactional(readOnly = true)
 	public ContactInfo updateContact(Long custId, ContactInfo request) {
+		customerFinder.getActiveCustomerOrThrow(custId);
 		Long dataTypeId = lookupResolver.resolveCustomerDataTypeId();
 		List<ContactMediumResponse> existing = contactAddressClient.getContactMediumsByCustomer(custId, dataTypeId);
 

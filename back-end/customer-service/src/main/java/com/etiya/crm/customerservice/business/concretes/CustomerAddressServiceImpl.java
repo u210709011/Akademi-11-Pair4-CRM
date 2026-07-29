@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.etiya.crm.customerservice.business.abstracts.CustomerAddressService;
+import com.etiya.crm.customerservice.business.abstracts.CustomerFinder;
 import com.etiya.crm.customerservice.business.abstracts.CustomerLookupResolver;
 import com.etiya.crm.customerservice.business.dtos.requests.AddressEditRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.AddressInfo;
@@ -26,16 +27,19 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
 	private final CustomerAccountRepository customerAccountRepository;
 	private final AddressBusinessRules rules;
 	private final CustomerLookupResolver lookupResolver;
+	private final CustomerFinder customerFinder;
 
 	@Override
 	@Transactional(readOnly = true)
 	public List<AddressResponse> getAddresses(Long custId) {
+		customerFinder.getActiveCustomerOrThrow(custId);
 		return contactAddressClient.getAddressesByCustomer(custId, lookupResolver.resolveCustomerDataTypeId());
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public AddressResponse addAddress(Long custId, AddressEditRequest request) {
+		customerFinder.getActiveCustomerOrThrow(custId);
 		Long dataTypeId = lookupResolver.resolveCustomerDataTypeId();
 		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, dataTypeId);
 		rules.validateAddressLimit(existing.size());
@@ -48,6 +52,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
 	@Override
 	@Transactional(readOnly = true)
 	public AddressResponse updateAddress(Long custId, Long addressId, AddressEditRequest request) {
+		customerFinder.getActiveCustomerOrThrow(custId);
 		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId,
 				lookupResolver.resolveCustomerDataTypeId());
 		rules.ensureAddressBelongsToCustomer(custId, addressId, existing);
@@ -60,6 +65,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
 	@Override
 	@Transactional(readOnly = true)
 	public void deleteAddress(Long custId, Long addressId) {
+		customerFinder.getActiveCustomerOrThrow(custId);
 		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId,
 				lookupResolver.resolveCustomerDataTypeId());
 		AddressResponse address = rules.ensureAddressBelongsToCustomer(custId, addressId, existing);
