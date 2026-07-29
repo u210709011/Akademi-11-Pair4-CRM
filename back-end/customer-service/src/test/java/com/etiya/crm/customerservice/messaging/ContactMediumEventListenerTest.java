@@ -12,9 +12,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchViewRepository;
 import com.etiya.crm.customerservice.entities.concretes.CustomerSearchView;
-import com.etiya.crm.shared.contracts.lookup.DataTypeIds;
-import com.etiya.crm.shared.contracts.lookup.LookupCodes;
-import com.etiya.crm.shared.contracts.lookup.LookupGroups;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpCodes;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpGroups;
+import com.etiya.crm.shared.contracts.typevalue.TypeValueTables;
 import com.etiya.crm.shared.events.contactmedium.ContactMediumEvent;
 import com.etiya.crm.shared.events.contactmedium.ContactMediumEventTypes;
 import com.etiya.crm.shared.events.inbox.InboxEventRepository;
@@ -31,6 +31,8 @@ class ContactMediumEventListenerTest {
 
 	private static final Long MOBILE_PHONE_TYPE_ID = 4002L;
 	private static final Long OTHER_TYPE_ID = 4001L; // e.g. EMAIL
+	private static final Long PARTY_DATA_TYPE_ID = 9L;
+	private static final Long CUSTOMER_DATA_TYPE_ID = 12L;
 
 	@Mock
 	private InboxEventRepository inboxEventRepository;
@@ -57,11 +59,11 @@ class ContactMediumEventListenerTest {
 	@Test
 	void onContactMediumEvent_ignoresNonCustomerDataType() {
 		ContactMediumEvent event = new ContactMediumEvent(UUID.randomUUID(),
-				ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, 10L, DataTypeIds.PARTY, MOBILE_PHONE_TYPE_ID,
+				ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, 10L, PARTY_DATA_TYPE_ID, MOBILE_PHONE_TYPE_ID,
 				"5551234567");
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveDataTypeId(LookupCodes.TABLE_NAME_CUSTOMER)).thenReturn(DataTypeIds.CUSTOMER);
-		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER)).thenReturn(CUSTOMER_DATA_TYPE_ID);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
 				.thenReturn(MOBILE_PHONE_TYPE_ID);
 
 		listener.onContactMediumEvent(event);
@@ -72,11 +74,11 @@ class ContactMediumEventListenerTest {
 	@Test
 	void onContactMediumEvent_ignoresNonMobilePhoneMedium() {
 		ContactMediumEvent event = new ContactMediumEvent(UUID.randomUUID(),
-				ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, 10L, DataTypeIds.CUSTOMER, OTHER_TYPE_ID,
+				ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, 10L, CUSTOMER_DATA_TYPE_ID, OTHER_TYPE_ID,
 				"ahmet@example.com");
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveDataTypeId(LookupCodes.TABLE_NAME_CUSTOMER)).thenReturn(DataTypeIds.CUSTOMER);
-		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER)).thenReturn(CUSTOMER_DATA_TYPE_ID);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
 				.thenReturn(MOBILE_PHONE_TYPE_ID);
 
 		listener.onContactMediumEvent(event);
@@ -90,8 +92,8 @@ class ContactMediumEventListenerTest {
 		CustomerSearchView view = new CustomerSearchView();
 		view.setCustId(10L);
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveDataTypeId(LookupCodes.TABLE_NAME_CUSTOMER)).thenReturn(DataTypeIds.CUSTOMER);
-		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER)).thenReturn(CUSTOMER_DATA_TYPE_ID);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
 				.thenReturn(MOBILE_PHONE_TYPE_ID);
 		when(customerSearchViewRepository.findById(10L)).thenReturn(Optional.of(view));
 
@@ -108,8 +110,8 @@ class ContactMediumEventListenerTest {
 		view.setCustId(10L);
 		view.setGsm("5551234567");
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveDataTypeId(LookupCodes.TABLE_NAME_CUSTOMER)).thenReturn(DataTypeIds.CUSTOMER);
-		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER)).thenReturn(CUSTOMER_DATA_TYPE_ID);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
 				.thenReturn(MOBILE_PHONE_TYPE_ID);
 		when(customerSearchViewRepository.findById(10L)).thenReturn(Optional.of(view));
 
@@ -125,8 +127,8 @@ class ContactMediumEventListenerTest {
 		view.setCustId(10L);
 		view.setGsm("5551234567");
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveDataTypeId(LookupCodes.TABLE_NAME_CUSTOMER)).thenReturn(DataTypeIds.CUSTOMER);
-		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER)).thenReturn(CUSTOMER_DATA_TYPE_ID);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
 				.thenReturn(MOBILE_PHONE_TYPE_ID);
 		when(customerSearchViewRepository.findById(10L)).thenReturn(Optional.of(view));
 
@@ -139,8 +141,8 @@ class ContactMediumEventListenerTest {
 	void onContactMediumEvent_skipsSync_whenCustomerSearchViewNotFound() {
 		ContactMediumEvent event = mobilePhoneEvent(ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, "5551234567");
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveDataTypeId(LookupCodes.TABLE_NAME_CUSTOMER)).thenReturn(DataTypeIds.CUSTOMER);
-		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER)).thenReturn(CUSTOMER_DATA_TYPE_ID);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
 				.thenReturn(MOBILE_PHONE_TYPE_ID);
 		when(customerSearchViewRepository.findById(10L)).thenReturn(Optional.empty());
 
@@ -153,7 +155,7 @@ class ContactMediumEventListenerTest {
 	void onContactMediumEvent_throwsLookupServiceUnavailable_whenLookupCacheFails() {
 		ContactMediumEvent event = mobilePhoneEvent(ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, "5551234567");
 		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
-		when(lookupCacheService.resolveTypeId(LookupGroups.CONTACT_MEDIUM_TYPE, LookupCodes.CONTACT_MEDIUM_MOBILE_PHONE))
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
 				.thenThrow(new RuntimeException("401 Unauthorized"));
 
 		assertThatThrownBy(() -> listener.onContactMediumEvent(event))
@@ -163,7 +165,7 @@ class ContactMediumEventListenerTest {
 	}
 
 	private ContactMediumEvent mobilePhoneEvent(String type, String cntcData) {
-		return new ContactMediumEvent(UUID.randomUUID(), type, 10L, DataTypeIds.CUSTOMER, MOBILE_PHONE_TYPE_ID,
+		return new ContactMediumEvent(UUID.randomUUID(), type, 10L, CUSTOMER_DATA_TYPE_ID, MOBILE_PHONE_TYPE_ID,
 				cntcData);
 	}
 }

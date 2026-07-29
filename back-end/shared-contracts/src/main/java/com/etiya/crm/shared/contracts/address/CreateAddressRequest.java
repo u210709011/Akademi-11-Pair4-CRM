@@ -8,8 +8,9 @@ import jakarta.validation.constraints.Size;
 /**
  * contact-info-service POST /api/v1/addresses istek govdesi. rowId+dataTypeId,
  * adresin kime ait oldugunu belirtir (polimorfik iliski) - caller bilmek
- * zorunda; ornek: customer icin rowId=custId, dataTypeId=102 (DATA_TYPE
- * grubu CUST, bkz. DataTypeIds.CUSTOMER).
+ * zorunda; ornek: customer icin rowId=custId, dataTypeId=lookup-service'in
+ * TYPE_VALUE tablosundan dinamik cozulen CUST etiketi (bkz. customer-service
+ * LookupCacheService.resolveDataTypeId).
  */
 @Schema(description = "POST /api/v1/addresses istek govdesi.")
 public record CreateAddressRequest(
@@ -18,7 +19,7 @@ public record CreateAddressRequest(
 		@NotNull
 		Long rowId,
 
-		@Schema(description = "lookup-service DATA_TYPE grubundaki deger id'si (musteri icin 102).", example = "102")
+		@Schema(description = "lookup-service TYPE_VALUE tablosundaki polimorfik tip etiketi (musteri icin CUST=12, dinamik cozulur).", example = "12")
 		@NotNull
 		Long dataTypeId,
 

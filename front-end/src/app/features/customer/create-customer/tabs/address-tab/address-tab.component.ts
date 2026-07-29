@@ -1,10 +1,13 @@
-import { Component, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { form, FormField, required } from '@angular/forms/signals';
+import { Component, HostListener, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { form, FormField, maxLength, required } from '@angular/forms/signals';
 import { AddressInfo } from '../../../../../core/customer';
 import { I18nService } from '../../../../../core/i18n';
 import { AddressFormModel, CreateCustomerFormStateService } from '../../create-customer.component';
 
 const EMPTY_ADDRESS: AddressFormModel = { city: '', street: '', houseNumber: '', description: '' };
+
+// lookup-service CITY grubunda seed'de tek deger var: 201=Ankara.
+const CITY_NAMES: Record<string, string> = { '201': 'Ankara' };
 
 @Component({
   selector: 'app-address-tab',
@@ -21,6 +24,7 @@ export class AddressTabComponent {
   // eklenen adresler sekmeler arasi gecince kaybolmamasi icin CreateCustomerFormStateService'te tutulur
   protected readonly addresses = this.formState.addresses;
   protected readonly isAddAddressModalOpen = signal(false);
+  protected readonly openAddressMenuIndex = signal<number | null>(null);
 
   // "yeni adres ekle" modalindaki taslak veri gecicidir, kaydedilmeden sekme degisirse kaybolmasi beklenir
   protected readonly addressModel = signal<AddressFormModel>({ ...EMPTY_ADDRESS });
@@ -28,9 +32,12 @@ export class AddressTabComponent {
   protected readonly addressForm = form(this.addressModel, path => {
     required(path.city);
     required(path.street);
+    maxLength(path.street, 200);
     required(path.houseNumber);
     required(path.description);
   });
+
+  protected readonly addressLimitReached = computed(() => this.addresses().length >= this.maxAddresses);
 
   constructor() {
     // ACC-011: en az bir adres eklenmeden sonraki adima gecilemez - sihirbazin ortak state'ine yansitilir.
@@ -41,7 +48,30 @@ export class AddressTabComponent {
     });
   }
 
+  protected cityName(cityId: string): string {
+    return CITY_NAMES[cityId] ?? '—';
+  }
+
+  protected toggleAddressMenu(index: number, event: Event): void {
+    event.stopPropagation();
+    this.openAddressMenuIndex.set(this.openAddressMenuIndex() === index ? null : index);
+  }
+
+  @HostListener('document:click')
+  protected closeAddressMenu(): void {
+    this.openAddressMenuIndex.set(null);
+  }
+
+  protected removeAddress(index: number): void {
+    this.openAddressMenuIndex.set(null);
+    this.addresses.update(list => list.filter((_, i) => i !== index));
+  }
+
   protected openAddAddressModal(): void {
+    if (this.addressLimitReached()) {
+      return;
+    }
+    this.openAddressMenuIndex.set(null);
     this.isAddAddressModalOpen.set(true);
   }
 

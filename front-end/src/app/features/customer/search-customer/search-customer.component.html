@@ -37,7 +37,7 @@
                         formControlName="natIdNumber"
                         placeholder="NAT ID Number"
                         (input)="sanitizeDigits($event, 'natIdNumber', 11)"
-                        (blur)="setFieldError('natIdNumber', false)"
+                        (blur)="onNatIdBlur()"
                     >
                     @if (fieldErrors().natIdNumber) {
                         <span class="field-error">{{ i18n.t('search.natIdError') }}</span>
@@ -96,10 +96,11 @@
                             id="gsmNumber"
                             type="text"
                             inputmode="numeric"
+                            maxlength="10"
                             formControlName="gsmNumber"
                             placeholder="5XX XXX XX XX"
                             (input)="sanitizeGsm($event)"
-                            (blur)="setFieldError('gsmNumber', false)"
+                            (blur)="onGsmBlur()"
                         >
                     </div>
                     @if (fieldErrors().gsmNumber) {
@@ -153,7 +154,7 @@
                 <button
                     type="button"
                     class="search-button"
-                    [disabled]="!hasFilledFilter() || isSearching()"
+                    [disabled]="!hasFilledFilter() || isSearching() || hasFieldErrors()"
                     (click)="search()"
                 >{{ i18n.t('search.searchBtn') }}</button>
             </div>
@@ -242,7 +243,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (customer of sortedResults(); track customer.custId) {
+                        @for (customer of searchResults(); track customer.custId) {
                             <tr>
                                 <td>
                                     <button type="button" class="customer-id-link" (click)="viewCustomerDetail(customer)">{{ customer.custId }}</button>

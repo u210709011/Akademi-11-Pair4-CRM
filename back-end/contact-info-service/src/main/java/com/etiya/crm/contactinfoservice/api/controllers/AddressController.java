@@ -46,7 +46,7 @@ public class AddressController {
     public ResponseEntity<List<AddressResponse>> getAll(
             @Parameter(description = "Adresin sahibinin id'si (ornegin custId). dataTypeId ile birlikte kullanilir.", example = "1")
             @RequestParam(required = false) Long rowId,
-            @Parameter(description = "lookup-service DATA_TYPE grubundaki deger id'si (musteri icin 102). rowId ile birlikte kullanilir.", example = "102")
+            @Parameter(description = "lookup-service TYPE_VALUE tablosundaki polimorfik tip etiketi (musteri icin CUST=12, dinamik cozulur). rowId ile birlikte kullanilir.", example = "12")
             @RequestParam(required = false) Long dataTypeId) {
         if (rowId != null && dataTypeId != null) {
             return ResponseEntity.ok(addressService.getByRowIdAndDataTypeId(rowId, dataTypeId));
