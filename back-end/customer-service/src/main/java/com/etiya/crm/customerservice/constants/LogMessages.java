@@ -30,6 +30,8 @@ public final class LogMessages {
 	public static final String LOOKUP_SERVICE_CALL_FAILED =
 			"lookup-service call failed (expected to be transient: network/auth), will retry via RetryableTopic: {}";
 
+	public static final String DOWNSTREAM_ERROR_BODY_PARSE_FAILED = "Downstream Feign hata govdesi coz(ul)emedi: {}";
+
 	private LogMessages() {
 	}
 }

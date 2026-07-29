@@ -1,6 +1,8 @@
 package com.etiya.crm.partyservice.messaging;
 
 import com.etiya.crm.partyservice.business.abstracts.PartyRoleService;
+import com.etiya.crm.partyservice.constants.LogMessages;
+import com.etiya.crm.shared.events.KafkaTopics;
 import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
 import com.etiya.crm.shared.events.customer.CustomerEventTypes;
 import com.etiya.crm.shared.events.inbox.InboxEvent;
@@ -45,7 +47,7 @@ public class CustomerEventListener {
             retryTopicSuffix = "-retry-party",
             dltTopicSuffix = "-dlt-party",
             include = Exception.class)
-    @KafkaListener(topics = "customer-events", groupId = "party-service")
+    @KafkaListener(topics = KafkaTopics.CUSTOMER_EVENTS, groupId = "party-service")
     @Transactional
     public void onMessage(CustomerDeletedEvent event) {
         if (!CustomerEventTypes.CUSTOMER_DELETED.equals(event.type())) {
@@ -53,7 +55,7 @@ public class CustomerEventListener {
         }
 
         if (inboxEventRepository.existsById(event.eventId())) {
-            log.info("customer-events mesaji zaten islenmis, atlaniyor: partyRoleId={}", event.partyRoleId());
+            log.info(LogMessages.CUSTOMER_EVENT_ALREADY_PROCESSED, event.partyRoleId());
             return;
         }
 

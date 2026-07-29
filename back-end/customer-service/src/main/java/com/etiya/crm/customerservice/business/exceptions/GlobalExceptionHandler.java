@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.constants.MessageKeys;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -109,7 +110,7 @@ public class GlobalExceptionHandler {
 			ErrorResponse downstream = objectMapper.readValue(ex.contentUTF8(), ErrorResponse.class);
 			return Optional.ofNullable(downstream.message());
 		} catch (Exception parseError) {
-			log.warn("Downstream Feign hata govdesi coz(ul)emedi: {}", ex.contentUTF8());
+			log.warn(LogMessages.DOWNSTREAM_ERROR_BODY_PARSE_FAILED, ex.contentUTF8());
 			return Optional.empty();
 		}
 	}
@@ -126,8 +127,17 @@ public class GlobalExceptionHandler {
 						message, request.getRequestURI()));
 	}
 
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
+		log.error("Unexpected error", ex);
+		return build(HttpStatus.INTERNAL_SERVER_ERROR, resolve(MessageKeys.UNEXPECTED_ERROR), request);
+	}
+
 	private ResponseEntity<ErrorResponse> build(HttpStatus status, BusinessException ex, HttpServletRequest request) {
-		String message = resolve(ex.getMessageKey(), ex.getArgs());
+		return build(status, resolve(ex.getMessageKey(), ex.getArgs()), request);
+	}
+
+	private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, HttpServletRequest request) {
 		return ResponseEntity.status(status)
 				.body(ErrorResponse.of(status.value(), status.getReasonPhrase(), message, request.getRequestURI()));
 	}

@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * party-service'in party-events topic'ine yayinladigi event'leri dinler ve
  * CUSTOMER_SEARCH_VIEW'i gunceller. Onboarding sirasinda search view zaten
- * dogrudan CustomerService.onboard() icinde yazilir; bu dinleyici sadece
+ * dogrudan CustomerOnboardingService.onboard() icinde yazilir; bu dinleyici sadece
  * onboarding disinda (ör. party-service'te dogrudan yapilan) degisikliklerin
  * senkron kalmasini saglar. INBOX ile idempotent calisir; kalici hatalarda
  * 4 deneme sonrasi "party-events-dlt" topic'ine dusurulur (DLQ).
