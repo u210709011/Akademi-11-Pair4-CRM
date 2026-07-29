@@ -56,6 +56,9 @@ export class SearchCustomerComponent {
     gsmNumber: false,
     orderNumber: false
   });
+  // Search butonu, herhangi bir alanda gecerli bir hata gosterilirken de aktif olmamali
+  // (ör. NAT ID 11 haneden az girilip alandan cikildiginda).
+  protected readonly hasFieldErrors = computed(() => Object.values(this.fieldErrors()).some(hasError => hasError));
 
   protected readonly searchForm = this.formBuilder.nonNullable.group({
     natIdNumber: [''],
@@ -178,7 +181,7 @@ export class SearchCustomerComponent {
 
   protected sanitizeGsm(event: Event): void {
     const input = event.target as HTMLInputElement;
-    let digitsOnly = input.value.replace(/\D/g, '');
+    let digitsOnly = input.value.replace(/\D/g, '').slice(0, 10);
 
     while (digitsOnly.length > 0 && digitsOnly[0] !== '5') {
       digitsOnly = digitsOnly.slice(1);
@@ -186,6 +189,13 @@ export class SearchCustomerComponent {
 
     this.setFieldError('gsmNumber', input.value !== digitsOnly);
     this.searchForm.controls.gsmNumber.setValue(digitsOnly);
+  }
+
+  // GSM zorunlu degil ama girildiyse tam 10 hane olmali - NAT ID ile ayni mantik:
+  // yazarken degil, alandan cikildiginda eksik hane sayisi hata olarak gosterilir.
+  protected onGsmBlur(): void {
+    const raw: string = this.searchForm.controls.gsmNumber.value;
+    this.setFieldError('gsmNumber', raw.length > 0 && raw.length !== 10);
   }
 
   protected sanitizeLetters(event: Event, controlName: 'firstName' | 'lastName'): void {
