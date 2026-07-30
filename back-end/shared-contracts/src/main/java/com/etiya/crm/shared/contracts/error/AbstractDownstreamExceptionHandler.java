@@ -66,7 +66,7 @@ public abstract class AbstractDownstreamExceptionHandler {
 			ErrorResponse downstream = objectMapper.readValue(ex.contentUTF8(), ErrorResponse.class);
 			return Optional.ofNullable(downstream.message());
 		} catch (Exception parseError) {
-			log.warn("Downstream Feign hata govdesi coz(ul)emedi: {}", ex.contentUTF8());
+			log.warn(LogMessages.DOWNSTREAM_ERROR_BODY_PARSE_FAILED, ex.contentUTF8());
 			return Optional.empty();
 		}
 	}

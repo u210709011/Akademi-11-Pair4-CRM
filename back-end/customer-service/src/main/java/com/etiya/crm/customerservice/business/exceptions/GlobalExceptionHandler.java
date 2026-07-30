@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.constants.MessageKeys;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -110,7 +111,7 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
-		log.error("Unexpected error", ex);
+		log.error(LogMessages.UNEXPECTED_ERROR, ex);
 		return build(HttpStatus.INTERNAL_SERVER_ERROR, resolve(MessageKeys.UNEXPECTED_ERROR), request);
 	}
 
