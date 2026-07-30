@@ -1,10 +1,8 @@
 package com.etiya.crm.customerservice.business.exceptions;
 
-import java.util.Optional;
-
+import com.etiya.crm.shared.contracts.error.AbstractDownstreamExceptionHandler;
 import com.etiya.crm.shared.contracts.error.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import feign.FeignException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
@@ -14,20 +12,31 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.constants.MessageKeys;
 
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@RequiredArgsConstructor
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
 	private final MessageSource messageSource;
-	private final ObjectMapper objectMapper;
+
+	public GlobalExceptionHandler(MessageSource messageSource, ObjectMapper objectMapper) {
+		super(objectMapper);
+		this.messageSource = messageSource;
+	}
+
+	@Override
+	protected String downstreamCallFailedMessage() {
+		return resolve(MessageKeys.DOWNSTREAM_CALL_FAILED);
+	}
+
+	@Override
+	protected String downstreamUnavailableMessage() {
+		return resolve(MessageKeys.DOWNSTREAM_UNAVAILABLE);
+	}
 
 	@ExceptionHandler(CustomerNotFoundException.class)
 	public ResponseEntity<ErrorResponse> handleNotFound(CustomerNotFoundException ex, HttpServletRequest request) {
@@ -85,34 +94,6 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ErrorResponse> handleOnboardingFailed(OnboardingFailedException ex,
 			HttpServletRequest request) {
 		return build(HttpStatus.BAD_GATEWAY, ex, request);
-	}
-
-	/**
-	 * party-service/contact-info-service/lookup-service cagrilarindan (Feign) donen hersey
-	 * eskiden buradan yakalanmadigi icin caller'a (frontend) daima 500 olarak sizardi - downstream
-	 * gercekten 404/409/400 dondurmus olsa bile. Butun servisler ayni ErrorResponse kontratini
-	 * kullandigindan (bkz. shared-contracts), govdeyi coz ve HEM statusu HEM mesaji oldugu gibi
-	 * yansit.
-	 */
-	@ExceptionHandler(FeignException.class)
-	public ResponseEntity<ErrorResponse> handleFeignException(FeignException ex, HttpServletRequest request) {
-		HttpStatus status = HttpStatus.resolve(ex.status());
-		if (status == null) {
-			status = HttpStatus.BAD_GATEWAY;
-		}
-		String message = extractDownstreamMessage(ex).orElseGet(() -> resolve(MessageKeys.DOWNSTREAM_CALL_FAILED));
-		return ResponseEntity.status(status)
-				.body(ErrorResponse.of(status.value(), status.getReasonPhrase(), message, request.getRequestURI()));
-	}
-
-	private Optional<String> extractDownstreamMessage(FeignException ex) {
-		try {
-			ErrorResponse downstream = objectMapper.readValue(ex.contentUTF8(), ErrorResponse.class);
-			return Optional.ofNullable(downstream.message());
-		} catch (Exception parseError) {
-			log.warn(LogMessages.DOWNSTREAM_ERROR_BODY_PARSE_FAILED, ex.contentUTF8());
-			return Optional.empty();
-		}
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
