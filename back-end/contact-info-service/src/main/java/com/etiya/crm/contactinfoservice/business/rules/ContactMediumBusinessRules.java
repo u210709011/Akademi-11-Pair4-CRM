@@ -2,7 +2,6 @@ package com.etiya.crm.contactinfoservice.business.rules;
 
 import com.etiya.crm.contactinfoservice.business.exceptions.ContactMediumNotFoundException;
 import com.etiya.crm.contactinfoservice.business.exceptions.InvalidContactMediumFormatException;
-import com.etiya.crm.contactinfoservice.clients.LookupClient;
 import com.etiya.crm.contactinfoservice.constants.MessageKeys;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.ContactMediumRepository;
 import com.etiya.crm.shared.contracts.gnltp.GnlTpCodes;
@@ -11,6 +10,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.regex.Pattern;
 
+/**
+ * Pure contact-medium kurallari: lookup-service'e HTTP cagrisi yapmaz - tip
+ * kodu (EML/GSM/vb.) zaten cozulmus olarak (String) parametre gelir, burada
+ * sadece format regex'i uygulanir. Tip kodunu cozmek (LookupClient) ise
+ * ContactMediumServiceImpl'in sorumlulugundadir.
+ */
 @Component
 public class ContactMediumBusinessRules {
 
@@ -19,11 +24,9 @@ public class ContactMediumBusinessRules {
     private static final Pattern LANDLINE_PHONE_PATTERN = Pattern.compile("^[0-9]{10,11}$");
 
     private final ContactMediumRepository contactMediumRepository;
-    private final LookupClient lookupClient;
 
-    public ContactMediumBusinessRules(ContactMediumRepository contactMediumRepository, LookupClient lookupClient) {
+    public ContactMediumBusinessRules(ContactMediumRepository contactMediumRepository) {
         this.contactMediumRepository = contactMediumRepository;
-        this.lookupClient = lookupClient;
     }
 
     public ContactMedium checkIfContactMediumExists(Long id) {
@@ -31,9 +34,7 @@ public class ContactMediumBusinessRules {
                 .orElseThrow(() -> new ContactMediumNotFoundException(id));
     }
 
-    public void checkDataFormat(String cntcData, Long cntcMediumTypeId) {
-        String typeCode = lookupClient.getById(cntcMediumTypeId).shrtCode();
-
+    public void checkDataFormat(String cntcData, String typeCode) {
         if (GnlTpCodes.EMAIL.equals(typeCode)) {
             if (!EMAIL_PATTERN.matcher(cntcData).matches()) {
                 throw new InvalidContactMediumFormatException(MessageKeys.CONTACT_MEDIUM_INVALID_EMAIL_FORMAT);

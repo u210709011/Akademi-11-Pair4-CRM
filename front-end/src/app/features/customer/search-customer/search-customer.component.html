@@ -96,10 +96,11 @@
                             id="gsmNumber"
                             type="text"
                             inputmode="numeric"
+                            maxlength="10"
                             formControlName="gsmNumber"
                             placeholder="5XX XXX XX XX"
                             (input)="sanitizeGsm($event)"
-                            (blur)="setFieldError('gsmNumber', false)"
+                            (blur)="onGsmBlur()"
                         >
                     </div>
                     @if (fieldErrors().gsmNumber) {
@@ -153,7 +154,7 @@
                 <button
                     type="button"
                     class="search-button"
-                    [disabled]="!hasFilledFilter() || isSearching()"
+                    [disabled]="!hasFilledFilter() || isSearching() || hasFieldErrors()"
                     (click)="search()"
                 >{{ i18n.t('search.searchBtn') }}</button>
             </div>

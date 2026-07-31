@@ -108,8 +108,11 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'create.emailFormatError': 'Email must be a valid email address.',
     'create.emailPlaceholder': 'Enter email address',
     'create.homePhone': 'Home Phone',
+    'create.homePhoneFormatError': 'Home phone must start with 2 and be 10 digits.',
     'create.mobilePhone': 'Mobile Phone',
+    'create.mobilePhoneFormatError': 'Mobile phone must start with 5 and be 10 digits.',
     'create.fax': 'Fax',
+    'create.digitsOnlyError': 'Only numbers can be entered.',
 
     'detail.b2c': 'B2C',
     'detail.detailCustomer': 'Detail Customer',
@@ -265,8 +268,11 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'create.emailFormatError': 'E-posta geçerli bir adres olmalıdır.',
     'create.emailPlaceholder': 'E-posta adresini girin',
     'create.homePhone': 'Ev Telefonu',
+    'create.homePhoneFormatError': 'Ev telefonu 2 ile başlamalı ve 10 haneli olmalıdır.',
     'create.mobilePhone': 'Cep Telefonu',
+    'create.mobilePhoneFormatError': 'Cep telefonu 5 ile başlamalı ve 10 haneli olmalıdır.',
     'create.fax': 'Faks',
+    'create.digitsOnlyError': 'Sadece rakam girilebilir.',
 
     'detail.b2c': 'B2C',
     'detail.detailCustomer': 'Müşteri Detayı',

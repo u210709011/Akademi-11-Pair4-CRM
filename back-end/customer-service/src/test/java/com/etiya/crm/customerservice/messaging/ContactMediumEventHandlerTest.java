@@ -1,0 +1,171 @@
+package com.etiya.crm.customerservice.messaging;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
+import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchViewRepository;
+import com.etiya.crm.customerservice.entities.concretes.CustomerSearchView;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpCodes;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpGroups;
+import com.etiya.crm.shared.contracts.typevalue.TypeValueTables;
+import com.etiya.crm.shared.events.contactmedium.ContactMediumEvent;
+import com.etiya.crm.shared.events.contactmedium.ContactMediumEventTypes;
+import com.etiya.crm.shared.events.inbox.InboxEventRepository;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class ContactMediumEventHandlerTest {
+
+	private static final Long MOBILE_PHONE_TYPE_ID = 4002L;
+	private static final Long OTHER_TYPE_ID = 4001L; // e.g. EMAIL
+	private static final Long PARTY_DATA_TYPE_ID = 9L;
+	private static final Long CUSTOMER_DATA_TYPE_ID = 12L;
+
+	@Mock
+	private InboxEventRepository inboxEventRepository;
+
+	@Mock
+	private CustomerSearchViewRepository customerSearchViewRepository;
+
+	@Mock
+	private LookupCacheService lookupCacheService;
+
+	@InjectMocks
+	private ContactMediumEventHandler handler;
+
+	@Test
+	void handle_skipsProcessing_whenEventAlreadyInInbox() {
+		ContactMediumEvent event = mobilePhoneEvent(ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, "5551234567");
+		when(inboxEventRepository.existsById(event.eventId())).thenReturn(true);
+
+		handler.handle(event);
+
+		verify(customerSearchViewRepository, never()).findById(any());
+	}
+
+	@Test
+	void handle_ignoresNonCustomerDataType() {
+		ContactMediumEvent event = new ContactMediumEvent(UUID.randomUUID(),
+				ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, 10L, PARTY_DATA_TYPE_ID, MOBILE_PHONE_TYPE_ID,
+				"5551234567");
+		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
+		when(lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER)).thenReturn(CUSTOMER_DATA_TYPE_ID);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
+				.thenReturn(MOBILE_PHONE_TYPE_ID);
+
+		handler.handle(event);
+
+		verify(customerSearchViewRepository, never()).findById(any());
+	}
+
+	@Test
+	void handle_ignoresNonMobilePhoneMedium() {
+		ContactMediumEvent event = new ContactMediumEvent(UUID.randomUUID(),
+				ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, 10L, CUSTOMER_DATA_TYPE_ID, OTHER_TYPE_ID,
+				"ahmet@example.com");
+		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
+		when(lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER)).thenReturn(CUSTOMER_DATA_TYPE_ID);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
+				.thenReturn(MOBILE_PHONE_TYPE_ID);
+
+		handler.handle(event);
+
+		verify(customerSearchViewRepository, never()).findById(any());
+	}
+
+	@Test
+	void handle_syncsGsm_whenMobilePhoneCreated() {
+		ContactMediumEvent event = mobilePhoneEvent(ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, "5551234567");
+		CustomerSearchView view = new CustomerSearchView();
+		view.setCustId(10L);
+		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
+		when(lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER)).thenReturn(CUSTOMER_DATA_TYPE_ID);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
+				.thenReturn(MOBILE_PHONE_TYPE_ID);
+		when(customerSearchViewRepository.findById(10L)).thenReturn(Optional.of(view));
+
+		handler.handle(event);
+
+		assertThat(view.getGsm()).isEqualTo("5551234567");
+		verify(customerSearchViewRepository).save(view);
+	}
+
+	@Test
+	void handle_syncsGsm_whenMobilePhoneUpdated() {
+		ContactMediumEvent event = mobilePhoneEvent(ContactMediumEventTypes.CONTACT_MEDIUM_UPDATED, "5559998877");
+		CustomerSearchView view = new CustomerSearchView();
+		view.setCustId(10L);
+		view.setGsm("5551234567");
+		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
+		when(lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER)).thenReturn(CUSTOMER_DATA_TYPE_ID);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
+				.thenReturn(MOBILE_PHONE_TYPE_ID);
+		when(customerSearchViewRepository.findById(10L)).thenReturn(Optional.of(view));
+
+		handler.handle(event);
+
+		assertThat(view.getGsm()).isEqualTo("5559998877");
+	}
+
+	@Test
+	void handle_clearsGsm_whenMobilePhoneDeactivated() {
+		ContactMediumEvent event = mobilePhoneEvent(ContactMediumEventTypes.CONTACT_MEDIUM_DEACTIVATED, "5551234567");
+		CustomerSearchView view = new CustomerSearchView();
+		view.setCustId(10L);
+		view.setGsm("5551234567");
+		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
+		when(lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER)).thenReturn(CUSTOMER_DATA_TYPE_ID);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
+				.thenReturn(MOBILE_PHONE_TYPE_ID);
+		when(customerSearchViewRepository.findById(10L)).thenReturn(Optional.of(view));
+
+		handler.handle(event);
+
+		assertThat(view.getGsm()).isNull();
+	}
+
+	@Test
+	void handle_skipsSync_whenCustomerSearchViewNotFound() {
+		ContactMediumEvent event = mobilePhoneEvent(ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, "5551234567");
+		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
+		when(lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER)).thenReturn(CUSTOMER_DATA_TYPE_ID);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
+				.thenReturn(MOBILE_PHONE_TYPE_ID);
+		when(customerSearchViewRepository.findById(10L)).thenReturn(Optional.empty());
+
+		handler.handle(event);
+
+		verify(customerSearchViewRepository, never()).save(any());
+	}
+
+	@Test
+	void handle_throwsLookupServiceUnavailable_whenLookupCacheFails() {
+		ContactMediumEvent event = mobilePhoneEvent(ContactMediumEventTypes.CONTACT_MEDIUM_CREATED, "5551234567");
+		when(inboxEventRepository.existsById(event.eventId())).thenReturn(false);
+		when(lookupCacheService.resolveTypeId(GnlTpGroups.CONTACT_MEDIUM, GnlTpCodes.MOBILE))
+				.thenThrow(new RuntimeException("401 Unauthorized"));
+
+		assertThatThrownBy(() -> handler.handle(event))
+				.isInstanceOf(LookupServiceUnavailableException.class);
+
+		verify(customerSearchViewRepository, never()).findById(any());
+	}
+
+	private ContactMediumEvent mobilePhoneEvent(String type, String cntcData) {
+		return new ContactMediumEvent(UUID.randomUUID(), type, 10L, CUSTOMER_DATA_TYPE_ID, MOBILE_PHONE_TYPE_ID,
+				cntcData);
+	}
+}

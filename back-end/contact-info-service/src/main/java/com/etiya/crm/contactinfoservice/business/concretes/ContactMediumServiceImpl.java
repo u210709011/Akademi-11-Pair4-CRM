@@ -2,6 +2,7 @@ package com.etiya.crm.contactinfoservice.business.concretes;
 
 import com.etiya.crm.contactinfoservice.business.abstracts.ContactMediumService;
 import com.etiya.crm.contactinfoservice.business.rules.ContactMediumBusinessRules;
+import com.etiya.crm.contactinfoservice.clients.LookupClient;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.ContactMediumRepository;
 import com.etiya.crm.contactinfoservice.entities.concretes.ContactMedium;
 import com.etiya.crm.contactinfoservice.mapper.ContactMediumMapper;
@@ -24,13 +25,16 @@ public class ContactMediumServiceImpl implements ContactMediumService {
     private final ContactMediumRepository contactMediumRepository;
     private final ContactMediumBusinessRules contactMediumBusinessRules;
     private final OutboxEventPublisher outboxEventPublisher;
+    private final LookupClient lookupClient;
 
     public ContactMediumServiceImpl(ContactMediumRepository contactMediumRepository,
                                      ContactMediumBusinessRules contactMediumBusinessRules,
-                                     OutboxEventPublisher outboxEventPublisher) {
+                                     OutboxEventPublisher outboxEventPublisher,
+                                     LookupClient lookupClient) {
         this.contactMediumRepository = contactMediumRepository;
         this.contactMediumBusinessRules = contactMediumBusinessRules;
         this.outboxEventPublisher = outboxEventPublisher;
+        this.lookupClient = lookupClient;
     }
 
     @Override
@@ -56,7 +60,8 @@ public class ContactMediumServiceImpl implements ContactMediumService {
     @Override
     @Transactional
     public ContactMediumResponse add(CreateContactMediumRequest request) {
-        contactMediumBusinessRules.checkDataFormat(request.cntcData(), request.cntcMediumTypeId());
+        String typeCode = lookupClient.getById(request.cntcMediumTypeId()).shrtCode();
+        contactMediumBusinessRules.checkDataFormat(request.cntcData(), typeCode);
 
         ContactMedium contactMedium = ContactMediumMapper.toEntity(request);
         ContactMedium saved = contactMediumRepository.save(contactMedium);
@@ -68,7 +73,8 @@ public class ContactMediumServiceImpl implements ContactMediumService {
     @Transactional
     public ContactMediumResponse update(Long id, UpdateContactMediumRequest request) {
         ContactMedium contactMedium = contactMediumBusinessRules.checkIfContactMediumExists(id);
-        contactMediumBusinessRules.checkDataFormat(request.cntcData(), request.cntcMediumTypeId());
+        String typeCode = lookupClient.getById(request.cntcMediumTypeId()).shrtCode();
+        contactMediumBusinessRules.checkDataFormat(request.cntcData(), typeCode);
 
         ContactMediumMapper.updateEntity(contactMedium, request);
         ContactMedium saved = contactMediumRepository.save(contactMedium);

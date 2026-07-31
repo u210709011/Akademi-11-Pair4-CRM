@@ -7,6 +7,7 @@ import com.etiya.crm.contactinfoservice.business.exceptions.AddressLimitExceeded
 import com.etiya.crm.contactinfoservice.business.exceptions.AddressLinkedToAccountException;
 import com.etiya.crm.contactinfoservice.business.exceptions.PrimaryAddressDeletionException;
 import com.etiya.crm.contactinfoservice.business.rules.AddressBusinessRules;
+import com.etiya.crm.contactinfoservice.clients.CustomerAccountClient;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.AddressRepository;
 import com.etiya.crm.contactinfoservice.entities.concretes.Address;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ class AddressServiceImplTest {
 
     @Mock
     private AddressBusinessRules addressBusinessRules;
+
+    @Mock
+    private CustomerAccountClient customerAccountClient;
 
     @InjectMocks
     private AddressServiceImpl addressService;
@@ -73,6 +77,25 @@ class AddressServiceImplTest {
                 .isInstanceOf(AddressLimitExceededException.class);
 
         verify(addressRepository, never()).save(any());
+    }
+
+    @Test
+    void add_unsetsOtherPrimaryAddresses_whenNewAddressIsMarkedPrimary() {
+        CreateAddressRequest request = new CreateAddressRequest(10L, 1L, 5L, "Street", "12", "Desc", true);
+        Address otherPrimary = new Address();
+        otherPrimary.setId(2L);
+        otherPrimary.setPrimary(true);
+        when(addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(10L, 1L)).thenReturn(List.of(otherPrimary));
+        when(addressRepository.save(any(Address.class))).thenAnswer(invocation -> {
+            Address saved = invocation.getArgument(0);
+            saved.setId(3L);
+            return saved;
+        });
+
+        addressService.add(request);
+
+        assertThat(otherPrimary.isPrimary()).isFalse();
+        verify(addressRepository).saveAll(List.of(otherPrimary));
     }
 
     @Test
@@ -117,11 +140,12 @@ class AddressServiceImplTest {
         address.setActive(true);
 
         when(addressBusinessRules.checkIfAddressExists(1L)).thenReturn(address);
+        when(customerAccountClient.existsByAddressId(1L)).thenReturn(false);
 
         addressService.delete(1L);
 
         assertThat(address.isActive()).isFalse();
-        verify(addressBusinessRules).checkNotLinkedToAccount(1L);
+        verify(addressBusinessRules).ensureNotLinkedToAccount(false);
         verify(addressRepository).save(address);
     }
 
@@ -132,8 +156,9 @@ class AddressServiceImplTest {
         address.setPrimary(false);
 
         when(addressBusinessRules.checkIfAddressExists(1L)).thenReturn(address);
+        when(customerAccountClient.existsByAddressId(1L)).thenReturn(true);
         doThrow(new AddressLinkedToAccountException())
-                .when(addressBusinessRules).checkNotLinkedToAccount(1L);
+                .when(addressBusinessRules).ensureNotLinkedToAccount(true);
 
         assertThatThrownBy(() -> addressService.delete(1L))
                 .isInstanceOf(AddressLinkedToAccountException.class);
