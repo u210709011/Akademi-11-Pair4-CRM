@@ -1,7 +1,7 @@
 package com.etiya.crm.partyservice.business.concretes;
 
 import com.etiya.crm.partyservice.business.abstracts.PartyService;
-import com.etiya.crm.partyservice.business.exceptions.BusinessException;
+import com.etiya.crm.partyservice.business.exceptions.PartyNotFoundException;
 import com.etiya.crm.partyservice.dataAccess.abstracts.IndividualRepository;
 import com.etiya.crm.partyservice.dataAccess.abstracts.PartyRepository;
 import com.etiya.crm.partyservice.entities.concretes.Party;
@@ -20,7 +20,7 @@ public class PartyManager implements PartyService {
     @Transactional
     public void softDeleteParty(Long partyId) {
         Party party = partyRepository.findById(partyId)
-                .orElseThrow(() -> new BusinessException("Party bulunamadi: " + partyId));
+                .orElseThrow(() -> new PartyNotFoundException(partyId));
 
         party.setActive(false);
         party.getRoles().forEach(role -> role.setActive(false));

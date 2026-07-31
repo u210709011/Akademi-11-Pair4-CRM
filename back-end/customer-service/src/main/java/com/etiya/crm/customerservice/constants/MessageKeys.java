@@ -9,6 +9,7 @@ public final class MessageKeys {
 
 	public static final String FIELD_REQUIRED = "validation.field.required";
 	public static final String NATIONAL_ID_INVALID = "validation.national-id.invalid";
+	public static final String NAME_INVALID = "validation.name.invalid";
 	public static final String BIRTH_DATE_INVALID = "validation.birth-date.invalid";
 	public static final String EMAIL_INVALID = "validation.email.invalid";
 	public static final String PHONE_INVALID = "validation.phone.invalid";
@@ -21,6 +22,9 @@ public final class MessageKeys {
 	public static final String DUPLICATE_NATIONAL_ID = "error.customer.duplicate-national-id";
 	public static final String ONBOARDING_FAILED = "error.customer.onboarding-failed";
 	public static final String IDENTITY_VERIFICATION_FAILED = "error.identity.verification-failed";
+	public static final String DOWNSTREAM_CALL_FAILED = "error.downstream.call-failed";
+	public static final String DOWNSTREAM_UNAVAILABLE = "error.downstream.unavailable";
+	public static final String UNEXPECTED_ERROR = "error.unexpected";
 
 	public static final String PRIMARY_ADDRESS_CANNOT_BE_DELETED = "error.address.primary-cannot-be-deleted";
 	public static final String ADDRESS_LINKED_TO_BILLING_ACCOUNT = "error.address.linked-to-billing-account";

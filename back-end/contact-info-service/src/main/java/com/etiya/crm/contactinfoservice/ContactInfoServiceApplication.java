@@ -7,19 +7,25 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import com.etiya.crm.shared.contracts.feign.DefaultFeignRetryConfig;
+
 /**
- * shared-events'ten sadece ".outbox" alt paketi eklenir (OutboxEvent/
- * OutboxEventRepository/OutboxEventPublisher) - ".inbox" alt paketindeki
- * InboxEvent, bu serviste zaten var olan yerel Inbox entity'siyle (ayni
- * "inbox" tablosu) cakisir, bu yuzden kasitli olarak disaridedir. Bu servisin
- * kendi paketleri acikca eklenir cunku @EntityScan/@EnableJpaRepositories/
- * @ComponentScan bir kez belirtilince varsayilan (sinifin kendi paketi)
- * scan'in yerini alir.
+ * shared-events'ten hem ".outbox" (OutboxEvent/OutboxEventRepository/
+ * OutboxEventPublisher) hem ".inbox" (InboxEvent/InboxEventRepository, bkz.
+ * CustomerEventListener) alt paketleri eklenir - bu servisin eskiden ayni
+ * "inbox" tablosuna eslenen yerel bir Inbox entity'si vardi, artik onun
+ * yerine dogrudan shared-events'teki InboxEvent kullanilir (ayni sema, bkz.
+ * V1__baseline_existing_schema.sql). Bu servisin kendi paketleri acikca
+ * eklenir cunku @EntityScan/@EnableJpaRepositories/@ComponentScan bir kez
+ * belirtilince varsayilan (sinifin kendi paketi) scan'in yerini alir.
  */
-@EnableFeignClients
-@EntityScan(basePackages = { "com.etiya.crm.contactinfoservice", "com.etiya.crm.shared.events.outbox" })
-@EnableJpaRepositories(basePackages = { "com.etiya.crm.contactinfoservice", "com.etiya.crm.shared.events.outbox" })
-@ComponentScan(basePackages = { "com.etiya.crm.contactinfoservice", "com.etiya.crm.shared.events.outbox" })
+@EnableFeignClients(defaultConfiguration = DefaultFeignRetryConfig.class)
+@EntityScan(basePackages = { "com.etiya.crm.contactinfoservice", "com.etiya.crm.shared.events.outbox",
+		"com.etiya.crm.shared.events.inbox" })
+@EnableJpaRepositories(basePackages = { "com.etiya.crm.contactinfoservice", "com.etiya.crm.shared.events.outbox",
+		"com.etiya.crm.shared.events.inbox" })
+@ComponentScan(basePackages = { "com.etiya.crm.contactinfoservice", "com.etiya.crm.shared.events.outbox",
+		"com.etiya.crm.shared.events.inbox" })
 @SpringBootApplication
 public class ContactInfoServiceApplication {
 

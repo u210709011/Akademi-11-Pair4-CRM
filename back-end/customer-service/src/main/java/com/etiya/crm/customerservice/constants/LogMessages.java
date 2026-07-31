@@ -9,6 +9,12 @@ public final class LogMessages {
 	public static final String ONBOARDING_FAILED_COMPENSATING_PARTY =
 			"onboarding failed after party-service call, compensating party {}";
 
+	public static final String ONBOARDING_CONTACT_COMPENSATION_FAILED =
+			"contact-info-service compensation (deleteByCustomerId) failed for custId={} - manual cleanup may be required";
+
+	public static final String ONBOARDING_PARTY_COMPENSATION_FAILED =
+			"party-service compensation (deleteParty) failed for partyId={} - manual cleanup may be required";
+
 	public static final String FAKE_KPS_VERIFICATION = "Fake KPS verification for nationalId={} (always succeeds)";
 
 	public static final String PARTY_EVENT_CUSTOMER_NOT_FOUND =
@@ -23,6 +29,13 @@ public final class LogMessages {
 
 	public static final String LOOKUP_SERVICE_CALL_FAILED =
 			"lookup-service call failed (expected to be transient: network/auth), will retry via RetryableTopic: {}";
+
+	public static final String UNEXPECTED_ERROR = "Unexpected error";
+
+	public static final String CACHE_GET_FAILED = "Cache '{}' okunamadi (key={}), DB'ye dusuluyor: {}";
+	public static final String CACHE_PUT_FAILED = "Cache '{}' yazilamadi (key={}): {}";
+	public static final String CACHE_EVICT_FAILED = "Cache '{}' temizlenemedi (key={}): {}";
+	public static final String CACHE_CLEAR_FAILED = "Cache '{}' tumuyle temizlenemedi: {}";
 
 	private LogMessages() {
 	}

@@ -43,7 +43,9 @@ public class Individual extends BaseEntity {
     @Column(name = "fthr_name")
     private String fatherName;
 
-    @Column(name = "nat_id", nullable = false, unique = true)
+    // Tekillik kisiti DB'de partial unique index ile saglanir (bkz. V3 migration) - sadece
+    // is_active=true satirlar arasinda tekil; soft-delete'li kayitlar nat_id'yi tekrar kullanilabilir birakir.
+    @Column(name = "nat_id", nullable = false)
     private String nationalId;
 
     @OneToOne(fetch = FetchType.LAZY)

@@ -1,9 +1,11 @@
 package com.etiya.crm.contactinfoservice.business.exceptions;
 
-public class AddressLinkedToAccountException extends RuntimeException {
+import com.etiya.crm.contactinfoservice.constants.MessageKeys;
 
-    public AddressLinkedToAccountException(String message) {
-        super(message);
+public class AddressLinkedToAccountException extends BusinessException {
+
+    public AddressLinkedToAccountException() {
+        super(MessageKeys.ADDRESS_LINKED_TO_BILLING_ACCOUNT);
     }
 
 }

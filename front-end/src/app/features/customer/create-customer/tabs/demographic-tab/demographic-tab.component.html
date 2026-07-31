@@ -11,10 +11,13 @@
             type="text"
             [formField]="demographicForm.firstName"
             [placeholder]="i18n.t('create.firstName')"
+            (keydown)="blockDigitKey($event, 'firstName')"
             (blur)="setLetterFieldError('firstName', false)"
         >
         @if (letterFieldErrors().firstName) {
             <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+        } @else if (demographicForm.firstName().invalid() && demographicForm.firstName().touched()) {
+            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
         }
     </div>
 
@@ -25,6 +28,7 @@
             type="text"
             [formField]="demographicForm.middleName"
             [placeholder]="i18n.t('create.middleName')"
+            (keydown)="blockDigitKey($event, 'middleName')"
             (blur)="setLetterFieldError('middleName', false)"
         >
         @if (letterFieldErrors().middleName) {
@@ -39,10 +43,13 @@
             type="text"
             [formField]="demographicForm.lastName"
             [placeholder]="i18n.t('create.lastName')"
+            (keydown)="blockDigitKey($event, 'lastName')"
             (blur)="setLetterFieldError('lastName', false)"
         >
         @if (letterFieldErrors().lastName) {
             <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+        } @else if (demographicForm.lastName().invalid() && demographicForm.lastName().touched()) {
+            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
         }
     </div>
 
@@ -55,6 +62,7 @@
                 placeholder="DD/MM/YYYY"
                 [matDatepicker]="birthDatePicker"
                 [max]="today"
+                [min]="minBirthDate"
                 [formField]="demographicForm.birthDate"
             >
             <mat-datepicker-toggle matIconSuffix [for]="birthDatePicker"></mat-datepicker-toggle>
@@ -64,6 +72,9 @@
                 panelClass="app-date-picker-panel"
             ></mat-datepicker>
         </mat-form-field>
+        @if (demographicForm.birthDate().invalid() && demographicForm.birthDate().touched()) {
+            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+        }
     </div>
 
     <div class="form-field">
@@ -73,6 +84,9 @@
             <option value="1">{{ i18n.t('create.genderMale') }}</option>
             <option value="2">{{ i18n.t('create.genderFemale') }}</option>
         </select>
+        @if (demographicForm.gender().invalid() && demographicForm.gender().touched()) {
+            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+        }
     </div>
 
     <div class="form-field">
@@ -82,6 +96,7 @@
             type="text"
             [formField]="demographicForm.fatherName"
             [placeholder]="i18n.t('create.fatherName')"
+            (keydown)="blockDigitKey($event, 'fatherName')"
             (blur)="setLetterFieldError('fatherName', false)"
         >
         @if (letterFieldErrors().fatherName) {
@@ -96,6 +111,7 @@
             type="text"
             [formField]="demographicForm.motherName"
             [placeholder]="i18n.t('create.motherName')"
+            (keydown)="blockDigitKey($event, 'motherName')"
             (blur)="setLetterFieldError('motherName', false)"
         >
         @if (letterFieldErrors().motherName) {
@@ -111,10 +127,15 @@
             inputmode="numeric"
             [formField]="demographicForm.nationalId"
             [placeholder]="i18n.t('create.nationalId')"
+            (keydown)="blockNonDigitKey($event)"
             (blur)="nationalIdError.set(false)"
         >
         @if (nationalIdError()) {
             <span class="field-error">{{ i18n.t('create.nationalIdError') }}</span>
+        } @else if (demographicForm.nationalId().touched() && demographicForm.nationalId().value().length > 0 && demographicForm.nationalId().value().length < 11) {
+            <span class="field-error">{{ i18n.t('create.nationalIdError') }}</span>
+        } @else if (demographicForm.nationalId().invalid() && demographicForm.nationalId().touched()) {
+            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
         }
     </div>
 

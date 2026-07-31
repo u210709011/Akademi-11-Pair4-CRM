@@ -9,12 +9,6 @@ const UNKNOWN = '—';
 // lookup-service CITY grubunda seed'de tek deger var: 201=Ankara.
 export const CITY_NAMES: Record<number, string> = { 201: 'Ankara' };
 
-// GET /individual birthDate'i ISO (yyyy-MM-dd) formatinda donuyor, ekranda dd/MM/yyyy gosterilir.
-function formatBirthDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split('-');
-  return `${day}/${month}/${year}`;
-}
-
 export interface CustomerDetail {
   customerId: string;
   fullName: string;
@@ -65,7 +59,7 @@ export function mapToCustomerDetail(
     firstName: individual.firstName,
     middleName: individual.middleName ?? UNKNOWN,
     lastName: individual.lastName,
-    dateOfBirth: formatBirthDate(individual.birthDate),
+    dateOfBirth: individual.birthDate,
     genderId: individual.genderId,
     fatherName: individual.fatherName ?? UNKNOWN,
     motherName: individual.motherName ?? UNKNOWN,
