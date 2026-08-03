@@ -12,8 +12,9 @@ exit /b %errorlevel%
 setlocal enabledelayedexpansion
 
 rem Starts the full CRM stack for local dev: infra pods (Postgres/Kafka/Redis/
-rem Keycloak) via podman compose, then each Spring Boot service via a real,
-rem vendored Apache Maven (downloaded once into back-end\.maven\ on first run).
+rem Keycloak) via docker/podman compose (whichever is installed), then each
+rem Spring Boot service via a real, vendored Apache Maven (downloaded once
+rem into back-end\.maven\ on first run).
 rem NOT the project's mvnw.cmd wrapper - that script re-invokes itself via
 rem powershell internally (see mvnw.cmd's own polyglot batch/powershell body),
 rem which is blocked outright by Group Policy on some machines. Real Maven's
@@ -60,9 +61,13 @@ if not exist "%MVN%" (
     echo Maven ready at %MVN%
 )
 
+call "%~dp0..\detect-engine.bat"
+if errorlevel 1 exit /b 1
+echo Using container engine: %ENGINE%
+
 echo === Starting infra (Postgres, Kafka, Redis, Keycloak) ===
 pushd "%INFRA%"
-podman compose -f docker-compose.yml up -d postgres kafka kafka-ui debezium debezium-connectors redis redis-commander keycloak
+%COMPOSE% -f docker-compose.yml up -d postgres kafka kafka-ui debezium debezium-connectors redis redis-commander keycloak
 popd
 
 call :waitforport 5432 "PostgreSQL"

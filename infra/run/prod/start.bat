@@ -10,15 +10,19 @@ set INFRA=%~dp0..\..
 for %%I in ("%INFRA%") do set INFRA=%%~fI
 cd /d "%INFRA%"
 
+call "%~dp0..\detect-engine.bat"
+if errorlevel 1 exit /b 1
+echo Using container engine: %ENGINE%
+
 set SPRING_PROFILE=prod
 echo Using SPRING_PROFILE=%SPRING_PROFILE%
 
 echo === Starting infra (Postgres, Kafka, Redis, Keycloak) ===
-podman compose -f docker-compose.yml up -d postgres kafka kafka-ui debezium debezium-connectors redis redis-commander keycloak
+%COMPOSE% -f docker-compose.yml up -d postgres kafka kafka-ui debezium debezium-connectors redis redis-commander keycloak
 
 echo.
 echo === Building and starting app services + front-end ===
-podman compose -f docker-compose.yml up -d --build
+%COMPOSE% -f docker-compose.yml up -d --build
 echo.
 echo Stack starting. Check:
 echo   Eureka:    http://localhost:8761
@@ -29,5 +33,5 @@ echo   Kafka UI:  http://localhost:8090
 echo   Debezium:  http://localhost:8083/connectors
 echo   Redis UI:  http://localhost:8081
 echo.
-echo Tail logs with: podman compose logs -f ^<service^>
+echo Tail logs with: %COMPOSE% logs -f ^<service^>
 echo Stop everything with: stop.bat
