@@ -11,11 +11,7 @@ public final class TypeValueTables {
 	public static final String CUSTOMER_ACCOUNT = "CUST_ACCT";
 	public static final String PRODUCT = "PROD";
 
-	/**
-	 * TODO: lookup-service'te henuz seed edilmedi - dogru field_name numarasi netlesince
-	 * V5__seed_general_lookup_data.sql'e eklenecek. Bu sabiti simdiden ekliyoruz ki
-	 * order-service entegrasyonu ayni ismi kullansin.
-	 */
+	/** lookup-service'te seed edildi (bkz. V5__seed_general_lookup_data.sql). */
 	public static final String ORDER = "ORDER";
 
 	private TypeValueTables() {

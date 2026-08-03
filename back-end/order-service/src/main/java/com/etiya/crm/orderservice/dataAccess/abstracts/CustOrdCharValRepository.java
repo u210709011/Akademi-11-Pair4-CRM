@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CustOrdCharValRepository extends JpaRepository<CustOrdCharVal, Long> {
+
+    // saveConfiguration idempotent (replace-all) calisir: her cagrida onceki karakteristikler silinip yenileri yazilir.
+    void deleteByCustOrd_CustOrdId(Long custOrdId);
 }

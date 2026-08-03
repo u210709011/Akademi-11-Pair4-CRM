@@ -53,9 +53,15 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
     }
 
     @ExceptionHandler({ AddressSelectionInvalidException.class, AccountNotBelongToCustomerException.class,
-            DuplicateBasketItemException.class })
+            DuplicateBasketItemException.class, ServiceAddressMissingException.class })
     public ResponseEntity<ErrorResponse> handleBadRequest(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex, request);
+    }
+
+    // Siparis artik WAIT durumunda degil (zaten finish edilmis) - kullanicinin istegi degil, akis hatasi.
+    @ExceptionHandler(OrderNotEditableException.class)
+    public ResponseEntity<ErrorResponse> handleOrderNotEditable(OrderNotEditableException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, ex, request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
