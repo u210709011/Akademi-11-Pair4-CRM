@@ -15,7 +15,7 @@
     margin: 0 0 8px;
     font-size: 24px;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--text-on-navy);
   }
 }
 
@@ -25,7 +25,7 @@
   margin-bottom: 20px;
   font-size: 14px;
   font-weight: 700;
-  color: #F47920;
+  color: var(--etiya-orange);
   letter-spacing: 0.08em;
 }
 
@@ -50,12 +50,12 @@
   label {
     font-size: 13px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-on-navy);
   }
 }
 
 .required {
-  color: #F47920;
+  color: var(--etiya-orange);
 }
 
 .error-wrapper {
@@ -154,7 +154,7 @@
   }
 
   &:hover {
-    color: #6b7280;
+    color: var(--text-placeholder);
   }
 }
 
@@ -170,7 +170,7 @@
   font-weight: 600;
   color: #fff;
   cursor: pointer;
-  background: linear-gradient(180deg, #F78B39, #F47920);
+  background: linear-gradient(180deg, #F78B39, var(--etiya-orange));
   border: none;
   border-radius: 10px;
   transition: filter 0.2s ease, transform 0.05s ease;

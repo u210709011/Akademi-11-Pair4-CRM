@@ -1,11 +1,15 @@
 package com.etiya.crm.contactinfoservice.business.concretes;
 
-import com.etiya.crm.contactinfoservice.business.dtos.requests.CreateContactMediumRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.UpdateContactMediumRequest;
+import com.etiya.crm.shared.contracts.contactmedium.CreateContactMediumRequest;
+import com.etiya.crm.shared.contracts.contactmedium.UpdateContactMediumRequest;
 import com.etiya.crm.contactinfoservice.business.exceptions.InvalidContactMediumFormatException;
 import com.etiya.crm.contactinfoservice.business.rules.ContactMediumBusinessRules;
+import com.etiya.crm.contactinfoservice.clients.LookupClient;
+import com.etiya.crm.contactinfoservice.constants.MessageKeys;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.ContactMediumRepository;
 import com.etiya.crm.contactinfoservice.entities.concretes.ContactMedium;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpResponse;
+import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,25 +35,38 @@ class ContactMediumServiceImplTest {
     @Mock
     private ContactMediumBusinessRules contactMediumBusinessRules;
 
+    @Mock
+    private OutboxEventPublisher outboxEventPublisher;
+
+    @Mock
+    private LookupClient lookupClient;
+
     @InjectMocks
     private ContactMediumServiceImpl contactMediumService;
+
+    private static GnlTpResponse gnlTp(Long id, String shrtCode) {
+        return new GnlTpResponse(id, shrtCode, shrtCode, shrtCode, "CNTC_MEDIUM", "CNTC_MEDIUM", true,
+                null, null, null, null);
+    }
 
     @Test
     void add_savesContactMedium_whenFormatIsValid() {
         CreateContactMediumRequest request = new CreateContactMediumRequest(10L, 1L, "user@example.com", 1L);
+        when(lookupClient.getById(1L)).thenReturn(gnlTp(1L, "EML"));
         when(contactMediumRepository.save(any(ContactMedium.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         contactMediumService.add(request);
 
-        verify(contactMediumBusinessRules).checkDataFormat("user@example.com", 1L);
+        verify(contactMediumBusinessRules).checkDataFormat("user@example.com", "EML");
         verify(contactMediumRepository).save(any(ContactMedium.class));
     }
 
     @Test
     void add_throws_whenFormatIsInvalid() {
         CreateContactMediumRequest request = new CreateContactMediumRequest(10L, 1L, "not-an-email", 1L);
-        doThrow(new InvalidContactMediumFormatException("Invalid email format"))
-                .when(contactMediumBusinessRules).checkDataFormat("not-an-email", 1L);
+        when(lookupClient.getById(1L)).thenReturn(gnlTp(1L, "EML"));
+        doThrow(new InvalidContactMediumFormatException(MessageKeys.CONTACT_MEDIUM_INVALID_EMAIL_FORMAT))
+                .when(contactMediumBusinessRules).checkDataFormat("not-an-email", "EML");
 
         assertThatThrownBy(() -> contactMediumService.add(request))
                 .isInstanceOf(InvalidContactMediumFormatException.class);
@@ -62,10 +79,11 @@ class ContactMediumServiceImplTest {
         ContactMedium existing = new ContactMedium();
         existing.setId(1L);
         when(contactMediumBusinessRules.checkIfContactMediumExists(1L)).thenReturn(existing);
+        when(lookupClient.getById(2L)).thenReturn(gnlTp(2L, "GSM"));
 
         UpdateContactMediumRequest request = new UpdateContactMediumRequest("abc-phone", 2L);
-        doThrow(new InvalidContactMediumFormatException("Invalid phone number format"))
-                .when(contactMediumBusinessRules).checkDataFormat("abc-phone", 2L);
+        doThrow(new InvalidContactMediumFormatException(MessageKeys.CONTACT_MEDIUM_INVALID_PHONE_FORMAT))
+                .when(contactMediumBusinessRules).checkDataFormat("abc-phone", "GSM");
 
         assertThatThrownBy(() -> contactMediumService.update(1L, request))
                 .isInstanceOf(InvalidContactMediumFormatException.class);
@@ -79,6 +97,7 @@ class ContactMediumServiceImplTest {
         contactMedium.setId(1L);
         contactMedium.setActive(true);
         when(contactMediumBusinessRules.checkIfContactMediumExists(1L)).thenReturn(contactMedium);
+        when(contactMediumRepository.save(contactMedium)).thenReturn(contactMedium);
 
         contactMediumService.delete(1L);
 

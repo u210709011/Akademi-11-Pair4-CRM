@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { I18nService, Lang } from '../../core/i18n';
 
@@ -6,6 +6,7 @@ import { I18nService, Lang } from '../../core/i18n';
   selector: 'app-auth-layout',
   imports: [RouterOutlet],
   templateUrl: './auth-layout.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './auth-layout.component.scss'
 })
 export class AuthLayoutComponent {

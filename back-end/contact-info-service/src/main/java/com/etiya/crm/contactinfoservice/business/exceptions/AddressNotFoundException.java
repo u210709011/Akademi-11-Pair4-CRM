@@ -1,9 +1,11 @@
 package com.etiya.crm.contactinfoservice.business.exceptions;
 
-public class AddressNotFoundException extends RuntimeException {
+import com.etiya.crm.contactinfoservice.constants.MessageKeys;
 
-    public AddressNotFoundException(String message) {
-        super(message);
+public class AddressNotFoundException extends BusinessException {
+
+    public AddressNotFoundException(Long id) {
+        super(MessageKeys.ADDRESS_NOT_FOUND, id);
     }
 
 }

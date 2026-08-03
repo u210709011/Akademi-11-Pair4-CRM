@@ -1,87 +1,42 @@
 package com.etiya.crm.partyservice.messaging;
 
-import com.etiya.crm.partyservice.business.abstracts.PartyRoleService;
-import com.etiya.crm.partyservice.events.CustomerDeletedEvent;
-import com.etiya.crm.partyservice.inbox.Inbox;
-import com.etiya.crm.partyservice.inbox.InboxRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.etiya.crm.shared.events.KafkaTopics;
+import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.header.Header;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 /**
  * "customer-events" topic'ini (Debezium outbox, yayinci customer-service)
- * dinler; sadece CustomerDeleted{custId, partyRoleId} ile ilgilenir.
+ * dinleyen Kafka'ya OZGU ince adapter - deserialize edilmis event'i olduğu
+ * gibi CustomerDeletedEventHandler'a devreder, is mantigi/idempotency orada.
+ * Bu sinif broker-spesifiktir (KafkaListener/RetryableTopic); baska bir mesajlasma
+ * aracina gecilirse sadece bu adapter degisir, handler ve testleri etkilenmez.
  *
- * TODO: netlestirilecek - CUSTOMER_SERVICE_CONTRACTS.md SS5.2'de gosterilen
- * customer-outbox-connector.json'da "table.fields.additional.placement"
- * ayarlanmamis; yani outbox.type kolonu (CustomerOnboarded / CustomerDeleted
- * ayrimi) su anki haliyle ne payload'a ne de header'a yansiyor gibi
- * gorunuyor. Bu kod, event tipinin "eventType" header'i olarak geldigini
- * varsayiyor - customer-service tarafinda dogrulanmali/netlestirilmeli.
- * Header yoksa mesaj YANLIŞLIKLA CustomerOnboarded'i CustomerDeleted sanip
- * PartyRole pasiflestirmemek icin ISLENMEDEN atlanir (sessizce varsayim
- * yapip veri bozmaktansa, log uyarisiyla atlamak tercih edildi).
+ * application.yml'deki spring.kafka.consumer.properties.spring.json.value.default.type
+ * zaten CustomerDeletedEvent'e ayarli - JsonDeserializer bunu OTOMATIK olarak
+ * bu tipe cevirir, bu yuzden burada manuel ObjectMapper.readValue(...) GEREKMEZ.
+ *
+ * "customer-events"in contact-info-service ile ORTAK bir tuketicisi var - retry/dlt
+ * suffix'leri her iki tuketicide de FARKLI olmali, aksi halde ikisi de ayni
+ * "customer-events-dlt" topic'ini kullanmaya calisir ve mesajlar karisir.
  */
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class CustomerEventListener {
 
-    private static final String CUSTOMER_DELETED_TYPE = "CustomerDeleted";
-    private static final String EVENT_TYPE_HEADER = "eventType";
+	private final CustomerDeletedEventHandler customerDeletedEventHandler;
 
-    private final PartyRoleService partyRoleService;
-    private final InboxRepository inboxRepository;
-    private final ObjectMapper objectMapper;
-
-    @KafkaListener(topics = "customer-events", groupId = "party-service")
-    @Transactional
-    public void onMessage(ConsumerRecord<String, String> record) {
-        String eventType = readEventTypeHeader(record);
-        if (eventType == null) {
-            log.warn("customer-events mesaji atlandi: '{}' header'i bulunamadi. payload={}",
-                    EVENT_TYPE_HEADER, record.value());
-            return;
-        }
-        if (!CUSTOMER_DELETED_TYPE.equals(eventType)) {
-            return;
-        }
-
-        CustomerDeletedEvent event;
-        try {
-            event = objectMapper.readValue(record.value(), CustomerDeletedEvent.class);
-        } catch (JsonProcessingException e) {
-            log.error("customer-events payload parse edilemedi: {}", record.value(), e);
-            return;
-        }
-
-        // TODO: netlestirilecek - CUSTOMER_SERVICE_CONTRACTS.md SS5.2'deki
-        // CustomerDeleted payload ornegi {custId, partyRoleId} - eventId alani
-        // dokumante edilmemis. Inbox tablosu event_id (UUID) bekledigi icin,
-        // partyRoleId'den deterministik bir UUID turetiliyor.
-        UUID inboxEventId = UUID.nameUUIDFromBytes(
-                (CUSTOMER_DELETED_TYPE + "-" + event.getPartyRoleId()).getBytes(StandardCharsets.UTF_8));
-
-        if (inboxRepository.existsById(inboxEventId)) {
-            log.info("customer-events mesaji zaten islenmis, atlaniyor: partyRoleId={}", event.getPartyRoleId());
-            return;
-        }
-
-        partyRoleService.deactivatePartyRole(event.getPartyRoleId());
-        inboxRepository.save(new Inbox(inboxEventId, CUSTOMER_DELETED_TYPE, null));
-    }
-
-    private String readEventTypeHeader(ConsumerRecord<String, String> record) {
-        Header header = record.headers().lastHeader(EVENT_TYPE_HEADER);
-        return header == null ? null : new String(header.value(), StandardCharsets.UTF_8);
-    }
+	@RetryableTopic(
+			attempts = "4",
+			backoff = @Backoff(delay = 1000, multiplier = 2.0),
+			retryTopicSuffix = "-retry-party",
+			dltTopicSuffix = "-dlt-party",
+			include = Exception.class)
+	@KafkaListener(topics = KafkaTopics.CUSTOMER_EVENTS, groupId = "party-service")
+	public void onMessage(CustomerDeletedEvent event) {
+		customerDeletedEventHandler.handle(event);
+	}
 }

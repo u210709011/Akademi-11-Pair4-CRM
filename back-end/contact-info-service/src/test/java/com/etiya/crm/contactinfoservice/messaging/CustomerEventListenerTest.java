@@ -1,98 +1,62 @@
 package com.etiya.crm.contactinfoservice.messaging;
 
-import com.etiya.crm.contactinfoservice.business.abstracts.AddressService;
-import com.etiya.crm.contactinfoservice.business.abstracts.ContactMediumService;
-import com.etiya.crm.contactinfoservice.constants.DataTypeIds;
-import com.etiya.crm.contactinfoservice.inbox.Inbox;
-import com.etiya.crm.contactinfoservice.inbox.InboxRepository;
+import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.nio.charset.StandardCharsets;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
+/**
+ * Bu test sadece adapter'in kendi sorumlulugunu (JSON parse + handler'a devir)
+ * dogrular - is mantigi (idempotency, deactivate cagrilari) artik
+ * CustomerDeletedEventHandlerTest'te.
+ */
 @ExtendWith(MockitoExtension.class)
 class CustomerEventListenerTest {
 
-    private static final String PAYLOAD = "{\"custId\":10,\"partyRoleId\":20}";
+	@Mock
+	private CustomerDeletedEventHandler customerDeletedEventHandler;
 
-    @Mock
-    private AddressService addressService;
+	@Spy
+	private ObjectMapper objectMapper = new ObjectMapper();
 
-    @Mock
-    private ContactMediumService contactMediumService;
+	@InjectMocks
+	private CustomerEventListener customerEventListener;
 
-    @Mock
-    private InboxRepository inboxRepository;
+	@Test
+	void onMessage_parsesPayload_andDelegatesToHandler() {
+		ConsumerRecord<String, String> record = recordWithType("CustomerDeleted");
 
-    @Spy
-    private ObjectMapper objectMapper = new ObjectMapper();
+		customerEventListener.onMessage(record);
 
-    @InjectMocks
-    private CustomerEventListener customerEventListener;
+		ArgumentCaptor<CustomerDeletedEvent> captor = ArgumentCaptor.forClass(CustomerDeletedEvent.class);
+		verify(customerDeletedEventHandler).handle(captor.capture());
+		assertThat(captor.getValue().custId()).isEqualTo(10L);
+		assertThat(captor.getValue().partyRoleId()).isEqualTo(20L);
+		assertThat(captor.getValue().dataTypeId()).isEqualTo(12L);
+	}
 
-    @Test
-    void onMessage_deactivatesAddressAndContactMedium_whenCustomerDeletedEventReceived() {
-        ConsumerRecord<String, String> record = recordWithEventType("CustomerDeleted");
-        when(inboxRepository.existsById(any())).thenReturn(false);
+	@Test
+	void onMessage_skips_whenPayloadIsNotValidJson() {
+		ConsumerRecord<String, String> record = new ConsumerRecord<>("customer-events", 0, 0L, "key", "not-json");
 
-        customerEventListener.onMessage(record);
+		customerEventListener.onMessage(record);
 
-        verify(addressService).deactivateAllForRow(10L, DataTypeIds.CUSTOMER);
-        verify(contactMediumService).deactivateAllForRow(10L, DataTypeIds.CUSTOMER);
-        verify(inboxRepository).save(any(Inbox.class));
-    }
+		verify(customerDeletedEventHandler, never()).handle(org.mockito.ArgumentMatchers.any());
+	}
 
-    @Test
-    void onMessage_skips_whenEventAlreadyProcessed() {
-        ConsumerRecord<String, String> record = recordWithEventType("CustomerDeleted");
-        when(inboxRepository.existsById(any())).thenReturn(true);
-
-        customerEventListener.onMessage(record);
-
-        verify(addressService, never()).deactivateAllForRow(anyLong(), anyLong());
-        verify(contactMediumService, never()).deactivateAllForRow(anyLong(), anyLong());
-        verify(inboxRepository, never()).save(any());
-    }
-
-    @Test
-    void onMessage_skips_whenEventTypeHeaderMissing() {
-        ConsumerRecord<String, String> record = new ConsumerRecord<>("customer-events", 0, 0L, "key", PAYLOAD);
-
-        customerEventListener.onMessage(record);
-
-        verify(addressService, never()).deactivateAllForRow(anyLong(), anyLong());
-        verify(inboxRepository, never()).existsById(any());
-    }
-
-    @Test
-    void onMessage_skips_whenEventTypeIsNotCustomerDeleted() {
-        ConsumerRecord<String, String> record = recordWithEventType("CustomerOnboarded");
-
-        customerEventListener.onMessage(record);
-
-        verify(addressService, never()).deactivateAllForRow(anyLong(), anyLong());
-        verify(inboxRepository, never()).existsById(any());
-    }
-
-    private ConsumerRecord<String, String> recordWithEventType(String eventType) {
-        RecordHeaders headers = new RecordHeaders();
-        headers.add("eventType", eventType.getBytes(StandardCharsets.UTF_8));
-        return new ConsumerRecord<>("customer-events", 0, 0L, System.currentTimeMillis(),
-                org.apache.kafka.common.record.TimestampType.CREATE_TIME, -1, -1,
-                "key", PAYLOAD, headers, java.util.Optional.empty());
-    }
-
+	private ConsumerRecord<String, String> recordWithType(String type) {
+		String payload = "{\"eventId\":\"9c1e6e2a-1b2c-4d3e-8f4a-000000000001\",\"type\":\"" + type
+				+ "\",\"custId\":10,\"partyRoleId\":20,\"dataTypeId\":12}";
+		return new ConsumerRecord<>("customer-events", 0, 0L, "key", payload);
+	}
 }

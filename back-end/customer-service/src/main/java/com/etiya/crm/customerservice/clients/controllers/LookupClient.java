@@ -4,14 +4,24 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import com.etiya.crm.customerservice.clients.responses.LookupValueResponse;
+import com.etiya.crm.shared.contracts.gnlst.GnlStResponse;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpResponse;
+import com.etiya.crm.shared.contracts.typevalue.TypeValueResponse;
 
 @FeignClient(name = "lookup-service")
 public interface LookupClient {
 
-	@GetMapping("/api/lookups/{groupCode}/{valueId}")
-	LookupValueResponse getById(@PathVariable("groupCode") String groupCode, @PathVariable("valueId") Long valueId);
+	@GetMapping("/api/v1/general-types/resolve/{entCodeName}/{shrtCode}")
+	GnlTpResponse resolveType(@PathVariable("entCodeName") String entCodeName,
+			@PathVariable("shrtCode") String shrtCode);
 
-	@GetMapping("/api/lookups/{groupCode}/code/{code}")
-	LookupValueResponse getByCode(@PathVariable("groupCode") String groupCode, @PathVariable("code") String code);
+	@GetMapping("/api/v1/general-types/{id}")
+	GnlTpResponse getTypeById(@PathVariable("id") Long id);
+
+	@GetMapping("/api/v1/general-statuses/resolve/{entCodeName}/{shrtCode}")
+	GnlStResponse resolveStatus(@PathVariable("entCodeName") String entCodeName,
+			@PathVariable("shrtCode") String shrtCode);
+
+	@GetMapping("/api/v1/type-values/by-table/{tableName}")
+	TypeValueResponse getTypeValueByTableName(@PathVariable("tableName") String tableName);
 }

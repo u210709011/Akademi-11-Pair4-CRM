@@ -1,13 +1,14 @@
 package com.etiya.crm.contactinfoservice.business.concretes;
 
 import com.etiya.crm.contactinfoservice.business.abstracts.AddressService;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.CreateAddressRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.UpdateAddressRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.responses.AddressResponse;
 import com.etiya.crm.contactinfoservice.business.rules.AddressBusinessRules;
+import com.etiya.crm.contactinfoservice.clients.CustomerAccountClient;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.AddressRepository;
 import com.etiya.crm.contactinfoservice.entities.concretes.Address;
 import com.etiya.crm.contactinfoservice.mapper.AddressMapper;
+import com.etiya.crm.shared.contracts.address.AddressResponse;
+import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.address.UpdateAddressRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,10 +18,13 @@ public class AddressServiceImpl implements AddressService {
 
     private final AddressRepository addressRepository;
     private final AddressBusinessRules addressBusinessRules;
+    private final CustomerAccountClient customerAccountClient;
 
-    public AddressServiceImpl(AddressRepository addressRepository, AddressBusinessRules addressBusinessRules) {
+    public AddressServiceImpl(AddressRepository addressRepository, AddressBusinessRules addressBusinessRules,
+                               CustomerAccountClient customerAccountClient) {
         this.addressRepository = addressRepository;
         this.addressBusinessRules = addressBusinessRules;
+        this.customerAccountClient = customerAccountClient;
     }
 
     @Override
@@ -46,7 +50,7 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public AddressResponse add(CreateAddressRequest request) {
         List<Address> existingAddresses = addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(
-                request.getRowId(), request.getDataTypeId());
+                request.rowId(), request.dataTypeId());
         addressBusinessRules.checkAddressLimitNotExceeded(existingAddresses);
 
         Address address = AddressMapper.toEntity(request);
@@ -57,7 +61,7 @@ public class AddressServiceImpl implements AddressService {
         Address saved = addressRepository.save(address);
 
         if (saved.isPrimary()) {
-            addressBusinessRules.unsetOtherPrimaryAddresses(saved.getRowId(), saved.getDataTypeId(), saved.getId());
+            unsetOtherPrimaryAddresses(saved.getRowId(), saved.getDataTypeId(), saved.getId());
         }
 
         return AddressMapper.toResponse(saved);
@@ -77,7 +81,7 @@ public class AddressServiceImpl implements AddressService {
         Address saved = addressRepository.save(address);
 
         if (saved.isPrimary()) {
-            addressBusinessRules.unsetOtherPrimaryAddresses(saved.getRowId(), saved.getDataTypeId(), saved.getId());
+            unsetOtherPrimaryAddresses(saved.getRowId(), saved.getDataTypeId(), saved.getId());
         }
 
         return AddressMapper.toResponse(saved);
@@ -87,6 +91,7 @@ public class AddressServiceImpl implements AddressService {
     public void delete(Long id) {
         Address address = addressBusinessRules.checkIfAddressExists(id);
         addressBusinessRules.checkIfNotPrimary(address);
+        addressBusinessRules.ensureNotLinkedToAccount(customerAccountClient.existsByAddressId(id));
         address.setActive(false);
         addressRepository.save(address);
     }
@@ -96,6 +101,15 @@ public class AddressServiceImpl implements AddressService {
         List<Address> addresses = addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(rowId, dataTypeId);
         addresses.forEach(address -> address.setActive(false));
         addressRepository.saveAll(addresses);
+    }
+
+    private void unsetOtherPrimaryAddresses(Long rowId, Long dataTypeId, Long excludeId) {
+        List<Address> addresses = addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(rowId, dataTypeId);
+        List<Address> toUpdate = addresses.stream()
+                .filter(address -> address.isPrimary() && !address.getId().equals(excludeId))
+                .peek(address -> address.setPrimary(false))
+                .toList();
+        addressRepository.saveAll(toUpdate);
     }
 
 }

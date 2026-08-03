@@ -1,11 +1,13 @@
 package com.etiya.crm.contactinfoservice.business.concretes;
 
-import com.etiya.crm.contactinfoservice.business.dtos.requests.CreateAddressRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.requests.UpdateAddressRequest;
-import com.etiya.crm.contactinfoservice.business.dtos.responses.AddressResponse;
+import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.address.UpdateAddressRequest;
+import com.etiya.crm.shared.contracts.address.AddressResponse;
 import com.etiya.crm.contactinfoservice.business.exceptions.AddressLimitExceededException;
+import com.etiya.crm.contactinfoservice.business.exceptions.AddressLinkedToAccountException;
 import com.etiya.crm.contactinfoservice.business.exceptions.PrimaryAddressDeletionException;
 import com.etiya.crm.contactinfoservice.business.rules.AddressBusinessRules;
+import com.etiya.crm.contactinfoservice.clients.CustomerAccountClient;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.AddressRepository;
 import com.etiya.crm.contactinfoservice.entities.concretes.Address;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,9 @@ class AddressServiceImplTest {
     @Mock
     private AddressBusinessRules addressBusinessRules;
 
+    @Mock
+    private CustomerAccountClient customerAccountClient;
+
     @InjectMocks
     private AddressServiceImpl addressService;
 
@@ -44,7 +49,7 @@ class AddressServiceImplTest {
 
         AddressResponse response = addressService.add(request);
 
-        assertThat(response.isPrimary()).isTrue();
+        assertThat(response.primary()).isTrue();
     }
 
     @Test
@@ -57,7 +62,7 @@ class AddressServiceImplTest {
 
         AddressResponse response = addressService.add(request);
 
-        assertThat(response.isPrimary()).isFalse();
+        assertThat(response.primary()).isFalse();
     }
 
     @Test
@@ -65,13 +70,32 @@ class AddressServiceImplTest {
         CreateAddressRequest request = new CreateAddressRequest(10L, 1L, 5L, "Street", "12", "Desc", false);
         List<Address> fiveAddresses = List.of(new Address(), new Address(), new Address(), new Address(), new Address());
         when(addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(10L, 1L)).thenReturn(fiveAddresses);
-        doThrow(new AddressLimitExceededException("You can add up to 5 addresses."))
+        doThrow(new AddressLimitExceededException())
                 .when(addressBusinessRules).checkAddressLimitNotExceeded(fiveAddresses);
 
         assertThatThrownBy(() -> addressService.add(request))
                 .isInstanceOf(AddressLimitExceededException.class);
 
         verify(addressRepository, never()).save(any());
+    }
+
+    @Test
+    void add_unsetsOtherPrimaryAddresses_whenNewAddressIsMarkedPrimary() {
+        CreateAddressRequest request = new CreateAddressRequest(10L, 1L, 5L, "Street", "12", "Desc", true);
+        Address otherPrimary = new Address();
+        otherPrimary.setId(2L);
+        otherPrimary.setPrimary(true);
+        when(addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(10L, 1L)).thenReturn(List.of(otherPrimary));
+        when(addressRepository.save(any(Address.class))).thenAnswer(invocation -> {
+            Address saved = invocation.getArgument(0);
+            saved.setId(3L);
+            return saved;
+        });
+
+        addressService.add(request);
+
+        assertThat(otherPrimary.isPrimary()).isFalse();
+        verify(addressRepository).saveAll(List.of(otherPrimary));
     }
 
     @Test
@@ -89,7 +113,7 @@ class AddressServiceImplTest {
         UpdateAddressRequest request = new UpdateAddressRequest(5L, "Street", "12", "Desc", false);
         AddressResponse response = addressService.update(1L, request);
 
-        assertThat(response.isPrimary()).isTrue();
+        assertThat(response.primary()).isTrue();
     }
 
     @Test
@@ -99,7 +123,7 @@ class AddressServiceImplTest {
         address.setPrimary(true);
 
         when(addressBusinessRules.checkIfAddressExists(1L)).thenReturn(address);
-        doThrow(new PrimaryAddressDeletionException("Primary address cannot be deleted."))
+        doThrow(new PrimaryAddressDeletionException())
                 .when(addressBusinessRules).checkIfNotPrimary(address);
 
         assertThatThrownBy(() -> addressService.delete(1L))
@@ -116,11 +140,30 @@ class AddressServiceImplTest {
         address.setActive(true);
 
         when(addressBusinessRules.checkIfAddressExists(1L)).thenReturn(address);
+        when(customerAccountClient.existsByAddressId(1L)).thenReturn(false);
 
         addressService.delete(1L);
 
         assertThat(address.isActive()).isFalse();
+        verify(addressBusinessRules).ensureNotLinkedToAccount(false);
         verify(addressRepository).save(address);
+    }
+
+    @Test
+    void delete_throws_whenAddressIsLinkedToAccount() {
+        Address address = new Address();
+        address.setId(1L);
+        address.setPrimary(false);
+
+        when(addressBusinessRules.checkIfAddressExists(1L)).thenReturn(address);
+        when(customerAccountClient.existsByAddressId(1L)).thenReturn(true);
+        doThrow(new AddressLinkedToAccountException())
+                .when(addressBusinessRules).ensureNotLinkedToAccount(true);
+
+        assertThatThrownBy(() -> addressService.delete(1L))
+                .isInstanceOf(AddressLinkedToAccountException.class);
+
+        verify(addressRepository, never()).save(any());
     }
 
     @Test

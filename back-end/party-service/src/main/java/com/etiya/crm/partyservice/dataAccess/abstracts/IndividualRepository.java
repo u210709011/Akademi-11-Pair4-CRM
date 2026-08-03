@@ -8,7 +8,9 @@ import java.util.Optional;
 
 @Repository
 public interface IndividualRepository extends JpaRepository<Individual, Long> {
-    boolean existsByNationalId(String nationalId);
+    boolean existsByNationalIdAndActiveTrue(String nationalId);
+
+    boolean existsByNationalIdAndActiveTrueAndIndividualIdNot(String nationalId, Long individualId);
 
     Optional<Individual> findByNationalId(String nationalId);
 

@@ -1,20 +1,53 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { CustomerSearchCriteria, CustomerSearchResult, CustomerService } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
 
 type DigitFieldName = 'natIdNumber' | 'customerId' | 'accountNumber' | 'gsmNumber' | 'orderNumber';
+
+type SortColumn = 'custId' | 'firstName' | 'middleName' | 'lastName' | 'tcNo' | 'role';
+type SortDirection = 'asc' | 'desc';
+
+const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-search-customer',
   imports: [ReactiveFormsModule],
   templateUrl: './search-customer.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './search-customer.component.scss'
 })
 export class SearchCustomerComponent {
   protected readonly i18n = inject(I18nService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly customerService = inject(CustomerService);
+  private readonly router = inject(Router);
 
   protected readonly hasFilledFilter = signal(false);
+  protected readonly isSearching = signal(false);
+  protected readonly hasSearched = signal(false);
+  protected readonly searchError = signal(false);
+  protected readonly searchResults = signal<CustomerSearchResult[]>([]);
+
+  protected readonly pageSize = PAGE_SIZE;
+  protected readonly currentPage = signal(0);
+  protected readonly totalElements = signal(0);
+  protected readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalElements() / this.pageSize)));
+  protected readonly rangeStart = computed(() => this.totalElements() === 0 ? 0 : this.currentPage() * this.pageSize + 1);
+  protected readonly rangeEnd = computed(() => Math.min(this.totalElements(), (this.currentPage() + 1) * this.pageSize));
+  protected readonly resultsCountLabel = computed(() =>
+    this.i18n.t('search.resultsCount').replace('{count}', `${this.totalElements()}`)
+  );
+  protected readonly rangeLabel = computed(() => `${this.rangeStart()}-${this.rangeEnd()} of ${this.totalElements()}`);
+  protected readonly pageNumbers = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i));
+
+  private lastCriteria: CustomerSearchCriteria | null = null;
+
+  // Backend-driven: sort her zaman tum sonuc kumesi uzerinde uygulanir (bkz. customer.service.ts search()),
+  // sadece o an yuklu sayfa uzerinde degil. Kolon degistiginde/yon degistiginde yeni bir search istegi atilir.
+  protected readonly sortColumn = signal<SortColumn | null>(null);
+  protected readonly sortDirection = signal<SortDirection>('asc');
 
   protected readonly fieldErrors = signal<Record<DigitFieldName, boolean>>({
     natIdNumber: false,
@@ -23,6 +56,9 @@ export class SearchCustomerComponent {
     gsmNumber: false,
     orderNumber: false
   });
+  // Search butonu, herhangi bir alanda gecerli bir hata gosterilirken de aktif olmamali
+  // (ör. NAT ID 11 haneden az girilip alandan cikildiginda).
+  protected readonly hasFieldErrors = computed(() => Object.values(this.fieldErrors()).some(hasError => hasError));
 
   protected readonly searchForm = this.formBuilder.nonNullable.group({
     natIdNumber: [''],
@@ -43,10 +79,93 @@ export class SearchCustomerComponent {
 
   protected clearFilters(): void {
     this.searchForm.reset();
+    this.hasSearched.set(false);
+    this.searchError.set(false);
+    this.searchResults.set([]);
+    this.sortColumn.set(null);
+    this.sortDirection.set('asc');
+    this.currentPage.set(0);
+    this.totalElements.set(0);
+    this.lastCriteria = null;
+  }
+
+  protected search(): void {
+    if (!this.hasFilledFilter()) {
+      return;
+    }
+
+    const { natIdNumber, accountNumber, customerId, gsmNumber, firstName, lastName } = this.searchForm.getRawValue();
+    this.lastCriteria = { firstName, lastName, tcNo: natIdNumber, acctNo: accountNumber, custId: customerId, gsm: gsmNumber };
+    this.currentPage.set(0);
+    this.sortColumn.set(null);
+    this.sortDirection.set('asc');
+    this.runSearch();
+  }
+
+  protected goToPage(page: number): void {
+    if (page < 0 || page >= this.totalPages() || page === this.currentPage()) {
+      return;
+    }
+    this.currentPage.set(page);
+    this.runSearch();
+  }
+
+  private runSearch(): void {
+    if (!this.lastCriteria) {
+      return;
+    }
+
+    this.isSearching.set(true);
+    this.searchError.set(false);
+
+    this.customerService
+      .search(this.lastCriteria, this.currentPage(), this.pageSize, this.sortColumn(), this.sortDirection())
+      .subscribe({
+        next: ({ results, totalElements }) => {
+          this.searchResults.set(results);
+          this.totalElements.set(totalElements);
+          this.hasSearched.set(true);
+          this.isSearching.set(false);
+        },
+        error: () => {
+          this.searchError.set(true);
+          this.hasSearched.set(true);
+          this.isSearching.set(false);
+        }
+      });
+  }
+
+  protected viewCustomerDetail(customer: CustomerSearchResult): void {
+    this.router.navigate(['/detail-customer', customer.custId], { state: { customer } });
+  }
+
+  protected goToCreateCustomer(): void {
+    this.router.navigateByUrl('/create-customer');
+  }
+
+  // Tek kolonda sort: ilk tik ASC, ikinci tik DESC, farkli kolona tiklamak o kolonu ASC'den baslatir.
+  // Backend-driven oldugu icin her tikta sayfa 0'a donup yeni bir search istegi atilir (tum sonuc kumesi
+  // uzerinde siralanmis halde geri gelir - bkz. runSearch()).
+  protected toggleSort(column: SortColumn): void {
+    if (this.sortColumn() !== column) {
+      this.sortColumn.set(column);
+      this.sortDirection.set('asc');
+    } else {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    }
+    this.currentPage.set(0);
+    this.runSearch();
   }
 
   protected setFieldError(field: DigitFieldName, hasError: boolean): void {
     this.fieldErrors.update(errors => ({ ...errors, [field]: hasError }));
+  }
+
+  // NAT ID zorunlu degil ama girildiyse tam 11 hane olmali - sadece gecersiz karakter yazildiginda
+  // degil, alandan cikildiginda eksik/uzun hane sayisi da hata olarak gosterilir.
+  protected onNatIdBlur(): void {
+    const raw: string = this.searchForm.controls.natIdNumber.value;
+    this.setFieldError('natIdNumber', raw.length > 0 && raw.length !== 11);
   }
 
   protected sanitizeDigits(
@@ -62,7 +181,7 @@ export class SearchCustomerComponent {
 
   protected sanitizeGsm(event: Event): void {
     const input = event.target as HTMLInputElement;
-    let digitsOnly = input.value.replace(/\D/g, '');
+    let digitsOnly = input.value.replace(/\D/g, '').slice(0, 10);
 
     while (digitsOnly.length > 0 && digitsOnly[0] !== '5') {
       digitsOnly = digitsOnly.slice(1);
@@ -70,6 +189,13 @@ export class SearchCustomerComponent {
 
     this.setFieldError('gsmNumber', input.value !== digitsOnly);
     this.searchForm.controls.gsmNumber.setValue(digitsOnly);
+  }
+
+  // GSM zorunlu degil ama girildiyse tam 10 hane olmali - NAT ID ile ayni mantik:
+  // yazarken degil, alandan cikildiginda eksik hane sayisi hata olarak gosterilir.
+  protected onGsmBlur(): void {
+    const raw: string = this.searchForm.controls.gsmNumber.value;
+    this.setFieldError('gsmNumber', raw.length > 0 && raw.length !== 10);
   }
 
   protected sanitizeLetters(event: Event, controlName: 'firstName' | 'lastName'): void {
