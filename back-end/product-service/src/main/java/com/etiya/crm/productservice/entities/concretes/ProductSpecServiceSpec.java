@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.entities.concretes;
 
+import com.etiya.crm.productservice.entities.abstracts.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,7 +15,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Table(name = "prod_spec_srvc_spec")
 @Entity
-public class ProductSpecServiceSpec {
+public class ProductSpecServiceSpec extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
