@@ -3,6 +3,7 @@ package com.etiya.crm.partyservice;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -14,6 +15,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  * paketinden asagisini tarar, bu yuzden shared paket acikca eklenir.
  */
 @EnableFeignClients
+@ConfigurationPropertiesScan
 @EnableJpaAuditing(auditorAwareRef = "jwtAuditorAware")
 @EntityScan(basePackages = { "com.etiya.crm.partyservice.entities", "com.etiya.crm.shared.events" })
 @EnableJpaRepositories(basePackages = { "com.etiya.crm.partyservice.dataAccess.abstracts",
