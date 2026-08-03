@@ -138,24 +138,120 @@
                     </div>
                 </div>
             } @else if (activeTab() === 'accounts') {
+                <div class="info-panel-header">
+                    <h2 class="info-panel-title info-panel-title-dark">{{ i18n.t('detail.tabAccounts') }} ({{ accounts().length }})</h2>
+                    <div class="info-panel-actions">
+                        <button type="button" class="add-address-button">
+                            <span class="add-address-icon">+</span> {{ i18n.t('detail.createNewAccount') }}
+                        </button>
+                    </div>
+                </div>
+
                 <div class="accounts-table-wrapper">
                     <table class="accounts-table">
                         <thead>
                             <tr>
+                                <th class="account-expand-header"></th>
+                                <th>{{ i18n.t('detail.accountStatus') }}</th>
                                 <th>{{ i18n.t('detail.accountNumber') }}</th>
                                 <th>{{ i18n.t('detail.accountName') }}</th>
                                 <th>{{ i18n.t('detail.accountType') }}</th>
-                                <th>{{ i18n.t('detail.accountStatus') }}</th>
+                                <th>{{ i18n.t('detail.action') }}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @for (account of accounts(); track account.accountNumber) {
+                            @for (account of accounts(); track account.id) {
                                 <tr>
+                                    <td class="account-expand-cell">
+                                        <button type="button" class="account-expand-toggle" [class.expanded]="expandedAccountId() === account.id" [attr.aria-label]="i18n.t('detail.expandAccount')" (click)="toggleAccountRow(account.id)">
+                                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge" [class.status-active]="account.active" [class.status-inactive]="!account.active">
+                                            <span class="status-dot"></span>
+                                            {{ account.active ? i18n.t('detail.statusActive') : i18n.t('detail.statusInactive') }}
+                                        </span>
+                                    </td>
                                     <td class="account-number-cell">{{ account.accountNumber }}</td>
                                     <td>{{ account.accountName }}</td>
                                     <td>{{ account.accountType }}</td>
-                                    <td>{{ account.status }}</td>
+                                    <td>
+                                        <div class="account-row-actions">
+                                            <button type="button" class="icon-button" [attr.aria-label]="i18n.t('detail.editAccount')">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path d="M12 20h9" />
+                                                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                                                </svg>
+                                            </button>
+                                            <button type="button" class="icon-button icon-button-danger" [attr.aria-label]="i18n.t('detail.deleteAccount')">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path d="M3 6h18" />
+                                                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                                    <path d="M10 11v6" />
+                                                    <path d="M14 11v6" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
+                                @if (expandedAccountId() === account.id) {
+                                    <tr class="account-detail-row">
+                                        <td colspan="6">
+                                            <div class="account-detail-panel">
+                                                <div class="service-address-line">
+                                                    <svg class="service-address-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                                    </svg>
+                                                    <span class="service-address-label">{{ i18n.t('detail.serviceAddress') }}</span>
+                                                    <span class="service-address-value">{{ serviceAddressLine(account.addressId) }}</span>
+                                                    <span class="service-address-note">
+                                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+                                                        {{ i18n.t('detail.serviceAddressNote') }}
+                                                    </span>
+                                                </div>
+
+                                                @if (account.products.length === 0) {
+                                                    <p class="account-no-products">{{ i18n.t('detail.noProducts') }}</p>
+                                                } @else {
+                                                    <table class="products-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>{{ i18n.t('detail.productId') }}</th>
+                                                                <th>{{ i18n.t('detail.productName') }}</th>
+                                                                <th>{{ i18n.t('detail.campaignName') }}</th>
+                                                                <th>{{ i18n.t('detail.campaignId') }}</th>
+                                                                <th>{{ i18n.t('detail.action') }}</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @for (product of account.products; track product.productId) {
+                                                                <tr>
+                                                                    <td class="account-number-cell">{{ product.productId }}</td>
+                                                                    <td>{{ product.productName }}</td>
+                                                                    <td>{{ product.campaignName }}</td>
+                                                                    <td>{{ product.campaignId }}</td>
+                                                                    <td>
+                                                                        <button type="button" class="icon-button" [attr.aria-label]="i18n.t('detail.viewProduct')">
+                                                                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                                                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
+                                                                                <circle cx="12" cy="12" r="3" />
+                                                                            </svg>
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                }
+
+                                                <button type="button" class="start-new-sale-button">{{ i18n.t('detail.startNewSale') }}</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
