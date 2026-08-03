@@ -1,6 +1,8 @@
 package com.etiya.crm.customerservice.business.exceptions;
 
+import com.etiya.crm.shared.contracts.error.AbstractDownstreamExceptionHandler;
 import com.etiya.crm.shared.contracts.error.ErrorResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
@@ -10,16 +12,32 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.constants.MessageKeys;
 
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-@RequiredArgsConstructor
+@Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
 	private final MessageSource messageSource;
+
+	public GlobalExceptionHandler(MessageSource messageSource, ObjectMapper objectMapper) {
+		super(objectMapper);
+		this.messageSource = messageSource;
+	}
+
+	@Override
+	protected String downstreamCallFailedMessage() {
+		return resolve(MessageKeys.DOWNSTREAM_CALL_FAILED);
+	}
+
+	@Override
+	protected String downstreamUnavailableMessage() {
+		return resolve(MessageKeys.DOWNSTREAM_UNAVAILABLE);
+	}
 
 	@ExceptionHandler(CustomerNotFoundException.class)
 	public ResponseEntity<ErrorResponse> handleNotFound(CustomerNotFoundException ex, HttpServletRequest request) {
@@ -91,8 +109,17 @@ public class GlobalExceptionHandler {
 						message, request.getRequestURI()));
 	}
 
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
+		log.error(LogMessages.UNEXPECTED_ERROR, ex);
+		return build(HttpStatus.INTERNAL_SERVER_ERROR, resolve(MessageKeys.UNEXPECTED_ERROR), request);
+	}
+
 	private ResponseEntity<ErrorResponse> build(HttpStatus status, BusinessException ex, HttpServletRequest request) {
-		String message = resolve(ex.getMessageKey(), ex.getArgs());
+		return build(status, resolve(ex.getMessageKey(), ex.getArgs()), request);
+	}
+
+	private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, HttpServletRequest request) {
 		return ResponseEntity.status(status)
 				.body(ErrorResponse.of(status.value(), status.getReasonPhrase(), message, request.getRequestURI()));
 	}

@@ -126,7 +126,7 @@ class CustomerSearchSpecificationsTest {
 		when(cb.like(lowerLastName, "%yilmaz%")).thenReturn(likeLastName);
 		when(cb.and(likeFirstName, likeLastName)).thenReturn(nameAnd);
 		when(cb.equal(tcNoPath, "10000000146")).thenReturn(tcNoEq);
-		when(cb.equal(acctNoPath, "ACC-1")).thenReturn(acctNoEq);
+		when(cb.equal(acctNoPath, "000001")).thenReturn(acctNoEq);
 		when(cb.equal(custIdPath, 1L)).thenReturn(custIdEq);
 		when(cb.equal(gsmPath, "5551234567")).thenReturn(gsmEq);
 		when(cb.isFalse(deletedPath)).thenReturn(notDeleted);

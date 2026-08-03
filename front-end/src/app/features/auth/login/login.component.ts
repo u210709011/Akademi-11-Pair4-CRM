@@ -4,7 +4,10 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth';
 import { I18nService } from '../../../core/i18n';
 
-const MAX_FAILED_ATTEMPTS = 5;
+// Keycloak'in gercek bruteforce penceresiyle ayni (bkz. infra/keycloak/crm-realm.json:
+// waitIncrementSeconds=900). Kilit durumunun KENDISI backend'den gelir (bkz. AuthService),
+// bu sure sadece kilit acildiktan sonra butonu tekrar aktif etmek icin kullanilan bir
+// UX yardimcisidir - "kac kere yanlis girildi" sayaci artik burada TUTULMAZ.
 const LOCK_DURATION_MS = 15 * 60 * 1000;
 
 type LoginErrorKey = 'wrongCredentials' | 'accountLocked';
@@ -29,7 +32,6 @@ export class LoginComponent {
     accountLocked: false
   });
 
-  private failedAttempts = 0;
   private lockTimeoutId?: ReturnType<typeof setTimeout>;
 
   // it only makes trim and length validation in frontend, once keycloak is done it will be connect to the backend
@@ -74,16 +76,15 @@ export class LoginComponent {
 
     const { username, password } = this.loginModel();
 
-    this.authService.login(username.trim(), password).subscribe(success => {
-      if (success) {
+    this.authService.login(username.trim(), password).subscribe(result => {
+      if (result === 'success') {
         this.setLoginError('wrongCredentials', false);
+        this.setLoginError('accountLocked', false);
         this.router.navigateByUrl('/search-customer');
         return;
       }
 
-      this.failedAttempts++;
-
-      if (this.failedAttempts >= MAX_FAILED_ATTEMPTS) {
+      if (result === 'accountLocked') {
         this.setLoginError('wrongCredentials', false);
         this.lockAccount();
       } else {
@@ -94,9 +95,9 @@ export class LoginComponent {
 
   private lockAccount(): void {
     this.setLoginError('accountLocked', true);
+    clearTimeout(this.lockTimeoutId);
     this.lockTimeoutId = setTimeout(() => {
       this.setLoginError('accountLocked', false);
-      this.failedAttempts = 0;
     }, LOCK_DURATION_MS);
   }
 }

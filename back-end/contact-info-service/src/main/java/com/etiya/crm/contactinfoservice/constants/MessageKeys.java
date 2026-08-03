@@ -13,6 +13,8 @@ public final class MessageKeys {
 	public static final String CONTACT_MEDIUM_NOT_FOUND = "error.contact-medium.not-found";
 	public static final String CONTACT_MEDIUM_INVALID_EMAIL_FORMAT = "error.contact-medium.invalid-email-format";
 	public static final String CONTACT_MEDIUM_INVALID_PHONE_FORMAT = "error.contact-medium.invalid-phone-format";
+	public static final String DOWNSTREAM_CALL_FAILED = "error.downstream.call-failed";
+	public static final String DOWNSTREAM_UNAVAILABLE = "error.downstream.unavailable";
 	public static final String VALIDATION_FAILED = "error.validation.failed";
 	public static final String UNEXPECTED_ERROR = "error.unexpected";
 	public static final String DOWNSTREAM_CALL_FAILED = "error.downstream.call-failed";

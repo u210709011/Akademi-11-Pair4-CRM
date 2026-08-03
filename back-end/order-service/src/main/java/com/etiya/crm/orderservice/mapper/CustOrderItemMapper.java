@@ -1,0 +1,45 @@
+package com.etiya.crm.orderservice.mapper;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
+import com.etiya.crm.orderservice.business.dtos.requests.BasketItemRequest;
+import com.etiya.crm.orderservice.business.dtos.responses.CustOrdItemResponse;
+import com.etiya.crm.orderservice.business.dtos.responses.OrderItemSummaryResponse;
+import com.etiya.crm.orderservice.entities.concretes.CustOrdItem;
+
+@Mapper(componentModel = "spring")
+public interface CustOrderItemMapper {
+
+    //submitOrder VE getById'de aynı satırlar tekrarlanıyordu
+    //price: CustOrdItem'da karsiligi yok (product-service den bekliyoruz)
+    @Mapping(target = "price", ignore = true)
+    OrderItemSummaryResponse toSummaryResponse(CustOrdItem item);
+    //getItemsByCustAcctId
+    CustOrdItemResponse toItemResponse(CustOrdItem item);
+
+    //bu alanlar requestte yok managerda set edeceğiz o nedenle ignore = true
+    @Mapping(target= "custOrd", ignore = true)
+    @Mapping(target= "custAcctId", ignore = true)
+    @Mapping(target= "custId", ignore = true)
+    @Mapping(target= "custOrdItemId", ignore = true)
+
+    //BaseEntity audit alanlari - JwtAuditorAware/JPA auditing tarafindan otomatik doldurulur
+    @Mapping(target = "active", ignore = true)
+    @Mapping(target = "cdate", ignore = true)
+    @Mapping(target = "cuser", ignore = true)
+    @Mapping(target = "udate", ignore = true)
+    @Mapping(target = "uuser", ignore = true)
+    
+    //product-service tamamlanana kadar bilerek bos birakilan alanlar
+    @Mapping(target = "newCustAcctId", ignore = true)
+    @Mapping(target = "newCustId", ignore = true)
+    @Mapping(target = "prodId", ignore = true)
+    @Mapping(target = "ofrName", ignore = true)
+    @Mapping(target = "prodName", ignore = true)
+    @Mapping(target = "prodSpecId", ignore = true)
+    @Mapping(target = "cmpgName", ignore = true)
+    @Mapping(target = "bsnInter", ignore = true)
+    @Mapping(target = "isNeedShpmt", ignore = true)
+    CustOrdItem toEntity(BasketItemRequest request);
+}

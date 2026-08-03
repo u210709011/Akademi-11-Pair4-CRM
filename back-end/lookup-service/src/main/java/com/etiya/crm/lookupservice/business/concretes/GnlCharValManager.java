@@ -4,8 +4,8 @@ import com.etiya.crm.lookupservice.business.abstracts.GnlCharValService;
 import com.etiya.crm.shared.contracts.gnlcharval.CreateGnlCharValRequest;
 import com.etiya.crm.shared.contracts.gnlcharval.UpdateGnlCharValRequest;
 import com.etiya.crm.shared.contracts.gnlcharval.GnlCharValResponse;
-import com.etiya.crm.lookupservice.business.exceptions.BusinessException;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
+import com.etiya.crm.lookupservice.business.exceptions.InvalidDateRangeException;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlCharRepository;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlCharValRepository;
 import com.etiya.crm.lookupservice.entities.concretes.GnlCharVal;
@@ -75,7 +75,7 @@ public class GnlCharValManager implements GnlCharValService {
 
     private void checkDateRange(LocalDate sdate, LocalDate edate) {
         if (edate != null && edate.isBefore(sdate)) {
-            throw new BusinessException("edate, sdate'den once olamaz: sdate=" + sdate + ", edate=" + edate);
+            throw new InvalidDateRangeException(sdate, edate);
         }
     }
 }

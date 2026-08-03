@@ -40,7 +40,7 @@ public interface ContactAddressClient {
 
 	// Onboarding compensation: customer-service tarafi basarisiz olursa geri alinir.
 	@DeleteMapping("/api/v1/contact-mediums/customer/{custId}")
-	void deleteByCustomerId(@PathVariable("custId") Long custId);
+	void deleteByCustomerId(@PathVariable("custId") Long custId, @RequestParam("dataTypeId") Long dataTypeId);
 
 	// --- Edit akisi: contact-info-service'in mevcut tekil CRUD endpoint'leri ---
 

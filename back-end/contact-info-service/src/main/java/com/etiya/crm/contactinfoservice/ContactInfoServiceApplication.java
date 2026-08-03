@@ -8,6 +8,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import com.etiya.crm.shared.contracts.feign.DefaultFeignRetryConfig;
+
 /**
  * shared-events'ten hem ".outbox" (OutboxEvent/OutboxEventRepository/
  * OutboxEventPublisher) hem ".inbox" (InboxEvent/InboxEventRepository, bkz.
@@ -18,7 +20,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  * eklenir cunku @EntityScan/@EnableJpaRepositories/@ComponentScan bir kez
  * belirtilince varsayilan (sinifin kendi paketi) scan'in yerini alir.
  */
-@EnableFeignClients
+@EnableFeignClients(defaultConfiguration = DefaultFeignRetryConfig.class)
 @ConfigurationPropertiesScan
 @EntityScan(basePackages = { "com.etiya.crm.contactinfoservice", "com.etiya.crm.shared.events.outbox",
 		"com.etiya.crm.shared.events.inbox" })

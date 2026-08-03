@@ -14,6 +14,9 @@
                 <path d="m3 7 9 6 9-6"></path>
             </svg>
         </div>
+        @if (contactForm.email().invalid() && contactForm.email().touched()) {
+            <span class="field-error">{{ contactModel().email ? i18n.t('create.emailFormatError') : i18n.t('create.fieldRequired') }}</span>
+        }
     </div>
 
     <div class="form-field">
@@ -33,9 +36,15 @@
                 type="text"
                 inputmode="numeric"
                 [formField]="contactForm.homePhone"
-                placeholder="XXX XXX XX XX"
+                (beforeinput)="blockNonDigitInput($event, 'homePhone')"
+                placeholder="2XX XXX XX XX"
             >
         </div>
+        @if (digitsOnlyErrorField() === 'homePhone') {
+            <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+        } @else if (contactForm.homePhone().invalid() && contactForm.homePhone().touched()) {
+            <span class="field-error">{{ i18n.t('create.homePhoneFormatError') }}</span>
+        }
     </div>
 
     <div class="form-field">
@@ -55,9 +64,15 @@
                 type="text"
                 inputmode="numeric"
                 [formField]="contactForm.mobilePhone"
+                (beforeinput)="blockNonDigitInput($event, 'mobilePhone')"
                 placeholder="5XX XXX XX XX"
             >
         </div>
+        @if (digitsOnlyErrorField() === 'mobilePhone') {
+            <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+        } @else if (contactForm.mobilePhone().invalid() && contactForm.mobilePhone().touched()) {
+            <span class="field-error">{{ contactModel().mobilePhone ? i18n.t('create.mobilePhoneFormatError') : i18n.t('create.fieldRequired') }}</span>
+        }
     </div>
 
     <div class="form-field">
@@ -77,9 +92,13 @@
                 type="text"
                 inputmode="numeric"
                 [formField]="contactForm.fax"
+                (beforeinput)="blockNonDigitInput($event, 'fax')"
                 placeholder="XXX XXX XX XX"
             >
         </div>
+        @if (digitsOnlyErrorField() === 'fax') {
+            <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+        }
     </div>
 
 </form>

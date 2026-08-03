@@ -90,6 +90,43 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    # Connect REST API'nin gercekten istek kabul ettigini dogrular - port acik
+    # gorunse de uygulama henuz ayaga kalkmamis olabilir (debezium-connectors
+    # bu healthcheck'e bagimli, erken kayit denemesi 404/connection refused alir).
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8083/connectors"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  # debezium ayaga kalktiktan sonra infra/debezium/*-connector.json dosylarini
+  # otomatik register eder (bkz. register-connectors.sh - ayni mantik, elle
+  # calistirmayi unutma riskini ortadan kaldirmak icin burada tekrarlanir).
+  # Zaten kayitli bir connector'a tekrar POST atmak connector'u bozmaz, sadece
+  # "HTTP 409" loglar - bu yuzden "compose up" her calistiginda güvenle tekrar
+  # calisabilir.
+  debezium-connectors:
+    image: docker.io/curlimages/curl:8.11.1
+    container_name: crm-debezium-connectors
+    depends_on:
+      debezium:
+        condition: service_healthy
+    volumes:
+      - ./debezium:/debezium:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        for f in /debezium/*-connector.json; do
+          echo "Registering $$(basename "$$f") ..."
+          curl -s -X POST -H "Content-Type: application/json" \
+            -d "@$$f" \
+            http://debezium:8083/connectors \
+            -w "\nHTTP %{http_code}\n"
+        done
+    restart: "no"
 
   redis:
     image: docker.io/library/redis:7
