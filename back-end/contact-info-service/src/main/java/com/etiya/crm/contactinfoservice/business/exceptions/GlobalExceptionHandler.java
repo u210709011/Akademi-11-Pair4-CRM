@@ -11,22 +11,38 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.etiya.crm.contactinfoservice.constants.LogMessages;
 import com.etiya.crm.contactinfoservice.constants.MessageKeys;
+import com.etiya.crm.shared.contracts.error.AbstractDownstreamExceptionHandler;
 import com.etiya.crm.shared.contracts.error.ErrorResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@RequiredArgsConstructor
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
 	private final MessageSource messageSource;
+
+	public GlobalExceptionHandler(MessageSource messageSource, ObjectMapper objectMapper) {
+		super(objectMapper);
+		this.messageSource = messageSource;
+	}
+
+	@Override
+	protected String downstreamCallFailedMessage() {
+		return resolve(MessageKeys.DOWNSTREAM_CALL_FAILED);
+	}
+
+	@Override
+	protected String downstreamUnavailableMessage() {
+		return resolve(MessageKeys.DOWNSTREAM_UNAVAILABLE);
+	}
 
 	@ExceptionHandler({ AddressNotFoundException.class, ContactMediumNotFoundException.class })
 	public ResponseEntity<ErrorResponse> handleNotFound(BusinessException ex, HttpServletRequest request) {
@@ -63,7 +79,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
-		logger.error("Unexpected error", ex);
+		logger.error(LogMessages.UNEXPECTED_ERROR, ex);
 		return build(HttpStatus.INTERNAL_SERVER_ERROR, resolve(MessageKeys.UNEXPECTED_ERROR), request);
 	}
 

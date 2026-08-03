@@ -10,6 +10,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import com.etiya.crm.shared.contracts.feign.DefaultFeignRetryConfig;
+
 /**
  * shared-events modulundeki OutboxEvent/InboxEvent entity+repository'leri ve
  * OutboxEventPublisher bean'i com.etiya.crm.shared.events paketinde yasar -
@@ -17,7 +19,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  * paketinden asagisini tarar, bu yuzden shared paket acikca eklenir.
  */
 @EnableDiscoveryClient
-@EnableFeignClients
+@EnableFeignClients(defaultConfiguration = DefaultFeignRetryConfig.class)
 @EnableJpaAuditing(auditorAwareRef = "jwtAuditorAware")
 @ConfigurationPropertiesScan
 @EntityScan(basePackages = { "com.etiya.crm.customerservice.entities", "com.etiya.crm.shared.events" })

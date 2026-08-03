@@ -30,6 +30,13 @@ public final class LogMessages {
 	public static final String LOOKUP_SERVICE_CALL_FAILED =
 			"lookup-service call failed (expected to be transient: network/auth), will retry via RetryableTopic: {}";
 
+	public static final String UNEXPECTED_ERROR = "Unexpected error";
+
+	public static final String CACHE_GET_FAILED = "Cache '{}' okunamadi (key={}), DB'ye dusuluyor: {}";
+	public static final String CACHE_PUT_FAILED = "Cache '{}' yazilamadi (key={}): {}";
+	public static final String CACHE_EVICT_FAILED = "Cache '{}' temizlenemedi (key={}): {}";
+	public static final String CACHE_CLEAR_FAILED = "Cache '{}' tumuyle temizlenemedi: {}";
+
 	private LogMessages() {
 	}
 }

@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 /**
  * contact-info-service'e (ADDR) gidecek adres bilgisi. ACC-015.
  * "primary" alani UI'da yok; ilk eklenen adres server-side primary sayilir
- * (bkz. CustomerBusinessRules). Onboarding disinda adres eklemek/guncellemek
+ * (bkz. AddressBusinessRules). Onboarding disinda adres eklemek/guncellemek
  * icin bkz. AddressEditRequest (orada primary aciktan gelir).
  */
 @Schema(description = "Onboarding sirasinda girilen adres bilgisi (1-5 adet).")
