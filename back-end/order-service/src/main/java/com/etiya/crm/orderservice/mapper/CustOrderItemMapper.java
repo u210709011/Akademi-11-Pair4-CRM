@@ -11,7 +11,7 @@ import com.etiya.crm.orderservice.entities.concretes.CustOrdItem;
 @Mapper(componentModel = "spring")
 public interface CustOrderItemMapper {
 
-    //submitOrder VE getById'de aynı satırlar tekrarlanıyordu
+    //createOrder VE getById'de aynı satırlar tekrarlanıyordu
     //price: CustOrdItem'da karsiligi yok (product-service den bekliyoruz)
     @Mapping(target = "price", ignore = true)
     OrderItemSummaryResponse toSummaryResponse(CustOrdItem item);

@@ -1,7 +1,8 @@
 package com.etiya.crm.orderservice.api.controllers;
 
 import com.etiya.crm.orderservice.business.abstracts.CustOrdService;
-import com.etiya.crm.orderservice.business.dtos.requests.SubmitOrderRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.CreateOrderRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.OrderConfigurationRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ValidateBasketRequest;
 import com.etiya.crm.orderservice.business.dtos.responses.CustOrdItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderSummaryResponse;
@@ -22,16 +23,30 @@ public class CustOrdController {
 
     private final CustOrdService custOrdService;
 
-    @PostMapping("/submit")
-    public ResponseEntity<OrderSummaryResponse> submit(@Valid @RequestBody SubmitOrderRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(custOrdService.submitOrder(request));
-    }
-
     // FR-017: Offer Selection ekraninda "Next" - Product Configuration'a gecmeden once sepeti dogrular.
     @PostMapping("/validate-basket")
     public ResponseEntity<Void> validateBasket(@Valid @RequestBody ValidateBasketRequest request) {
         custOrdService.validateBasket(request);
         return ResponseEntity.ok().build();
+    }
+
+    // FR-012/FR-013: sepet dogrulandiktan sonra siparisi WAIT durumunda acar (Offer Selection -> Configuration).
+    @PostMapping
+    public ResponseEntity<OrderSummaryResponse> create(@Valid @RequestBody CreateOrderRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(custOrdService.createOrder(request));
+    }
+
+    // FR-015: Product Configuration ekraninda karakteristik/adres girildikce (autosave) cagrilir.
+    @PutMapping("/{custOrdId}/configuration")
+    public ResponseEntity<OrderSummaryResponse> saveConfiguration(@PathVariable Long custOrdId,
+            @Valid @RequestBody OrderConfigurationRequest request) {
+        return ResponseEntity.ok(custOrdService.saveConfiguration(custOrdId, request));
+    }
+
+    // FR-021: Review & Confirm'de Finish - WAIT'ten MIDLWARE'e gecirir ve OrderSubmittedEvent'i yayinlar.
+    @PostMapping("/{custOrdId}/finish")
+    public ResponseEntity<OrderSummaryResponse> finish(@PathVariable Long custOrdId) {
+        return ResponseEntity.ok(custOrdService.finishOrder(custOrdId));
     }
 
     @GetMapping("/{custOrdId}")

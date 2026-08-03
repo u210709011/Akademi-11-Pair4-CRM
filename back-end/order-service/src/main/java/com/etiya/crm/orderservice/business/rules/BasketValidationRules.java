@@ -1,8 +1,8 @@
 package com.etiya.crm.orderservice.business.rules;
 
 import org.springframework.stereotype.Component;
+import com.etiya.crm.orderservice.business.dtos.requests.AddressInfoRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.BasketItemRequest;
-import com.etiya.crm.orderservice.business.dtos.requests.SubmitOrderRequest;
 import com.etiya.crm.orderservice.business.exceptions.AccountNotBelongToCustomerException;
 import com.etiya.crm.orderservice.business.exceptions.AddressSelectionInvalidException;
 import com.etiya.crm.orderservice.business.exceptions.DuplicateBasketItemException;
@@ -15,9 +15,9 @@ import java.util.Set;
 @Component
 public class BasketValidationRules {
 
-        public void ensureAddressProvided(SubmitOrderRequest request) {
-            boolean hasExisting = request.addressId() != null;
-            boolean hasNew = request.newAddress() != null;
+        public void ensureAddressProvided(Long addressId, AddressInfoRequest newAddress) {
+            boolean hasExisting = addressId != null;
+            boolean hasNew = newAddress != null;
 
             if (hasExisting == hasNew) {
                     throw new AddressSelectionInvalidException();
