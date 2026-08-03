@@ -1,14 +1,15 @@
-# CRM Lite — Orta Katman (API) Test Takımı
+# CRM Lite — Orta Katman (API) Test Takımı · FR-001…FR-005
 
-CRM Lite gereksinim dokümanındaki (`FR-001 … FR-018`) fonksiyonel gereksinimlerin **orta katman** karşılıklarını doğrulayan, kod değiştikçe tekrar tekrar koşulabilen Postman/Newman regresyon takımı.
+CRM Lite gereksinim dokümanındaki **FR-001 … FR-005** maddelerinin orta katman karşılıklarını doğrulayan, kod değiştikçe tekrar tekrar koşulabilen Postman/Newman regresyon takımı.
 
 | | |
 |---|---|
 | **Hedef** | API Gateway — `http://localhost:8080` (front-end'in kullandığı yol) |
-| **Kapsam** | 14 klasör, ~87 istek, ~230 assertion |
+| **Kapsam** | 7 klasör, **138 istek**, **617 assertion** |
+| **Raporlama** | Allure (sunum), HTML (htmlextra), JUnit XML (CI) |
 | **Kimlik doğrulama** | Keycloak `crm` realm, gerçek JWT, otomatik token yönetimi |
 | **Test verisi** | Her koşum kendi verisini üretir ve sonunda temizler |
-| **Raporlama** | Postman Runner / Newman (CLI + HTML + JUnit) |
+| **Son koşum** | 150 Allure test case · 144 geçti · 6 kaldı (hepsi gerçek kusur) |
 
 ---
 
@@ -16,124 +17,136 @@ CRM Lite gereksinim dokümanındaki (`FR-001 … FR-018`) fonksiyonel gereksinim
 
 ```
 analiz-test/postman/
-├── CRM-Lite.postman_collection.json     # Koleksiyon (tek dosya)
+├── CRM-Lite-FR001-FR005.postman_collection.json   # Ana koleksiyon
 ├── environments/
-│   ├── CRM-Lite.local.postman_environment.json   # Lokal geliştirme
-│   └── CRM-Lite.ci.postman_environment.json      # Newman / CI
+│   └── CRM-Lite.local.postman_environment.json
 ├── newman/
-│   ├── package.json                     # npm run test:local, test:strict, ...
-│   └── reports/                         # (otomatik oluşur, git'e girmez)
+│   ├── package.json          # npm run demo / test / test:allure ...
+│   ├── allure-results/       # (otomatik oluşur)
+│   ├── allure-report/        # (otomatik oluşur)
+│   └── reports/              # HTML + JUnit (otomatik oluşur)
 ├── docs/
-│   └── traceability-matrix.md           # FR/ACC → test eşlemesi ve boşluk listesi
+│   └── traceability-matrix.md   # ACC ↔ TC eşlemesi, bulgular, boşluk listesi
+├── archive/
+│   └── CRM-Lite-TUM-FR.postman_collection.json   # FR-006…FR-018 (şu an bakımda değil)
 └── README.md
 ```
 
 ## 2. Ön koşullar
 
-1. **Altyapı** ayakta olmalı:
-   ```bash
-   cd back-end/infra
-   podman compose -f compose.yml up -d      # PostgreSQL, Kafka, Keycloak, Redis
-   ```
-2. **Servisler** şu sırayla başlatılmalı (her biri kendi klasöründe `./mvnw spring-boot:run`):
-   `config-server` → `discovery-server` → `api-gateway` → `lookup-service` → `party-service` → `contact-info-service` → `customer-service` → `product-service` → `order-service`
-3. **Kullanıcı**: Keycloak realm import'u `salesperson / password` kullanıcısını `CRM_AGENT` rolüyle oluşturur. Farklı bir kullanıcı kullanacaksanız environment'taki `username` / `password` değerlerini değiştirin.
+1. **Altyapı**: `cd back-end/infra && docker compose up -d`
+2. **Servisler** (IntelliJ'de `back-end/` klasörünü açın), şu sırayla:
+   `config-server` → `discovery-server` → `api-gateway` → `lookup-service` → `party-service` → `contact-info-service` → `customer-service`
 
-## 3. Postman ile koşum
+   Config Server'ın **"Started" olmasını bekleyin** — tüm servislerde `spring.config.import: configserver:...` zorunludur, fallback yoktur. Konfigürasyonlar harici repo'dan geldiği için internet erişimi de gerekir. Doğrulama: `curl http://localhost:8888/api-gateway/dev`
 
-1. Postman → **Import** → `CRM-Lite.postman_collection.json` ve `environments/CRM-Lite.local.postman_environment.json`.
-2. Sağ üstten **CRM Lite — Local (dev)** environment'ını seçin.
-3. Önce sadece **`00 - Smoke`** klasörünü çalıştırın. Bu klasör kırmızıysa altyapı/servis sorunu vardır; diğer klasörleri koşmak anlamsızdır.
-4. Ardından koleksiyonun tamamını **Run collection** ile çalıştırın. Klasör sırası bilinçlidir (veri üreten klasörler önce, temizlik en sonda) — **sırayı değiştirmeyin**.
+   > FR-001…FR-005 için `product-service` ve `order-service` **gerekmez**.
+3. **Kullanıcı**: Keycloak realm import'u `salesperson / password` kullanıcısını `CRM_AGENT` rolüyle oluşturur.
 
-## 4. Newman ile koşum (önerilen)
+## 3. Koşum
 
-```bash
-cd analiz-test/postman/newman
-npm install            # bir kerelik
+Komutlar **her zaman `newman` klasöründen** çalıştırılır:
 
-npm run test:smoke     # sadece ön koşul kontrolü (~5 sn)
-npm run test:local     # tam koşum + HTML/JUnit rapor
+```cmd
+cd c:\...\Akademi-11-Pair4-CRM\analiz-test\postman\newman
+npm install          :: sadece ilk seferde
 ```
 
-Rapor: `newman/reports/crm-lite-report.html` (klasör ağacı FR bazlıdır, her assertion FR/ACC numarası taşır).
+> `npm run`, script'leri bulunduğunuz klasördeki `package.json`'dan okur. Yanlış klasörde çalıştırırsanız "Missing script" hatası alırsınız.
 
 | Komut | Ne yapar |
 |---|---|
-| `npm run test:smoke` | Yalnızca `00 - Smoke` klasörü |
-| `npm run test:local` | Tam koşum, HTML + JUnit rapor |
+| `npm run demo` | **Sunum için:** temizle → koş → Allure raporunu tarayıcıda aç |
+| `npm test` | Tam koşum + HTML/JUnit rapor (`reports/`) |
+| `npm run test:allure` | Tam koşum + Allure sonuçları — **hata varsa exit code 1** (CI için) |
+| `npm run test:allure:demo` | Aynısı, ama exit code bastırılır — `demo` zinciri bu yüzden kesilmez |
+| `npm run allure:serve` | Mevcut sonuçlardan Allure raporunu açar |
+| `npm run allure:report` | Statik Allure raporu üretir (`allure-report/`) |
+| `npm run test:setup` | Sadece `00 · Ortam Hazırlığı` — ortam sağlam mı (5 sn) |
 | `npm run test:strict` | `strictMode=true` — bilinen boşluklar da gerçek hata sayılır |
-| `npm run test:slow` | Token süre dolumu testi dahil (~35 sn uzar) |
-| `npm run test:keep-data` | Oluşan test kayıtlarını silmeden bırakır (manuel inceleme için) |
-| `npm run test:ci` | CI ortamı; `BASE_URL` ve `CRM_TEST_PASSWORD` ortam değişkenlerini kullanır |
+| `npm run test:keep-data` | Oluşan test kayıtlarını silmeden bırakır |
 
-## 5. Takımın çalışma mantığı
+**Sunum akışı:** tek komut yeter → `npm run demo`
 
-### 5.1 Otomatik token yönetimi
-Koleksiyon seviyesindeki pre-request script, token yoksa veya süresi dolmak üzereyse (`< 30 sn`) `/api/v1/auth/login` çağırıp token'ı saklar. Hiçbir isteğe elle token yapıştırmanız gerekmez. `/api/v1/auth/**` uçları ve `X-No-Auth: true` başlığı taşıyan istekler bu akışın dışındadır (401 testleri için).
+Postman arayüzünden koşmak isterseniz: koleksiyonu ve environment'ı import edin, environment'ı seçin, **Run collection**. Klasör sırası bilinçlidir (00 Setup → 01…05 → 99 Temizlik), **değiştirmeyin**.
 
-### 5.2 Test verisi izolasyonu
-- Her koşum bir `runId` üretir; müşteri adları, e-postalar ve GSM numaraları bu değerden türetilir.
-- T.C. kimlik numaraları **geçerli checksum algoritmasıyla** rastgele üretilir → aynı koleksiyon sınırsız kez koşulabilir, "TC zaten kayıtlı" (409) çakışması olmaz.
-- Oluşturulan tüm müşteri id'leri biriktirilir, `99 - Temizlik` klasöründe soft-delete edilir.
-- Silinemeyen kayıtlar (aktif fatura hesabı olanlar — bkz. bölüm 7) koşum özetinde listelenir.
+## 4. Takımın çalışma mantığı
 
-### 5.3 `strictMode` — bilinen boşlukların yönetimi
-Dokümanda tanımlı olup kodda henüz karşılığı olmayan maddeler `gapTest` ile yazılmıştır:
+### 4.1 Deterministik veri seti (`00 · Ortam Hazırlığı`)
+Testler rastgele veriye değil, kurulan dört fixture'a dayanır:
 
-| `strictMode` | Davranış | Ne zaman kullanılır |
-|---|---|---|
-| `false` (varsayılan) | Boşluk `[BEKLEYEN BOSLUK]` olarak raporlanır, koşum kırılmaz | Geliştirme devam ederken |
-| `true` | Boşluk gerçek hata sayılır | İlgili gereksinimler tamamlandığında |
-
-Bir boşluk kapatıldığında test kendiliğinden `[GAP KAPANDI]` etiketiyle yeşile döner — yani ekip bir gereksinimi tamamladığında bunu ayrıca haber vermenize gerek kalmaz, rapor söyler.
-
-### 5.4 Ortak assertion katmanı
-Her istekten sonra otomatik çalışır: 5xx dönmedi, yanıt süresi eşiğin altında, gövde geçerli JSON, hata gövdesi standart kontrata uygun (`status`/`error`/`message`/`path`). Tekil testler sadece kendi ACC maddesine odaklanır.
-
-### 5.5 Validasyon matrisleri
-Dokümandaki validasyon tablolarının her satırı ayrı bir assertion olarak koşar. Bunlar tek bir "matris" isteği içinde `pm.sendRequest` ile sıralı çalışır; raporda yine satır satır görünür.
-
-> **Not:** Matris verisi bilinçli olarak ayrı CSV dosyalarında tutulmadı. Newman'ın `--iteration-data` mekanizması **koleksiyonun tamamını** her satır için tekrar koşar; bu, veri üreten/temizleyen bir takımda kabul edilemez. Matrisler istek içinde tanımlanarak tek kaynak korundu ve rapor okunabilirliği bozulmadı.
-
-## 6. Kapsam dışı bıraktıklarım (ve nedeni)
-
-Dokümandaki ACC maddelerinin önemli bir kısmı **saf UI davranışıdır** ve orta katmanda test edilmesi yanlış olur: buton aktif/pasif olması, göz ikonu, modal açılması, sıralama tıklaması, mesajların ekranda kırmızı gösterilmesi, dil değişiminde sayfanın yenilenmesi. Bunlar `docs/traceability-matrix.md` içinde **🖥 UI** olarak işaretlendi; kapsam yanılsaması oluşmasın diye API testine dönüştürülmedi.
-
-## 7. Koşumdan çıkacak bilinen bulgular
-
-Aşağıdakiler takım ilk koşumda **doğrudan raporlayacaktır** — hata değil, dokümanla kod arasındaki gerçek farklardır:
-
-| Konu | Durum |
+| Fixture | Rolü |
 |---|---|
-| FR-013 / FR-014 (katalog, kampanya, sepet) | API karşılığı yok; `product_relation` REQ/EXCL kuralları orta katmanda uygulanmamış |
-| FR-003 ACC-006/007, FR-004 ACC-008/009 (KPS) | `FakeIdentityVerificationServiceImpl` her kimliği doğruluyor → negatif senaryo test edilemiyor |
-| FR-011 ACC-004/005 | Hesabı pasifleştiren uç yok → "pasif hesap silinir" mutlu yolu doğrulanamıyor; ürün guard'ı kodda `TODO` |
-| FR-007 ACC-004 | Pasif hesaba bağlı ürün kontrolü uygulanmamış |
-| FR-002 ACC-007 | Doküman "ilk 10 kayıt" diyor, API varsayılanı 50 |
-| FR-002 ACC-008 | `sort` parametresi uygulanmıyor (`PageRequest.of(page, size)`) |
-| FR-002 (validasyon tablosu) | `Order Number` arama kriteri API'de yok |
-| Ad/soyad/street uzunlukları | Doküman max 50 / 200 diyor, DTO'larda `@Size` yok |
-| Home Phone | Doküman FR-003'te "2 ile başlar", FR-006'da "10–11 hane"; kod yalnızca `^[0-9]{10,11}$` |
-| FR-007 ↔ FR-011 kilitlenmesi | Fatura hesabı pasifleştirilemediği için silinemiyor; hesabı olan müşteri de silinemiyor → bu müşteriler sistemde kalıcı hale geliyor |
+| **Müşteri A** | Ana test müşterisi — arama, güncelleme senaryoları |
+| **Müşteri B** | A ile **aynı soyad**, farklı ad → AND/OR mantığı ve sıralama testleri |
+| **Müşteri C** | Oluşturulup soft-delete edilir → "pasif müşteri aramada görünmez" |
+| **Müşteri D** | Adres testlerine ayrılmıştır → adres sayısı deterministik kalır |
 
-Detaylı gerekçeler ve ACC bazlı eşleme: **`docs/traceability-matrix.md`**.
+`cityId` ve `genderId` sabit yazılmaz, lookup servisinden **kod ile çözülür** (`CITY/ANKARA`, `GENDER/MALE`). Veritabanı sıfırlandığında bu id'ler değişir; sabit yazılsaydı her test kırılırdı.
 
-## 8. Sorun giderme
+### 4.2 Otomatik token yönetimi
+Koleksiyon seviyesindeki pre-request, token yoksa veya süresi dolmak üzereyse otomatik login olur. Hiçbir isteğe elle token yapıştırmazsınız. `/api/v1/auth/**` uçları ve `X-No-Auth: true` başlıklı istekler bu akışın dışındadır (401 testleri için).
 
-| Belirti | Olası neden / çözüm |
+### 4.3 Test verisi izolasyonu
+- Her koşum bir `runId` üretir; isimler, e-postalar ve GSM'ler bundan türetilir.
+- T.C. kimlik numaraları **geçerli checksum algoritmasıyla** üretilir → koleksiyon sınırsız kez koşulabilir, 409 çakışması olmaz.
+- İsimler yalnızca harf içerir (sprint-4'te eklenen `Name should contain letters only.` kuralı).
+- Oluşturulan tüm müşteriler `99 · Temizlik` klasöründe soft-delete edilir.
+
+### 4.4 `strictMode` — bilinen boşlukların yönetimi
+Dokümanda tanımlı olup kodda karşılığı olmayan maddeler `gapTest` ile yazılmıştır:
+
+| `strictMode` | Davranış |
 |---|---|
-| Tüm testler 401 | Keycloak ayakta değil ya da `username`/`password` yanlış. `npm run test:smoke` ile doğrulayın. |
-| Smoke'ta health 200 dönüyor ama arama 404 | Gateway route tanımları harici config repo'sundan gelir (`CONFIG_Etiya-11-Akademi-CRM`). Config Server'ın o repo'ya erişebildiğini kontrol edin. |
-| `cityId` / `genderId` boş uyarısı | `lookup-service` ayakta değil. Testler `defaultCityId`/`defaultGenderId` ile devam eder, adres/gender doğrulaması yanıltıcı olabilir. |
-| Onboarding 502 dönüyor | Saga adımlarından biri (party / contact-info) ayakta değil demektir. |
-| Koşum sonunda "silinemeyen müşteri" uyarısı | Beklenen davranış — aktif fatura hesabı olan müşteri silinemez (bölüm 7'deki kilitlenme). |
-| Newman `ECONNREFUSED` | `baseUrl` yanlış ya da gateway 8080'de değil. |
-| Hesap kilitlendi, her şey 401 | `lockoutTestEnabled=true` ile koşulmuş olabilir; Keycloak 15 dakika sonra açar veya admin konsolundan kullanıcı unlock edilir. |
+| `false` (varsayılan) | `[BEKLEYEN BOSLUK]` olarak raporlanır, koşumu kırmaz |
+| `true` | Gerçek hata sayılır |
 
-## 9. Takımı genişletirken
+Bir boşluk kapandığında test kendiliğinden `[GAP KAPANDI]` etiketiyle yeşile döner. Son koşumda 15 bekleyen boşluk, **5 kapanmış boşluk** vardı (sprint-4 ile varsayılan sayfa boyutu 10'a çekilmiş, arama harfe duyarsız hale gelmiş).
 
-- Yeni test adı **her zaman** `FR-0XX / ACC-0YY — açıklama` formatında olsun; rapor–matris eşlemesi buna dayanır.
-- Yeni müşteri oluşturan her istek, test script'inde `trackId('createdCustomerIds', b.custId)` çağırmalıdır; aksi halde kayıt temizlenmez.
-- Henüz geliştirilmemiş bir gereksinim için test yazarken `pm.test` yerine `gapTest` kullanın.
-- Yardımcı fonksiyonlar (`gapTest`, `runMatrix`, `newTckn`, `trackId`, `expectStatus`, `jsonBody`) koleksiyon pre-request script'inde tanımlıdır; her test script'i ilk satırda `eval(pm.collectionVariables.get('crmHelpers'));` ile bunları yükler.
+Aynı mekanizma **açık analiz soruları** için de kullanılır: `TC-003-41` (pasif müşterinin T.C. kimlik numarasıyla yeni kayıt) dokümanda kabul kriteri olmayan bir senaryodur; test fiili davranışı belgeler ve karar alınana kadar her koşumda görünür kalır.
+
+### 4.5 Aynı anda birden fazla kısıt ihlali
+Bir alan hem `@NotBlank` hem `@Pattern` ihlal ettiğinde (örn. `mobilePhone = ""`), Bean Validation hangisini önce raporlayacağını **garanti etmez**. Bu tür testlerde tek bir mesaj beklemek kırılganlık yaratır; `expectMessageAny('...', '...')` kullanın.
+
+### 4.6 Ortak assertion katmanı
+Her istekten sonra otomatik: 5xx dönmedi, yanıt süresi eşiğin altında, gövde geçerli JSON. Tekil testler yalnızca kendi ACC maddesine odaklanır.
+
+### 4.7 Nihai tutarlılık (eventual consistency)
+Arama görünümü (`CUSTOMER_SEARCH_VIEW`) Kafka olayı ile **asenkron** güncellenir. `TC-004-04` bu yüzden tek atışlık okumaz; güncel değer görünene kadar kısa aralıklarla yeniden okur. Benzer testler yazarken bunu unutmayın.
+
+## 5. Test adlandırma standardı
+
+```
+TC-002-05 · GSM - +90'li format (URL-encoded) ile arama          [ACC-004]
+└─┬─┘ └┬┘   └──────────────┬──────────────┘                      └───┬───┘
+  │    │                   │                                         │
+  │    │                   senaryo                        izlenebilirlik (ACC)
+  │    sıra no
+  FR numarası
+```
+
+Kural: **isimlerde `/`, `—`, `→` kullanmayın.** Allure bu karakterleri bozuyor veya ismi kesiyor (`/` yol ayracı sayılıyor). Onun yerine `-` ve `->` kullanın.
+
+## 6. Kapsam dışı bıraktıklarımız
+
+Dokümandaki ACC maddelerinin bir kısmı **saf UI davranışıdır** ve orta katmanda test edilemez: buton aktif/pasif, göz ikonu, mesaj rengi, ekran geçişi, sıralama tıklaması. Bunlar `docs/traceability-matrix.md` içinde **🖥 UI** olarak işaretlendi — kapsam yanılsaması oluşmasın diye API testine dönüştürülmedi.
+
+## 7. Sorun giderme
+
+| Belirti | Çözüm |
+|---|---|
+| `npm error Missing script` | Yanlış klasördesiniz. `newman` klasörüne `cd` yapın. |
+| Tüm testler 401 | Keycloak ayakta değil ya da kullanıcı adı/şifre yanlış. `npm run test:setup` ile doğrulayın. |
+| Hesap kilitlendi (her şey 401/500) | Keycloak quick-login koruması. Kilidi açmak için: `curl -X DELETE http://localhost:8180/admin/realms/crm/attack-detection/brute-force/users -H "Authorization: Bearer <admin-token>"` (admin token: `master` realm, `admin-cli`, admin/admin) |
+| Onboarding 502 veriyor | **B-06** — hesap numarası çakışması. `docker compose down -v` ile temiz başlangıç yapın (bkz. izlenebilirlik matrisi). |
+| Setup'ta 404 | Gateway route'ları harici config repo'sundan gelir; Config Server'ın oraya erişebildiğini kontrol edin. |
+| `cityId` / `genderId` uyarısı | `lookup-service` ayakta değil; testler yedek değerle devam eder ama sonuçlar yanıltıcı olabilir. |
+| Allure raporu açılmıyor | `allure-commandline` Java gerektirir. `java -version` ile kontrol edin. |
+
+## 8. Takımı genişletirken
+
+- Yeni test adı **her zaman** `TC-0XX-YY · açıklama -> beklenen [ACC-0ZZ]` formatında olsun.
+- Müşteri oluşturan her istek test script'inde `trackId('createdCustomerIds', jsonBody().custId)` çağırmalı; aksi halde kayıt temizlenmez.
+- Henüz geliştirilmemiş bir gereksinim için `pm.test` yerine `gapTest` kullanın.
+- Yardımcı fonksiyonlar (`gapTest`, `expectCode`, `expectMessage`, `newTckn`, `newGsm`, `newOnboardBody`, `newAddressBody`, `repeat`, `dateOffset`, `trackId`) koleksiyon pre-request'inde tanımlıdır; her test script'i ilk satırda `eval(pm.collectionVariables.get('crmHelpers'));` ile yükler.
+- Asenkron yansıyan bir veriyi doğruluyorsanız tek atışlık okumayın — `TC-004-04`'teki yeniden deneme desenini örnek alın.

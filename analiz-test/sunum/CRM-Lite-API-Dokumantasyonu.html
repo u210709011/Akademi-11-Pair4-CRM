@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Lite API Dokümantasyonu</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --panel: #12151d;
+    --panel-2: #171b26;
+    --border: #232838;
+    --text: #e5e7eb;
+    --text-dim: #8b93a7;
+    --accent: #22d3ee;
+    --accent-2: #818cf8;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .layout { display: flex; min-height: 100vh; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 20px 0 40px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .brand {
+    padding: 0 20px 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .brand-name { font-weight: 700; font-size: 17px; color: var(--text); }
+  .brand-badge {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--bg);
+    background: var(--accent);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .nav-group { margin-bottom: 6px; }
+  .nav-group-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    padding: 12px 20px 6px;
+  }
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 20px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 13.5px;
+    border-left: 2px solid transparent;
+  }
+  .nav-link:hover { color: var(--text); background: var(--panel-2); }
+  .nav-link.active {
+    color: var(--text);
+    background: var(--panel-2);
+    border-left-color: var(--accent);
+  }
+  .method-tag {
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    min-width: 38px;
+    text-align: center;
+    letter-spacing: 0.02em;
+    color: #0b0d12;
+  }
+  .method-tag.GET { background: var(--blue); color: #fff; }
+  .method-tag.POST { background: var(--green); color: #05210f; }
+  .method-tag.PUT { background: var(--amber); color: #2b1a00; }
+  .method-tag.DELETE { background: var(--red); color: #fff; }
+
+  /* ---------- Content ---------- */
+  .content { flex: 1; max-width: 900px; padding: 40px 48px 120px; }
+  h1 { font-size: 28px; margin: 0 0 6px; }
+  h2 {
+    font-size: 21px;
+    margin: 52px 0 14px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  section:first-of-type h2 { border-top: none; padding-top: 0; margin-top: 0; }
+  h3 { font-size: 15px; margin: 22px 0 8px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  p { color: #c7cbd6; }
+  .subtitle { color: var(--text-dim); font-size: 15px; margin-bottom: 30px; }
+  code.inline {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 13px;
+    color: var(--accent);
+  }
+  a { color: var(--accent-2); }
+
+  .callout {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-left: 3px solid var(--amber);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13.5px;
+    color: #e8d5b0;
+    margin: 14px 0;
+  }
+  .callout.info {
+    background: rgba(34, 211, 238, 0.06);
+    border-color: rgba(34, 211, 238, 0.3);
+    border-left-color: var(--accent);
+    color: #bfe9f2;
+  }
+
+  /* ---------- Env boxes ---------- */
+  .env-grid { display: flex; gap: 14px; flex-wrap: wrap; }
+  .env-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    min-width: 320px;
+  }
+  .env-box .env-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .env-box .env-url {
+    font-family: monospace;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .env-box .env-service {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 11px;
+    background: var(--panel-2);
+    color: var(--text-dim);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  /* ---------- Tables ---------- */
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 20px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-dim); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+  td { color: #d3d7e0; }
+  .status-pill {
+    display: inline-block;
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 12.5px;
+    padding: 1px 8px;
+    border-radius: 5px;
+  }
+  .status-2xx { background: rgba(34,197,94,0.15); color: var(--green); }
+  .status-4xx { background: rgba(239,68,68,0.15); color: var(--red); }
+  .status-4xx-warn { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .status-5xx { background: rgba(168,85,247,0.15); color: #c084fc; }
+
+  /* ---------- Endpoint card ---------- */
+  .endpoint {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 26px 26px;
+    margin-bottom: 36px;
+    scroll-margin-top: 20px;
+  }
+  .endpoint-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .endpoint-title { display: flex; align-items: center; gap: 10px; }
+  .endpoint-title .method-tag { font-size: 11px; padding: 3px 9px; min-width: 52px; }
+  .endpoint-title code {
+    font-family: monospace;
+    font-size: 15.5px;
+    color: var(--text);
+  }
+  .fr-tag {
+    background: rgba(129,140,248,0.12);
+    border: 1px solid rgba(129,140,248,0.35);
+    color: var(--accent-2);
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .tc-tag {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+  }
+  .tc-tag code { color: var(--accent); }
+  .endpoint-desc { color: #c7cbd6; font-size: 13.5px; margin: 10px 0 4px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 10px 0; }
+  @media (max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  pre {
+    background: #0d0f16;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 12.8px;
+    line-height: 1.55;
+    margin: 0;
+  }
+  pre code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; color: #d7dbe4; }
+  .block-label { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+
+  /* ---------- Code sample tabs ---------- */
+  .code-tabs { margin-top: 14px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .tab-bar { display: flex; background: var(--panel-2); border-bottom: 1px solid var(--border); position: relative; }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 9px 16px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .copy-btn {
+    margin-left: auto;
+    margin-right: 10px;
+    align-self: center;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--text-dim); }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+  .tab-pane pre { border: none; border-radius: 0; }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 12.5px;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ============================= SIDEBAR ============================= -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-name">CRM Lite API</div>
+      <span class="brand-badge">v1.0 · FR-001…FR-005</span>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Başlarken</div>
+      <a class="nav-link" href="#genel-bakis">Genel Bakış</a>
+      <a class="nav-link" href="#ortamlar">Ortamlar (Base URL)</a>
+      <a class="nav-link" href="#kimlik-dogrulama-genel">Kimlik Doğrulama</a>
+      <a class="nav-link" href="#hata-yonetimi">Hata Yönetimi</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Oturum (FR-001)</div>
+      <a class="nav-link" href="#auth-login"><span class="method-tag POST">POST</span>Giriş Yap</a>
+      <a class="nav-link" href="#auth-refresh"><span class="method-tag POST">POST</span>Token Yenile</a>
+      <a class="nav-link" href="#auth-logout"><span class="method-tag POST">POST</span>Çıkış Yap</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Müşteri (FR-002, FR-003, FR-004)</div>
+      <a class="nav-link" href="#musteri-ara"><span class="method-tag GET">GET</span>Müşteri Ara</a>
+      <a class="nav-link" href="#musteri-getir"><span class="method-tag GET">GET</span>Müşteri Getir (ID)</a>
+      <a class="nav-link" href="#kimlik-dogrula"><span class="method-tag POST">POST</span>Kimlik Doğrula</a>
+      <a class="nav-link" href="#musteri-olustur"><span class="method-tag POST">POST</span>Müşteri Oluştur</a>
+      <a class="nav-link" href="#kisisel-bilgi-getir"><span class="method-tag GET">GET</span>Kişisel Bilgi Getir</a>
+      <a class="nav-link" href="#kisisel-bilgi-guncelle"><span class="method-tag PUT">PUT</span>Kişisel Bilgi Güncelle</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Adres (FR-005)</div>
+      <a class="nav-link" href="#adres-listele"><span class="method-tag GET">GET</span>Adresleri Listele</a>
+      <a class="nav-link" href="#adres-ekle"><span class="method-tag POST">POST</span>Adres Ekle</a>
+      <a class="nav-link" href="#adres-guncelle"><span class="method-tag PUT">PUT</span>Adres Güncelle</a>
+      <a class="nav-link" href="#adres-sil"><span class="method-tag DELETE">DEL</span>Adres Sil</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Referans</div>
+      <a class="nav-link" href="#durum-kodlari">Durum Kodları</a>
+      <a class="nav-link" href="#izlenebilirlik">FR / ACC İzlenebilirlik</a>
+    </div>
+  </aside>
+
+  <!-- ============================= CONTENT ============================= -->
+  <main class="content">
+
+    <section id="genel-bakis">
+      <h1>CRM Lite · Customer Service API</h1>
+      <p class="subtitle">Telekom sektörüne yönelik CRM Lite platformunun müşteri yönetimi servis dokümantasyonu — Kapsam: FR-001…FR-005</p>
+
+      <p>Bu doküman, CRM Lite platformunun <strong>FR-001…FR-005</strong> kapsamındaki uçlarını (endpoint) açıklar:
+      sisteme giriş / oturum yönetimi, müşteri arama ve görüntüleme, müşteri oluşturma, müşteri bilgilerini güncelleme
+      ve adres yönetimi. Her uç, gereksinim dokümanında tanımlanan bir Fonksiyonel Gereksinime (FR) ve Kabul Kriterlerine
+      (ACC) doğrudan bağlıdır — sağ üstteki etiketlerden takip edebilirsiniz.</p>
+
+      <p>CRM Lite mikroservis mimarisiyle geliştirilmiştir; tüm istekler tek giriş noktası olan
+      <strong>API Gateway</strong> üzerinden yapılır, hiçbir istemci mikroservislere doğrudan bağlanmaz.
+      FR-001 kapsamındaki oturum uçları doğrudan API Gateway içinde (Keycloak önünde) işlenir; FR-002…FR-005
+      kapsamındaki müşteri uçları <code class="inline">customer-service</code> tarafından karşılanır ve gerekli
+      durumlarda kişi bilgisi için <code class="inline">party-service</code>'i, adres/iletişim bilgisi için
+      <code class="inline">contact-info-service</code>'i orkestre eder (saga: bir adım başarısız olursa öncekiler
+      otomatik geri alınır).</p>
+
+      <div class="callout info">
+        Bu dokümandaki her endpoint, projenin Postman test koleksiyonundaki
+        (<code class="inline">CRM-Lite-FR001-FR005.postman_collection.json</code>) gerçek test senaryolarıyla
+        doğrulanmıştır. Her uçta "İlgili Test Case" etiketinden ilgili senaryoya referans verilmiştir.
+      </div>
+    </section>
+
+    <section id="ortamlar">
+      <h2>Ortamlar</h2>
+      <div class="env-grid">
+        <div class="env-box">
+          <div class="env-label">LOCAL · GELİŞTİRME</div>
+          <div class="env-url">http://localhost:8080</div>
+          <span class="env-service">api-gateway</span>
+        </div>
+      </div>
+      <div class="callout">
+        Proje şu an yalnızca yerel geliştirme ortamında çalışmaktadır; canlı (production) ortam devreye alındığında
+        bu bölüm güncellenecektir. Tüm örneklerde <code class="inline">{{baseUrl}}</code> bu adresi temsil eder.
+      </div>
+    </section>
+
+    <section id="kimlik-dogrulama-genel">
+      <h2>Kimlik Doğrulama</h2>
+      <p>API, <strong>Keycloak</strong> (realm: <code class="inline">crm</code>) tarafından üretilen Bearer JWT ile
+      korunur. Aşağıdaki uca kullanıcı adı/şifre gönderilerek bir erişim token'ı alınır; sonraki tüm isteklerde
+      <code class="inline">Authorization: Bearer &lt;token&gt;</code> header'ı zorunludur
+      (<code class="inline">/api/v1/auth/**</code> uçları hariç). Token, çağıran kullanıcının
+      <code class="inline">CRM_AGENT</code> rolünü taşıması gerektiğini doğrular.</p>
+      <table>
+        <tr><th>Alan</th><th>Açıklama</th></tr>
+        <tr><td><code class="inline">expiresIn</code></td><td>Erişim token'ının saniye cinsinden ömrü — varsayılan 28800 sn (8 saat)</td></tr>
+        <tr><td><code class="inline">tokenType</code></td><td>Her zaman <code class="inline">Bearer</code></td></tr>
+      </table>
+      <div class="callout">
+        Test hesabı, art arda 5 başarısız giriş denemesinden sonra Keycloak tarafından 15 dakika süreyle kilitlenir.
+        Otomatik test/Postman koşumlarında bu limite dikkat edilmelidir.
+      </div>
+    </section>
+
+    <section id="hata-yonetimi">
+      <h2>Hata Yönetimi</h2>
+      <p>Tüm servisler (FR-001…FR-005 kapsamında) aynı standart hata gövdesini döner:</p>
+      <pre><code>{
+  "timestamp": "2026-07-29T18:14:23.094Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "This field is required.",
+  "path": "/api/v1/customers/onboarding"
+}</code></pre>
+      <p style="margin-top:10px; font-size:13.5px;">Birden fazla alan aynı anda geçersizse <code class="inline">message</code>
+      yalnızca <strong>ilk</strong> ihlal edilen kuralın mesajını içerir (RFC 7807 formatı kullanılmaz).</p>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- OTURUM (FR-001)                                                          -->
+    <!-- ======================================================================= -->
+
+    <section id="auth-login" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag POST">POST</span>
+          <code>/api/v1/auth/login</code>
+        </div>
+        <span class="fr-tag">FR-001 · ACC-004, ACC-009</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-001-01</code></div>
+      <p class="endpoint-desc">Kullanıcı adı ve şifre ile giriş yapar, Bearer JWT üretir.
+      <code class="inline">clientId</code> alanı opsiyoneldir: boş bırakılırsa veya <code class="inline">"default"</code>
+      gönderilirse 8 saat geçerli varsayılan token; <code class="inline">"short-lived"</code> gönderilirse test amaçlı
+      30 saniyelik token döner.</p>
+
+      <div class="grid-2">
+        <div>
+          <div class="block-label">Request Body</div>
+          <pre><code>{
+  "username": "salesperson",
+  "password": "password",
+  "clientId": null
+}</code></pre>
+        </div>
+        <div>
+          <div class="block-label">200 OK</div>
+          <pre><code>{
+  "accessToken": "eyJhbGciOiJSUzI1NiIs...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
+  "tokenType": "Bearer",
+  "expiresIn": 28800
+}</code></pre>
+        </div>
+      </div>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">200</span></td><td>Giriş başarılı</td></tr>
+        <tr><td><span class="status-pill status-4xx-warn">400</span></td><td>username/password boş, format hatalı ya da baştaki/sondaki boşluk içeriyor</td></tr>
+        <tr><td><span class="status-pill status-4xx">401</span></td><td>Kullanıcı adı veya şifre hatalı</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="login">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"salesperson","password":"password"}'</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>const res = await fetch('http://localhost:8080/api/v1/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username: 'salesperson', password: 'password' })
+});
+const { accessToken, expiresIn } = await res.json();</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>import requests
+
+resp = requests.post(
+    "http://localhost:8080/api/v1/auth/login",
+    json={"username": "salesperson", "password": "password"},
+)
+resp.raise_for_status()
+access_token = resp.json()["accessToken"]</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://localhost:8080/api/v1/auth/login"))
+    .header("Content-Type", "application/json")
+    .POST(HttpRequest.BodyPublishers.ofString(
+        "{\"username\":\"salesperson\",\"password\":\"password\"}"))
+    .build();
+HttpResponse&lt;String&gt; response =
+    client.send(request, HttpResponse.BodyHandlers.ofString());</code></pre></div>
+      </div>
+    </section>
+
+    <section id="auth-refresh" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag POST">POST</span>
+          <code>/api/v1/auth/refresh</code>
+        </div>
+        <span class="fr-tag">FR-001 · ACC-011</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-001-12</code></div>
+      <p class="endpoint-desc">Refresh token ile yeni bir erişim token'ı alır. Her zaman varsayılan client
+      (8 saatlik) üzerinden çalışır.</p>
+
+      <div class="grid-2">
+        <div>
+          <div class="block-label">Request Body</div>
+          <pre><code>{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+}</code></pre>
+        </div>
+        <div>
+          <div class="block-label">200 OK</div>
+          <pre><code>{
+  "accessToken": "eyJhbGciOiJSUzI1NiIs...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
+  "tokenType": "Bearer",
+  "expiresIn": 28800
+}</code></pre>
+        </div>
+      </div>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">200</span></td><td>Yeni token üretildi</td></tr>
+        <tr><td><span class="status-pill status-4xx-warn">400</span></td><td>refreshToken boş</td></tr>
+        <tr><td><span class="status-pill status-4xx">401</span></td><td>refreshToken geçersiz ya da süresi dolmuş</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="refresh">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl -X POST http://localhost:8080/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"eyJhbGciOiJIUzI1NiIs..."}'</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>const res = await fetch('http://localhost:8080/api/v1/auth/refresh', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ refreshToken })
+});
+const newToken = await res.json();</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>resp = requests.post(
+    "http://localhost:8080/api/v1/auth/refresh",
+    json={"refreshToken": refresh_token},
+)
+new_access_token = resp.json()["accessToken"]</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://localhost:8080/api/v1/auth/refresh"))
+    .header("Content-Type", "application/json")
+    .POST(HttpRequest.BodyPublishers.ofString(
+        "{\"refreshToken\":\"" + refreshToken + "\"}"))
+    .build();</code></pre></div>
+      </div>
+    </section>
+
+    <section id="auth-logout" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag POST">POST</span>
+          <code>/api/v1/auth/logout</code>
+        </div>
+        <span class="fr-tag">FR-001 · ACC-012, ACC-013</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-001-17</code></div>
+      <p class="endpoint-desc">Oturumu kapatır (refresh token'ı geçersiz kılar). Başarılı işlemde gövde dönmez.</p>
+
+      <div class="grid-2">
+        <div>
+          <div class="block-label">Request Body</div>
+          <pre><code>{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+}</code></pre>
+        </div>
+        <div>
+          <div class="block-label">204 No Content</div>
+          <pre><code>(gövde yok)</code></pre>
+        </div>
+      </div>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">204</span></td><td>Oturum sonlandırıldı</td></tr>
+        <tr><td><span class="status-pill status-4xx-warn">400</span></td><td>refreshToken boş</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="logout">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl -X POST http://localhost:8080/api/v1/auth/logout \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"eyJhbGciOiJIUzI1NiIs..."}'</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>await fetch('http://localhost:8080/api/v1/auth/logout', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ refreshToken })
+});</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>requests.post(
+    "http://localhost:8080/api/v1/auth/logout",
+    json={"refreshToken": refresh_token},
+)</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://localhost:8080/api/v1/auth/logout"))
+    .header("Content-Type", "application/json")
+    .POST(HttpRequest.BodyPublishers.ofString(
+        "{\"refreshToken\":\"" + refreshToken + "\"}"))
+    .build();</code></pre></div>
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- MÜŞTERİ (FR-002, FR-003, FR-004)                                         -->
+    <!-- ======================================================================= -->
+
+    <section id="musteri-ara" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag GET">GET</span>
+          <code>/api/v1/customers/search</code>
+        </div>
+        <span class="fr-tag">FR-002 · ACC-001…010</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-002-01</code></div>
+      <p class="endpoint-desc"><code class="inline">firstName</code> ve <code class="inline">lastName</code> birlikte
+      verilirse AND ile tek bir grup oluşturur; bu grup, diğer tüm kriterlerle (<code class="inline">tcNo</code>,
+      <code class="inline">acctNo</code>, <code class="inline">custId</code>, <code class="inline">gsm</code>) her
+      zaman OR ile bağlanır. Soft-delete edilmiş (pasif) müşteriler sonuca dahil edilmez.</p>
+
+      <div class="block-label">Query Parametreleri</div>
+      <table>
+        <tr><th>Parametre</th><th>Açıklama</th></tr>
+        <tr><td><code class="inline">firstName</code></td><td>Ad (kısmi/prefix eşleşme)</td></tr>
+        <tr><td><code class="inline">lastName</code></td><td>Soyad (kısmi/prefix eşleşme)</td></tr>
+        <tr><td><code class="inline">tcNo</code></td><td>T.C. Kimlik No (tam eşleşme)</td></tr>
+        <tr><td><code class="inline">acctNo</code></td><td>Hesap no (tam eşleşme)</td></tr>
+        <tr><td><code class="inline">custId</code></td><td>Müşteri no (tam eşleşme)</td></tr>
+        <tr><td><code class="inline">gsm</code></td><td>GSM no (tam eşleşme)</td></tr>
+        <tr><td><code class="inline">page</code></td><td>Sayfa numarası, varsayılan 0</td></tr>
+        <tr><td><code class="inline">size</code></td><td>Sayfa başına kayıt, varsayılan 10</td></tr>
+      </table>
+
+      <div class="block-label">200 OK</div>
+      <pre><code>{
+  "content": [
+    {
+      "custId": 1,
+      "firstName": "Ahmet",
+      "middleName": "Can",
+      "lastName": "Yılmaz",
+      "tcNo": "10000000146",
+      "acctNo": "000001",
+      "role": "CUSTOMER",
+      "gsm": "5551234567",
+      "status": "ACTIVE"
+    }
+  ],
+  "totalElements": 1,
+  "totalPages": 1,
+  "size": 10,
+  "number": 0,
+  "first": true,
+  "last": true,
+  "empty": false
+}</code></pre>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">200</span></td><td>Arama yapıldı (eşleşme yoksa boş <code class="inline">content</code> ile birlikte)</td></tr>
+        <tr><td><span class="status-pill status-4xx">401</span></td><td>Token eksik veya geçersiz</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="search">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl -G http://localhost:8080/api/v1/customers/search \
+  -H "Authorization: Bearer $TOKEN" \
+  --data-urlencode "tcNo=10000000146"</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>const res = await fetch(
+  'http://localhost:8080/api/v1/customers/search?tcNo=10000000146',
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+const page = await res.json();</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>resp = requests.get(
+    "http://localhost:8080/api/v1/customers/search",
+    params={"tcNo": "10000000146"},
+    headers={"Authorization": f"Bearer {token}"},
+)
+page = resp.json()</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create(
+        "http://localhost:8080/api/v1/customers/search?tcNo=10000000146"))
+    .header("Authorization", "Bearer " + token)
+    .GET()
+    .build();</code></pre></div>
+      </div>
+    </section>
+
+    <section id="musteri-getir" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag GET">GET</span>
+          <code>/api/v1/customers/{custId}</code>
+        </div>
+        <span class="fr-tag">FR-002 · ACC-009</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-002-27</code></div>
+      <p class="endpoint-desc">Müşteriyi id ile getirir; hesap (account) bilgilerini de içerir.</p>
+
+      <div class="block-label">200 OK</div>
+      <pre><code>{
+  "custId": 1,
+  "partyRoleId": 1,
+  "custTpId": 6,
+  "active": true,
+  "accounts": [
+    {
+      "custAcctId": 1,
+      "accountNo": "000001",
+      "accountName": null,
+      "accountDesc": null,
+      "accountTpId": 223,
+      "addressId": null,
+      "acctStId": 164,
+      "active": true
+    }
+  ]
+}</code></pre>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">200</span></td><td>Müşteri bulundu ve döndürüldü</td></tr>
+        <tr><td><span class="status-pill status-4xx">404</span></td><td>Belirtilen id'de müşteri yok (veya pasif/silinmiş)</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="getbyid">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl http://localhost:8080/api/v1/customers/1 \
+  -H "Authorization: Bearer $TOKEN"</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>const res = await fetch('http://localhost:8080/api/v1/customers/1', {
+  headers: { Authorization: `Bearer ${token}` }
+});
+const customer = await res.json();</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>resp = requests.get(
+    "http://localhost:8080/api/v1/customers/1",
+    headers={"Authorization": f"Bearer {token}"},
+)
+customer = resp.json()</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://localhost:8080/api/v1/customers/1"))
+    .header("Authorization", "Bearer " + token)
+    .GET()
+    .build();</code></pre></div>
+      </div>
+    </section>
+
+    <section id="kimlik-dogrula" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag POST">POST</span>
+          <code>/api/v1/customers/onboarding/verify-identity</code>
+        </div>
+        <span class="fr-tag">FR-003 · ACC-004, ACC-006</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-003-01</code></div>
+      <p class="endpoint-desc">DB'ye hiçbir şey yazmaz, sadece doğrular: önce T.C. kimlik no tekillik kontrolü, ardından
+      kimlik bilgilerini (fiktif) KPS servisi üzerinden doğrular. Onboarding formunun ilk adımında (adres/kontakt
+      girilmeden önce) çağrılır; aynı doğrulama <code class="inline">POST /onboarding</code> içinde de tekrar çalışır.</p>
+
+      <div class="grid-2">
+        <div>
+          <div class="block-label">Request Body</div>
+          <pre><code>{
+  "firstName": "Ahmet",
+  "middleName": "Can",
+  "lastName": "Yılmaz",
+  "birthDate": "15/06/1990",
+  "genderId": 3,
+  "motherName": "Ayşe",
+  "fatherName": "Mehmet",
+  "nationalId": "10000000146"
+}</code></pre>
+        </div>
+        <div>
+          <div class="block-label">200 OK</div>
+          <pre><code>{
+  "verified": true,
+  "message": "Identity verified."
+}</code></pre>
+        </div>
+      </div>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">200</span></td><td>Kimlik doğrulandı</td></tr>
+        <tr><td><span class="status-pill status-4xx-warn">400</span></td><td>Zorunlu alan eksik / format hatalı (örn. doğum tarihi 01/01/1900 öncesi ya da gelecek)</td></tr>
+        <tr><td><span class="status-pill status-4xx">409</span></td><td>Bu T.C. kimlik no ile kayıtlı bir müşteri zaten var</td></tr>
+        <tr><td><span class="status-pill status-4xx">422</span></td><td>KPS doğrulaması başarısız</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="verify">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl -X POST http://localhost:8080/api/v1/customers/onboarding/verify-identity \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "Ahmet", "lastName": "Yılmaz",
+    "birthDate": "15/06/1990", "genderId": 3,
+    "nationalId": "10000000146"
+  }'</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>const res = await fetch(
+  'http://localhost:8080/api/v1/customers/onboarding/verify-identity',
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      firstName: 'Ahmet', lastName: 'Yılmaz',
+      birthDate: '15/06/1990', genderId: 3,
+      nationalId: '10000000146'
+    })
+  }
+);</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>resp = requests.post(
+    "http://localhost:8080/api/v1/customers/onboarding/verify-identity",
+    headers={"Authorization": f"Bearer {token}"},
+    json={
+        "firstName": "Ahmet", "lastName": "Yılmaz",
+        "birthDate": "15/06/1990", "genderId": 3,
+        "nationalId": "10000000146",
+    },
+)</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>String body = """
+    {"firstName":"Ahmet","lastName":"Yılmaz",
+     "birthDate":"15/06/1990","genderId":3,
+     "nationalId":"10000000146"}""";
+
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create(
+        "http://localhost:8080/api/v1/customers/onboarding/verify-identity"))
+    .header("Content-Type", "application/json")
+    .header("Authorization", "Bearer " + token)
+    .POST(HttpRequest.BodyPublishers.ofString(body))
+    .build();</code></pre></div>
+      </div>
+    </section>
+
+    <section id="musteri-olustur" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag POST">POST</span>
+          <code>/api/v1/customers/onboarding</code>
+        </div>
+        <span class="fr-tag">FR-003 · ACC-015, ACC-017</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-003-08</code></div>
+      <p class="endpoint-desc">Tek istekte üç servise yazar: <code class="inline">party-service</code> (kişi + rol),
+      <code class="inline">customer-service</code> (müşteri + otomatik <strong>223</strong> tipi varsayılan hesap),
+      <code class="inline">contact-info-service</code> (adres + iletişim). Saga: bir adım başarısız olursa öncekiler
+      otomatik geri alınır. Adresler dizisindeki <strong>ilk eleman</strong> otomatik olarak birincil (primary) adres
+      kabul edilir; 1–5 arası adres girilebilir.</p>
+
+      <div class="grid-2">
+        <div>
+          <div class="block-label">Request Body</div>
+          <pre><code>{
+  "individual": {
+    "firstName": "Ahmet",
+    "middleName": "Can",
+    "lastName": "Yılmaz",
+    "birthDate": "15/06/1990",
+    "genderId": 3,
+    "motherName": "Ayşe",
+    "fatherName": "Mehmet",
+    "nationalId": "10000000146"
+  },
+  "addresses": [
+    {
+      "cityId": 5,
+      "streetName": "Cumhuriyet Cad.",
+      "buildingName": "No:12 D:3",
+      "addressDesc": "Ev adresi"
+    }
+  ],
+  "contact": {
+    "email": "ahmet.yilmaz@example.com",
+    "mobilePhone": "5551234567",
+    "homePhone": "2121234567",
+    "fax": "2129876543"
+  }
+}</code></pre>
+        </div>
+        <div>
+          <div class="block-label">201 Created</div>
+          <pre><code>{
+  "custId": 1,
+  "partyRoleId": 1,
+  "custTpId": 6,
+  "active": true,
+  "accounts": [
+    {
+      "custAcctId": 1,
+      "accountNo": "000001",
+      "accountTpId": 223,
+      "acctStId": 164,
+      "active": true
+    }
+  ]
+}</code></pre>
+        </div>
+      </div>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">201</span></td><td>Müşteri, varsayılan hesabıyla birlikte oluşturuldu</td></tr>
+        <tr><td><span class="status-pill status-4xx-warn">400</span></td><td>Zorunlu alan eksik, format hatalı ya da adres sayısı 0 / &gt;5</td></tr>
+        <tr><td><span class="status-pill status-4xx">409</span></td><td>T.C. kimlik no zaten kayıtlı</td></tr>
+        <tr><td><span class="status-pill status-4xx">422</span></td><td>KPS doğrulaması başarısız</td></tr>
+        <tr><td><span class="status-pill status-5xx">502</span></td><td>Orkestrasyon (saga) adımlarından biri başarısız oldu</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="onboard">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl -X POST http://localhost:8080/api/v1/customers/onboarding \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d @onboard-request.json</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>const res = await fetch('http://localhost:8080/api/v1/customers/onboarding', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  },
+  body: JSON.stringify(onboardRequest)
+});
+const customer = await res.json(); // custId burada döner</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>resp = requests.post(
+    "http://localhost:8080/api/v1/customers/onboarding",
+    headers={"Authorization": f"Bearer {token}"},
+    json=onboard_request,
+)
+resp.raise_for_status()
+customer = resp.json()</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://localhost:8080/api/v1/customers/onboarding"))
+    .header("Content-Type", "application/json")
+    .header("Authorization", "Bearer " + token)
+    .POST(HttpRequest.BodyPublishers.ofString(onboardRequestJson))
+    .build();
+HttpResponse&lt;String&gt; response =
+    client.send(request, HttpResponse.BodyHandlers.ofString());</code></pre></div>
+      </div>
+    </section>
+
+    <section id="kisisel-bilgi-getir" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag GET">GET</span>
+          <code>/api/v1/customers/{custId}/individual</code>
+        </div>
+        <span class="fr-tag">FR-004 · ACC-002</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-004-01</code></div>
+      <p class="endpoint-desc"><code class="inline">party-service</code>'e proxy. Kişisel bilgi güncelleme
+      ekranını dolu doldurmak için kullanılır.</p>
+
+      <div class="block-label">200 OK</div>
+      <pre><code>{
+  "firstName": "Ahmet",
+  "middleName": "Can",
+  "lastName": "Yılmaz",
+  "birthDate": "15/06/1990",
+  "genderId": 3,
+  "motherName": "Ayşe",
+  "fatherName": "Mehmet",
+  "nationalId": "10000000146"
+}</code></pre>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">200</span></td><td>Kişisel bilgi döndürüldü</td></tr>
+        <tr><td><span class="status-pill status-4xx">404</span></td><td>Müşteri bulunamadı</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="getindiv">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl http://localhost:8080/api/v1/customers/1/individual \
+  -H "Authorization: Bearer $TOKEN"</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>const res = await fetch(
+  'http://localhost:8080/api/v1/customers/1/individual',
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+const individual = await res.json();</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>resp = requests.get(
+    "http://localhost:8080/api/v1/customers/1/individual",
+    headers={"Authorization": f"Bearer {token}"},
+)
+individual = resp.json()</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://localhost:8080/api/v1/customers/1/individual"))
+    .header("Authorization", "Bearer " + token)
+    .GET()
+    .build();</code></pre></div>
+      </div>
+    </section>
+
+    <section id="kisisel-bilgi-guncelle" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag PUT">PUT</span>
+          <code>/api/v1/customers/{custId}/individual</code>
+        </div>
+        <span class="fr-tag">FR-004 · ACC-003, ACC-006, ACC-010</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-004-02</code></div>
+      <p class="endpoint-desc"><code class="inline">party-service</code>'e proxy. <code class="inline">nationalId</code>
+      / <code class="inline">birthDate</code> de güncellenebilir; <code class="inline">nationalId</code> başka bir
+      müşteriyle çakışırsa 409 döner (kendi mevcut değeriyle güncelleme çakışma sayılmaz).</p>
+
+      <div class="grid-2">
+        <div>
+          <div class="block-label">Request Body</div>
+          <pre><code>{
+  "firstName": "Ahmet",
+  "middleName": "Can",
+  "lastName": "Yılmazoğlu",
+  "genderId": 3,
+  "motherName": "Ayşe",
+  "fatherName": "Mehmet",
+  "birthDate": "20/07/1985",
+  "nationalId": "10000000146"
+}</code></pre>
+        </div>
+        <div>
+          <div class="block-label">200 OK</div>
+          <pre><code>{
+  "firstName": "Ahmet",
+  "middleName": "Can",
+  "lastName": "Yılmazoğlu",
+  "birthDate": "20/07/1985",
+  "genderId": 3,
+  "motherName": "Ayşe",
+  "fatherName": "Mehmet",
+  "nationalId": "10000000146"
+}</code></pre>
+        </div>
+      </div>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">200</span></td><td>Güncelleme başarılı</td></tr>
+        <tr><td><span class="status-pill status-4xx-warn">400</span></td><td>Zorunlu alan boş / format hatalı (örn. isim yalnızca harf içerebilir)</td></tr>
+        <tr><td><span class="status-pill status-4xx">404</span></td><td>Müşteri bulunamadı</td></tr>
+        <tr><td><span class="status-pill status-4xx">409</span></td><td>nationalId başka bir müşteriye ait</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="updindiv">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl -X PUT http://localhost:8080/api/v1/customers/1/individual \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d @update-individual.json</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>const res = await fetch(
+  'http://localhost:8080/api/v1/customers/1/individual',
+  {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(updateRequest)
+  }
+);</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>resp = requests.put(
+    "http://localhost:8080/api/v1/customers/1/individual",
+    headers={"Authorization": f"Bearer {token}"},
+    json=update_request,
+)</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://localhost:8080/api/v1/customers/1/individual"))
+    .header("Content-Type", "application/json")
+    .header("Authorization", "Bearer " + token)
+    .PUT(HttpRequest.BodyPublishers.ofString(updateRequestJson))
+    .build();</code></pre></div>
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- ADRES (FR-005)                                                           -->
+    <!-- ======================================================================= -->
+
+    <section id="adres-listele" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag GET">GET</span>
+          <code>/api/v1/customers/{custId}/addresses</code>
+        </div>
+        <span class="fr-tag">FR-005 · ACC-001, ACC-007</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-005-01</code></div>
+      <p class="endpoint-desc"><code class="inline">contact-info-service</code>'e proxy (müşteri başına en fazla 5
+      adet). Tek adresi olan müşteride o adres otomatik olarak birincil (primary) kabul edilir.</p>
+
+      <div class="block-label">200 OK</div>
+      <pre><code>[
+  {
+    "id": 42,
+    "rowId": 1,
+    "dataTypeId": 12,
+    "cityId": 5,
+    "streetName": "Cumhuriyet Cad.",
+    "houseName": "No:12 D:3",
+    "addrDesc": "Ev adresi",
+    "primary": true,
+    "cdate": "2026-07-29T18:14:23Z",
+    "cuser": "system",
+    "udate": null,
+    "uuser": null
+  }
+]</code></pre>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">200</span></td><td>Adres listesi döndürüldü (boş olabilir)</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="listaddr">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl http://localhost:8080/api/v1/customers/1/addresses \
+  -H "Authorization: Bearer $TOKEN"</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>const res = await fetch(
+  'http://localhost:8080/api/v1/customers/1/addresses',
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+const addresses = await res.json();</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>resp = requests.get(
+    "http://localhost:8080/api/v1/customers/1/addresses",
+    headers={"Authorization": f"Bearer {token}"},
+)
+addresses = resp.json()</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://localhost:8080/api/v1/customers/1/addresses"))
+    .header("Authorization", "Bearer " + token)
+    .GET()
+    .build();</code></pre></div>
+      </div>
+    </section>
+
+    <section id="adres-ekle" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag POST">POST</span>
+          <code>/api/v1/customers/{custId}/addresses</code>
+        </div>
+        <span class="fr-tag">FR-005 · ACC-002, ACC-004, ACC-005</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-005-02</code></div>
+      <p class="endpoint-desc">Müşteri başına en fazla 5 adres kuralı burada uygulanır (6. eklemede 409 döner).
+      <code class="inline">primary: true</code> gönderilirse müşterinin diğer adreslerinin birincil durumu otomatik
+      olarak <code class="inline">false</code> yapılır (tek birincil kuralı).</p>
+
+      <div class="grid-2">
+        <div>
+          <div class="block-label">Request Body</div>
+          <pre><code>{
+  "cityId": 5,
+  "streetName": "İkinci Sokak",
+  "buildingName": "No:10",
+  "addressDesc": "İş adresi",
+  "primary": false
+}</code></pre>
+        </div>
+        <div>
+          <div class="block-label">201 Created</div>
+          <pre><code>{
+  "id": 43,
+  "rowId": 1,
+  "dataTypeId": 12,
+  "cityId": 5,
+  "streetName": "İkinci Sokak",
+  "houseName": "No:10",
+  "addrDesc": "İş adresi",
+  "primary": false,
+  "cdate": "2026-07-29T18:20:11Z",
+  "cuser": "system"
+}</code></pre>
+        </div>
+      </div>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">201</span></td><td>Adres kaydedildi</td></tr>
+        <tr><td><span class="status-pill status-4xx-warn">400</span></td><td>Zorunlu alan eksik (City, Street, House/Flat Number, Address Description)</td></tr>
+        <tr><td><span class="status-pill status-4xx">404</span></td><td>Müşteri bulunamadı</td></tr>
+        <tr><td><span class="status-pill status-4xx">409</span></td><td>Müşterinin zaten 5 adresi var ("You can add up to 5 addresses.")</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="addaddr">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl -X POST http://localhost:8080/api/v1/customers/1/addresses \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cityId": 5, "streetName": "İkinci Sokak",
+    "buildingName": "No:10", "addressDesc": "İş adresi",
+    "primary": false
+  }'</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>const res = await fetch(
+  'http://localhost:8080/api/v1/customers/1/addresses',
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      cityId: 5, streetName: 'İkinci Sokak',
+      buildingName: 'No:10', addressDesc: 'İş adresi',
+      primary: false
+    })
+  }
+);</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>resp = requests.post(
+    "http://localhost:8080/api/v1/customers/1/addresses",
+    headers={"Authorization": f"Bearer {token}"},
+    json={
+        "cityId": 5, "streetName": "İkinci Sokak",
+        "buildingName": "No:10", "addressDesc": "İş adresi",
+        "primary": False,
+    },
+)</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>String body = """
+    {"cityId":5,"streetName":"İkinci Sokak",
+     "buildingName":"No:10","addressDesc":"İş adresi",
+     "primary":false}""";
+
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://localhost:8080/api/v1/customers/1/addresses"))
+    .header("Content-Type", "application/json")
+    .header("Authorization", "Bearer " + token)
+    .POST(HttpRequest.BodyPublishers.ofString(body))
+    .build();</code></pre></div>
+      </div>
+    </section>
+
+    <section id="adres-guncelle" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag PUT">PUT</span>
+          <code>/api/v1/customers/{custId}/addresses/{addressId}</code>
+        </div>
+        <span class="fr-tag">FR-005 · ACC-006, ACC-013, ACC-014</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-005-03</code></div>
+      <p class="endpoint-desc">Var olan bir adresi günceller (birincil yapma dahil).
+      <code class="inline">addressId</code>'nin gerçekten bu <code class="inline">custId</code>'ye ait olup olmadığı
+      kontrol edilir (IDOR koruması) — başka müşterinin adresi 404 döner.</p>
+
+      <div class="grid-2">
+        <div>
+          <div class="block-label">Request Body</div>
+          <pre><code>{
+  "cityId": 5,
+  "streetName": "Güncellenen Sokak",
+  "buildingName": "No:99",
+  "addressDesc": "Güncellenen açıklama",
+  "primary": true
+}</code></pre>
+        </div>
+        <div>
+          <div class="block-label">200 OK</div>
+          <pre><code>{
+  "id": 43,
+  "cityId": 5,
+  "streetName": "Güncellenen Sokak",
+  "houseName": "No:99",
+  "addrDesc": "Güncellenen açıklama",
+  "primary": true
+}</code></pre>
+        </div>
+      </div>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">200</span></td><td>Adres güncellendi</td></tr>
+        <tr><td><span class="status-pill status-4xx-warn">400</span></td><td>Zorunlu alan eksik</td></tr>
+        <tr><td><span class="status-pill status-4xx">404</span></td><td>Adres bulunamadı ya da başka müşteriye ait (IDOR)</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="updaddr">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl -X PUT http://localhost:8080/api/v1/customers/1/addresses/43 \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cityId": 5, "streetName": "Güncellenen Sokak",
+    "buildingName": "No:99", "addressDesc": "Güncellenen açıklama",
+    "primary": true
+  }'</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>const res = await fetch(
+  'http://localhost:8080/api/v1/customers/1/addresses/43',
+  {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      cityId: 5, streetName: 'Güncellenen Sokak',
+      buildingName: 'No:99', addressDesc: 'Güncellenen açıklama',
+      primary: true
+    })
+  }
+);</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>resp = requests.put(
+    "http://localhost:8080/api/v1/customers/1/addresses/43",
+    headers={"Authorization": f"Bearer {token}"},
+    json={
+        "cityId": 5, "streetName": "Güncellenen Sokak",
+        "buildingName": "No:99", "addressDesc": "Güncellenen açıklama",
+        "primary": True,
+    },
+)</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://localhost:8080/api/v1/customers/1/addresses/43"))
+    .header("Content-Type", "application/json")
+    .header("Authorization", "Bearer " + token)
+    .PUT(HttpRequest.BodyPublishers.ofString(updateAddressJson))
+    .build();</code></pre></div>
+      </div>
+    </section>
+
+    <section id="adres-sil" class="endpoint">
+      <div class="endpoint-head">
+        <div class="endpoint-title">
+          <span class="method-tag DELETE">DEL</span>
+          <code>/api/v1/customers/{custId}/addresses/{addressId}</code>
+        </div>
+        <span class="fr-tag">FR-005 · ACC-008, ACC-009, ACC-011, ACC-012</span>
+      </div>
+      <div class="tc-tag">İlgili Test Case: <code>TC-005-07</code></div>
+      <p class="endpoint-desc">Birincil adres silinemez (409). Bir fatura hesabına bağlı adres de silinemez (409) —
+      önce ilgili hesabın adresi değiştirilmelidir. IDOR: başka müşterinin adresi 404 döner.</p>
+
+      <div class="block-label">204 No Content</div>
+      <pre><code>(gövde yok)</code></pre>
+
+      <h3>Durum Kodları</h3>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">204</span></td><td>Adres silindi</td></tr>
+        <tr><td><span class="status-pill status-4xx">404</span></td><td>Adres bulunamadı ya da başka müşteriye ait (IDOR)</td></tr>
+        <tr><td><span class="status-pill status-4xx">409</span></td><td>Birincil adres ("Primary address cannot be deleted.") veya faturaya bağlı adres ("Please change the related billing address in customer account.")</td></tr>
+      </table>
+
+      <div class="code-tabs" data-tabs="deladdr">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="curl">cURL</button>
+          <button class="tab-btn" data-tab="js">JavaScript</button>
+          <button class="tab-btn" data-tab="py">Python</button>
+          <button class="tab-btn" data-tab="java">Java</button>
+          <button class="copy-btn" type="button">Kopyala</button>
+        </div>
+        <div class="tab-pane active" data-tab="curl"><pre><code>curl -X DELETE http://localhost:8080/api/v1/customers/1/addresses/43 \
+  -H "Authorization: Bearer $TOKEN"</code></pre></div>
+        <div class="tab-pane" data-tab="js"><pre><code>await fetch('http://localhost:8080/api/v1/customers/1/addresses/43', {
+  method: 'DELETE',
+  headers: { Authorization: `Bearer ${token}` }
+});</code></pre></div>
+        <div class="tab-pane" data-tab="py"><pre><code>requests.delete(
+    "http://localhost:8080/api/v1/customers/1/addresses/43",
+    headers={"Authorization": f"Bearer {token}"},
+)</code></pre></div>
+        <div class="tab-pane" data-tab="java"><pre><code>HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("http://localhost:8080/api/v1/customers/1/addresses/43"))
+    .header("Authorization", "Bearer " + token)
+    .DELETE()
+    .build();</code></pre></div>
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- REFERANS                                                                  -->
+    <!-- ======================================================================= -->
+
+    <section id="durum-kodlari">
+      <h2>Durum Kodları</h2>
+      <p>FR-001…FR-005 kapsamında karşılaşabileceğiniz tüm HTTP durum kodları:</p>
+      <table>
+        <tr><th>Kod</th><th>Anlamı</th></tr>
+        <tr><td><span class="status-pill status-2xx">200</span></td><td>İstek başarılı</td></tr>
+        <tr><td><span class="status-pill status-2xx">201</span></td><td>Kayıt başarıyla oluşturuldu</td></tr>
+        <tr><td><span class="status-pill status-2xx">204</span></td><td>İşlem başarılı, gövde yok (silme / çıkış)</td></tr>
+        <tr><td><span class="status-pill status-4xx-warn">400</span></td><td>Geçersiz istek / doğrulama hatası</td></tr>
+        <tr><td><span class="status-pill status-4xx">401</span></td><td>Kimlik doğrulama başarısız / token geçersiz ya da süresi dolmuş</td></tr>
+        <tr><td><span class="status-pill status-4xx">404</span></td><td>Kaynak bulunamadı (veya başka müşteriye ait kaynağa erişim denemesi)</td></tr>
+        <tr><td><span class="status-pill status-4xx">409</span></td><td>Çakışma (örn. mükerrer T.C. kimlik no, birincil adresi silme denemesi, adres limiti aşımı)</td></tr>
+        <tr><td><span class="status-pill status-4xx">422</span></td><td>Kimlik doğrulama (KPS) başarısız</td></tr>
+        <tr><td><span class="status-pill status-5xx">502</span></td><td>Orkestrasyon (saga) adımlarından biri başarısız oldu</td></tr>
+      </table>
+    </section>
+
+    <section id="izlenebilirlik">
+      <h2>FR / ACC İzlenebilirlik</h2>
+      <p>Bu dokümandaki her uç, analiz aşamasında tanımlanan bir Fonksiyonel Gereksinime bağlıdır:</p>
+      <table>
+        <tr><th>FR</th><th>Modül</th><th>İlgili Uçlar</th></tr>
+        <tr>
+          <td>FR-001</td><td>Sisteme Giriş</td>
+          <td><code class="inline">POST /api/v1/auth/login</code>, <code class="inline">/refresh</code>, <code class="inline">/logout</code></td>
+        </tr>
+        <tr>
+          <td>FR-002</td><td>Müşteri Arama ve Görüntüleme</td>
+          <td><code class="inline">GET /customers/search</code>, <code class="inline">GET /customers/{id}</code></td>
+        </tr>
+        <tr>
+          <td>FR-003</td><td>Müşteri Oluşturma</td>
+          <td><code class="inline">POST /customers/onboarding/verify-identity</code>, <code class="inline">POST /customers/onboarding</code></td>
+        </tr>
+        <tr>
+          <td>FR-004</td><td>Müşteri Bilgilerini Güncelleme</td>
+          <td><code class="inline">GET /customers/{id}/individual</code>, <code class="inline">PUT /customers/{id}/individual</code></td>
+        </tr>
+        <tr>
+          <td>FR-005</td><td>Adres Yönetimi</td>
+          <td><code class="inline">GET/POST /customers/{id}/addresses</code>, <code class="inline">PUT/DELETE /customers/{id}/addresses/{addressId}</code></td>
+        </tr>
+      </table>
+    </section>
+
+    <footer>
+      CRM Lite · Customer Service API v1.0 — Bu doküman, projenin gerçek controller kaynak kodundan
+      (<code class="inline">CustomerController</code>, <code class="inline">AuthController</code>) ve
+      Postman test koleksiyonundaki gerçek endpoint tanımlarından üretilmiştir.
+    </footer>
+
+  </main>
+</div>
+
+<script>
+(function () {
+  // --- Kod ornegi sekmeleri (dil secimi) ---
+  document.querySelectorAll('.code-tabs').forEach(function (wrap) {
+    var btns = wrap.querySelectorAll('.tab-btn');
+    var panes = wrap.querySelectorAll('.tab-pane');
+    btns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var target = btn.getAttribute('data-tab');
+        btns.forEach(function (b) { b.classList.toggle('active', b === btn); });
+        panes.forEach(function (p) {
+          p.classList.toggle('active', p.getAttribute('data-tab') === target);
+        });
+      });
+    });
+
+    // --- Kopyala butonu (file:// altinda da calisir - execCommand fallback) ---
+    var copyBtn = wrap.querySelector('.copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        var activePane = wrap.querySelector('.tab-pane.active pre code');
+        if (!activePane) { return; }
+        var text = activePane.textContent;
+        var done = function () {
+          copyBtn.textContent = 'Kopyalandı';
+          copyBtn.classList.add('copied');
+          setTimeout(function () {
+            copyBtn.textContent = 'Kopyala';
+            copyBtn.classList.remove('copied');
+          }, 1500);
+        };
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+        } else {
+          fallbackCopy(text, done);
+        }
+      });
+    }
+  });
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* sessizce yoksay */ }
+    document.body.removeChild(ta);
+  }
+
+  // --- Sidebar aktif baglanti vurgusu ---
+  var links = Array.prototype.slice.call(document.querySelectorAll('.nav-link'));
+  var sections = links
+    .map(function (l) { return document.querySelector(l.getAttribute('href')); })
+    .filter(Boolean);
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          var id = '#' + entry.target.id;
+          links.forEach(function (l) {
+            l.classList.toggle('active', l.getAttribute('href') === id);
+          });
+        }
+      });
+    }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+    sections.forEach(function (s) { observer.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>
