@@ -4,24 +4,28 @@ import com.etiya.crm.contactinfoservice.business.exceptions.AddressLimitExceeded
 import com.etiya.crm.contactinfoservice.business.exceptions.AddressLinkedToAccountException;
 import com.etiya.crm.contactinfoservice.business.exceptions.AddressNotFoundException;
 import com.etiya.crm.contactinfoservice.business.exceptions.PrimaryAddressDeletionException;
-import com.etiya.crm.contactinfoservice.clients.CustomerAccountClient;
 import com.etiya.crm.contactinfoservice.dataAccess.abstracts.AddressRepository;
 import com.etiya.crm.contactinfoservice.entities.concretes.Address;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Pure adres kurallari: repository disina (baska bir servise) HTTP cagrisi
+ * yapmaz, entity yazmaz - sadece var olan veri/olgu uzerinden dogrular ve
+ * gerekirse istisna firlatir. Musteri hesabina baglilik kontrolu (external
+ * call) ve primary adres yeniden atama (write) AddressServiceImpl'de yapilir,
+ * sonucu/olgusu buraya parametre olarak gelir.
+ */
 @Component
 public class AddressBusinessRules {
 
     private static final int MAX_ADDRESS_COUNT = 5;
 
     private final AddressRepository addressRepository;
-    private final CustomerAccountClient customerAccountClient;
 
-    public AddressBusinessRules(AddressRepository addressRepository, CustomerAccountClient customerAccountClient) {
+    public AddressBusinessRules(AddressRepository addressRepository) {
         this.addressRepository = addressRepository;
-        this.customerAccountClient = customerAccountClient;
     }
 
     public Address checkIfAddressExists(Long id) {
@@ -43,19 +47,10 @@ public class AddressBusinessRules {
 
     // customer-service'teki ayni kural (CustomerBusinessRules) ile birebir ayni mesaj key'i
     // kullanilir - iki servis ayni hatayi farkli sozcuklerle anlatmasin.
-    public void checkNotLinkedToAccount(Long addressId) {
-        if (customerAccountClient.existsByAddressId(addressId)) {
+    public void ensureNotLinkedToAccount(boolean linkedToAccount) {
+        if (linkedToAccount) {
             throw new AddressLinkedToAccountException();
         }
-    }
-
-    public void unsetOtherPrimaryAddresses(Long rowId, Long dataTypeId, Long excludeId) {
-        List<Address> addresses = addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(rowId, dataTypeId);
-        List<Address> toUpdate = addresses.stream()
-                .filter(address -> address.isPrimary() && !address.getId().equals(excludeId))
-                .peek(address -> address.setPrimary(false))
-                .toList();
-        addressRepository.saveAll(toUpdate);
     }
 
 }

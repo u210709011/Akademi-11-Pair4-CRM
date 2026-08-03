@@ -19,14 +19,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * hesabi acct_st_id=null oldugu icin "pasif" sanilip yanlislikla silinebilir/
  * musteri yanlislikla silinebilir hale gelir.
  */
-class CustomerBusinessRulesTest {
+class BillingAccountBusinessRulesTest {
 
 	private static final Long BILL_ACCT_TYPE_ID = 500L;
 	private static final Long OTHER_TYPE_ID = 501L;
 	private static final Long ACTIVE_STATUS_ID = 601L;
 	private static final Long PASSIVE_STATUS_ID = 602L;
 
-	private final CustomerBusinessRules rules = new CustomerBusinessRules();
+	private final BillingAccountBusinessRules rules = new BillingAccountBusinessRules();
 
 	// --- FR-011: ensureBillingAccountNotActive (tek hesap) ---
 

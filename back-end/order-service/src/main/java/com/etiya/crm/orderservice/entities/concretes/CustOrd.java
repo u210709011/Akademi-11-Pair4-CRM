@@ -36,6 +36,10 @@ public class CustOrd extends BaseEntity {
 	@Column(name = "cust_id", nullable = false)
 	private Long custId;
 
+	/** Configuration adiminda kaydedilir (bkz. V4 migration) - contact-info-service ADDR.addr_id'ye mantiksal referans. */
+	@Column(name = "address_id")
+	private Long addressId;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "bsn_inter_id")
 	private BsnInter bsnInter;

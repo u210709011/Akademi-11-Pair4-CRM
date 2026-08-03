@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 
 // FR-017: Offer Selection ekraninda "Next" tiklandiginda, Product Configuration'a
 // gecmeden once sepetin dogrulanmasi icin kullanilir. Adres/charVals henuz bu adimda
-// toplanmadigindan (onlar Product Configuration'da girilir) SubmitOrderRequest'ten
+// toplanmadigindan (onlar Product Configuration'da girilir) CreateOrderRequest'ten
 // farkli, daha dar bir kontrat.
 public record ValidateBasketRequest(
 

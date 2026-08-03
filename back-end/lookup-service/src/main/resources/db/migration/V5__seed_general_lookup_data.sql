@@ -102,9 +102,11 @@ SELECT setval(pg_get_serial_sequence('gnl_st', 'gnl_st_id'), (SELECT MAX(gnl_st_
 
 -- ---- TYPE_VALUE ----
 -- Gercek veriden: PROD/20, PARTY/9, CUST_ACCT/13, CUST/12 (field_name = o tabloya atanmis
--- polimorfik tip etiketi numarasi). ORDER icin henuz gercek deger yok - eklenmedi.
+-- polimorfik tip etiketi numarasi). ORDER icin gercek deger yok; mevcut degerlerle
+-- catismayan bir yer tutucu (21) kullanildi - shared-contracts'taki TypeValueTables.ORDER
+-- ("ORDER") ile eslesir, order-service bu ismi kullanir (bkz. CustOrdManager.resolveAddress).
 INSERT INTO type_value (table_name, field_name, description, cuser) VALUES
     ('PARTY',     9,  'Party_id',     'system'),
     ('CUST_ACCT', 13, 'Cust_acct_id', 'system'),
     ('PROD',      20, 'Prod_id',      'system'),
-    ('CUST',      12, 'Cust_id',      'system');
+    ('CUST',      12, 'Cust_id',      'system'),

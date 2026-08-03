@@ -10,6 +10,7 @@ public final class MessageKeys {
 	public static final String GNL_CHAR_VAL_INVALID_DATE_RANGE = "error.gnl-char-val.invalid-date-range";
 	public static final String DATA_INTEGRITY_VIOLATION = "error.data-integrity-violation";
 	public static final String VALIDATION_FAILED = "error.validation.failed";
+	public static final String UNEXPECTED_ERROR = "error.unexpected";
 
 	private MessageKeys() {
 	}

@@ -1,0 +1,383 @@
+package com.etiya.crm.orderservice.business.concretes;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.etiya.crm.orderservice.business.abstracts.LookupCacheService;
+import com.etiya.crm.orderservice.business.dtos.requests.AddressInfoRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.BasketItemRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.CreateOrderRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.OrderConfigurationRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.ProdCharValRequest;
+import com.etiya.crm.orderservice.business.dtos.responses.OrderSummaryResponse;
+import com.etiya.crm.orderservice.business.dtos.responses.ProdCharValResponse;
+import com.etiya.crm.orderservice.business.exceptions.AccountNotBelongToCustomerException;
+import com.etiya.crm.orderservice.business.exceptions.AddressSelectionInvalidException;
+import com.etiya.crm.orderservice.business.exceptions.OrderNotEditableException;
+import com.etiya.crm.orderservice.business.exceptions.OrderNotFoundException;
+import com.etiya.crm.orderservice.business.exceptions.ServiceAddressMissingException;
+import com.etiya.crm.orderservice.business.rules.BasketValidationRules;
+import com.etiya.crm.orderservice.clients.controllers.ContactAddressClient;
+import com.etiya.crm.orderservice.clients.controllers.CustomerClient;
+import com.etiya.crm.orderservice.clients.responses.CustomerAccountPageResponse;
+import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
+import com.etiya.crm.orderservice.clients.responses.CustomerResponse;
+import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
+import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterRepository;
+import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterSpecRepository;
+import com.etiya.crm.orderservice.dataAccess.abstracts.CustOrdCharValRepository;
+import com.etiya.crm.orderservice.dataAccess.abstracts.CustOrdItemRepository;
+import com.etiya.crm.orderservice.dataAccess.abstracts.CustOrdRepository;
+import com.etiya.crm.orderservice.entities.concretes.BsnInter;
+import com.etiya.crm.orderservice.entities.concretes.BsnInterSpec;
+import com.etiya.crm.orderservice.entities.concretes.CustOrd;
+import com.etiya.crm.orderservice.entities.concretes.CustOrdCharVal;
+import com.etiya.crm.orderservice.entities.concretes.CustOrdItem;
+import com.etiya.crm.orderservice.mapper.AddressMapper;
+import com.etiya.crm.orderservice.mapper.CustOrdCharValMapper;
+import com.etiya.crm.orderservice.mapper.CustOrderItemMapper;
+import org.mapstruct.factory.Mappers;
+import com.etiya.crm.shared.contracts.address.AddressResponse;
+import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
+import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
+import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * createOrder/saveConfiguration/finishOrder ucgeninin (WAIT -> configure -> MIDLWARE) durum
+ * gecislerini ve guard'larini dogrular. Repository'ler mock oldugu icin CustOrd.items/charVals
+ * gibi lazy koleksiyonlarin gercek Hibernate'te otomatik dolmasi (persist + auto-flush) burada
+ * elle simule edilir (bkz. stubSaveAddsToParentCollection).
+ */
+@ExtendWith(MockitoExtension.class)
+class CustOrdManagerTest {
+
+	private static final Long CUST_ID = 1L;
+	private static final Long CUST_ACCT_ID = 10L;
+	private static final Long CUST_ORD_ID = 100L;
+	private static final Long WAIT_STATUS_ID = 51L;
+	private static final Long PROCESSING_STATUS_ID = 52L;
+
+	@Mock
+	private AddressMapper addressMapper;
+	@Mock
+	private CustOrdCharValMapper custOrdCharValMapper;
+	// gercek MapStruct implementasyonu kullanilir - duz alan kopyalama oldugu icin mock'lamaya gerek yok.
+	private final CustOrderItemMapper custOrderItemMapper = Mappers.getMapper(CustOrderItemMapper.class);
+	@Mock
+	private CustOrdRepository custOrdRepository;
+	@Mock
+	private CustOrdItemRepository custOrdItemRepository;
+	@Mock
+	private CustOrdCharValRepository custOrdCharValRepository;
+	@Mock
+	private BsnInterRepository bsnInterRepository;
+	@Mock
+	private BsnInterItemRepository bsnInterItemRepository;
+	@Mock
+	private BsnInterSpecRepository bsnInterSpecRepository;
+	@Mock
+	private CustomerClient customerClient;
+	@Mock
+	private ContactAddressClient contactAddressClient;
+	@Mock
+	private LookupCacheService lookupCacheService;
+	@Mock
+	private OutboxEventPublisher outboxEventPublisher;
+
+	private CustOrdManager custOrdManager;
+
+	@BeforeEach
+	void setUp() {
+		custOrdManager = new CustOrdManager(addressMapper, custOrdCharValMapper, custOrderItemMapper,
+				custOrdRepository, custOrdItemRepository, custOrdCharValRepository, bsnInterRepository,
+				bsnInterItemRepository, bsnInterSpecRepository, customerClient, contactAddressClient,
+				lookupCacheService, new BasketValidationRules(), outboxEventPublisher);
+	}
+
+	// ---- createOrder ----
+
+	@Test
+	void createOrder_opensOrderInWaitStatus_withItemsAndNoAddressOrCharVals() {
+		stubCustomerAndAccount();
+		stubBsnInterSpec();
+		stubBsnInterSave();
+		stubCustOrdSave();
+		stubCustOrdItemSaveAddsToParent();
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		CreateOrderRequest request = new CreateOrderRequest(CUST_ID, CUST_ACCT_ID,
+				List.of(new BasketItemRequest(200L, null, null)));
+
+		OrderSummaryResponse response = custOrdManager.createOrder(request);
+
+		assertThat(response.custOrdId()).isEqualTo(CUST_ORD_ID);
+		assertThat(response.ordStId()).isEqualTo(WAIT_STATUS_ID);
+		assertThat(response.items()).hasSize(1);
+		assertThat(response.items().get(0).prodOfrId()).isEqualTo(200L);
+		assertThat(response.charVals()).isEmpty();
+		assertThat(response.serviceAddress()).isNull();
+	}
+
+	@Test
+	void createOrder_throws_whenAccountDoesNotBelongToCustomer() {
+		when(customerClient.getById(CUST_ID)).thenReturn(new CustomerResponse(CUST_ID, 2L, 3L, true, List.of()));
+		when(customerClient.getAccounts(CUST_ID, 1000)).thenReturn(new CustomerAccountPageResponse(
+				List.of(new CustomerAccountResponse(999L, "AC-999", "n", "d", null, 1L, 1L, true))));
+
+		CreateOrderRequest request = new CreateOrderRequest(CUST_ID, CUST_ACCT_ID,
+				List.of(new BasketItemRequest(200L, null, null)));
+
+		assertThatThrownBy(() -> custOrdManager.createOrder(request))
+				.isInstanceOf(AccountNotBelongToCustomerException.class);
+	}
+
+	// ---- saveConfiguration ----
+
+	@Test
+	void saveConfiguration_throws_whenOrderNotFound() {
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.empty());
+
+		OrderConfigurationRequest request = new OrderConfigurationRequest(List.of(), null, null);
+
+		assertThatThrownBy(() -> custOrdManager.saveConfiguration(CUST_ORD_ID, request))
+				.isInstanceOf(OrderNotFoundException.class);
+	}
+
+	@Test
+	void saveConfiguration_throws_whenOrderAlreadyProcessing() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setOrdStId(PROCESSING_STATUS_ID);
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		OrderConfigurationRequest request = new OrderConfigurationRequest(List.of(), 77L, null);
+
+		assertThatThrownBy(() -> custOrdManager.saveConfiguration(CUST_ORD_ID, request))
+				.isInstanceOf(OrderNotEditableException.class);
+	}
+
+	@Test
+	void saveConfiguration_throws_whenBothAddressIdAndNewAddressGiven() {
+		CustOrd custOrd = waitingOrder();
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		AddressInfoRequest newAddress = new AddressInfoRequest(1L, "Street", "12", "Desc");
+		OrderConfigurationRequest request = new OrderConfigurationRequest(List.of(), 77L, newAddress);
+
+		assertThatThrownBy(() -> custOrdManager.saveConfiguration(CUST_ORD_ID, request))
+				.isInstanceOf(AddressSelectionInvalidException.class);
+	}
+
+	@Test
+	void saveConfiguration_replacesCharVals_andStoresExistingAddressId() {
+		CustOrd custOrd = waitingOrder();
+		CustOrdCharVal staleCharVal = new CustOrdCharVal();
+		staleCharVal.setCustOrd(custOrd);
+		custOrd.getCharVals().add(staleCharVal); // onceki (autosave) turdan kalan eski kayit
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		doAnswer(inv -> {
+			custOrd.getCharVals().clear();
+			return null;
+		}).when(custOrdCharValRepository).deleteByCustOrd_CustOrdId(CUST_ORD_ID);
+
+		ProdCharValRequest charValRequest = new ProdCharValRequest(1L, 2L, "200Mbps");
+		when(custOrdCharValMapper.toEntity(charValRequest)).thenAnswer(inv -> {
+			CustOrdCharVal entity = new CustOrdCharVal();
+			entity.setCharId(1L);
+			entity.setCharValId(2L);
+			entity.setVal("200Mbps");
+			return entity;
+		});
+		when(custOrdCharValRepository.save(any(CustOrdCharVal.class))).thenAnswer(inv -> {
+			CustOrdCharVal saved = inv.getArgument(0);
+			saved.getCustOrd().getCharVals().add(saved);
+			return saved;
+		});
+		when(custOrdCharValMapper.toResponse(any(CustOrdCharVal.class)))
+				.thenReturn(new ProdCharValResponse(1L, 2L, "200Mbps"));
+
+		AddressResponse existingAddress = new AddressResponse(77L, CUST_ID, 5L, 1L, "Street", "12", "Desc", true,
+				null, null, null, null);
+		when(contactAddressClient.getById(77L)).thenReturn(existingAddress);
+		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
+
+		OrderConfigurationRequest request = new OrderConfigurationRequest(List.of(charValRequest), 77L, null);
+
+		OrderSummaryResponse response = custOrdManager.saveConfiguration(CUST_ORD_ID, request);
+
+		assertThat(response.charVals()).hasSize(1);
+		assertThat(custOrd.getAddressId()).isEqualTo(77L);
+		verify(contactAddressClient, never()).createAddress(any());
+	}
+
+	@Test
+	void saveConfiguration_createsNewAddress_whenNewAddressProvided() {
+		CustOrd custOrd = waitingOrder();
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(lookupCacheService.resolveDataTypeId("ORDER")).thenReturn(21L);
+
+		AddressInfoRequest newAddress = new AddressInfoRequest(5L, "Street", "12", "Desc");
+		CreateAddressRequest createAddressRequest = new CreateAddressRequest(CUST_ORD_ID, 21L, 5L, "Street", "12",
+				"Desc", true);
+		when(addressMapper.toCreateAddressRequest(newAddress, CUST_ORD_ID, 21L, true)).thenReturn(createAddressRequest);
+
+		AddressResponse createdAddress = new AddressResponse(88L, CUST_ORD_ID, 21L, 5L, "Street", "12", "Desc", true,
+				null, null, null, null);
+		when(contactAddressClient.createAddress(createAddressRequest)).thenReturn(createdAddress);
+		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
+
+		OrderConfigurationRequest request = new OrderConfigurationRequest(List.of(), null, newAddress);
+
+		custOrdManager.saveConfiguration(CUST_ORD_ID, request);
+
+		assertThat(custOrd.getAddressId()).isEqualTo(88L);
+	}
+
+	// ---- finishOrder ----
+
+	@Test
+	void finishOrder_throws_whenServiceAddressMissing() {
+		CustOrd custOrd = waitingOrder(); // addressId hic set edilmemis
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		assertThatThrownBy(() -> custOrdManager.finishOrder(CUST_ORD_ID))
+				.isInstanceOf(ServiceAddressMissingException.class);
+
+		verify(outboxEventPublisher, never()).publish(any(), any(), any(), any());
+	}
+
+	@Test
+	void finishOrder_throws_whenOrderNotInWaitStatus() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setAddressId(77L);
+		custOrd.setOrdStId(PROCESSING_STATUS_ID); // zaten finish edilmis
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		assertThatThrownBy(() -> custOrdManager.finishOrder(CUST_ORD_ID))
+				.isInstanceOf(OrderNotEditableException.class);
+	}
+
+	@Test
+	void finishOrder_transitionsToProcessing_andPublishesEvent() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setAddressId(77L);
+		CustOrdItem item = new CustOrdItem();
+		item.setCustOrd(custOrd);
+		item.setCustAcctId(CUST_ACCT_ID);
+		custOrd.getItems().add(item);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING))
+				.thenReturn(PROCESSING_STATUS_ID);
+		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
+		AddressResponse address = new AddressResponse(77L, CUST_ORD_ID, 21L, 5L, "Street", "12", "Desc", true, null,
+				null, null, null);
+		when(contactAddressClient.getById(77L)).thenReturn(address);
+
+		OrderSummaryResponse response = custOrdManager.finishOrder(CUST_ORD_ID);
+
+		assertThat(response.ordStId()).isEqualTo(PROCESSING_STATUS_ID);
+		verify(outboxEventPublisher).publish(eq("order"), eq(CUST_ORD_ID.toString()), eq("OrderSubmitted"), any());
+	}
+
+	// ---- getById ----
+
+	@Test
+	void getById_throws_whenOrderNotFound() {
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> custOrdManager.getById(CUST_ORD_ID)).isInstanceOf(OrderNotFoundException.class);
+	}
+
+	@Test
+	void getById_resolvesServiceAddress_whenAddressIdSet() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setAddressId(77L);
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		AddressResponse address = new AddressResponse(77L, CUST_ORD_ID, 21L, 5L, "Street", "12", "Desc", true, null,
+				null, null, null);
+		when(contactAddressClient.getById(77L)).thenReturn(address);
+		when(addressMapper.toSummaryResponse(address))
+				.thenReturn(new com.etiya.crm.orderservice.business.dtos.responses.AddressSummaryResponse(77L, 5L,
+						"Street", "12", "Desc"));
+
+		OrderSummaryResponse response = custOrdManager.getById(CUST_ORD_ID);
+
+		assertThat(response.serviceAddress()).isNotNull();
+		assertThat(response.serviceAddress().addressId()).isEqualTo(77L);
+	}
+
+	// ---- helpers ----
+
+	private void stubCustomerAndAccount() {
+		when(customerClient.getById(CUST_ID)).thenReturn(new CustomerResponse(CUST_ID, 2L, 3L, true, List.of()));
+		when(customerClient.getAccounts(CUST_ID, 1000)).thenReturn(new CustomerAccountPageResponse(
+				List.of(new CustomerAccountResponse(CUST_ACCT_ID, "AC-1", "n", "d", null, 1L, 1L, true))));
+	}
+
+	private void stubBsnInterSpec() {
+		BsnInterSpec spec = new BsnInterSpec();
+		spec.setBsnInterSpecId(5L);
+		spec.setShrtCode("NEW_SALE");
+		when(bsnInterSpecRepository.findByShrtCode("NEW_SALE")).thenReturn(Optional.of(spec));
+	}
+
+	private void stubBsnInterSave() {
+		when(bsnInterRepository.save(any(BsnInter.class))).thenAnswer(inv -> {
+			BsnInter bsnInter = inv.getArgument(0);
+			bsnInter.setBsnInterId(500L);
+			return bsnInter;
+		});
+	}
+
+	private void stubCustOrdSave() {
+		when(custOrdRepository.save(any(CustOrd.class))).thenAnswer(inv -> {
+			CustOrd custOrd = inv.getArgument(0);
+			if (custOrd.getCustOrdId() == null) {
+				custOrd.setCustOrdId(CUST_ORD_ID);
+			}
+			return custOrd;
+		});
+	}
+
+	private void stubCustOrdItemSaveAddsToParent() {
+		// custOrd.getItems().add(item) artik CustOrdManager.createOrder icinde yapiliyor -
+		// burada sadece IDENTITY id ataniyormus gibi davranmak yeterli, ikinci kez eklemeyiz.
+		when(custOrdItemRepository.save(any(CustOrdItem.class))).thenAnswer(inv -> {
+			CustOrdItem item = inv.getArgument(0);
+			item.setCustOrdItemId(900L);
+			return item;
+		});
+	}
+
+	private CustOrd waitingOrder() {
+		CustOrd custOrd = new CustOrd();
+		custOrd.setCustOrdId(CUST_ORD_ID);
+		custOrd.setCustId(CUST_ID);
+		custOrd.setOrdStId(WAIT_STATUS_ID);
+		return custOrd;
+	}
+}
