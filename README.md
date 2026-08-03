@@ -93,7 +93,11 @@ flowchart LR
 - **Backend:** Java 21/25, Spring Boot 3.5.x, Spring Cloud 2025.0.x, PostgreSQL 16,
   Kafka 4 (KRaft) + Debezium 3.1 (outbox→CDC), Redis 7, Keycloak 26, Resilience4j
 - **Front-end:** Angular
-- **Altyapı:** Podman Compose (`back-end/infra/`)
+- **Altyapı:** Podman Compose — `infra/` klasörü `docker-compose.yml`'i, altyapı
+  config/data dosyalarını (postgres-init, keycloak, debezium) ve başlatma
+  script'lerini tek yerde tutar: `infra/run/{dev,test,prod}/start.bat`+`stop.bat`
+  (dev = infra container + servisler native `mvnw`; test/prod = tüm stack
+  container olarak, ilgili Spring profiliyle). Bkz. back-end/README.md.
 
 ## Bilinen sınırlamalar
 
