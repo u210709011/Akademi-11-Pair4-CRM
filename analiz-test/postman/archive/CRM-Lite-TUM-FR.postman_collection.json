@@ -40,6 +40,8 @@
           "  \"function expectStatus(){ var codes = Array.prototype.slice.call(arguments); pm.expect(codes, 'HTTP ' + pm.response.code + ' | ' + String(pm.response.text()).slice(0, 300)).to.include(pm.response.code); }\",",
           "  \"function newTckn(){ var d = []; var x = Math.floor(Math.random() * 900000000) + 100000000; d[0] = (x % 9) + 1; for (var i = 1; i < 9; i++) { x = (x * 31 + 7) % 1000000007; d[i] = x % 10; } var odd = d[0] + d[2] + d[4] + d[6] + d[8]; var even = d[1] + d[3] + d[5] + d[7]; var d10 = ((odd * 7) - even) % 10; if (d10 < 0) { d10 += 10; } d[9] = d10; var t = 0; for (var j = 0; j < 10; j++) { t += d[j]; } d[10] = t % 10; return d.join(''); }\",",
           "  \"function newGsm(){ var n = '5'; for (var i = 0; i < 9; i++) { n += Math.floor(Math.random() * 10); } return n; }\",",
+          "  \"function lettersOf(v){ var map = 'abcdefghij'; var out = ''; var s = String(v); for (var i = 0; i < s.length; i++) { var d = parseInt(s.charAt(i), 10); out += isNaN(d) ? 'x' : map.charAt(d); } return out; }\",",
+          "  \"function resetLoginFailures(){ pm.sendRequest({ url: pm.environment.get('baseUrl') + '/api/v1/auth/login', method: 'POST', header: { 'Content-Type': 'application/json' }, body: { mode: 'raw', raw: JSON.stringify({ username: pm.environment.get('username'), password: pm.environment.get('password') }) } }, function(){ /* Keycloak basarili girriste hata sayacini sifirlar */ }); }\",",
           "  \"function authHeader(){ return 'Bearer ' + pm.collectionVariables.get('accessToken'); }\",",
           "  \"function jsonHeaders(){ return { 'Content-Type': 'application/json', 'Authorization': authHeader() }; }\",",
           "  \"function runMatrix(path, method, cases, done){\",",
@@ -581,7 +583,10 @@
                   "});",
                   "pm.test('FR-001 / ACC-005 — Hata govdesinde aciklama mesaji var', function () {",
                   "  pm.expect(b.message, 'message').to.be.a('string').and.not.empty;",
-                  "});"
+                  "});",
+                  "// Keycloak quick-login korumasi: ard arda hatali denemede hesap kilitlenir.",
+                  "// Kosumun geri kalanini kilitlememek icin hemen basarili bir giris yapilir (sayac sifirlanir).",
+                  "resetLoginFailures();"
                 ]
               }
             }
@@ -643,7 +648,9 @@
                   "  c('FR-001 / Validasyon — Kullanici adi sondaki bosluk ile reddedilir', { username: u + ' ', password: p }, 400),",
                   "  c('FR-001 / ACC-005 — Tanimsiz kullanici adi 401 doner', { username: 'olmayan-kullanici-' + Date.now(), password: p }, 401),",
                   "  c('FR-001 / Validasyon — Kullanici adi en fazla 50 karakter olmalidir (dokuman kurali)', { username: new Array(52).join('a'), password: p }, 400, null, true),",
-                  "  c('FR-001 / Validasyon — Sifre en fazla 50 karakter olmalidir (dokuman kurali)', { username: u, password: new Array(52).join('a') }, 400, null, true),",
+                  "  // Not: sifre uzunlugu testi GERCEK kullanici ile yapilmaz - Keycloak quick-login korumasi",
+                  "  // hesabi kilitler ve kosumun geri kalani 401 alirdi. Var olmayan kullanici ile denenir.",
+                  "  c('FR-001 / Validasyon — Sifre en fazla 50 karakter olmalidir (dokuman kurali)', { username: 'uzun-sifre-testi-' + Date.now(), password: new Array(52).join('a') }, 400, null, true),",
                   "  c('FR-001 / Validasyon — Kullanici adi buyuk/kucuk harfe duyarsizdir', { username: String(u).toUpperCase(), password: p }, 200, null, true)",
                   "];",
                   "runMatrix('/api/v1/auth/login', 'POST', cases);"
@@ -1088,7 +1095,8 @@
                   "var runId = pm.collectionVariables.get('runId');",
                   "var tckn = newTckn();",
                   "var gsm = newGsm();",
-                  "var suffix = 'Ana' + runId;",
+                  "// Isim alanlari yalnizca harf kabul eder (^[a-zA-ZcCgGiIoOsSuU\\s]*$) - runId harfe cevrilir.",
+                  "var suffix = 'Ana' + lettersOf(runId);",
                   "var addresses = [];",
                   "for (var i = 0; i < 1; i++) {",
                   "  addresses.push({",
@@ -1386,6 +1394,8 @@
                   "  c('FR-003 / Demografik — Gender bos ise 400', function (b) { b.individual.genderId = null; }, 400, 'This field is required.'),",
                   "  c('FR-003 / Demografik — Birth Date bos ise 400', function (b) { b.individual.birthDate = null; }, 400, 'This field is required.'),",
                   "  c('FR-003 / Demografik — Nationality ID 11 hane degilse 400', function (b) { b.individual.nationalId = '123'; }, 400, 'Invalid national ID'),",
+                  "  c('FR-003 / Demografik — Isim alanlari yalnizca harf kabul eder (kod kurali, dokumanda yok)', function (b) { b.individual.firstName = 'Ahmet123'; }, 400, 'Name should contain letters only.'),",
+                  "  c('FR-003 / Demografik — Turkce karakterli isim kabul edilir', function (b) { b.individual.firstName = 'Sukru Cagri'; b.individual.lastName = 'Gunes'; }, 201),",
                   "  c('FR-003 / Demografik — Middle/Father/Mother Name opsiyoneldir (201)', function (b) { b.individual.middleName = null; b.individual.fatherName = null; b.individual.motherName = null; }, 201),",
                   "  c('FR-003 / Demografik — First Name en fazla 50 karakter olmalidir (dokuman kurali)', function (b) { b.individual.firstName = long51; }, 400, null, true),",
                   "  c('FR-003 / Demografik — Last Name en fazla 50 karakter olmalidir (dokuman kurali)', function (b) { b.individual.lastName = long51; }, 400, null, true),",
@@ -1438,7 +1448,8 @@
                   "var runId = pm.collectionVariables.get('runId');",
                   "var tckn = newTckn();",
                   "var gsm = newGsm();",
-                  "var suffix = 'Iki' + runId;",
+                  "// Isim alanlari yalnizca harf kabul eder (^[a-zA-ZcCgGiIoOsSuU\\s]*$) - runId harfe cevrilir.",
+                  "var suffix = 'Iki' + lettersOf(runId);",
                   "var addresses = [];",
                   "for (var i = 0; i < 1; i++) {",
                   "  addresses.push({",
@@ -2039,7 +2050,7 @@
                 "exec": [
                   "eval(pm.collectionVariables.get('crmHelpers'));",
                   "var runId = pm.collectionVariables.get('runId');",
-                  "var newLast = 'Guncel' + runId;",
+                  "var newLast = 'Guncel' + lettersOf(runId);",
                   "pm.collectionVariables.set('updatedLastName', newLast);",
                   "pm.collectionVariables.set('updateIndividualBody', JSON.stringify({",
                   "  firstName: pm.collectionVariables.get('firstNameMain'),",
@@ -2330,7 +2341,8 @@
                   "var runId = pm.collectionVariables.get('runId');",
                   "var tckn = newTckn();",
                   "var gsm = newGsm();",
-                  "var suffix = 'Adr' + runId;",
+                  "// Isim alanlari yalnizca harf kabul eder (^[a-zA-ZcCgGiIoOsSuU\\s]*$) - runId harfe cevrilir.",
+                  "var suffix = 'Adr' + lettersOf(runId);",
                   "var addresses = [];",
                   "for (var i = 0; i < 1; i++) {",
                   "  addresses.push({",
@@ -3103,7 +3115,8 @@
                   "var runId = pm.collectionVariables.get('runId');",
                   "var tckn = newTckn();",
                   "var gsm = newGsm();",
-                  "var suffix = 'Hsp' + runId;",
+                  "// Isim alanlari yalnizca harf kabul eder (^[a-zA-ZcCgGiIoOsSuU\\s]*$) - runId harfe cevrilir.",
+                  "var suffix = 'Hsp' + lettersOf(runId);",
                   "var addresses = [];",
                   "for (var i = 0; i < 1; i++) {",
                   "  addresses.push({",
@@ -3237,8 +3250,24 @@
           }
         },
         {
-          "name": "FR-008 / Kurulum — Musterinin mevcut adresi alinir",
+          "name": "FR-008 / Kurulum — Fatura hesabina baglanacak ikinci adres olusturulur",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "eval(pm.collectionVariables.get('crmHelpers'));",
+                  "pm.collectionVariables.set('acctAddressBody', JSON.stringify({",
+                  "  cityId: Number(pm.collectionVariables.get('cityId')),",
+                  "  streetName: 'Fatura Adresi Sokak',",
+                  "  buildingName: 'No:3',",
+                  "  addressDesc: 'Fatura hesabi adresi',",
+                  "  primary: false",
+                  "}));"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -3246,18 +3275,21 @@
                 "exec": [
                   "eval(pm.collectionVariables.get('crmHelpers'));",
                   "var b = jsonBody();",
-                  "pm.test('Kurulum — Adres listesi alindi', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "  pm.expect(b).to.be.an('array').that.is.not.empty;",
-                  "});",
-                  "if (b[0]) { pm.collectionVariables.set('addressIdAcct', b[0].id); }"
+                  "pm.test('Kurulum — Ikinci adres olusturuldu (201)', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Kurulum — Olusturulan adres birincil degil', function () { pm.expect(b.primary).to.eql(false); });",
+                  "if (b.id) { pm.collectionVariables.set('addressIdAcct', b.id); }"
                 ]
               }
             }
           ],
           "request": {
-            "method": "GET",
-            "header": [],
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/customers/{{custIdAcct}}/addresses",
               "host": [
@@ -3270,6 +3302,16 @@
                 "{{custIdAcct}}",
                 "addresses"
               ]
+            },
+            "description": "Bilincli olarak birincil OLMAYAN bir adres kullanilir: FR-005 ACC-011 (faturaya bagli adres silinemez) guard'ini test edebilmek icin, birincil adres guard'inin (ACC-009) once devreye girmemesi gerekir.",
+            "body": {
+              "mode": "raw",
+              "raw": "{{acctAddressBody}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
@@ -4053,6 +4095,51 @@
       "description": "FR-015/016/017'nin orta katman karsiligi: POST /api/v1/orders/submit ve siparis okuma uclari. FR-012/013/014 (Offer Selection, katalog/kampanya arama, sepet) icin API karsiligi henuz yoktur - bkz. 11 numarali klasor. Mutlu yol testi ancak environment'ta gecerli bir prodOfrId tanimliysa calisir (product-service seed verisi gerekir).",
       "item": [
         {
+          "name": "FR-016 / Kurulum — Katalogdan Prod Offer ID cozumlenir (varsa)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "eval(pm.collectionVariables.get('crmHelpers'));",
+                  "var list = jsonBody();",
+                  "var resolved = '';",
+                  "if (pm.response.code === 200 && Array.isArray(list) && list.length > 0) {",
+                  "  resolved = list[0].prodOfrId || list[0].productOfferingId || list[0].id || '';",
+                  "}",
+                  "pm.collectionVariables.set('prodOfrIdResolved', resolved);",
+                  "pm.test('Kurulum — Katalog sorgulandi (siparis mutlu yolu icin)', function () {",
+                  "  pm.expect(true).to.be.true;",
+                  "});",
+                  "console.log('[FR-016] prodOfrId (environment): \"' + (pm.environment.get('prodOfrId') || '') + '\" | katalogdan cozulen: \"' + resolved + '\"');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tolerate-5xx",
+                "value": "true"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/product-procutOfferings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "product-procutOfferings"
+              ]
+            },
+            "description": "environment'ta prodOfrId bos ise katalogdan ilk teklif alinir; boylece katalog verisi girildiginde siparis mutlu yolu elle ayar gerektirmeden calisir."
+          }
+        },
+        {
           "name": "FR-017 / Validasyon matrisi — Siparis gonderimi zorunlu alanlari",
           "event": [
             {
@@ -4107,9 +4194,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "eval(pm.collectionVariables.get('crmHelpers'));",
-                  "var prodOfrId = pm.environment.get('prodOfrId');",
+                  "var prodOfrId = pm.environment.get('prodOfrId') || pm.collectionVariables.get('prodOfrIdResolved');",
                   "if (!prodOfrId) {",
-                  "  pm.test('[ATLANDI] FR-016 — Siparis ozeti testi icin environment\\'ta prodOfrId tanimli degil (product-service katalog seed verisi yok)', function () {",
+                  "  pm.test('[ATLANDI] FR-016 — Siparis ozeti testi icin gecerli bir Prod Offer ID yok (katalogda kayit yok, environment.prodOfrId bos)', function () {",
                   "    pm.expect(true).to.be.true;",
                   "  });",
                   "} else {",
@@ -4473,7 +4560,7 @@
       "description": "Gereksinim dokumaninda tanimli olan ancak API tarafinda henuz karsiligi bulunmayan maddeler. strictMode=false iken bu testler [BEKLEYEN BOSLUK] olarak raporlanir ve kosumu kirmaz; ilgili gelistirme tamamlandiginda [GAP KAPANDI] olarak yesile doner.",
       "item": [
         {
-          "name": "FR-013 / ACC-003, ACC-004 — Katalog (Prod Offer) arama ucu",
+          "name": "FR-013 / ACC-003, ACC-006 — Katalog (Product Offering) listeleme ucu",
           "event": [
             {
               "listen": "test",
@@ -4481,8 +4568,21 @@
                 "type": "text/javascript",
                 "exec": [
                   "eval(pm.collectionVariables.get('crmHelpers'));",
-                  "gapTest('FR-013 / ACC-004 — Katalog arama ucu (kategori / Prod Offer ID / Prod Offer Name) mevcut olmalidir', function () {",
-                  "  pm.expect(pm.response.code, 'gelen ' + pm.response.code + ' - product-service\\'te katalog arama controller\\'i yok').to.eql(200);",
+                  "pm.test('FR-013 / ACC-006 — Product Offering listeleme ucu 200 doner', function () { pm.response.to.have.status(200); });",
+                  "var list = jsonBody();",
+                  "pm.test('FR-013 / ACC-006 — Yanit liste kontratinda', function () { pm.expect(list).to.be.an('array'); });",
+                  "if (Array.isArray(list) && list.length > 0) {",
+                  "  pm.collectionVariables.set('catalogOfferId', list[0].prodOfrId || list[0].productOfferingId || list[0].id);",
+                  "  console.log('[FR-013] Katalogda ' + list.length + ' teklif bulundu.');",
+                  "}",
+                  "gapTest('FR-013 — Uc adresi yazim hatasi icermemelidir (product-procutOfferings -> product-offerings)', function () {",
+                  "  throw new Error('Route adi hatali: /api/v1/product-procutOfferings');",
+                  "});",
+                  "gapTest('FR-013 / ACC-004 — Kriterli arama (kategori / Prod Offer ID / Prod Offer Name) desteklenmelidir', function () {",
+                  "  throw new Error('Yalnizca getAll var; kriterli arama ucu yok');",
+                  "});",
+                  "gapTest('FR-013 / ACC-014 — Sonuclar sayfalanmalidir (ilk sayfa en fazla 5 kayit)', function () {",
+                  "  pm.expect(jsonBody(), 'sayfali yanit bekleniyor').to.have.property('content');",
                   "});"
                 ]
               }
@@ -4497,27 +4597,21 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/product-offerings/search?name=internet",
+              "raw": "{{baseUrl}}/api/v1/product-procutOfferings",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "product-offerings",
-                "search"
-              ],
-              "query": [
-                {
-                  "key": "name",
-                  "value": "internet"
-                }
+                "product-procutOfferings"
               ]
-            }
+            },
+            "description": "sprint-4 ile eklendi. Uc adresindeki yazim hatasina dikkat: \"product-procutOfferings\" (dogrusu product-offerings olmaliydi)."
           }
         },
         {
-          "name": "FR-013 / ACC-007, ACC-008 — Kampanya arama ucu",
+          "name": "FR-013 / ACC-007, ACC-010 — Kampanya listeleme ucu",
           "event": [
             {
               "listen": "test",
@@ -4525,11 +4619,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "eval(pm.collectionVariables.get('crmHelpers'));",
-                  "gapTest('FR-013 / ACC-008 — Kampanya arama ucu (kategori / Campaign ID / Campaign Name) mevcut olmalidir', function () {",
-                  "  pm.expect(pm.response.code, 'gelen ' + pm.response.code + ' - product-service\\'te kampanya controller\\'i yok').to.eql(200);",
+                  "pm.test('FR-013 / ACC-010 — Kampanya listeleme ucu 200 doner', function () { pm.response.to.have.status(200); });",
+                  "pm.test('FR-013 / ACC-010 — Yanit liste kontratinda', function () { pm.expect(jsonBody()).to.be.an('array'); });",
+                  "gapTest('FR-013 / ACC-008 — Kampanya kriterli aramasi (kategori / Campaign ID / Campaign Name) desteklenmelidir', function () {",
+                  "  throw new Error('Yalnizca getAll var; kriterli arama ucu yok');",
                   "});",
-                  "gapTest('FR-013 / ACC-011, ACC-012 — Kampanyaya bagli urunler (Bundled Offers) listelenebilmelidir', function () {",
-                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "gapTest('FR-013 / ACC-011, ACC-012 — Kampanyaya bagli urunler (Bundled Offers) listelenmelidir', function () {",
+                  "  var list = jsonBody();",
+                  "  pm.expect(Array.isArray(list) && list.length > 0 && list[0].bundledOffers !== undefined, 'bundledOffers alani yok').to.eql(true);",
                   "});"
                 ]
               }
@@ -4544,21 +4641,51 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/campaigns/search?name=kampanya",
+              "raw": "{{baseUrl}}/api/v1/product-campaigns",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "campaigns",
-                "search"
+                "product-campaigns"
+              ]
+            },
+            "description": "sprint-4 ile eklendi (CampaignController)."
+          }
+        },
+        {
+          "name": "FR-013 / ACC-003 — Kategori (Product Catalog) listeleme ucu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "eval(pm.collectionVariables.get('crmHelpers'));",
+                  "pm.test('FR-013 / ACC-003 — Kategori listeleme ucu 200 doner', function () { pm.response.to.have.status(200); });",
+                  "pm.test('FR-013 / ACC-003 — Yanit liste kontratinda', function () { pm.expect(jsonBody()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Tolerate-5xx",
+                "value": "true"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/product-catalogs",
+              "host": [
+                "{{baseUrl}}"
               ],
-              "query": [
-                {
-                  "key": "name",
-                  "value": "kampanya"
-                }
+              "path": [
+                "api",
+                "v1",
+                "product-catalogs"
               ]
             }
           }
