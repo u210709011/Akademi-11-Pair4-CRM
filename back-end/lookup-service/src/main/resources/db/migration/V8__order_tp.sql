@@ -1,7 +1,2 @@
-UPDATE type_value 
-SET 
-    table_name = 'ORDER',
-    field_name = 21,
-    description = 'Cust_ord_id',
-    cuser = 'system'
-WHERE table_name = 'ORDER';
+INSERT INTO type_value (table_name, field_name, description, cuser) VALUES
+    ('ORDER', 21, 'Cust_ord_id',  'system');
