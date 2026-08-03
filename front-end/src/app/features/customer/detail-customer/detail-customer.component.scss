@@ -354,6 +354,59 @@
   color: var(--text-placeholder);
 }
 
+.contact-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0 48px;
+}
+
+.contact-info-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.contact-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  color: var(--etiya-orange);
+  background: var(--etiya-orange-soft);
+  border-radius: 8px;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+.contact-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-info-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.contact-info-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 .accounts-table-wrapper {
   overflow-x: auto;
 }
