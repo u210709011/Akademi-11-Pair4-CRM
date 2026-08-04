@@ -15,6 +15,8 @@ public interface CustomerLookupResolver {
 
 	Long resolveActiveAccountStatusId();
 
+	Long resolvePassiveAccountStatusId();
+
 	Long resolveDeletedAccountStatusId();
 
 	Long resolveCustomerAccountTypeId();
