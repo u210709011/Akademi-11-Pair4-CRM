@@ -4,8 +4,8 @@ rem Fixed-port infra (Postgres/Kafka/Keycloak/config-server/discovery-server/
 rem api-gateway) is checked by port. The 6 business services get a random
 rem port each run (server.port: ${PORT:0}), so port-checking them is useless -
 rem instead this checks (a) whether a matching java.exe process exists (same
-rem command-line match stop.bat uses) and (b) whether Eureka actually has it
-rem registered, which is the real "is it usable" signal.
+rem command-line match stop.bat/restart.bat use) and (b) whether Eureka
+rem actually has it registered, which is the real "is it usable" signal.
 rem
 rem Auto-refreshes every 5s by default (Ctrl+C to stop) instead of a one-shot
 rem snapshot - pass "once" for a single check instead: status.bat once
@@ -26,9 +26,13 @@ echo === Infra (fixed ports) ===
 call :checkport 5432 PostgreSQL
 call :checkport 9092 Kafka
 call :checkport 8180 Keycloak
+call :checkport 8090 "Kafka UI"
+call :checkport 8083 "Debezium Connect"
+call :checkport 8081 "Redis Commander"
 call :checkport 8888 "Config Server"
 call :checkport 8761 "Discovery Server / Eureka"
 call :checkport 8080 "API Gateway"
+call :checkport 4200 "Front-end"
 
 echo.
 echo === Business services (dynamic ports - process + Eureka registration) ===

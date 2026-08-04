@@ -10,9 +10,10 @@ rem stdin trick fixes anyway.
 setlocal enabledelayedexpansion
 
 rem Starts the full CRM stack for local dev: infra pods (Postgres/Kafka/Redis/
-rem Keycloak) via docker/podman compose (whichever is installed), then each
-rem Spring Boot service via a real, vendored Apache Maven (downloaded once
-rem into back-end\.maven\ on first run).
+rem Keycloak) via docker/podman compose (whichever is installed), each Spring
+rem Boot service via a real, vendored Apache Maven (downloaded once into
+rem back-end\.maven\ on first run), and the Angular front-end via npm/ng (see
+rem _run-frontend.bat - installs node_modules once on first run too).
 rem NOT the project's mvnw.cmd wrapper - that script re-invokes itself via
 rem powershell internally (see mvnw.cmd's own polyglot batch/powershell body),
 rem which is blocked outright by Group Policy on some machines. Real Maven's
@@ -27,8 +28,10 @@ rem the spawned process (no "hidden" option like "start /B" has), so Maven's
 rem live output just prints straight into that window instead of being
 rem redirected anywhere - see _run-service.bat, which titles each window
 rem "CRM dev - <service>".
-rem stop.bat/restart.bat find and kill these by matching each java.exe's own
-rem command line (its module directory), not by window title.
+rem stop.bat/restart.bat find and kill backend services by matching each
+rem java.exe's own command line (its module directory), not by window title.
+rem The front-end is stopped differently (whatever's listening on port 4200,
+rem not command-line matching) - see stop.bat for why.
 rem Services default to the "dev" profile on their own (each service's local
 rem application.yml: SPRING_PROFILES_ACTIVE:dev) - no override needed here.
 rem
@@ -95,29 +98,33 @@ echo === Starting Discovery Server (Eureka) ===
 call :startwindow discovery-server
 call :waitforport 8761 "Discovery Server"
 
-echo === Starting API Gateway + business services ===
+echo === Starting API Gateway + business services (all launched together - they don't depend on each other, only on Config Server/Eureka which are already confirmed up) ===
 call :startwindow api-gateway
-timeout /t 2 /nobreak >nul
 call :startwindow customer-service
-timeout /t 2 /nobreak >nul
 call :startwindow party-service
-timeout /t 2 /nobreak >nul
 call :startwindow contact-info-service
-timeout /t 2 /nobreak >nul
 call :startwindow order-service
-timeout /t 2 /nobreak >nul
 call :startwindow lookup-service
-timeout /t 2 /nobreak >nul
 call :startwindow product-service
 
+echo === Starting Front-end ===
+echo Launching front-end ...
+wmic process call create "cmd /c call %~dp0_run-frontend.bat" >nul
+call :waitforport 4200 "Front-end"
+
 echo.
-echo All services launched, each in its own titled window (live Maven output there).
-echo   Eureka:   http://localhost:8761
-echo   Gateway:  http://localhost:8080/swagger-ui.html
-echo   Keycloak: http://localhost:8180 (admin/admin)
+echo All services launched, each in its own titled window (live output there).
+echo   Front-end:        http://localhost:4200
+echo   API Gateway:      http://localhost:8080/swagger-ui.html
+echo   Eureka:           http://localhost:8761
+echo   Config Server:    http://localhost:8888
+echo   Keycloak:         http://localhost:8180 (admin/admin)
+echo   Kafka UI:         http://localhost:8090
+echo   Debezium Connect: http://localhost:8083/connectors
+echo   Redis Commander:  http://localhost:8081
 echo.
 echo status.bat            - check what's up
-echo restart.bat ^<service^> - restart just one
+echo restart.bat ^<service^> - restart just one (also works for front-end)
 echo stop.bat / stop.bat ^<service^> - stop everything / stop just one
 exit /b 0
 
