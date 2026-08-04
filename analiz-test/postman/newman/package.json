@@ -1,0 +1,25 @@
+{
+  "name": "crm-lite-api-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CRM Lite orta katman (API) regresyon testleri — FR-001..FR-005, Newman + Allure",
+  "scripts": {
+    "test": "newman run ../CRM-Lite-FR001-FR005.postman_collection.json -e ../environments/CRM-Lite.local.postman_environment.json -r cli,htmlextra,junit --reporter-htmlextra-export reports/crm-lite-report.html --reporter-htmlextra-title \"CRM Lite — FR-001..FR-005 Test Raporu\" --reporter-junit-export reports/crm-lite-junit.xml",
+    "test:allure": "newman run ../CRM-Lite-FR001-FR005.postman_collection.json -e ../environments/CRM-Lite.local.postman_environment.json -r cli,allure --reporter-allure-export allure-results",
+    "test:allure:demo": "newman run ../CRM-Lite-FR001-FR005.postman_collection.json -e ../environments/CRM-Lite.local.postman_environment.json -r cli,allure --reporter-allure-export allure-results --suppress-exit-code",
+    "test:setup": "newman run ../CRM-Lite-FR001-FR005.postman_collection.json -e ../environments/CRM-Lite.local.postman_environment.json --folder \"00 · Ortam Hazirligi (Setup)\" -r cli",
+    "test:strict": "newman run ../CRM-Lite-FR001-FR005.postman_collection.json -e ../environments/CRM-Lite.local.postman_environment.json --env-var strictMode=true -r cli,htmlextra --reporter-htmlextra-export reports/crm-lite-report-strict.html",
+    "test:keep-data": "newman run ../CRM-Lite-FR001-FR005.postman_collection.json -e ../environments/CRM-Lite.local.postman_environment.json --env-var cleanup=false -r cli",
+    "allure:clean": "node -e \"require('fs').rmSync('allure-results',{recursive:true,force:true});require('fs').rmSync('allure-report',{recursive:true,force:true});console.log('allure ciktilari temizlendi')\"",
+    "allure:report": "allure generate allure-results --clean -o allure-report",
+    "allure:open": "allure open allure-report",
+    "allure:serve": "allure serve allure-results",
+    "demo": "npm run allure:clean && npm run test:allure:demo && npm run allure:serve"
+  },
+  "devDependencies": {
+    "allure-commandline": "^2.30.0",
+    "newman": "^6.2.1",
+    "newman-reporter-allure": "^1.0.5",
+    "newman-reporter-htmlextra": "^1.23.1"
+  }
+}
