@@ -1,14 +1,12 @@
 @echo off
-rem Re-launch with stdin explicitly attached to NUL. Code Runner (and some other
-rem automation contexts) invoke this script with a stdin handle that cmd.exe's
-rem "start" and piped commands (netstat | findstr) can't work with, failing with
-rem "Input redirection is not supported, exiting the process immediately." A
-rem clean re-launch with <nul fixes it for the whole process tree below it.
-if "%~1"=="__RELAUNCHED__" goto :main
-cmd /c "%~f0" __RELAUNCHED__ <nul
-exit /b %errorlevel%
-
-:main
+rem No stdin relaunch trick here anymore - it forced NUL onto stdin for the
+rem *entire* process tree below it (originally to survive Code Runner's
+rem broken stdin handle), and that turned out to also break things run under
+rem it (Maven dying silently mid-build with zero error output, for one).
+rem Run this from a real terminal (cmd/PowerShell/Windows Terminal) - it
+rem doesn't work reliably from Code Runner regardless, since Code Runner's
+rem execution context can't keep background processes alive at all, which no
+rem stdin trick fixes anyway.
 setlocal enabledelayedexpansion
 
 rem Starts the full CRM stack for local dev: infra pods (Postgres/Kafka/Redis/
@@ -19,14 +17,18 @@ rem NOT the project's mvnw.cmd wrapper - that script re-invokes itself via
 rem powershell internally (see mvnw.cmd's own polyglot batch/powershell body),
 rem which is blocked outright by Group Policy on some machines. Real Maven's
 rem own mvn.cmd has zero PowerShell dependency, so this works everywhere.
-rem Each service gets its own Windows Terminal tab (titled "CRM-<name>") in
-rem one shared window, via "wt new-tab" - NOT separate "start"-spawned windows,
-rem which some automation contexts (e.g. Code Runner) prevent from ever
-rem becoming visible at all even though the underlying process does start.
-rem stop.bat finds and kills these by matching each java.exe's own command
-rem line (its module directory), not by window/tab title - tabs don't expose
-rem an independent native window handle the way separate windows did, so
-rem title-based matching can't reliably target one specific tab's process.
+rem Each service is spawned via "wmic process call create" (see :startwindow
+rem below) - unlike "wt new-tab" (silently produced nothing under some
+rem execution contexts) or "start /B" (unreliable, inconsistent failures
+rem depending on quoting), wmic's process creation doesn't depend on any
+rem console/window station at all, so it survives regardless of how this
+rem script itself was launched. wmic always opens its own console window for
+rem the spawned process (no "hidden" option like "start /B" has), so Maven's
+rem live output just prints straight into that window instead of being
+rem redirected anywhere - see _run-service.bat, which titles each window
+rem "CRM dev - <service>".
+rem stop.bat/restart.bat find and kill these by matching each java.exe's own
+rem command line (its module directory), not by window title.
 rem Services default to the "dev" profile on their own (each service's local
 rem application.yml: SPRING_PROFILES_ACTIVE:dev) - no override needed here.
 rem
@@ -76,12 +78,13 @@ call :waitforport 8180 "Keycloak"
 
 echo === Building shared-contracts / shared-events (installed into local repo) ===
 pushd "%BACKEND%"
-"%MVN%" -pl shared-contracts,shared-events -am install -DskipTests -q <nul
+call "%MVN%" -pl shared-contracts,shared-events -am install -DskipTests -q
 if errorlevel 1 (
     echo ERROR: Failed to build shared-contracts/shared-events - see output above.
     popd
     exit /b 1
 )
+echo shared-contracts/shared-events built OK ^(-q means Maven prints nothing on success^).
 popd
 
 echo === Starting Config Server ===
@@ -108,31 +111,47 @@ timeout /t 2 /nobreak >nul
 call :startwindow product-service
 
 echo.
-echo All services launched, each in its own "CRM-<name>" Windows Terminal tab. Check:
+echo All services launched, each in its own titled window (live Maven output there).
 echo   Eureka:   http://localhost:8761
 echo   Gateway:  http://localhost:8080/swagger-ui.html
 echo   Keycloak: http://localhost:8180 (admin/admin)
 echo.
-echo To stop everything: stop.bat
+echo status.bat            - check what's up
+echo restart.bat ^<service^> - restart just one
+echo stop.bat / stop.bat ^<service^> - stop everything / stop just one
 exit /b 0
 
 :startwindow
-echo Launching %~1...
-wt -w 0 new-tab --title "CRM-%~1" cmd /k "cd /d "%BACKEND%\%~1" && "%MVN%" spring-boot:run"
+rem "wmic process call create" spawns a fully detached process via WMI -
+rem unlike "start /B", this reliably survives regardless of how THIS script
+rem itself was launched (real terminal, Code Runner, etc.), since it isn't
+rem tied to any console/window station at all. It does NOT inherit this
+rem shell's environment variables though (WMI provider host runs separately),
+rem hence _run-service.bat computing its own paths from %~dp0. Its one string
+rem argument goes through wmic's OWN command-line parsing, which does not
+rem reliably support nested quotes in testing - deliberately left unquoted
+rem here (works because this repo's own path has no spaces in it; if you
+rem move this project under a path containing spaces, this will need
+rem revisiting).
+echo Launching %~1 ...
+wmic process call create "cmd /c call %~dp0_run-service.bat %~1" >nul
 exit /b 0
 
 :waitforport
 set PORT=%~1
 set LABEL=%~2
 set COUNT=0
-echo Waiting for %LABEL% on port %PORT%...
+echo Waiting for %LABEL% on port %PORT% (prints a dot every 10s so this doesn't look stuck)...
 :waitloop
-netstat -an <nul | findstr /R /C:":%PORT% .*LISTENING" >nul
+netstat -an | findstr /R /C:":%PORT% .*LISTENING" >nul
 if not errorlevel 1 (
     echo %LABEL% is up.
     exit /b 0
 )
 set /a COUNT+=1
+set /a MOD=COUNT %% 5
+set /a ELAPSED=COUNT*2
+if %MOD%==0 echo   ...still waiting for %LABEL% ^(%ELAPSED%s^)
 if %COUNT% GEQ 60 (
     echo WARNING: %LABEL% did not come up on port %PORT% after 2 minutes - continuing anyway.
     exit /b 1
