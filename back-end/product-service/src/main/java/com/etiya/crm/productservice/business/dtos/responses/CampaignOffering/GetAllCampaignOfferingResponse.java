@@ -1,7 +1,16 @@
 package com.etiya.crm.productservice.business.dtos.responses.CampaignOffering;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDate;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class GetAllCampaignOfferingResponse {
     private Long campaignOfferingId;      // PK
     private Long campaignId;              // ilişki 1 → ID

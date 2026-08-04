@@ -7,11 +7,13 @@ import com.etiya.crm.productservice.business.dtos.responses.CampaignOffering.Get
 import com.etiya.crm.productservice.business.dtos.responses.CampaignOffering.GetCampaignOfferingResponse;
 import com.etiya.crm.productservice.business.dtos.responses.CampaignOffering.UpdatedCampaignOfferingResponse;
 import com.etiya.crm.productservice.entities.concretes.CampaignOffering;
+import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 import java.util.List;
 
+@Mapper(componentModel = "spring")
 public interface CampaignOfferingMapper {
 
     // ---------- CREATE ----------

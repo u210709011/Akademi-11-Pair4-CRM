@@ -14,9 +14,11 @@ import com.etiya.crm.productservice.entities.concretes.Campaign;
 import com.etiya.crm.productservice.entities.concretes.CampaignOffering;
 import com.etiya.crm.productservice.entities.concretes.ProductOffering;
 import com.etiya.crm.productservice.mapper.CampaignOfferingMapper;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class CampaignOfferingManager implements CampaignOfferingService {
 
     private final CampaignOfferingRepository campaignOfferingRepository;
