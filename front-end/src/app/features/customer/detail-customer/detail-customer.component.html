@@ -1,3 +1,16 @@
+@if (toastMessage(); as message) {
+    <div class="success-toast">
+        <svg class="success-toast-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <path d="m8 12 3 3 5-6" />
+        </svg>
+        <span class="success-toast-message">{{ message }}</span>
+        <button type="button" class="success-toast-close" [attr.aria-label]="i18n.t('detail.dismiss')" (click)="dismissToast()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+    </div>
+}
+
 <div class="search-customer-page">
 
     <nav class="breadcrumb">
@@ -141,7 +154,7 @@
                 <div class="info-panel-header">
                     <h2 class="info-panel-title info-panel-title-dark">{{ i18n.t('detail.tabAccounts') }} ({{ accounts().length }})</h2>
                     <div class="info-panel-actions">
-                        <button type="button" class="add-address-button">
+                        <button type="button" class="add-address-button" (click)="openCreateAccountModal()">
                             <span class="add-address-icon">+</span> {{ i18n.t('detail.createNewAccount') }}
                         </button>
                     </div>
@@ -366,7 +379,7 @@
                 <div class="info-panel-header">
                     <h2 class="info-panel-title">{{ i18n.t('detail.tabContact') }}</h2>
                     <div class="info-panel-actions">
-                        <button type="button" class="icon-button" aria-label="Edit">
+                        <button type="button" class="icon-button" [attr.aria-label]="i18n.t('detail.editContact')" (click)="openEditContactModal()">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M12 20h9" />
                                 <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
@@ -541,6 +554,113 @@
     </div>
 }
 
+@if (isContactModalOpen()) {
+    <div class="modal-backdrop" (click)="closeContactModal()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+                <h3 class="modal-title">{{ i18n.t('detail.editContactTitle') }}</h3>
+                <button type="button" class="modal-close" (click)="closeContactModal()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+            </div>
+
+            <form class="modal-form">
+
+                @if (contactSaveError()) {
+                    <p class="address-save-error">{{ contactSaveError() }}</p>
+                }
+
+                <div class="modal-field">
+                    <label for="contact-email">{{ i18n.t('create.email') }} <span class="required">*</span></label>
+                    <div class="input-with-icon">
+                        <input id="contact-email" type="email" [formField]="contactForm.email" [placeholder]="i18n.t('create.emailPlaceholder')">
+                        <svg class="mail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                            <path d="m3 7 9 6 9-6"></path>
+                        </svg>
+                    </div>
+                    @if (contactForm.email().invalid() && contactForm.email().touched()) {
+                        <span class="field-error">{{ contactModel().email ? i18n.t('create.emailFormatError') : i18n.t('create.fieldRequired') }}</span>
+                    }
+                </div>
+
+                <div class="modal-field-row">
+                    <div class="modal-field">
+                        <label for="contact-mobilePhone">{{ i18n.t('create.mobilePhone') }} <span class="required">*</span></label>
+                        <div class="phone-field">
+                            <span class="phone-prefix">
+                                <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
+                                    <rect width="28" height="20" fill="#E30A17"></rect>
+                                    <circle cx="11.5" cy="10" r="5" fill="#fff"></circle>
+                                    <circle cx="13" cy="10" r="4" fill="#E30A17"></circle>
+                                    <path fill="#fff" d="M17.6 10l3.1-1.1-1.9 2.6V8.4l1.9 2.6z"></path>
+                                </svg>
+                                <strong>+90</strong>
+                            </span>
+                            <input id="contact-mobilePhone" type="text" inputmode="numeric" [formField]="contactForm.mobilePhone" (beforeinput)="blockContactPhoneInput($event, 'mobilePhone')" placeholder="5XX XXX XX XX">
+                        </div>
+                        @if (digitsOnlyErrorField() === 'mobilePhone') {
+                            <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+                        } @else if (contactForm.mobilePhone().invalid() && contactForm.mobilePhone().touched()) {
+                            <span class="field-error">{{ contactModel().mobilePhone ? i18n.t('create.mobilePhoneFormatError') : i18n.t('create.fieldRequired') }}</span>
+                        }
+                    </div>
+
+                    <div class="modal-field">
+                        <label for="contact-homePhone">{{ i18n.t('create.homePhone') }} <span class="required required-hidden">*</span></label>
+                        <div class="phone-field">
+                            <span class="phone-prefix">
+                                <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
+                                    <rect width="28" height="20" fill="#E30A17"></rect>
+                                    <circle cx="11.5" cy="10" r="5" fill="#fff"></circle>
+                                    <circle cx="13" cy="10" r="4" fill="#E30A17"></circle>
+                                    <path fill="#fff" d="M17.6 10l3.1-1.1-1.9 2.6V8.4l1.9 2.6z"></path>
+                                </svg>
+                                <strong>+90</strong>
+                            </span>
+                            <input id="contact-homePhone" type="text" inputmode="numeric" [formField]="contactForm.homePhone" (beforeinput)="blockContactPhoneInput($event, 'homePhone')" placeholder="XXX XXX XX XX">
+                        </div>
+                        @if (digitsOnlyErrorField() === 'homePhone') {
+                            <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+                        } @else if (contactForm.homePhone().invalid() && contactForm.homePhone().touched()) {
+                            <span class="field-error">{{ i18n.t('detail.homePhoneFormatError') }}</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label for="contact-fax">{{ i18n.t('create.fax') }}</label>
+                    <div class="phone-field">
+                        <span class="phone-prefix">
+                            <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
+                                <rect width="28" height="20" fill="#E30A17"></rect>
+                                <circle cx="11.5" cy="10" r="5" fill="#fff"></circle>
+                                <circle cx="13" cy="10" r="4" fill="#E30A17"></circle>
+                                <path fill="#fff" d="M17.6 10l3.1-1.1-1.9 2.6V8.4l1.9 2.6z"></path>
+                            </svg>
+                            <strong>+90</strong>
+                        </span>
+                        <input id="contact-fax" type="text" inputmode="numeric" [formField]="contactForm.fax" (beforeinput)="blockContactPhoneInput($event, 'fax')" placeholder="XXX XXX XX XX">
+                    </div>
+                    @if (digitsOnlyErrorField() === 'fax') {
+                        <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+                    } @else if (contactForm.fax().invalid() && contactForm.fax().touched()) {
+                        <span class="field-error">{{ i18n.t('detail.faxFormatError') }}</span>
+                    }
+                </div>
+
+            </form>
+
+            <div class="modal-actions">
+                <button type="button" class="cancel-button" (click)="closeContactModal()">{{ i18n.t('create.cancelBtn') }}</button>
+                <button type="button" class="save-button" [disabled]="contactForm().invalid() || isSavingContact()" (click)="saveContact()">{{ i18n.t('create.saveBtn') }}</button>
+            </div>
+
+        </div>
+    </div>
+}
+
 @if (addressToDelete(); as address) {
     <div class="modal-backdrop" (click)="closeDeleteAddressConfirm()">
         <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
@@ -576,6 +696,118 @@
                 <button type="button" class="delete-confirm-button" [disabled]="isDeletingAddress()" (click)="confirmDeleteAddress()">
                     {{ isDeletingAddress() ? i18n.t('detail.deleting') : i18n.t('detail.deleteConfirmBtn') }}
                 </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@if (isCreateAccountModalOpen()) {
+    <div class="modal-backdrop" (click)="closeCreateAccountModal()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+                <h3 class="modal-title">{{ i18n.t('detail.createBillingAccountTitle') }}</h3>
+                <button type="button" class="modal-close" (click)="closeCreateAccountModal()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+            </div>
+
+            <form class="modal-form">
+
+                @if (createAccountError()) {
+                    <p class="address-save-error">{{ createAccountError() }}</p>
+                }
+
+                <div class="modal-field">
+                    <label for="account-name">{{ i18n.t('detail.accountName') }} <span class="required">*</span></label>
+                    <input id="account-name" type="text" [formField]="accountForm.accountName" [placeholder]="i18n.t('detail.accountNamePlaceholder')">
+                    @if (accountForm.accountName().invalid() && accountForm.accountName().touched()) {
+                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                    }
+                </div>
+
+                <div class="modal-field">
+                    <label for="account-desc">{{ i18n.t('detail.accountDesc') }}</label>
+                    <input id="account-desc" type="text" [formField]="accountForm.accountDesc" [placeholder]="i18n.t('detail.accountDescPlaceholder')">
+                </div>
+
+                <hr class="modal-divider">
+
+                <div class="linked-reference-note">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                    {{ i18n.t('detail.linkedReferenceNote') }}
+                </div>
+
+                @if (!isAddingNewAddressForAccount()) {
+                    <div class="modal-field">
+                        <label for="account-address">{{ i18n.t('detail.serviceAddress') }} <span class="required">*</span></label>
+                        <div class="select-wrapper">
+                            <select id="account-address" [formField]="accountForm.addressId">
+                                <option value="" disabled selected>{{ i18n.t('detail.selectAddress') }}</option>
+                                @for (address of addresses(); track address.id) {
+                                    <option [value]="address.id">{{ serviceAddressLine(address.id) }}</option>
+                                }
+                            </select>
+                            <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                        </div>
+                    </div>
+
+                    <button type="button" class="add-new-address-link" (click)="toggleAddNewAddressForAccount()">
+                        <span class="add-address-icon">+</span> {{ i18n.t('create.addNewAddress') }}
+                    </button>
+                } @else {
+                    <div class="modal-field">
+                        <label for="account-new-city">{{ i18n.t('create.city') }} <span class="required">*</span></label>
+                        <div class="select-wrapper">
+                            <select id="account-new-city" [formField]="newAccountAddressForm.city">
+                                <option value="" disabled selected>{{ i18n.t('create.selectCity') }}</option>
+                                <option value="201">Ankara</option>
+                            </select>
+                            <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                        </div>
+                        @if (newAccountAddressForm.city().invalid() && newAccountAddressForm.city().touched()) {
+                            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        }
+                    </div>
+
+                    <div class="modal-field">
+                        <label for="account-new-street">{{ i18n.t('create.street') }} <span class="required">*</span></label>
+                        <input id="account-new-street" type="text" [formField]="newAccountAddressForm.street" [placeholder]="i18n.t('create.streetPlaceholder')">
+                        @if (newAccountAddressForm.street().invalid() && newAccountAddressForm.street().touched()) {
+                            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        }
+                    </div>
+
+                    <div class="modal-field">
+                        <label for="account-new-houseNumber">{{ i18n.t('create.houseNumber') }} <span class="required">*</span></label>
+                        <input id="account-new-houseNumber" type="text" [formField]="newAccountAddressForm.houseNumber" [placeholder]="i18n.t('create.houseNumberPlaceholder')">
+                        @if (newAccountAddressForm.houseNumber().invalid() && newAccountAddressForm.houseNumber().touched()) {
+                            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        }
+                    </div>
+
+                    <div class="modal-field">
+                        <label for="account-new-description">{{ i18n.t('create.addressDescription') }} <span class="required">*</span></label>
+                        <input id="account-new-description" type="text" [formField]="newAccountAddressForm.description" [placeholder]="i18n.t('create.addressDescriptionPlaceholder')">
+                        @if (newAccountAddressForm.description().invalid() && newAccountAddressForm.description().touched()) {
+                            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        }
+                    </div>
+
+                    <button type="button" class="add-new-address-link" (click)="toggleAddNewAddressForAccount()">
+                        <span class="add-address-icon">‹</span> {{ i18n.t('detail.useExistingAddress') }}
+                    </button>
+                }
+
+            </form>
+
+            <div class="modal-actions">
+                <button type="button" class="cancel-button" (click)="closeCreateAccountModal()">{{ i18n.t('create.cancelBtn') }}</button>
+                <button type="button" class="save-button" [disabled]="!accountFormValid() || isSavingAccount()" (click)="saveAccount()">{{ i18n.t('create.createBtn') }}</button>
             </div>
 
         </div>

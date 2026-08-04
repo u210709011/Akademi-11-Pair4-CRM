@@ -6,6 +6,8 @@ import {
   AddressEditRequest,
   AddressResponse,
   ContactInfo,
+  CreateBillingAccountRequest,
+  CustomerAccountSummary,
   CustomerDetailResponse,
   CustomerSearchCriteria,
   CustomerSearchResult,
@@ -89,6 +91,11 @@ export class CustomerService {
     return this.http.get<ContactInfo>(`${environment.apiGatewayUrl}/api/v1/customers/${custId}/contact`);
   }
 
+  // updates contact info; backend returns the updated ContactInfo.
+  updateContact(custId: number, request: ContactInfo): Observable<ContactInfo> {
+    return this.http.put<ContactInfo>(`${environment.apiGatewayUrl}/api/v1/customers/${custId}/contact`, request);
+  }
+
   // FR-005: customer-service proxies this to contact-info-service internally (max 5 per customer).
   getAddresses(custId: number): Observable<AddressResponse[]> {
     return this.http.get<AddressResponse[]>(`${environment.apiGatewayUrl}/api/v1/customers/${custId}/addresses`);
@@ -113,6 +120,14 @@ export class CustomerService {
   // FR-005: deletes an address. Backend returns 409 if the address is primary or linked to a billing account.
   deleteAddress(custId: number, addressId: number): Observable<void> {
     return this.http.delete<void>(`${environment.apiGatewayUrl}/api/v1/customers/${custId}/addresses/${addressId}`);
+  }
+
+  // creates a billing account; exactly one of request.addressId/request.newAddress must be set (enforced by caller).
+  createBillingAccount(custId: number, request: CreateBillingAccountRequest): Observable<CustomerAccountSummary> {
+    return this.http.post<CustomerAccountSummary>(
+      `${environment.apiGatewayUrl}/api/v1/customers/${custId}/accounts`,
+      request
+    );
   }
 
   // ACC-023: Create butonu - tek istekte party+customer(+hesap)+contact/adres yazar (saga, backend tarafında geri alinir).
