@@ -60,14 +60,12 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 		Customer customer = customerFinder.getActiveCustomerOrThrow(custId);
 		rules.ensureAddressProvided(request.addressId(), request.newAddress());
 
-		// Hesap adi client'tan gelmez - secilen/olusturulan adresin addrDesc'inden ("Home" gibi)
-		// otomatik turetilir (bkz. CreateBillingAccountRequest javadoc).
 		AddressResponse address = addressService.resolveBillingAddress(custId, request.addressId(),
 				request.newAddress());
 
 		CustomerAccount account = new CustomerAccount();
 		account.setCustomer(customer);
-		account.setAccountName(address.addrDesc());
+		account.setAccountName(request.accountName());
 		account.setAccountDesc(request.accountDesc());
 		account.setAccountTpId(lookupResolver.resolveBillingAccountTypeId());
 		account.setAddressId(address.id());
@@ -96,9 +94,8 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 
 		AddressResponse address = addressService.resolveBillingAddress(custId, request.addressId(), request.newAddress());
 
-		// accountNo/accountTpId burada DEGISTIRILMEZ - sadece desc/adres guncellenebilir. accountName
-		// client'tan gelmez, (muhtemelen degisen) adresin addrDesc'inden yeniden turetilir.
-		account.setAccountName(address.addrDesc());
+		// accountNo/accountTpId burada DEGISTIRILMEZ - sadece name/desc/adres guncellenebilir.
+		account.setAccountName(request.accountName());
 		account.setAccountDesc(request.accountDesc());
 		account.setAddressId(address.id());
 		account = customerAccountRepository.save(account);

@@ -1,21 +1,27 @@
 package com.etiya.crm.customerservice.business.dtos.requests;
 
+import com.etiya.crm.customerservice.constants.MessageKeys;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 
 /**
- * FR-010: "Update Billing Account" ekrani. Guncellenebilir alanlar sadece
+ * FR-010: "Update Billing Account" ekrani. Guncellenebilir alanlar accountName/
  * accountDesc/adres - accountNo ve accountTpId burada YOK, hicbir zaman
- * degistirilemez (bkz. CustomerServiceImpl.updateBillingAccount). accountName de
- * YOKTUR - client'tan alinmaz, adres degistirilirse hesap adi da yeni adresin
- * addrDesc'inden otomatik yeniden turetilir (bkz. BillingAccountServiceImpl).
+ * degistirilemez (bkz. CustomerServiceImpl.updateBillingAccount). accountName
+ * ZORUNLUDUR - front-end tipik olarak (muhtemelen degisen) adresin addrDesc'ini
+ * onceden doldurup gonderir, ama backend'de otomatik turetme/fallback YOKTUR.
  * addressId (var olan adres) ile newAddress (yeni adres olusturma) alanlarindan
  * tam olarak biri doldurulmali - CreateBillingAccountRequest ile ayni desen.
  */
 @Schema(description = "PUT /api/v1/customers/{custId}/accounts/{accountId} istek govdesi. "
-		+ "addressId VEYA newAddress'ten TAM OLARAK BIRI doldurulmali - ikisi birden ya da hicbiri 400 doner. "
-		+ "Hesap adi bu adresin addrDesc'inden otomatik turetilir, burada gonderilmez.")
+		+ "addressId VEYA newAddress'ten TAM OLARAK BIRI doldurulmali - ikisi birden ya da hicbiri 400 doner.")
 public record UpdateBillingAccountRequest(
+
+		@Schema(description = "Hesap adi", example = "Home")
+		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		String accountName,
 
 		@Schema(description = "Hesap aciklamasi (opsiyonel)", example = "Aylik elektrik/su faturasi icin")
 		String accountDesc,
