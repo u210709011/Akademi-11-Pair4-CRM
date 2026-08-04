@@ -12,8 +12,7 @@ import com.etiya.crm.orderservice.entities.concretes.CustOrdItem;
 public interface CustOrderItemMapper {
 
     //createOrder VE getById'de aynı satırlar tekrarlanıyordu
-    //price: CustOrdItem'da karsiligi yok (product-service den bekliyoruz)
-    @Mapping(target = "price", ignore = true)
+    //price: entity'deki alanla ayni isimde oldugu icin MapStruct otomatik esler
     OrderItemSummaryResponse toSummaryResponse(CustOrdItem item);
     //getItemsByCustAcctId
     CustOrdItemResponse toItemResponse(CustOrdItem item);
@@ -31,7 +30,7 @@ public interface CustOrderItemMapper {
     @Mapping(target = "udate", ignore = true)
     @Mapping(target = "uuser", ignore = true)
     
-    //product-service tamamlanana kadar bilerek bos birakilan alanlar
+    //product-service'ten manager'da cekilip elle set edilen alanlar (ofrName/prodSpecId/price)
     @Mapping(target = "newCustAcctId", ignore = true)
     @Mapping(target = "newCustId", ignore = true)
     @Mapping(target = "prodId", ignore = true)
@@ -41,5 +40,6 @@ public interface CustOrderItemMapper {
     @Mapping(target = "cmpgName", ignore = true)
     @Mapping(target = "bsnInter", ignore = true)
     @Mapping(target = "isNeedShpmt", ignore = true)
+    @Mapping(target = "price", ignore = true)
     CustOrdItem toEntity(BasketItemRequest request);
 }
