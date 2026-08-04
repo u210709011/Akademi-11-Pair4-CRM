@@ -7,11 +7,13 @@ import com.etiya.crm.productservice.business.dtos.responses.ProductCatalogOfferi
 import com.etiya.crm.productservice.business.dtos.responses.ProductCatalogOffering.GetProductCatalogOfferingResponse;
 import com.etiya.crm.productservice.business.dtos.responses.ProductCatalogOffering.UpdatedProductCatalogOfferingResponse;
 import com.etiya.crm.productservice.entities.concretes.ProductCatalogOffering;
+import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 import java.util.List;
 
+@Mapper(componentModel = "spring")
 public interface ProductCatalogOfferingMapper {
 
     // ---------- CREATE ----------
