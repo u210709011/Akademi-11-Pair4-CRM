@@ -80,6 +80,7 @@ export class DetailCustomerComponent {
   protected readonly addresses = signal<AddressResponse[]>([]);
   protected readonly maxAddresses = 5;
   protected readonly openAddressMenuId = signal<number | null>(null);
+  protected readonly expandedAccountId = signal<number | null>(null);
 
   protected readonly isAddressModalOpen = signal(false);
   protected readonly editingAddressId = signal<number | null>(null);
@@ -133,7 +134,7 @@ export class DetailCustomerComponent {
         this.customerDetailResponse = customerDetail;
         this.individualResponse = individual;
         this.customer.set(mapToCustomerDetail(customerDetail, individual, addresses));
-        this.accounts.set(mapToCustomerAccounts(customerDetail, individual));
+        this.accounts.set(mapToCustomerAccounts(customerDetail));
         this.contact.set(mapToCustomerContact(contact));
         this.addresses.set(addresses);
         this.isLoading.set(false);
@@ -201,6 +202,18 @@ export class DetailCustomerComponent {
   @HostListener('document:click')
   protected closeAddressMenu(): void {
     this.openAddressMenuId.set(null);
+  }
+
+  protected toggleAccountRow(accountId: number): void {
+    this.expandedAccountId.set(this.expandedAccountId() === accountId ? null : accountId);
+  }
+
+  protected serviceAddressLine(addressId: number | null): string {
+    const address = this.addresses().find(candidate => candidate.id === addressId);
+    if (!address) {
+      return UNKNOWN;
+    }
+    return `${address.addrDesc} — ${address.streetName} ${address.houseName}, ${this.cityName(address.cityId)}`;
   }
 
   protected linkedAccountCount(addressId: number): number {
