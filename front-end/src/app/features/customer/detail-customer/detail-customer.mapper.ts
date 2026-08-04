@@ -3,6 +3,7 @@
 // talks to core/customer types. This mapper just reshapes those responses into the flat
 // view-model the detail page renders, keeping that transformation out of the component.
 import { AddressResponse, ContactInfo, CustomerDetailResponse, IndividualResponse } from '../../../core/customer';
+import { CustOrdItemResponse } from '../../../core/order';
 
 const UNKNOWN = '—';
 
@@ -49,12 +50,16 @@ export interface CustomerAccount {
   products: AccountProduct[];
 }
 
-// product-service entegrasyonu henuz yok (bkz. detail-customer.component.ts) - UI'in urun
-// tablosunu gosterebilmesi icin aktif hesaplara sabit ornek urunler atanir.
-const MOCK_PRODUCTS: AccountProduct[] = [
-  { productId: 'PRD-10023', productName: 'Mobile Postpaid 30GB', campaignName: 'Back to School Bundle', campaignId: 'CMP-9010' },
-  { productId: 'PRD-10031', productName: 'Home Fiber 100Mbps', campaignName: 'Fiber Loyalty', campaignId: 'CMP-2077' }
-];
+// order-service'ten gelen fulfilled order line item'larini urun tablosu satirina cevirir
+// (bkz. detail-customer.component.ts - her aktif billing account icin ayri cekilir).
+export function mapToAccountProducts(items: CustOrdItemResponse[]): AccountProduct[] {
+  return items.map(item => ({
+    productId: String(item.prodId),
+    productName: item.prodName,
+    campaignName: item.cmpgName ?? UNKNOWN,
+    campaignId: item.cmpgId !== null ? String(item.cmpgId) : UNKNOWN
+  }));
+}
 
 export interface CustomerContact {
   email: string;
@@ -101,7 +106,7 @@ export function mapToCustomerAccounts(customerDetail: CustomerDetailResponse): C
       status: account.active ? 'Active' : 'Inactive',
       active: account.active,
       addressId: account.addressId,
-      products: account.active ? MOCK_PRODUCTS : []
+      products: []
     }));
 }
 
