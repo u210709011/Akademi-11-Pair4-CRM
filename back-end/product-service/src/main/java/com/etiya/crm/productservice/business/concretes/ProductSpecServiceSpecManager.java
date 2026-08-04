@@ -12,9 +12,11 @@ import com.etiya.crm.productservice.dataAccess.abstracts.ProductSpecServiceSpecR
 import com.etiya.crm.productservice.entities.concretes.ProductSpec;
 import com.etiya.crm.productservice.entities.concretes.ProductSpecServiceSpec;
 import com.etiya.crm.productservice.mapper.ProductSpecServiceSpecMapper;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class ProductSpecServiceSpecManager implements ProductSpecServiceSpecService {
 
     private final ProductSpecServiceSpecRepository productSpecServiceSpecRepository;
