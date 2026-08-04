@@ -11,11 +11,13 @@ import {
   IndividualResponse
 } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
+import { OrderService } from '../../../core/order';
 import {
   CITY_NAMES,
   CustomerAccount,
   CustomerContact,
   CustomerDetail,
+  mapToAccountProducts,
   mapToCustomerAccounts,
   mapToCustomerContact,
   mapToCustomerDetail
@@ -70,6 +72,7 @@ export class DetailCustomerComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly customerService = inject(CustomerService);
+  private readonly orderService = inject(OrderService);
 
   protected readonly isLoading = signal(true);
   protected readonly loadError = signal(false);
@@ -138,12 +141,29 @@ export class DetailCustomerComponent {
         this.contact.set(mapToCustomerContact(contact));
         this.addresses.set(addresses);
         this.isLoading.set(false);
+        this.loadAccountProducts();
       },
       error: () => {
         this.loadError.set(true);
         this.isLoading.set(false);
       }
     });
+  }
+
+  // order-service'te custAcctId'ye gore filtrelenen tek bir toplu endpoint yok, o yuzden
+  // aktif her hesap icin ayri istek atilir; hesap ID'sine gore ilgili satir guncellenir.
+  private loadAccountProducts(): void {
+    for (const account of this.accounts()) {
+      if (!account.active) {
+        continue;
+      }
+      this.orderService.getByCustAcctId(account.id).subscribe(items => {
+        const products = mapToAccountProducts(items);
+        this.accounts.update(accounts =>
+          accounts.map(candidate => (candidate.id === account.id ? { ...candidate, products } : candidate))
+        );
+      });
+    }
   }
 
   protected selectTab(tab: DetailTab): void {
