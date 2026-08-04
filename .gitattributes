@@ -1,0 +1,13 @@
+# Windows checkouts default to core.autocrlf=true, which rewrites tracked
+# text files to CRLF on checkout. For POSIX shell scripts this silently
+# corrupts the shebang line ("#!/bin/sh\r\n") - the interpreter path becomes
+# "/bin/sh\r", which doesn't exist inside a Linux container, so
+# "./mvnw ..." fails with "not found" (exit 127) as soon as it's COPYed into
+# a Docker/Podman build. Force these to always stay LF regardless of the
+# checking-out machine's git config.
+mvnw            text eol=lf
+*.sh            text eol=lf
+
+# Windows batch files stay CRLF - that's their native/expected format.
+mvnw.cmd        text eol=crlf
+*.bat           text eol=crlf

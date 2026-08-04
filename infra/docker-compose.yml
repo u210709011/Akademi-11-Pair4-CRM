@@ -285,7 +285,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/contact_info_db
       DB_USERNAME: crm
       DB_PASSWORD: crm
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
       EUREKA_URL: http://discovery-server:8761/eureka
       KEYCLOAK_CLIENT_SECRET: contact-info-service-m2m-secret
