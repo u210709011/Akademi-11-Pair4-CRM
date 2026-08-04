@@ -27,6 +27,7 @@ import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerAccountReposit
 import com.etiya.crm.customerservice.entities.concretes.Customer;
 import com.etiya.crm.customerservice.entities.concretes.CustomerAccount;
 import com.etiya.crm.customerservice.mapper.CustomerMapper;
+import com.etiya.crm.shared.contracts.address.AddressResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -59,15 +60,17 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 		Customer customer = customerFinder.getActiveCustomerOrThrow(custId);
 		rules.ensureAddressProvided(request.addressId(), request.newAddress());
 
-		Long addressId = addressService.resolveBillingAddressId(custId, request.addressId(),
+		// Hesap adi client'tan gelmez - secilen/olusturulan adresin addrDesc'inden ("Home" gibi)
+		// otomatik turetilir (bkz. CreateBillingAccountRequest javadoc).
+		AddressResponse address = addressService.resolveBillingAddress(custId, request.addressId(),
 				request.newAddress());
 
 		CustomerAccount account = new CustomerAccount();
 		account.setCustomer(customer);
-		account.setAccountName(request.accountName());
+		account.setAccountName(address.addrDesc());
 		account.setAccountDesc(request.accountDesc());
 		account.setAccountTpId(lookupResolver.resolveBillingAccountTypeId());
-		account.setAddressId(addressId);
+		account.setAddressId(address.id());
 		account.setAcctStId(lookupResolver.resolveActiveAccountStatusId());
 		// acct_no NOT NULL+UNIQUE oldugu icin gecici bir deger ile ilk kayit yapilir,
 		// IDENTITY'den donen custAcctId ile asil numara ikinci kayitta yazilir.
@@ -91,12 +94,13 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 						lookupResolver.resolveDeletedAccountStatusId())
 				.orElseThrow(() -> new BillingAccountNotFoundException(custId, accountId));
 
-		Long addressId = addressService.resolveBillingAddressId(custId, request.addressId(), request.newAddress());
+		AddressResponse address = addressService.resolveBillingAddress(custId, request.addressId(), request.newAddress());
 
-		// accountNo/accountTpId burada DEGISTIRILMEZ - sadece name/desc/adres guncellenebilir.
-		account.setAccountName(request.accountName());
+		// accountNo/accountTpId burada DEGISTIRILMEZ - sadece desc/adres guncellenebilir. accountName
+		// client'tan gelmez, (muhtemelen degisen) adresin addrDesc'inden yeniden turetilir.
+		account.setAccountName(address.addrDesc());
 		account.setAccountDesc(request.accountDesc());
-		account.setAddressId(addressId);
+		account.setAddressId(address.id());
 		account = customerAccountRepository.save(account);
 
 		return customerMapper.toResponse(account, lookupResolver.resolveActiveAccountStatusId());

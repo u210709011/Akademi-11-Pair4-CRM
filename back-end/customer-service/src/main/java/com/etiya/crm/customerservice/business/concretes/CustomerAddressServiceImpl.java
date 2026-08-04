@@ -79,7 +79,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Long resolveBillingAddressId(Long custId, Long addressId, AddressInfo newAddress) {
+	public AddressResponse resolveBillingAddress(Long custId, Long addressId, AddressInfo newAddress) {
 		Long dataTypeId = lookupResolver.resolveCustomerDataTypeId();
 		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, dataTypeId);
 		if (newAddress != null) {
@@ -88,9 +88,8 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
 			rules.validateAddressLimit(existing.size());
 			CreateAddressRequest command = new CreateAddressRequest(custId, dataTypeId, newAddress.cityId(),
 					newAddress.streetName(), newAddress.buildingName(), newAddress.addressDesc(), false);
-			return contactAddressClient.addAddress(command).id();
+			return contactAddressClient.addAddress(command);
 		}
-		rules.ensureAddressBelongsToCustomer(custId, addressId, existing);
-		return addressId;
+		return rules.ensureAddressBelongsToCustomer(custId, addressId, existing);
 	}
 }
