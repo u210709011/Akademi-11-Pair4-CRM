@@ -35,6 +35,7 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 	public GlobalExceptionHandler(MessageSource messageSource, ObjectMapper objectMapper) {
 		super(objectMapper);
 		this.messageSource = messageSource;
+		this.objectMapper = objectMapper;
 	}
 
 	@Override

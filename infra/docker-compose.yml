@@ -226,7 +226,6 @@ services:
     environment:
       CONFIG_SERVER_URL: http://config-server:8888
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
-      PORT: 8091
       DB_URL: jdbc:postgresql://postgres:5432/customer_db
       DB_USERNAME: crm
       DB_PASSWORD: crm
@@ -236,8 +235,6 @@ services:
       KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
       EUREKA_URL: http://discovery-server:8761/eureka
       KEYCLOAK_CLIENT_SECRET: customer-service-m2m-secret
-    ports:
-      - "8091:8091"
     depends_on:
       discovery-server:
         condition: service_healthy
@@ -258,7 +255,6 @@ services:
     environment:
       CONFIG_SERVER_URL: http://config-server:8888
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
-      PORT: 8092
       DB_URL: jdbc:postgresql://postgres:5432/party_db
       DB_USERNAME: crm
       DB_PASSWORD: crm
@@ -268,8 +264,6 @@ services:
       KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
       EUREKA_URL: http://discovery-server:8761/eureka
       KEYCLOAK_CLIENT_SECRET: party-service-m2m-secret
-    ports:
-      - "8092:8092"
     depends_on:
       discovery-server:
         condition: service_healthy
@@ -288,19 +282,19 @@ services:
     environment:
       CONFIG_SERVER_URL: http://config-server:8888
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
-      PORT: 8093
       DB_URL: jdbc:postgresql://postgres:5432/contact_info_db
       DB_USERNAME: crm
       DB_PASSWORD: crm
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
       EUREKA_URL: http://discovery-server:8761/eureka
       KEYCLOAK_CLIENT_SECRET: contact-info-service-m2m-secret
-    ports:
-      - "8093:8093"
     depends_on:
       discovery-server:
         condition: service_healthy
       postgres:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
       keycloak:
         condition: service_healthy
@@ -313,7 +307,6 @@ services:
     environment:
       CONFIG_SERVER_URL: http://config-server:8888
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
-      PORT: 8094
       DB_URL: jdbc:postgresql://postgres:5432/order_db
       DB_USERNAME: crm
       DB_PASSWORD: crm
@@ -323,8 +316,6 @@ services:
       KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
       EUREKA_URL: http://discovery-server:8761/eureka
       KEYCLOAK_CLIENT_SECRET: order-service-m2m-secret
-    ports:
-      - "8094:8094"
     depends_on:
       discovery-server:
         condition: service_healthy
@@ -345,14 +336,11 @@ services:
     environment:
       CONFIG_SERVER_URL: http://config-server:8888
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
-      PORT: 8095
       DB_URL: jdbc:postgresql://postgres:5432/lookup_db
       DB_USERNAME: crm
       DB_PASSWORD: crm
       KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
       EUREKA_URL: http://discovery-server:8761/eureka
-    ports:
-      - "8095:8095"
     depends_on:
       discovery-server:
         condition: service_healthy
@@ -369,14 +357,11 @@ services:
     environment:
       CONFIG_SERVER_URL: http://config-server:8888
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
-      PORT: 8096
       DB_URL: jdbc:postgresql://postgres:5432/product_db
       DB_USERNAME: crm
       DB_PASSWORD: crm
       KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
       EUREKA_URL: http://discovery-server:8761/eureka
-    ports:
-      - "8096:8096"
     depends_on:
       discovery-server:
         condition: service_healthy

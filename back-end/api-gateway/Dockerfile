@@ -3,7 +3,7 @@ FROM eclipse-temurin:25-jdk AS build
 WORKDIR /workspace
 COPY . .
 RUN --mount=type=cache,target=/root/.m2,id=maven-repo \
-    ./mvnw -pl api-gateway -am -DskipTests package -B
+    sh mvnw -pl api-gateway -am -DskipTests package -B
 
 FROM eclipse-temurin:25-jre
 WORKDIR /app

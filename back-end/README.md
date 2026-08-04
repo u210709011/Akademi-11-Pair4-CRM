@@ -23,24 +23,11 @@ back-end/
 bu repo'nun içinde DEĞİL, ayrı bir git deposunda tutulur — Config Server oradan
 klonlayıp servislere sunar (bkz. "Konfigürasyon ve Ortam Profilleri").
 
-**Not:** Altyapı (Postgres/Kafka/Redis/Keycloak) tanımları, tüm servisleri +
-front-end'i container olarak ayağa kaldıran `docker-compose.yml` ve
-başlatma/durdurma script'leri front-end ile birlikte kullanıldığı için
-`back-end/` içinde DEĞİL, tamamen `<repo-root>/infra/` altında yaşar
-(postgres-init, keycloak, debezium config/data dosyalarıyla birlikte):
-
-```
-infra/
-├── docker-compose.yml
-├── postgres-init/ , keycloak/ , debezium/    # altyapı config/data dosyalari
-└── run/
-    ├── dev/    start.bat / stop.bat   # infra container, servisler native mvnw ile (hizli iterasyon)
-    ├── test/   start.bat / stop.bat   # tum stack container, SPRING_PROFILE=test
-    └── prod/   start.bat / stop.bat   # tum stack container, SPRING_PROFILE=prod
-```
-
-Hangisini çalıştıracağını seçmek, o ortamın klasörüne girip `start.bat`
-çalıştırmak kadar basit (bkz. "Uygulamaları Başlatma Sırası").
+**Not:** Projeyi (altyapı + tüm servisler + front-end) nasıl ayağa kaldıracağın
+artık kök **[README.md](../README.md#projeyi-ayağa-kaldırma)**'da anlatılıyor —
+tek komut: `infra/run/{dev,test,prod}/start.bat`. Bu dosyadaki geri kalan
+bölümler back-end'e özgü detaylar (config profilleri, Feign/circuit breaker,
+outbox/Debezium, yeni servis ekleme) içindir.
 
 ## Sürümler
 
@@ -58,49 +45,19 @@ Hangisini çalıştıracağını seçmek, o ortamın klasörüne girip `start.ba
 | lookup-service | Genel tip/durum/type-value referans verisi | yok (REST-only) | - | - |
 | product-service | Ürün katalog/kampanya/teklif | yok (REST-only) | - | - |
 
-## Altyapıyı Başlatma (Podman)
+## Manuel / Tek Tek Başlatma (IntelliJ vb.)
 
-`podman compose` bir compose sağlayıcısına ihtiyaç duyar. `docker-compose` veya
-`podman-compose` kurulu değilse: `pip install podman-compose`
-
-Tüm stack'i (infra + her servis + front-end) build edip ayağa kaldırmak için
-`infra/run/prod/start.bat` (veya `test/`) çalıştırılır (bkz. yukarıdaki not).
-Sadece infra servisleri elle başlatılacaksa:
-
-```bash
-cd <repo-root>/infra
-podman compose -f docker-compose.yml up -d postgres kafka kafka-ui debezium debezium-connectors redis redis-commander keycloak
-```
-
-| Servis | Adres | Notlar |
-|---|---|---|
-| PostgreSQL | localhost:5432 | user/pass: `crm` / `crm`, `wal_level=logical` (CDC için) |
-| Kafka | localhost:9092 | Container içinden `kafka:29092` |
-| Kafka UI | http://localhost:8090 | Topic/mesaj izleme (`kafbat/kafka-ui` imajı) |
-| Debezium Connect | http://localhost:8083 | REST API |
-| Redis | localhost:6379 | `customer-service` cache'i için |
-| Redis Commander | http://localhost:8081 | Redis'teki key/value'lari tarayan web UI |
-| Keycloak | http://localhost:8180 | admin/admin, `crm` realm otomatik import edilir |
-
-## Uygulamaları Başlatma Sırası
-
-Her projede Maven wrapper (`mvnw`) mevcuttur, ayrıca Maven kurulumu gerekmez.
-
-Config Server tüm konfigürasyonların kaynağı olduğu için ilk o başlatılır;
-diğer tüm uygulamalar (Eureka dahil) ayarlarını ondan çeker.
+Otomatik script (`infra/run/dev/start.bat`, bkz. kök README) her servisi zaten
+bu sırayla ve vendored Maven ile başlatır. Bir servisi IntelliJ'den veya elle
+çalıştırman gerekirse aynı sıra geçerli — Config Server tüm konfigürasyonun
+kaynağı olduğu için ilk o, sonra Eureka, sonra Gateway, sonra iş servisleri
+(herhangi bir sırada). Her projede Maven wrapper (`mvnw`) mevcuttur.
 
 ```bash
-# 1. Config Server - http://localhost:8888
-cd back-end/config-server && ./mvnw spring-boot:run
-
-# 2. Discovery Server (Eureka) - http://localhost:8761
-cd back-end/discovery-server && ./mvnw spring-boot:run
-
-# 3. API Gateway - http://localhost:8080
-cd back-end/api-gateway && ./mvnw spring-boot:run
-
-# 4. İş servisleri (herhangi bir sırada)
-cd back-end/customer-service && ./mvnw spring-boot:run
+cd back-end/config-server && ./mvnw spring-boot:run       # 1. http://localhost:8888
+cd back-end/discovery-server && ./mvnw spring-boot:run    # 2. http://localhost:8761
+cd back-end/api-gateway && ./mvnw spring-boot:run         # 3. http://localhost:8080
+cd back-end/customer-service && ./mvnw spring-boot:run    # 4. herhangi bir sırada
 cd back-end/party-service && ./mvnw spring-boot:run
 cd back-end/contact-info-service && ./mvnw spring-boot:run
 cd back-end/order-service && ./mvnw spring-boot:run
