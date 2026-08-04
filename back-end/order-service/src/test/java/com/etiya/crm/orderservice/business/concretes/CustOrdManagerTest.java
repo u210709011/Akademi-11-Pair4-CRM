@@ -1,5 +1,6 @@
 package com.etiya.crm.orderservice.business.concretes;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,19 +16,26 @@ import com.etiya.crm.orderservice.business.dtos.requests.BasketItemRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.CreateOrderRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.OrderConfigurationRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ProdCharValRequest;
+import com.etiya.crm.orderservice.business.dtos.responses.OrderListItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderSummaryResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.ProdCharValResponse;
 import com.etiya.crm.orderservice.business.exceptions.AccountNotBelongToCustomerException;
+import com.etiya.crm.orderservice.business.exceptions.AddressNotBelongToCustomerException;
 import com.etiya.crm.orderservice.business.exceptions.AddressSelectionInvalidException;
+import com.etiya.crm.orderservice.business.exceptions.DuplicateBasketItemException;
+import com.etiya.crm.orderservice.business.exceptions.OrderItemNotFoundException;
 import com.etiya.crm.orderservice.business.exceptions.OrderNotEditableException;
 import com.etiya.crm.orderservice.business.exceptions.OrderNotFoundException;
 import com.etiya.crm.orderservice.business.exceptions.ServiceAddressMissingException;
 import com.etiya.crm.orderservice.business.rules.BasketValidationRules;
 import com.etiya.crm.orderservice.clients.controllers.ContactAddressClient;
 import com.etiya.crm.orderservice.clients.controllers.CustomerClient;
+import com.etiya.crm.orderservice.clients.controllers.ProductClient;
+import com.etiya.crm.orderservice.clients.responses.CampaignResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountPageResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingResponse;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterSpecRepository;
@@ -96,6 +104,8 @@ class CustOrdManagerTest {
 	@Mock
 	private ContactAddressClient contactAddressClient;
 	@Mock
+	private ProductClient productClient;
+	@Mock
 	private LookupCacheService lookupCacheService;
 	@Mock
 	private OutboxEventPublisher outboxEventPublisher;
@@ -107,7 +117,7 @@ class CustOrdManagerTest {
 		custOrdManager = new CustOrdManager(addressMapper, custOrdCharValMapper, custOrderItemMapper,
 				custOrdRepository, custOrdItemRepository, custOrdCharValRepository, bsnInterRepository,
 				bsnInterItemRepository, bsnInterSpecRepository, customerClient, contactAddressClient,
-				lookupCacheService, new BasketValidationRules(), outboxEventPublisher);
+				productClient, lookupCacheService, new BasketValidationRules(), outboxEventPublisher);
 	}
 
 	// ---- createOrder ----
@@ -120,6 +130,8 @@ class CustOrdManagerTest {
 		stubCustOrdSave();
 		stubCustOrdItemSaveAddsToParent();
 		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(productClient.getById(200L)).thenReturn(
+				new ProductOfferingResponse(200L, 9L, "Mobile Prepaid 5GB", "descr", null, 1L, new BigDecimal("89.90")));
 
 		CreateOrderRequest request = new CreateOrderRequest(CUST_ID, CUST_ACCT_ID,
 				List.of(new BasketItemRequest(200L, null, null)));
@@ -130,6 +142,8 @@ class CustOrdManagerTest {
 		assertThat(response.ordStId()).isEqualTo(WAIT_STATUS_ID);
 		assertThat(response.items()).hasSize(1);
 		assertThat(response.items().get(0).prodOfrId()).isEqualTo(200L);
+		assertThat(response.items().get(0).ofrName()).isEqualTo("Mobile Prepaid 5GB");
+		assertThat(response.totalAmount()).isEqualByComparingTo("89.90");
 		assertThat(response.charVals()).isEmpty();
 		assertThat(response.serviceAddress()).isNull();
 	}
@@ -145,6 +159,138 @@ class CustOrdManagerTest {
 
 		assertThatThrownBy(() -> custOrdManager.createOrder(request))
 				.isInstanceOf(AccountNotBelongToCustomerException.class);
+	}
+
+	// ---- addItem ----
+
+	@Test
+	void addItem_appendsToExistingWaitOrder() {
+		CustOrd custOrd = waitingOrder();
+		CustOrdItem existingItem = new CustOrdItem();
+		existingItem.setCustOrdItemId(900L);
+		existingItem.setCustOrd(custOrd);
+		existingItem.setCustAcctId(CUST_ACCT_ID);
+		existingItem.setProdOfrId(200L);
+		custOrd.getItems().add(existingItem);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(productClient.getById(300L)).thenReturn(
+				new ProductOfferingResponse(300L, 9L, "International Roaming Pack", "descr", null, 1L, new BigDecimal("149.90")));
+		when(custOrdItemRepository.save(any(CustOrdItem.class))).thenAnswer(inv -> {
+			CustOrdItem item = inv.getArgument(0);
+			item.setCustOrdItemId(901L);
+			return item;
+		});
+
+		OrderSummaryResponse response = custOrdManager.addItem(CUST_ORD_ID, new BasketItemRequest(300L, null, null));
+
+		assertThat(response.items()).hasSize(2);
+		assertThat(response.items().get(1).prodOfrId()).isEqualTo(300L);
+		verify(bsnInterItemRepository).save(any());
+	}
+
+	@Test
+	void addItem_throws_whenOrderNotEditable() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setOrdStId(PROCESSING_STATUS_ID);
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		assertThatThrownBy(() -> custOrdManager.addItem(CUST_ORD_ID, new BasketItemRequest(300L, null, null)))
+				.isInstanceOf(OrderNotEditableException.class);
+	}
+
+	@Test
+	void addItem_throws_whenAlreadyInBasket() {
+		CustOrd custOrd = waitingOrder();
+		CustOrdItem existingItem = new CustOrdItem();
+		existingItem.setCustOrdItemId(900L);
+		existingItem.setCustOrd(custOrd);
+		existingItem.setCustAcctId(CUST_ACCT_ID);
+		existingItem.setProdOfrId(200L);
+		custOrd.getItems().add(existingItem);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		assertThatThrownBy(() -> custOrdManager.addItem(CUST_ORD_ID, new BasketItemRequest(200L, null, null)))
+				.isInstanceOf(DuplicateBasketItemException.class);
+	}
+
+	@Test
+	void addItem_resolvesCampaignName_whenCmpgIdProvided() {
+		CustOrd custOrd = waitingOrder();
+		CustOrdItem existingItem = new CustOrdItem();
+		existingItem.setCustOrdItemId(900L);
+		existingItem.setCustOrd(custOrd);
+		existingItem.setCustAcctId(CUST_ACCT_ID);
+		existingItem.setProdOfrId(200L);
+		custOrd.getItems().add(existingItem);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(productClient.getById(300L)).thenReturn(
+				new ProductOfferingResponse(300L, 9L, "International Roaming Pack", "descr", null, 1L, new BigDecimal("149.90")));
+		when(productClient.getCampaignById(40L))
+				.thenReturn(new CampaignResponse(40L, "Summer Discount", "descr", "CMP-40", null, 1L, false));
+		when(custOrdItemRepository.save(any(CustOrdItem.class))).thenAnswer(inv -> {
+			CustOrdItem item = inv.getArgument(0);
+			item.setCustOrdItemId(901L);
+			return item;
+		});
+
+		OrderSummaryResponse response = custOrdManager.addItem(CUST_ORD_ID, new BasketItemRequest(300L, 40L, null));
+
+		assertThat(response.items().get(1).cmpgName()).isEqualTo("Summer Discount");
+	}
+
+	// ---- removeItem ----
+
+	@Test
+	void removeItem_removesItem_keepsOthers() {
+		CustOrd custOrd = waitingOrder();
+		CustOrdItem item1 = new CustOrdItem();
+		item1.setCustOrdItemId(900L);
+		item1.setCustOrd(custOrd);
+		item1.setProdOfrId(200L);
+		CustOrdItem item2 = new CustOrdItem();
+		item2.setCustOrdItemId(901L);
+		item2.setCustOrd(custOrd);
+		item2.setProdOfrId(300L);
+		custOrd.getItems().add(item1);
+		custOrd.getItems().add(item2);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		OrderSummaryResponse response = custOrdManager.removeItem(CUST_ORD_ID, 900L);
+
+		assertThat(response.items()).hasSize(1);
+		assertThat(response.items().get(0).prodOfrId()).isEqualTo(300L);
+		verify(bsnInterItemRepository).deleteByRowId(900L);
+		verify(custOrdItemRepository).delete(item1);
+	}
+
+	@Test
+	void removeItem_throws_whenItemNotFound() {
+		CustOrd custOrd = waitingOrder();
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		assertThatThrownBy(() -> custOrdManager.removeItem(CUST_ORD_ID, 999L))
+				.isInstanceOf(OrderItemNotFoundException.class);
+	}
+
+	@Test
+	void removeItem_throws_whenOrderNotEditable() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setOrdStId(PROCESSING_STATUS_ID);
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		assertThatThrownBy(() -> custOrdManager.removeItem(CUST_ORD_ID, 900L))
+				.isInstanceOf(OrderNotEditableException.class);
 	}
 
 	// ---- saveConfiguration ----
@@ -218,6 +364,9 @@ class CustOrdManagerTest {
 		AddressResponse existingAddress = new AddressResponse(77L, CUST_ID, 5L, 1L, "Street", "12", "Desc", true,
 				null, null, null, null);
 		when(contactAddressClient.getById(77L)).thenReturn(existingAddress);
+		when(customerClient.getAccounts(CUST_ID, 1000)).thenReturn(new CustomerAccountPageResponse(
+				List.of(new CustomerAccountResponse(CUST_ACCT_ID, "AC-1", "n", "d", null, 1L, 1L, true))));
+		when(lookupCacheService.resolveDataTypeId("CUST")).thenReturn(5L);
 		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
 
 		OrderConfigurationRequest request = new OrderConfigurationRequest(List.of(charValRequest), 77L, null);
@@ -227,6 +376,26 @@ class CustOrdManagerTest {
 		assertThat(response.charVals()).hasSize(1);
 		assertThat(custOrd.getAddressId()).isEqualTo(77L);
 		verify(contactAddressClient, never()).createAddress(any());
+	}
+
+	@Test
+	void saveConfiguration_throws_whenAddressDoesNotBelongToCustomer() {
+		CustOrd custOrd = waitingOrder();
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		doAnswer(inv -> null).when(custOrdCharValRepository).deleteByCustOrd_CustOrdId(CUST_ORD_ID);
+
+		AddressResponse someoneElsesAddress = new AddressResponse(77L, 999L, 5L, 1L, "Street", "12", "Desc", true,
+				null, null, null, null);
+		when(contactAddressClient.getById(77L)).thenReturn(someoneElsesAddress);
+		when(customerClient.getAccounts(CUST_ID, 1000)).thenReturn(new CustomerAccountPageResponse(
+				List.of(new CustomerAccountResponse(CUST_ACCT_ID, "AC-1", "n", "d", null, 1L, 1L, true))));
+		when(lookupCacheService.resolveDataTypeId("CUST")).thenReturn(5L);
+
+		OrderConfigurationRequest request = new OrderConfigurationRequest(List.of(), 77L, null);
+
+		assertThatThrownBy(() -> custOrdManager.saveConfiguration(CUST_ORD_ID, request))
+				.isInstanceOf(AddressNotBelongToCustomerException.class);
 	}
 
 	@Test
@@ -303,6 +472,33 @@ class CustOrdManagerTest {
 		verify(outboxEventPublisher).publish(eq("order"), eq(CUST_ORD_ID.toString()), eq("OrderSubmitted"), any());
 	}
 
+	// ---- cancelOrder ----
+
+	@Test
+	void cancelOrder_transitionsToRejected() {
+		CustOrd custOrd = waitingOrder();
+		Long rejectedStatusId = 53L;
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.REJECTED)).thenReturn(rejectedStatusId);
+		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
+
+		OrderSummaryResponse response = custOrdManager.cancelOrder(CUST_ORD_ID);
+
+		assertThat(response.ordStId()).isEqualTo(rejectedStatusId);
+	}
+
+	@Test
+	void cancelOrder_throws_whenOrderNotEditable() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setOrdStId(PROCESSING_STATUS_ID);
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		assertThatThrownBy(() -> custOrdManager.cancelOrder(CUST_ORD_ID))
+				.isInstanceOf(OrderNotEditableException.class);
+	}
+
 	// ---- getById ----
 
 	@Test
@@ -328,6 +524,32 @@ class CustOrdManagerTest {
 
 		assertThat(response.serviceAddress()).isNotNull();
 		assertThat(response.serviceAddress().addressId()).isEqualTo(77L);
+	}
+
+	// ---- getOrdersByCustId ----
+
+	@Test
+	void getOrdersByCustId_returnsOneRowPerOrder_withItemCountAndTotal() {
+		CustOrd custOrd = waitingOrder();
+		CustOrdItem item1 = new CustOrdItem();
+		item1.setCustOrdItemId(900L);
+		item1.setCustOrd(custOrd);
+		item1.setPrice(new BigDecimal("89.90"));
+		CustOrdItem item2 = new CustOrdItem();
+		item2.setCustOrdItemId(901L);
+		item2.setCustOrd(custOrd);
+		item2.setPrice(new BigDecimal("149.90"));
+		custOrd.getItems().add(item1);
+		custOrd.getItems().add(item2);
+
+		when(custOrdRepository.findByCustIdOrderByCdateDesc(CUST_ID)).thenReturn(List.of(custOrd));
+
+		List<OrderListItemResponse> response = custOrdManager.getOrdersByCustId(CUST_ID);
+
+		assertThat(response).hasSize(1);
+		assertThat(response.get(0).custOrdId()).isEqualTo(CUST_ORD_ID);
+		assertThat(response.get(0).itemCount()).isEqualTo(2);
+		assertThat(response.get(0).totalAmount()).isEqualByComparingTo("239.80");
 	}
 
 	// ---- helpers ----
