@@ -4,8 +4,12 @@ rem the Postgres/Kafka data volumes (full reset):  stop.bat clean
 set INFRA=%~dp0..\..
 for %%I in ("%INFRA%") do set INFRA=%%~fI
 cd /d "%INFRA%"
+
+call "%~dp0..\detect-engine.bat"
+if errorlevel 1 exit /b 1
+
 if /I "%~1"=="clean" (
-    podman compose -f docker-compose.yml down -v
+    %COMPOSE% -f docker-compose.yml down -v
 ) else (
-    podman compose -f docker-compose.yml down
+    %COMPOSE% -f docker-compose.yml down
 )
