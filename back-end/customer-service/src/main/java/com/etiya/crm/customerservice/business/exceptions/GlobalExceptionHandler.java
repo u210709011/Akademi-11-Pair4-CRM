@@ -66,8 +66,8 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 		return build(HttpStatus.BAD_REQUEST, ex, request);
 	}
 
-	@ExceptionHandler(BillingAccountAddressRequiredException.class)
-	public ResponseEntity<ErrorResponse> handleBillingAccountAddressRequired(BillingAccountAddressRequiredException ex,
+	@ExceptionHandler({ BillingAccountAddressRequiredException.class, BillingAccountAddressConflictException.class })
+	public ResponseEntity<ErrorResponse> handleBillingAccountAddressRequired(BusinessException ex,
 			HttpServletRequest request) {
 		return build(HttpStatus.BAD_REQUEST, ex, request);
 	}
@@ -80,7 +80,7 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
 	@ExceptionHandler({ PrimaryAddressCannotBeDeletedException.class, AddressLinkedToAccountException.class,
 			BillingAccountActiveCannotBeDeletedException.class, CustomerHasActiveBillingAccountException.class,
-			DefaultAccountCannotBeDeletedException.class })
+			DefaultAccountCannotBeDeletedException.class, BillingAccountHasActiveProductsException.class })
 	public ResponseEntity<ErrorResponse> handleGuardViolation(BusinessException ex, HttpServletRequest request) {
 		return build(HttpStatus.CONFLICT, ex, request);
 	}
