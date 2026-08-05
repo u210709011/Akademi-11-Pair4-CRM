@@ -41,9 +41,11 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
         return resolve(MessageKeys.DOWNSTREAM_UNAVAILABLE);
     }
 
-    // NOT: yeni "...NotFoundException" eklendikçe (ProductNotFoundException,
-    // CampaignNotFoundException, ...) buraya listeye eklenecek.
-    @ExceptionHandler({ ProductSpecNotFoundException.class, LookupValueNotFoundException.class })
+    // NOT: yeni "...NotFoundException" eklendikçe buraya listeye eklenecek.
+    @ExceptionHandler({ ProductSpecNotFoundException.class, ProductNotFoundException.class,
+            ProductOfferingNotFoundException.class, ProductCatalogNotFoundException.class,
+            ProductCatalogOfferingNotFoundException.class, CampaignNotFoundException.class,
+            LookupValueNotFoundException.class })
     public ResponseEntity<ErrorResponse> handleNotFound(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, ex, request);
     }

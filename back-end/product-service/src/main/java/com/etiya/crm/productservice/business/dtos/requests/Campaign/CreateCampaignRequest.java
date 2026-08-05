@@ -28,8 +28,8 @@ public class CreateCampaignRequest {
 
     private LocalDate activityEndDate;
 
-    @NotNull(message = "Durum zorunludur.")
-    private Long statusId;
+    @NotBlank(message = "Durum kodu zorunludur.")
+    private String statusCode;
 
     @NotNull(message = "penalty alanı boş bırakılamaz")
     private Boolean penalty;
