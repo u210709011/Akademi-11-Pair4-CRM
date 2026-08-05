@@ -21,7 +21,6 @@ import com.etiya.crm.customerservice.business.dtos.responses.AddressBillingAccou
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.business.exceptions.BillingAccountNotFoundException;
 import com.etiya.crm.customerservice.business.rules.BillingAccountBusinessRules;
-import com.etiya.crm.customerservice.constants.AccountDefaults;
 import com.etiya.crm.customerservice.constants.CacheNames;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerAccountRepository;
 import com.etiya.crm.customerservice.entities.concretes.Customer;
@@ -42,6 +41,7 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 	private final CustomerAddressService addressService;
 	private final CustomerFinder customerFinder;
 	private final BillingAccountProductGuard productGuard;
+	private final AccountNumberGenerator accountNumberGenerator;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -74,7 +74,7 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 		// IDENTITY'den donen custAcctId ile asil numara ikinci kayitta yazilir.
 		account.setAccountNo(UUID.randomUUID().toString());
 		account = customerAccountRepository.save(account);
-		account.setAccountNo(AccountDefaults.formatAccountNo(account.getCustAcctId()));
+		account.setAccountNo(accountNumberGenerator.generate(account.getCustAcctId()));
 		account = customerAccountRepository.save(account);
 
 		return customerMapper.toResponse(account, lookupResolver.resolveActiveAccountStatusId());
