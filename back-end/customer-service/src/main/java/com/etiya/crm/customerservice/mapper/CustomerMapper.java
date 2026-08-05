@@ -2,6 +2,7 @@ package com.etiya.crm.customerservice.mapper;
 
 import java.util.List;
 
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -15,15 +16,27 @@ import com.etiya.crm.customerservice.entities.concretes.CustomerSearchView;
 @Mapper(componentModel = "spring")
 public interface CustomerMapper {
 
-	CustomerAccountResponse toResponse(CustomerAccount account);
+	/**
+	 * "active" onceden MapStruct'in isim-uyumu convention'i ile BaseEntity.isActive()'dan
+	 * (CustomerAccount icin hep true, bkz. entity javadoc'u) doluyordu - gercek durumu hic
+	 * yansitmiyordu. Artik acctStId'nin caller'in @Context olarak verdigi activeStatusId'ye
+	 * gore null-safe yorumlanmasindan turetilir (bkz. isActive default metodu).
+	 */
+	@Mapping(target = "active", expression = "java(isActive(account, activeStatusId))")
+	CustomerAccountResponse toResponse(CustomerAccount account, @Context Long activeStatusId);
 
 	CustomerSearchResponse toResponse(CustomerSearchView searchView);
 
 	/**
 	 * CUST_ACCT'in aktif alt kumesi ayrica sorgulanip verildigi icin
 	 * Customer.accounts (soft-delete edilenler dahil tum liste) yerine bu
-	 * parametre kullanilir.
+	 * parametre kullanilir. @Context activeStatusId, listedeki her CustomerAccount icin
+	 * toResponse(CustomerAccount, Long) cagrisina otomatik iletilir.
 	 */
 	@Mapping(target = "accounts", source = "accounts")
-	CustomerResponse toResponse(Customer customer, List<CustomerAccount> accounts);
+	CustomerResponse toResponse(Customer customer, List<CustomerAccount> accounts, @Context Long activeStatusId);
+
+	default boolean isActive(CustomerAccount account, Long activeStatusId) {
+		return account.getAcctStId() == null || activeStatusId.equals(account.getAcctStId());
+	}
 }

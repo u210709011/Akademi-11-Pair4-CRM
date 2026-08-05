@@ -37,8 +37,10 @@ rem veya: infra\run\test\start.bat / infra\run\prod\start.bat
 ```
 
 - **`dev`**: Postgres/Kafka/Redis/Keycloak container'da başlar, her Spring Boot
-  servisi ise kendi Windows Terminal tab'ında **native** çalışır (vendored Apache
-  Maven ile — `mvnw` değil, bkz. back-end/README.md). En hızlı iterasyon için.
+  servisi ise kendi başlıklı konsol penceresinde **native** çalışır (vendored
+  Apache Maven ile — `mvnw` değil), Maven'in canlı çıktısı doğrudan o pencereye
+  basılır. Detaylar ve `restart.bat`/`status.bat`/`stop.bat` kullanımı için
+  **[infra/run/dev/README.md](infra/run/dev/README.md)**. En hızlı iterasyon için.
 - **`test`/`prod`**: Front-end dahil her şey (`--build` ile) container'da,
   ilgili Spring profiliyle ayağa kalkar.
 

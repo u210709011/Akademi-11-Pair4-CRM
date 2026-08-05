@@ -97,7 +97,7 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 					new CustomerOnboardedEvent(UUID.randomUUID(), CustomerEventTypes.CUSTOMER_ONBOARDED,
 							customer.getCustId(), customer.getPartyRoleId()));
 
-			return customerMapper.toResponse(customer, List.of(account));
+			return customerMapper.toResponse(customer, List.of(account), lookupResolver.resolveActiveAccountStatusId());
 		} catch (Exception ex) {
 			log.error(LogMessages.ONBOARDING_FAILED_COMPENSATING_PARTY, partyRole.partyId(), ex);
 			try {

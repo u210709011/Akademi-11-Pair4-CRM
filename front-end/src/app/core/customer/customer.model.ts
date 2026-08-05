@@ -118,3 +118,12 @@ export interface AddressEditRequest {
   addressDesc: string;
   primary: boolean;
 }
+
+// POST /api/v1/customers/{custId}/accounts request body - exactly one of addressId/newAddress
+// must be set (backend returns 400 if both or neither are present).
+export interface CreateBillingAccountRequest {
+  accountName: string;
+  accountDesc?: string | null;
+  addressId?: number;
+  newAddress?: AddressInfo;
+}

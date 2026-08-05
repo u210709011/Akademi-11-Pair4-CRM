@@ -4,7 +4,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.etiya.crm.customerservice.business.dtos.requests.AddressInfo;
 import com.etiya.crm.customerservice.business.exceptions.BillingAccountActiveCannotBeDeletedException;
+import com.etiya.crm.customerservice.business.exceptions.BillingAccountAddressConflictException;
+import com.etiya.crm.customerservice.business.exceptions.BillingAccountAddressRequiredException;
+import com.etiya.crm.customerservice.business.exceptions.BillingAccountHasActiveProductsException;
 import com.etiya.crm.customerservice.business.exceptions.CustomerHasActiveBillingAccountException;
 import com.etiya.crm.customerservice.business.exceptions.DefaultAccountCannotBeDeletedException;
 import com.etiya.crm.customerservice.entities.concretes.CustomerAccount;
@@ -27,6 +31,47 @@ class BillingAccountBusinessRulesTest {
 	private static final Long PASSIVE_STATUS_ID = 602L;
 
 	private final BillingAccountBusinessRules rules = new BillingAccountBusinessRules();
+
+	// --- ACC-004/009: ensureAddressProvided (XOR: addressId veya newAddress, ikisi birden degil) ---
+
+	@Test
+	void ensureAddressProvided_throws_whenBothAreNull() {
+		assertThatThrownBy(() -> rules.ensureAddressProvided(null, null))
+				.isInstanceOf(BillingAccountAddressRequiredException.class);
+	}
+
+	@Test
+	void ensureAddressProvided_throws_whenBothAreProvided() {
+		AddressInfo newAddress = new AddressInfo(201L, "Ataturk Cad.", "No:12", "Is yeri");
+
+		assertThatThrownBy(() -> rules.ensureAddressProvided(1L, newAddress))
+				.isInstanceOf(BillingAccountAddressConflictException.class);
+	}
+
+	@Test
+	void ensureAddressProvided_passes_whenOnlyAddressIdProvided() {
+		assertThatCode(() -> rules.ensureAddressProvided(1L, null)).doesNotThrowAnyException();
+	}
+
+	@Test
+	void ensureAddressProvided_passes_whenOnlyNewAddressProvided() {
+		AddressInfo newAddress = new AddressInfo(201L, "Ataturk Cad.", "No:12", "Is yeri");
+
+		assertThatCode(() -> rules.ensureAddressProvided(null, newAddress)).doesNotThrowAnyException();
+	}
+
+	// --- ACC-004: ensureNoLinkedProducts ---
+
+	@Test
+	void ensureNoLinkedProducts_throws_whenProductsLinked() {
+		assertThatThrownBy(() -> rules.ensureNoLinkedProducts(true))
+				.isInstanceOf(BillingAccountHasActiveProductsException.class);
+	}
+
+	@Test
+	void ensureNoLinkedProducts_passes_whenNoProductsLinked() {
+		assertThatCode(() -> rules.ensureNoLinkedProducts(false)).doesNotThrowAnyException();
+	}
 
 	// --- FR-011: ensureBillingAccountNotActive (tek hesap) ---
 

@@ -5,6 +5,7 @@ import com.etiya.crm.orderservice.business.dtos.requests.CreateOrderRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.OrderConfigurationRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ValidateBasketRequest;
 import com.etiya.crm.orderservice.business.dtos.responses.CustOrdItemResponse;
+import com.etiya.crm.orderservice.business.dtos.responses.OrderListItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderSummaryResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,12 @@ public class CustOrdController {
         return ResponseEntity.ok(custOrdService.finishOrder(custOrdId));
     }
 
+    // Review & Confirm'de Cancel - WAIT'teki siparisi REJECTED'e cevirir.
+    @PostMapping("/{custOrdId}/cancel")
+    public ResponseEntity<OrderSummaryResponse> cancel(@PathVariable Long custOrdId) {
+        return ResponseEntity.ok(custOrdService.cancelOrder(custOrdId));
+    }
+
     @GetMapping("/{custOrdId}")
     public ResponseEntity<OrderSummaryResponse> getById(@PathVariable Long custOrdId) {
         return ResponseEntity.ok(custOrdService.getById(custOrdId));
@@ -57,5 +64,11 @@ public class CustOrdController {
     @GetMapping(params = "custAcctId")
     public ResponseEntity<List<CustOrdItemResponse>> getByCustAcctId(@RequestParam Long custAcctId) {
         return ResponseEntity.ok(custOrdService.getItemsByCustAcctId(custAcctId));
+    }
+
+    // Musteri siparis gecmisi (order list ekrani) - tahmini alanlarla eklendi, gerekirse revize edilir.
+    @GetMapping(params = "custId")
+    public ResponseEntity<List<OrderListItemResponse>> getByCustId(@RequestParam Long custId) {
+        return ResponseEntity.ok(custOrdService.getOrdersByCustId(custId));
     }
 }

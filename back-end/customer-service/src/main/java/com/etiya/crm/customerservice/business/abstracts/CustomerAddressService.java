@@ -22,6 +22,8 @@ public interface CustomerAddressService {
 	 * Billing account CRUD'unun ihtiyaci: var olan bir addressId'yi dogrular ya da
 	 * newAddress'ten yeni bir adres olusturup id'sini doner. BillingAccountService
 	 * bu metoda bagimlidir (interface uzerinden, dogrudan implementasyona degil).
+	 * Tam AddressResponse donulur (sadece id degil) - fatura hesabinin ADI, client'tan
+	 * gelmez, bu adresin addrDesc'inden turetilir (bkz. BillingAccountServiceImpl).
 	 */
-	Long resolveBillingAddressId(Long custId, Long addressId, AddressInfo newAddress);
+	AddressResponse resolveBillingAddress(Long custId, Long addressId, AddressInfo newAddress);
 }

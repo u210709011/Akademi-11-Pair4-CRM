@@ -3,11 +3,16 @@
 // talks to core/customer types. This mapper just reshapes those responses into the flat
 // view-model the detail page renders, keeping that transformation out of the component.
 import { AddressResponse, ContactInfo, CustomerDetailResponse, IndividualResponse } from '../../../core/customer';
+import { CustOrdItemResponse } from '../../../core/order';
 
 const UNKNOWN = '—';
 
 // lookup-service CITY grubunda seed'de tek deger var: 201=Ankara.
 export const CITY_NAMES: Record<number, string> = { 201: 'Ankara' };
+
+// lookup-service gnl_tp (ent_code_name=ACCOUNT_TYPE): 223=Musteri Hesap (CUST_ACCT), 224=Fatura Hesap (BILL_ACCT).
+// Billing Accounts tab'i sadece gercek fatura hesaplarini (224) gosterir.
+const BILLING_ACCOUNT_TYPE_ID = 224;
 
 export interface CustomerDetail {
   customerId: string;
@@ -27,11 +32,33 @@ export interface CustomerDetail {
   nationalId: string;
 }
 
+export interface AccountProduct {
+  productId: string;
+  productName: string;
+  campaignName: string;
+  campaignId: string;
+}
+
 export interface CustomerAccount {
+  id: number;
   accountNumber: string;
   accountName: string;
   accountType: string;
   status: string;
+  active: boolean;
+  addressId: number | null;
+  products: AccountProduct[];
+}
+
+// order-service'ten gelen fulfilled order line item'larini urun tablosu satirina cevirir
+// (bkz. detail-customer.component.ts - her aktif billing account icin ayri cekilir).
+export function mapToAccountProducts(items: CustOrdItemResponse[]): AccountProduct[] {
+  return items.map(item => ({
+    productId: String(item.prodId),
+    productName: item.prodName,
+    campaignName: item.cmpgName ?? UNKNOWN,
+    campaignId: item.cmpgId !== null ? String(item.cmpgId) : UNKNOWN
+  }));
 }
 
 export interface CustomerContact {
@@ -47,12 +74,13 @@ export function mapToCustomerDetail(
   addresses: AddressResponse[]
 ): CustomerDetail {
   const primaryAddress = addresses.find(address => address.primary) ?? addresses[0];
+  const billingAccountsCount = customerDetail.accounts.filter(account => account.accountTpId === BILLING_ACCOUNT_TYPE_ID).length;
 
   return {
     customerId: `CUST-${customerDetail.custId}`,
     fullName: `${individual.firstName} ${individual.lastName}`,
     active: customerDetail.active,
-    accountsCount: customerDetail.accounts.length,
+    accountsCount: billingAccountsCount,
     addressCount: addresses.length,
     maxAddresses: 5,
     primaryCity: primaryAddress ? CITY_NAMES[primaryAddress.cityId] ?? UNKNOWN : UNKNOWN,
@@ -67,13 +95,19 @@ export function mapToCustomerDetail(
   };
 }
 
-export function mapToCustomerAccounts(customerDetail: CustomerDetailResponse, individual: IndividualResponse): CustomerAccount[] {
-  return customerDetail.accounts.map(account => ({
-    accountNumber: account.accountNo,
-    accountName: account.accountName ?? `${individual.firstName} ${individual.lastName}`,
-    accountType: account.accountDesc ?? UNKNOWN,
-    status: account.active ? 'Active' : 'Inactive'
-  }));
+export function mapToCustomerAccounts(customerDetail: CustomerDetailResponse): CustomerAccount[] {
+  return customerDetail.accounts
+    .filter(account => account.accountTpId === BILLING_ACCOUNT_TYPE_ID)
+    .map(account => ({
+      id: account.custAcctId,
+      accountNumber: account.accountNo,
+      accountName: account.accountName ?? UNKNOWN,
+      accountType: account.accountDesc ?? UNKNOWN,
+      status: account.active ? 'Active' : 'Inactive',
+      active: account.active,
+      addressId: account.addressId,
+      products: []
+    }));
 }
 
 export function mapToCustomerContact(contact: ContactInfo): CustomerContact {
