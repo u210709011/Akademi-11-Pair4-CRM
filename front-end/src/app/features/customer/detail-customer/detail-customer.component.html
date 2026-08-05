@@ -753,29 +753,6 @@
                     <p class="address-save-error">{{ createAccountError() }}</p>
                 }
 
-                <div class="modal-field">
-                    <label for="account-name">{{ i18n.t('detail.accountName') }} <span class="required">*</span></label>
-                    <input id="account-name" type="text" [formField]="accountForm.accountName" [placeholder]="i18n.t('detail.accountNamePlaceholder')">
-                    @if (accountForm.accountName().invalid() && accountForm.accountName().touched()) {
-                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
-                    }
-                </div>
-
-                <div class="modal-field">
-                    <label for="account-desc">{{ i18n.t('detail.accountDesc') }}</label>
-                    <input id="account-desc" type="text" [formField]="accountForm.accountDesc" [placeholder]="i18n.t('detail.accountDescPlaceholder')">
-                </div>
-
-                <hr class="modal-divider">
-
-                <div class="linked-reference-note">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                    </svg>
-                    {{ i18n.t('detail.linkedReferenceNote') }}
-                </div>
-
                 @if (!isAddingNewAddressForAccount()) {
                     <div class="modal-field">
                         <label for="account-address">{{ i18n.t('detail.serviceAddress') }} <span class="required">*</span></label>
@@ -793,6 +770,28 @@
                     <button type="button" class="add-new-address-link" (click)="toggleAddNewAddressForAccount()">
                         <span class="add-address-icon">+</span> {{ i18n.t('create.addNewAddress') }}
                     </button>
+
+                    @if (selectedExistingAddress(); as previewAddress) {
+                        <div class="address-card address-preview-card">
+                            <span class="service-address-label">{{ i18n.t('detail.addressPreviewTitle') }}</span>
+                            <div class="address-preview-row">
+                                <span class="address-preview-label">{{ i18n.t('detail.addressNameLabel') }}</span>
+                                <span class="address-preview-value">{{ previewAddress.addrDesc }}</span>
+                            </div>
+                            <div class="address-preview-row">
+                                <span class="address-preview-label">{{ i18n.t('detail.addressDetailsLabel') }}</span>
+                                <span class="address-preview-value">{{ previewAddress.addrDesc }}</span>
+                            </div>
+                            <div class="address-preview-row">
+                                <span class="address-preview-label">{{ i18n.t('detail.fullAddressLabel') }}</span>
+                                <span class="address-preview-value">{{ fullAddressLine(previewAddress) }}</span>
+                            </div>
+                            <p class="service-address-note">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
+                                {{ i18n.t('detail.addressPreviewNote') }}
+                            </p>
+                        </div>
+                    }
                 } @else {
                     <div class="modal-field">
                         <label for="account-new-city">{{ i18n.t('create.city') }} <span class="required">*</span></label>
@@ -836,6 +835,21 @@
                         <span class="add-address-icon">‹</span> {{ i18n.t('detail.useExistingAddress') }}
                     </button>
                 }
+
+                <hr class="modal-divider">
+
+                <div class="modal-field">
+                    <label for="account-name">{{ i18n.t('detail.accountName') }} <span class="required">*</span></label>
+                    <input id="account-name" type="text" [formField]="accountForm.accountName" (input)="markAccountNameTouched()" [placeholder]="i18n.t('detail.accountNamePlaceholder')">
+                    @if (accountForm.accountName().invalid() && accountForm.accountName().touched()) {
+                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                    }
+                </div>
+
+                <div class="modal-field">
+                    <label for="account-desc">{{ i18n.t('detail.accountDesc') }}</label>
+                    <input id="account-desc" type="text" [formField]="accountForm.accountDesc" [placeholder]="i18n.t('detail.accountDescPlaceholder')">
+                </div>
 
             </form>
 

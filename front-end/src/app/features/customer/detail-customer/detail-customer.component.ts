@@ -163,6 +163,8 @@ export class DetailCustomerComponent {
   protected readonly createAccountError = signal<string | null>(null);
   // false: mevcut adres dropdown'i; true: inline "+ Add New Address" formu.
   protected readonly isAddingNewAddressForAccount = signal(false);
+  // kullanici Account Name'i elle degistirdiyse true olur - auto-fill sadece false iken calisir (bkz. constructor'daki effect).
+  protected readonly accountNameTouched = signal(false);
 
   protected readonly addressModel = signal<AddressFormModel>({ ...EMPTY_ADDRESS_FORM });
 
@@ -219,6 +221,13 @@ export class DetailCustomerComponent {
       : this.accountModel().addressId !== '';
   });
 
+  // Address Preview karti icin - sadece "mevcut adres" modunda ve gecerli bir secim varken dolu.
+  protected readonly selectedExistingAddress = computed(() =>
+    this.isAddingNewAddressForAccount()
+      ? null
+      : this.addresses().find(address => String(address.id) === this.accountModel().addressId) ?? null
+  );
+
   protected readonly tabs: { key: DetailTab; labelKey: string }[] = [
     { key: 'information', labelKey: 'detail.tabInformation' },
     { key: 'accounts', labelKey: 'detail.tabAccounts' },
@@ -274,6 +283,18 @@ export class DetailCustomerComponent {
       const maxPage = this.accountsTotalPages() - 1;
       if (this.accountsPage() > maxPage) {
         this.accountsPage.set(maxPage);
+      }
+    });
+
+    // secilen mevcut adresin addrDesc'i Account Name'e otomatik dolar - kullanici elle yazdiysa
+    // (accountNameTouched) veya yeni-adres modundaysa calismaz.
+    effect(() => {
+      if (this.isAddingNewAddressForAccount() || this.accountNameTouched()) {
+        return;
+      }
+      const address = this.addresses().find(candidate => String(candidate.id) === this.accountModel().addressId);
+      if (address) {
+        this.accountForm.accountName().value.set(address.addrDesc);
       }
     });
   }
@@ -366,6 +387,7 @@ export class DetailCustomerComponent {
   protected openCreateAccountModal(): void {
     this.createAccountError.set(null);
     this.isAddingNewAddressForAccount.set(false);
+    this.accountNameTouched.set(false);
     this.accountForm().reset({ ...EMPTY_CREATE_ACCOUNT_FORM });
     this.newAccountAddressForm().reset({ ...EMPTY_ADDRESS_FORM });
     this.isCreateAccountModalOpen.set(true);
@@ -373,6 +395,10 @@ export class DetailCustomerComponent {
 
   protected closeCreateAccountModal(): void {
     this.isCreateAccountModalOpen.set(false);
+  }
+
+  protected markAccountNameTouched(): void {
+    this.accountNameTouched.set(true);
   }
 
   protected toggleAddNewAddressForAccount(): void {
@@ -441,6 +467,11 @@ export class DetailCustomerComponent {
       return UNKNOWN;
     }
     return `${address.addrDesc} — ${address.streetName} ${address.houseName}, ${this.cityName(address.cityId)}`;
+  }
+
+  // Address Preview karti icin - addrDesc'i tekrar etmeyen "salt adres" satiri.
+  protected fullAddressLine(address: AddressResponse): string {
+    return `${address.streetName} ${address.houseName}, ${this.cityName(address.cityId)}`;
   }
 
   protected linkedAccountCount(addressId: number): number {
