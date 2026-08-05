@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.etiya.crm.customerservice.business.abstracts.BillingAccountService;
 import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateBillingAccountRequest;
+import com.etiya.crm.customerservice.business.dtos.requests.UpdateBillingAccountStatusRequest;
+import com.etiya.crm.customerservice.business.dtos.responses.AddressBillingAccountsResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.constants.Roles;
 
@@ -71,6 +74,16 @@ public class CustomerAccountController {
 		return ResponseEntity.ok(billingAccountService.updateBillingAccount(custId, accountId, request));
 	}
 
+	@Operation(summary = "Billing account aktiflik durumunu degistir (ACTIVE<->PASSIVE)",
+			description = "Soft-delete DEGILDIR (bkz. DELETE ucu). Varsayilan (CUST_ACCT tipi) hesabin durumu "
+					+ "degistirilemez, DEL durumundaki hesap icin 404 doner. IDOR: baska musterinin hesabi 404 doner.")
+	@PatchMapping("/{custId}/accounts/{accountId}/status")
+	public ResponseEntity<CustomerAccountResponse> updateBillingAccountStatus(@PathVariable Long custId,
+			@Parameter(description = "Durumu degistirilecek hesabin id'si") @PathVariable Long accountId,
+			@Valid @RequestBody UpdateBillingAccountStatusRequest request) {
+		return ResponseEntity.ok(billingAccountService.updateBillingAccountStatus(custId, accountId, request));
+	}
+
 	@Operation(summary = "Billing account sil (soft-delete)",
 			description = "Aktif hesap silinemez (409, 'This billing account is active and cannot be "
 					+ "deleted.'). Urun guard'i (pasif hesaba bagli urun) order-service'i bekliyor, henuz "
@@ -88,5 +101,13 @@ public class CustomerAccountController {
 	@GetMapping("/accounts/exists-by-address/{addressId}")
 	public ResponseEntity<Boolean> existsAccountByAddress(@PathVariable Long addressId) {
 		return ResponseEntity.ok(billingAccountService.existsAccountByAddressId(addressId));
+	}
+
+	@Operation(summary = "Bir adrese bagli TUM billing account'lari (sayi + liste) getir",
+			description = "exists-by-address'in genisletilmis hali - contact-info-service'in boolean check'ini "
+					+ "bozmamak icin ayri bir uc. Front'ta gosterilmese bile ic kullanim/ileride admin ekrani icin.")
+	@GetMapping("/accounts/by-address/{addressId}")
+	public ResponseEntity<AddressBillingAccountsResponse> getAccountsByAddress(@PathVariable Long addressId) {
+		return ResponseEntity.ok(billingAccountService.getAccountsByAddressId(addressId));
 	}
 }

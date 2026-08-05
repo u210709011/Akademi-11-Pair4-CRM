@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 
 import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateBillingAccountRequest;
+import com.etiya.crm.customerservice.business.dtos.requests.UpdateBillingAccountStatusRequest;
+import com.etiya.crm.customerservice.business.dtos.responses.AddressBillingAccountsResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.entities.concretes.CustomerAccount;
 
@@ -19,9 +21,16 @@ public interface BillingAccountService {
 
 	CustomerAccountResponse updateBillingAccount(Long custId, Long accountId, UpdateBillingAccountRequest request);
 
+	/** ACTIVE<->PASSIVE toggle - soft-delete (acct_st_id=DEL) ile karistirilmaz, bkz. UpdateBillingAccountStatusRequest. */
+	CustomerAccountResponse updateBillingAccountStatus(Long custId, Long accountId,
+			UpdateBillingAccountStatusRequest request);
+
 	void deleteBillingAccount(Long custId, Long accountId);
 
 	boolean existsAccountByAddressId(Long addressId);
+
+	/** existsAccountByAddressId'nin genisletilmis hali: sayim + hesap listesi. */
+	AddressBillingAccountsResponse getAccountsByAddressId(Long addressId);
 
 	/** FR-007 ACC-003: musteri silinirken aktif bir fatura hesabi varsa engellenir. */
 	void ensureNoActiveBillingAccount(List<CustomerAccount> accounts);
