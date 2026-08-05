@@ -11,6 +11,7 @@ import org.springframework.util.StringUtils;
 import com.etiya.crm.customerservice.business.abstracts.CustomerOnboardingService;
 import com.etiya.crm.customerservice.business.abstracts.CustomerLookupResolver;
 import com.etiya.crm.customerservice.business.abstracts.IdentityVerificationService;
+import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.business.dtos.requests.ContactInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.IndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerRequest;
@@ -59,6 +60,7 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 	private final CustomerMapper customerMapper;
 	private final OutboxEventPublisher outboxEventPublisher;
 	private final AccountNumberGenerator accountNumberGenerator;
+	private final LookupCacheService lookupCacheService;
 
 	@Override
 	public IdentityVerificationResponse verifyIdentity(IndividualInfo individual) {
@@ -154,9 +156,15 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 	/**
 	 * firstName/middleName/lastName/tcNo/gsm burada senkron yazilir: hepsi bu
 	 * istekte customer-service'e caller tarafindan verilen degerlerdir, baska
-	 * bir servisin karari degildir. role BURADA YAZILMAZ: rol (partyRoleTypeId)
-	 * party-service'in karari - PartyEventListener'in az sonra tuketecegi
-	 * IndividualPartyCreated event'i ile async doldurulur (bkz. PartyEventListener).
+	 * bir servisin karari degildir. role de artik burada senkron yazilir -
+	 * onceden SADECE PartyEventListener'in async tuketecegi IndividualPartyCreated
+	 * event'i ile dolduruluyordu; event kaybolursa/lookup-service cagrisi basarisiz
+	 * olup 4 denemeden sonra DLQ'ya duserse role kalici olarak null kaliyordu, hicbir
+	 * hata da gorunmuyordu. onboard() sadece bireysel akis oldugundan ve party-service
+	 * her bireysel musteriye SABIT olarak ayni rolu (CUSTOMER_ROLE) atadigindan
+	 * (bkz. party-service IndividualManager), bu deger onboarding aninda zaten
+	 * biliniyor - async event'i beklemeye gerek yok. PartyEventListener, gelecekte
+	 * rol degisirse diye (INDIVIDUAL_UPDATED) hala calismaya devam ediyor.
 	 */
 	private void createSearchView(Customer customer, IndividualInfo individual, ContactInfo contact,
 			String accountNo) {
@@ -169,6 +177,7 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 		view.setTcNo(individual.nationalId());
 		view.setGsm(contact.mobilePhone());
 		view.setAcctNo(accountNo);
+		view.setRole(lookupCacheService.resolveTypeValue(lookupResolver.resolveCustomerRoleTypeId()));
 		view.setStatus("ACTIVE");
 		view.setDeleted(false);
 		customerSearchViewRepository.save(view);

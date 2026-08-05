@@ -37,10 +37,22 @@ import jakarta.servlet.http.HttpServletRequest;
  * hep NoFallbackAvailableException'a sarilmis, .getCause()'da gelir. Bu SARMALAMAYI cozup asil
  * exception'in tipine gore ayni iki mantiga devretmezsek, downstream'in dogru donen HER 4xx/409/404
  * (FR-006..FR-011'deki butun guard'lar dahil) caller'a ham 500 olarak sizar.
+ *
+ * DUZELTME 2 (QA canli ortam doğrulamasi ile bulundu): ex.getCause() tek basina yetmiyor - bazi
+ * cagri yollarinda (orn. Resilience4j'in ic Executor/Future tabanli calistirmasindan gecen
+ * cagrilarda) sarmalama iki katli oluyor:
+ *   NoFallbackAvailableException -> java.util.concurrent.ExecutionException -> feign.FeignException
+ * Tek seviye getCause() bu durumda ExecutionException'da duruyor, FeignException'a hic ulasmiyor
+ * ve generic 502 dalina duşuyordu (orn. PUT /customers/{id}/individual duplicate TC no -> 409
+ * yerine 502). Asagidaki findKnownCause artik FeignException/CallNotPermittedException bulana
+ * kadar (ya da MAX_UNWRAP_DEPTH sinirina kadar) TUM zinciri dolasir.
  */
 public abstract class AbstractDownstreamExceptionHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(AbstractDownstreamExceptionHandler.class);
+
+	/** Cause zincirinde sonsuz donguye karsi savunma - gercek zincirler bundan cok daha kisa. */
+	private static final int MAX_UNWRAP_DEPTH = 10;
 
 	private final ObjectMapper objectMapper;
 
@@ -73,17 +85,32 @@ public abstract class AbstractDownstreamExceptionHandler {
 	@ExceptionHandler(NoFallbackAvailableException.class)
 	public ResponseEntity<ErrorResponse> handleNoFallbackAvailable(NoFallbackAvailableException ex,
 			HttpServletRequest request) {
-		Throwable cause = ex.getCause();
-		if (cause instanceof FeignException feignException) {
+		Throwable knownCause = findKnownCause(ex.getCause());
+		if (knownCause instanceof FeignException feignException) {
 			return buildFeignExceptionResponse(feignException, request);
 		}
-		if (cause instanceof CallNotPermittedException) {
+		if (knownCause instanceof CallNotPermittedException) {
 			return buildCircuitBreakerOpenResponse(request);
 		}
-		log.error(LogMessages.NO_FALLBACK_UNEXPECTED_CAUSE, String.valueOf(cause), ex);
+		log.error(LogMessages.NO_FALLBACK_UNEXPECTED_CAUSE, String.valueOf(ex.getCause()), ex);
 		HttpStatus status = HttpStatus.BAD_GATEWAY;
 		return ResponseEntity.status(status).body(ErrorResponse.of(status.value(), status.getReasonPhrase(),
 				downstreamCallFailedMessage(), request.getRequestURI()));
+	}
+
+	/**
+	 * bkz. sinif ustu "DUZELTME 2" notu: ExecutionException gibi ara sarmalayicilari atlayip
+	 * zincirde FeignException/CallNotPermittedException arar - bulamazsa null doner.
+	 */
+	private Throwable findKnownCause(Throwable cause) {
+		Throwable current = cause;
+		for (int depth = 0; current != null && depth < MAX_UNWRAP_DEPTH; depth++) {
+			if (current instanceof FeignException || current instanceof CallNotPermittedException) {
+				return current;
+			}
+			current = current.getCause();
+		}
+		return null;
 	}
 
 	private ResponseEntity<ErrorResponse> buildFeignExceptionResponse(FeignException ex, HttpServletRequest request) {
