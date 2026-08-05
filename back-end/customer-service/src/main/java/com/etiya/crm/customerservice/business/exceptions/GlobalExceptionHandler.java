@@ -11,6 +11,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.constants.MessageKeys;
@@ -80,7 +81,8 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
 	@ExceptionHandler({ PrimaryAddressCannotBeDeletedException.class, AddressLinkedToAccountException.class,
 			BillingAccountActiveCannotBeDeletedException.class, CustomerHasActiveBillingAccountException.class,
-			DefaultAccountCannotBeDeletedException.class, BillingAccountHasActiveProductsException.class })
+			DefaultAccountCannotBeDeletedException.class, BillingAccountHasActiveProductsException.class,
+			AccountNumberCollisionException.class })
 	public ResponseEntity<ErrorResponse> handleGuardViolation(BusinessException ex, HttpServletRequest request) {
 		return build(HttpStatus.CONFLICT, ex, request);
 	}
@@ -107,6 +109,12 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 				.body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(),
 						message, request.getRequestURI()));
+	}
+
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, resolve(MessageKeys.PARAMETER_TYPE_MISMATCH, ex.getName()), request);
 	}
 
 	@ExceptionHandler(Exception.class)
