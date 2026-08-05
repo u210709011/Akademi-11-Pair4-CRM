@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface BsnInterItemRepository extends JpaRepository<BsnInterItem, Long> {
+    void deleteByRowId(Long rowId);
 }

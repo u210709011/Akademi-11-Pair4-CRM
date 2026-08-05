@@ -40,7 +40,7 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
         return resolve(MessageKeys.DOWNSTREAM_UNAVAILABLE);
     }
 
-    @ExceptionHandler({ OrderNotFoundException.class })
+    @ExceptionHandler({ OrderNotFoundException.class, OrderItemNotFoundException.class })
     public ResponseEntity<ErrorResponse> handleNotFound(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, ex, request);
     }
@@ -53,7 +53,8 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
     }
 
     @ExceptionHandler({ AddressSelectionInvalidException.class, AccountNotBelongToCustomerException.class,
-            DuplicateBasketItemException.class, ServiceAddressMissingException.class })
+            DuplicateBasketItemException.class, ServiceAddressMissingException.class,
+            AddressNotBelongToCustomerException.class })
     public ResponseEntity<ErrorResponse> handleBadRequest(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex, request);
     }

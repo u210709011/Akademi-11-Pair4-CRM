@@ -14,9 +14,11 @@ import com.etiya.crm.productservice.entities.concretes.ProductCatalog;
 import com.etiya.crm.productservice.entities.concretes.ProductCatalogOffering;
 import com.etiya.crm.productservice.entities.concretes.ProductOffering;
 import com.etiya.crm.productservice.mapper.ProductCatalogOfferingMapper;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class ProductCatalogOfferingManager implements ProductCatalogOfferingService {
 
     private final ProductCatalogOfferingRepository productCatalogOfferingRepository;

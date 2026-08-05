@@ -109,4 +109,4 @@ INSERT INTO type_value (table_name, field_name, description, cuser) VALUES
     ('PARTY',     9,  'Party_id',     'system'),
     ('CUST_ACCT', 13, 'Cust_acct_id', 'system'),
     ('PROD',      20, 'Prod_id',      'system'),
-    ('CUST',      12, 'Cust_id',      'system'),
+    ('CUST',      12, 'Cust_id',      'system');

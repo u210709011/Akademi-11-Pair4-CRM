@@ -7,11 +7,13 @@ import com.etiya.crm.productservice.business.dtos.responses.ProductSpecResourceS
 import com.etiya.crm.productservice.business.dtos.responses.ProductSpecResourceSpec.GetProductSpecResourceSpecResponse;
 import com.etiya.crm.productservice.business.dtos.responses.ProductSpecResourceSpec.UpdatedProductSpecResourceSpecResponse;
 import com.etiya.crm.productservice.entities.concretes.ProductSpecResourceSpec;
+import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 import java.util.List;
 
+@Mapper(componentModel = "spring")
 public interface ProductSpecResourceSpecMapper {
     // ---------- CREATE ----------
 

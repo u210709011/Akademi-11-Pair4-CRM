@@ -904,6 +904,70 @@
   color: var(--error);
 }
 
+// mockup'taki gercek "basari" bildirimi: sag ust, sabit, yesil tonlu, X ile kapatilabilir toast.
+// hem contact save hem de billing account create bunu paylasir (bkz. showToast() component.ts).
+.success-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 420px;
+  padding: 14px 16px;
+  background: rgba(31, 138, 91, 0.08);
+  border: 1px solid rgba(31, 138, 91, 0.3);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.success-toast-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--success);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.success-toast-message {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.success-toast-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: #6b7280;
+  cursor: pointer;
+  background: none;
+  border: none;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  &:hover {
+    color: #1f2937;
+  }
+}
+
 .delete-confirm-card {
   max-width: 460px;
 }
@@ -972,3 +1036,146 @@
 // .modal-* / .select-wrapper / .cancel-button / .save-button paylasilan adres modal
 // stilleri src/styles.scss'e tasindi (address-tab.component.scss ile ayni modal duzeni).
 
+// contact modal icin: .modal-field iki sutunlu (Mobile/Home Phone) yerlesim - onboarding'in
+// .contact-form grid deseniyle ayni mantik, sadece .modal-form'un tek sutunlu akisi icine gomulu.
+.modal-field-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px 16px;
+}
+
+// Mobile Phone zorunlu (*), Home Phone degil - etiketler farkli yukseklikte olursa (asterisk'in
+// vertical-align: super'i satir yuksekligini degistiriyor) yan yana kutular hizasiz gorunuyordu.
+// Home Phone etiketine gorunmez bir '*' koyarak iki etiketin yuksekligini esitliyoruz.
+.required-hidden {
+  visibility: hidden;
+}
+
+// asagidaki .input-with-icon / .phone-field / .phone-prefix / .flag-icon kurallari
+// contact-tab.component.scss (onboarding +90 telefon deseni) ile ayni - contact modal da
+// ayni gorunumu kullandigi icin buraya tasindi.
+.input-with-icon {
+  position: relative;
+
+  input {
+    padding-right: 40px;
+  }
+
+  .mail-icon {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--text-placeholder);
+    pointer-events: none;
+  }
+}
+
+.phone-field {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  background: var(--surface-card);
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus-within {
+    border-color: var(--etiya-orange);
+    box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15);
+  }
+
+  .phone-prefix {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    padding: 0 12px;
+    border-right: 1px solid #d1d5db;
+    font-size: 13px;
+    color: #1f2937;
+    white-space: nowrap;
+
+    strong {
+      font-weight: 700;
+    }
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0 12px;
+    font-size: 14px;
+    color: #111827;
+    background: transparent;
+    border: none;
+    box-sizing: border-box;
+
+    &:focus {
+      outline: none;
+    }
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+}
+
+// Create Billing Account modal icin - Account Name/Description ile Service Address bolumlerini
+// mockup'taki gibi ince bir cizgiyle ayirir.
+.modal-divider {
+  margin: 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+// mockup'taki "LINKED REFERENCE - NOT A COPY" statik bilgi etiketi - mevcut .required renk
+// tonuyla ayni aile (etiya-orange), ama kucuk harf araligiyla vurgulanmis bir uyari niteliginde.
+.linked-reference-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--etiya-orange);
+
+  svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+// "+ Add New Address" / "‹ Use Existing Address" - duz metin link (butonun aksine cerceve/arka
+// plan yok), Create Billing Account modalindaki iki mod arasi gecis icin.
+.add-new-address-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--etiya-orange);
+  cursor: pointer;
+  background: none;
+  border: none;
+
+  &:hover {
+    color: var(--etiya-orange-hover);
+  }
+
+  .add-address-icon {
+    font-size: 15px;
+    line-height: 1;
+  }
+}
