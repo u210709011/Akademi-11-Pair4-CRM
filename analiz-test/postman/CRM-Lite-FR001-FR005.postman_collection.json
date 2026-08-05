@@ -1969,6 +1969,15 @@
                   "  ['custId', 'firstName', 'middleName', 'lastName', 'role', 'tcNo'].forEach(function (f) {",
                   "    pm.expect(r, f).to.have.property(f);",
                   "  });",
+                  "});",
+                  "// Alanin VARLIGI yetmez, DOLU olmasi da gerekir: role alani bir donem async event ile",
+                  "// dolduruldugu icin event kaybolunca sessizce null kaliyordu (sadece varlik kontrolu",
+                  "// bu hatayi yakalayamamisti). middleName opsiyonel oldugu icin listede yok.",
+                  "pm.test('TC-002-01 · Zorunlu sonuc alanlari bos/null degil', function () {",
+                  "  var r = b.content[0];",
+                  "  ['custId', 'firstName', 'lastName', 'role', 'tcNo'].forEach(function (f) {",
+                  "    pm.expect(r[f], f + ' alani dolu olmali').to.not.be.oneOf([null, undefined, '']);",
+                  "  });",
                   "});"
                 ]
               }
