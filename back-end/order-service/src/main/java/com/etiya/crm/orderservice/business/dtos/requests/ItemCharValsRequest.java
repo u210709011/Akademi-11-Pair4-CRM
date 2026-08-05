@@ -7,12 +7,10 @@ import com.etiya.crm.orderservice.constants.MessageKeys;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
+// Configuration ekraninda basket item basina bir kart var, her biri kendi karakteristik setini tasir.
+public record ItemCharValsRequest(
 
-//single item in the cart, which offer belong to which campaign and characteristics of that item
-public record BasketItemRequest(
-
-    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}") Long prodOfrId,
-    Long cmpgId,
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}") Long custOrdItemId,
     @Valid List<ProdCharValRequest> charVals
 ) {
 
