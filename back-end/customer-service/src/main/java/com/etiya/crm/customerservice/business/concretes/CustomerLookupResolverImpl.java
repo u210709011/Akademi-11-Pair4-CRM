@@ -57,4 +57,9 @@ public class CustomerLookupResolverImpl implements CustomerLookupResolver {
 	public Long resolveIndividualCustomerTypeId() {
 		return lookupCacheService.resolveTypeId(GnlTpGroups.CUSTOMER_TYPE, GnlTpCodes.INDIVIDUAL_CUSTOMER);
 	}
+
+	@Override
+	public Long resolveCustomerRoleTypeId() {
+		return lookupCacheService.resolveTypeId(GnlTpGroups.PARTY_ROLE_TYPE, GnlTpCodes.CUSTOMER_ROLE);
+	}
 }
