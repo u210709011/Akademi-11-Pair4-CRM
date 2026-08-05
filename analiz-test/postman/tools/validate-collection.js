@@ -1,5 +1,5 @@
 const fs=require('fs');
-const c=JSON.parse(fs.readFileSync(require('path').join(__dirname,'..','CRM-Lite-FR001-FR005.postman_collection.json'),'utf8'));
+const c=JSON.parse(fs.readFileSync(require('path').join(__dirname,'..','CRM-Lite-FR001-FR011.postman_collection.json'),'utf8'));
 let n=0,bad=0;
 function chk(evts,label){(evts||[]).forEach(e=>{const src=e.script.exec.join('\n');n++;try{new Function(src);}catch(err){bad++;console.log('SYNTAX ['+label+'/'+e.listen+']: '+err.message);}});}
 chk(c.event,'COLLECTION');

@@ -1,8 +1,8 @@
 /* eslint-disable */
-// CRM Lite - FR-001..FR-005 Postman koleksiyonu ureticisi.
+// CRM Lite - FR-001..FR-011 Postman koleksiyonu ureticisi.
 const fs = require('fs');
 const path = require('path');
-const OUT = path.join(__dirname, '..', 'CRM-Lite-FR001-FR005.postman_collection.json');
+const OUT = path.join(__dirname, '..', 'CRM-Lite-FR001-FR011.postman_collection.json');
 
 const s = (t) => t.replace(/^\n+/, '').replace(/\s+$/, '').split('\n');
 
@@ -150,6 +150,73 @@ ${opts.extraTest || ''}`
   });
 }
 
+/** Iletisim bilgisi guncelleme senaryosu (FR-006). */
+function contactCase(tc, title, mutate, expect, msg, opts) {
+  opts = opts || {};
+  const v = 'c_' + tc.replace(/-/g, '_');
+  return req({
+    name: tc + ' · ' + title,
+    method: 'PUT',
+    path: opts.path || '/api/v1/customers/{{custIdE}}/contact',
+    body: '{{' + v + '}}',
+    noAuth: opts.noAuth,
+    description: opts.description,
+    pre: `${H}
+var b = newContactBody();
+${mutate || ''}
+pm.collectionVariables.set('${v}', JSON.stringify(b));`,
+    test: `${H}
+${opts.gap ? 'gapTest' : 'pm.test'}('${title.replace(/'/g, "\\'")}', function () {
+  expectCode(${expect});${msgLine(msg)}
+});
+${opts.extraTest || ''}`
+  });
+}
+
+/** Fatura hesabi olusturma (FR-008) / guncelleme (FR-010) senaryosu. */
+function billingCase(tc, title, mutate, expect, msg, opts) {
+  opts = opts || {};
+  const v = 'ba_' + tc.replace(/-/g, '_');
+  return req({
+    name: tc + ' · ' + title,
+    method: opts.method || 'POST',
+    path: opts.path || '/api/v1/customers/{{custIdF}}/accounts',
+    body: '{{' + v + '}}',
+    noAuth: opts.noAuth,
+    description: opts.description,
+    pre: `${H}
+var b = newBillingBody();
+${mutate || ''}
+pm.collectionVariables.set('${v}', JSON.stringify(b));`,
+    test: `${H}
+${opts.gap ? 'gapTest' : 'pm.test'}('${title.replace(/'/g, "\\'")}', function () {
+  expectCode(${expect});${msgLine(msg)}
+});
+if (pm.response.code === 201) { trackId('createdAccountIds', jsonBody().custAcctId); }
+${opts.extraTest || ''}`
+  });
+}
+
+/** Fatura hesabi durum degistirme (PATCH .../status) senaryosu - FR-011. */
+function statusCase(tc, title, status, expect, msg, opts) {
+  opts = opts || {};
+  const v = 'st_' + tc.replace(/-/g, '_');
+  return req({
+    name: tc + ' · ' + title,
+    method: 'PATCH',
+    path: opts.path || '/api/v1/customers/{{custIdF}}/accounts/{{acctIdF}}/status',
+    body: '{{' + v + '}}',
+    description: opts.description,
+    pre: `${H}
+pm.collectionVariables.set('${v}', JSON.stringify({ status: ${JSON.stringify(status)} }));`,
+    test: `${H}
+${opts.gap ? 'gapTest' : 'pm.test'}('${title.replace(/'/g, "\\'")}', function () {
+  expectCode(${expect});${msgLine(msg)}
+});
+${opts.extraTest || ''}`
+  });
+}
+
 /** Fixture musteri olusturan setup istegi. */
 function fixture(tc, label, key, extraPre) {
   return req({
@@ -224,6 +291,12 @@ var HELPERS = [
   "function currentIndividualBody(){",
   "  return { firstName: pm.collectionVariables.get('firstNameA'), middleName: 'Orta', lastName: pm.collectionVariables.get('lastNameA'), genderId: Number(pm.collectionVariables.get('genderId')), motherName: 'Anne', fatherName: 'Baba', birthDate: '15/06/1990', nationalId: pm.collectionVariables.get('tcknA') };",
   "}",
+  "// FR-006: gecerli bir iletisim bilgisi govdesi (her cagrida tekil e-posta/GSM uretir).",
+  "function newContactBody(){ var u = uniq(); return { email: 'iletisim.' + u.toLowerCase() + '@example.com', mobilePhone: newGsm(), homePhone: '2121234567', fax: '2129876543' }; }",
+  "// FR-008/FR-010: gecerli bir fatura hesabi govdesi - Musteri F'nin VAR OLAN adresini secer.",
+  "function newBillingBody(){ return { accountName: 'Hesap ' + uniq(), accountDesc: 'Fatura hesabi aciklamasi', addressId: Number(pm.collectionVariables.get('addressIdF1')) }; }",
+  "// FR-008 ACC-005 / FR-010 ACC-004: hesapla birlikte olusturulacak YENI adres govdesi.",
+  "function newBillingAddress(){ return { cityId: Number(pm.collectionVariables.get('cityId')), streetName: 'Fatura Sokak', buildingName: 'No:7 D:2', addressDesc: 'Fatura adresi' }; }",
   "function authHeader(){ return 'Bearer ' + pm.collectionVariables.get('accessToken'); }",
   "function jsonHeaders(){ return { 'Content-Type': 'application/json', 'Authorization': authHeader() }; }",
   "function resetLoginFailures(){ pm.sendRequest({ url: pm.environment.get('baseUrl') + '/api/v1/auth/login', method: 'POST', header: { 'Content-Type': 'application/json' }, body: { mode: 'raw', raw: JSON.stringify({ username: pm.environment.get('username'), password: pm.environment.get('password') }) } }, function(){}); }",
@@ -290,7 +363,14 @@ if (/json/.test(ct) && pm.response.code !== 204) {
 // ===========================================================================
 const setup = folder(
   '00 · Ortam Hazirligi (Setup)',
-  'Testlerin uzerinde calisacagi deterministik veri seti burada kurulur. Musteri A ve B bilincli olarak AYNI SOYADI tasir (FR-002 AND/OR ve siralama testleri icin); Musteri C silinip pasif hale getirilir; Musteri D adres testlerine ayrilmistir (adres sayisi deterministik kalsin diye).',
+  'Testlerin uzerinde calisacagi deterministik veri seti burada kurulur. Her fixture musteri tek bir sorumluluk alanina ayrilmistir; boylece bir FR\'nin testleri digerinin verisini bozmaz.\n\n'
+  + '- Musteri A : ana test musterisi (FR-002 arama, FR-004 guncelleme)\n'
+  + '- Musteri B : A ile AYNI SOYADI tasir (FR-002 AND/OR ve siralama testleri)\n'
+  + '- Musteri C : soft-delete edilir (pasif musteri davranisi)\n'
+  + '- Musteri D : FR-005 adres testleri (adres sayisi deterministik kalsin diye ayri)\n'
+  + '- Musteri E : FR-006 iletisim bilgisi testleri\n'
+  + '- Musteri F : FR-008..FR-011 fatura hesabi testleri\n'
+  + '- Musteri G : FR-007 musteri silme testleri (kosum sonunda silinir)',
   [
     req({
       name: 'S01 · Gateway ayakta (health)',
@@ -393,6 +473,55 @@ if (Array.isArray(b) && b[0]) {
   pm.collectionVariables.set('addressIdD1', b[0].id);
   console.log('[SETUP] Musteri D birincil adres id = ' + b[0].id);
 }`
+    }),
+    fixture('S12', 'Musteri E - iletisim bilgisi testleri icin', 'E'),
+    req({
+      name: 'S13 · [Musteri E] adres id alinir',
+      path: '/api/v1/customers/{{custIdE}}/addresses',
+      description: 'FR-008 IDOR testinde "baska musterinin adresi" olarak kullanilir. Musteri E\'nin adresi FR-006 boyunca degistirilmedigi icin deterministiktir.',
+      test: `${H}
+var b = jsonBody();
+pm.test('[Musteri E] adresi listelendi', function () {
+  expectCode(200);
+  pm.expect(b, 'adres listesi').to.be.an('array').that.is.not.empty;
+});
+if (Array.isArray(b) && b[0]) { pm.collectionVariables.set('addressIdE1', b[0].id); }`
+    }),
+    fixture('S14', 'Musteri F - fatura hesabi testleri icin', 'F'),
+    req({
+      name: 'S15 · [Musteri F] varsayilan hesap ve adres id alinir',
+      path: '/api/v1/customers/{{custIdF}}/accounts',
+      description: 'Onboarding her musteriye CUST_ACCT (223) tipinde varsayilan bir hesap acar. FR-011 "varsayilan hesap silinemez" testleri bu id\'yi kullanir.',
+      test: `${H}
+var b = jsonBody();
+pm.test('[Musteri F] varsayilan hesabi listelendi', function () {
+  expectCode(200);
+  pm.expect(b.content, 'hesap listesi').to.be.an('array').that.is.not.empty;
+});
+if (b.content && b.content[0]) {
+  pm.collectionVariables.set('defaultAcctIdF', b.content[0].custAcctId);
+  pm.collectionVariables.set('defaultAcctTpIdF', b.content[0].accountTpId);
+  console.log('[SETUP] Musteri F varsayilan hesap id = ' + b.content[0].custAcctId + ' (tip ' + b.content[0].accountTpId + ')');
+}
+pm.sendRequest({ url: pm.environment.get('baseUrl') + '/api/v1/customers/' + pm.collectionVariables.get('custIdF') + '/addresses', method: 'GET', header: jsonHeaders() }, function (err, res) {
+  pm.test('[Musteri F] adresi alindi', function () {
+    if (err) { throw new Error(String(err)); }
+    pm.expect(res.code).to.eql(200);
+  });
+  if (!err && res.code === 200 && res.json()[0]) { pm.collectionVariables.set('addressIdF1', res.json()[0].id); }
+});`
+    }),
+    fixture('S16', 'Musteri G - musteri silme testleri icin', 'G'),
+    req({
+      name: 'S17 · [Musteri G] adres id alinir',
+      path: '/api/v1/customers/{{custIdG}}/addresses',
+      test: `${H}
+var b = jsonBody();
+pm.test('[Musteri G] adresi listelendi', function () {
+  expectCode(200);
+  pm.expect(b, 'adres listesi').to.be.an('array').that.is.not.empty;
+});
+if (Array.isArray(b) && b[0]) { pm.collectionVariables.set('addressIdG1', b[0].id); }`
     })
   ]
 );
@@ -1192,6 +1321,1074 @@ pm.test('TC-005-19 · Tanimsiz adres icin 404 doner', function () { expectCode(4
 );
 
 // ===========================================================================
+// 06 - FR-006 ILETISIM BILGILERI YONETIMI
+// ===========================================================================
+const fr006 = folder(
+  '06 · FR-006 Iletisim Bilgileri Yonetimi',
+  'FR-006. Musterinin iletisim bilgilerinin goruntulenmesi (GET /contact) ve guncellenmesi (PUT /contact). '
+  + 'Dokumandaki validasyon tablosu (E-mail, Mobile Phone, Home Phone, Fax) sinir degerleriyle birlikte dogrulanir. '
+  + 'Musteri E kullanilir - guncellemeler kalici oldugu icin diger FR\'larin verisi etkilenmesin diye ayri bir fixture\'dir.',
+  [
+    req({
+      name: 'TC-006-01 · Iletisim bilgileri goruntulenir [ACC-001]',
+      path: '/api/v1/customers/{{custIdE}}/contact',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-006-01 · Iletisim bilgisi 200 doner', function () { expectCode(200); });
+pm.test('TC-006-01 · Contact Medium alanlari yanitta yer alir', function () {
+  ['email', 'mobilePhone', 'homePhone', 'fax'].forEach(function (f) {
+    pm.expect(b, f + ' alani').to.have.property(f);
+  });
+});`
+    }),
+    req({
+      name: 'TC-006-02 · Guncelleme ekrani mevcut degerlerle dolu gelir [ACC-002, ACC-003]',
+      path: '/api/v1/customers/{{custIdE}}/contact',
+      description: 'ACC-003 "mevcut iletisim bilgileri guncelleme ekraninda dolu gosterilmelidir" maddesinin orta katman karsiligi: '
+        + 'GET /contact, onboarding sirasinda girilen degerleri aynen dondurmelidir.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-006-02 · Onboarding\\'de girilen e-posta ve GSM aynen doner', function () {
+  expectCode(200);
+  pm.expect(b.email, 'email').to.eql(pm.collectionVariables.get('emailE'));
+  pm.expect(b.mobilePhone, 'mobilePhone').to.eql(pm.collectionVariables.get('gsmE'));
+});
+pm.test('TC-006-02 · Opsiyonel alanlar da dolu doner (ev telefonu, faks)', function () {
+  pm.expect(b.homePhone, 'homePhone').to.eql('2121234567');
+  pm.expect(b.fax, 'fax').to.eql('2129876543');
+});`
+    }),
+    contactCase('TC-006-03', 'Tum iletisim alanlari guncellenir -> 200 [ACC-004, ACC-007]', `
+b.homePhone = '2129998877';
+b.fax = '2128887766';
+pm.collectionVariables.set('emailEYeni', b.email);
+pm.collectionVariables.set('gsmEYeni', b.mobilePhone);`, 200, null, {
+      extraTest: `var r = jsonBody();
+pm.test('TC-006-03 · Yanit gonderilen degerleri tasir', function () {
+  pm.expect(r.email).to.eql(pm.collectionVariables.get('emailEYeni'));
+  pm.expect(r.mobilePhone).to.eql(pm.collectionVariables.get('gsmEYeni'));
+  pm.expect(r.homePhone).to.eql('2129998877');
+  pm.expect(r.fax).to.eql('2128887766');
+});`
+    }),
+    req({
+      name: 'TC-006-04 · Guncelleme kalicidir [ACC-007]',
+      path: '/api/v1/customers/{{custIdE}}/contact',
+      description: 'ACC-007: Save sonrasi Contact Medium ekranina donuldugunde guncel bilgiler gorunmelidir. '
+        + 'PUT yaniti degil, ayri bir GET ile dogrulanir - yani veri gercekten kalici olmalidir.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-006-04 · Yeni degerler kalici olarak okunuyor', function () {
+  expectCode(200);
+  pm.expect(b.email).to.eql(pm.collectionVariables.get('emailEYeni'));
+  pm.expect(b.mobilePhone).to.eql(pm.collectionVariables.get('gsmEYeni'));
+  pm.expect(b.homePhone).to.eql('2129998877');
+  pm.expect(b.fax).to.eql('2128887766');
+});`
+    }),
+    contactCase('TC-006-05', 'Opsiyonel alanlar null gonderilir, mevcut degerler korunur -> 200 [ACC-005]', `
+b.email = pm.collectionVariables.get('emailEYeni');
+b.mobilePhone = pm.collectionVariables.get('gsmEYeni');
+b.homePhone = null;
+b.fax = null;`, 200, null, {
+      description: 'Home Phone ve Fax dokumanda zorunlu degildir. Bos gonderildiginde mevcut kayit SILINMEZ - '
+        + 'CustomerContactServiceImpl.upsertMedium, required=false alanlarda bos degeri "dokunma" olarak yorumlar.',
+      extraTest: `var r = jsonBody();
+pm.test('TC-006-05 · Zorunlu olmayan alanlarin mevcut degerleri korunur', function () {
+  pm.expect(r.homePhone, 'homePhone').to.eql('2129998877');
+  pm.expect(r.fax, 'fax').to.eql('2128887766');
+});`
+    }),
+    contactCase('TC-006-06', 'Bos govde ile guncelleme -> 400 [ACC-005]', `
+b = {};`, 400, 'This field is required.'),
+    contactCase('TC-006-07', 'E-mail bos -> 400 [ACC-005]', "b.email = '';", 400,
+      ['This field is required.', 'Invalid email format']),
+    contactCase('TC-006-08', 'E-mail gecersiz format -> 400', "b.email = 'gecersiz-eposta';", 400, 'Invalid email format'),
+    contactCase('TC-006-09', 'E-mail - alan adi eksik -> 400', "b.email = 'kullanici@';", 400, 'Invalid email format'),
+    contactCase('TC-006-10', 'E-mail hata mesaji dokumandaki metin degil', "b.email = 'gecersiz-eposta';", 400,
+      'Email must be a valid email address.', {
+        gap: true,
+        description: 'Dokumanin validasyon tablosu hata mesajini "Email must be a valid email address." olarak tanimliyor; '
+          + 'API "Invalid email format" donuyor. Islevsel davranis dogru (400), yalnizca metin ayrisiyor - '
+          + 'ekranda gosterilecek mesaj dokumanla birebir olmali mi, analiz sorusu olarak izlenmektedir.'
+      }),
+    contactCase('TC-006-11', 'Mobile Phone bos -> 400 [ACC-005]', "b.mobilePhone = '';", 400,
+      ['This field is required.', 'Invalid phone number format'], {
+        description: 'Bos deger hem @NotBlank hem @Pattern kisitini ihlal eder. Bean Validation hangisini once '
+          + 'raporlayacagini garanti etmedigi icin iki mesajdan biri kabul edilir - test kararli kalir.'
+      }),
+    contactCase('TC-006-12', 'Mobile Phone 5 ile baslamiyor -> 400', "b.mobilePhone = '4551234567';", 400, 'Invalid phone number format'),
+    contactCase('TC-006-13', 'Mobile Phone 9 hane -> 400 (BVA alt sinir)', "b.mobilePhone = '512345678';", 400, 'Invalid phone number format'),
+    contactCase('TC-006-14', 'Mobile Phone 11 hane -> 400 (BVA ust sinir)', "b.mobilePhone = '51234567890';", 400, 'Invalid phone number format'),
+    contactCase('TC-006-15', 'Mobile Phone 10 hane ve 5 ile baslar -> 200 (BVA gecerli sinir)', "b.mobilePhone = '5321234567';", 200, null, {
+      extraTest: `pm.test('TC-006-15 · Gecerli GSM kaydedildi', function () { pm.expect(jsonBody().mobilePhone).to.eql('5321234567'); });`
+    }),
+    contactCase('TC-006-16', 'Mobile Phone rakam disi karakter icerir -> 400', "b.mobilePhone = '5A2123456B';", 400, 'Invalid phone number format'),
+    contactCase('TC-006-17', 'Home Phone 10 hane -> 200 (BVA alt sinir)', "b.homePhone = '3121234567';", 200),
+    contactCase('TC-006-18', 'Home Phone 11 hane -> 200 (BVA ust sinir)', "b.homePhone = '03121234567';", 200),
+    contactCase('TC-006-19', 'Home Phone 9 hane -> 400 (BVA sinir disi)', "b.homePhone = '312123456';", 400, 'Invalid phone number format'),
+    contactCase('TC-006-20', 'Home Phone 12 hane -> 400 (BVA sinir disi)', "b.homePhone = '031212345678';", 400, 'Invalid phone number format'),
+    contactCase('TC-006-21', 'Home Phone bos string gonderilir -> 200 (opsiyonel alan)', "b.homePhone = '';", 200, null, {
+      gap: true,
+      description: 'Dokuman Home Phone\'u opsiyonel sayiyor. Alan null gonderildiginde kabul ediliyor (TC-006-05), '
+        + 'ancak BOS STRING gonderildiginde @Pattern devreye girip 400 donuyor. Ekranda bos birakilan bir alanin '
+        + 'front-end tarafindan null mi bos string mi gonderilecegi sozlesmede net degil - front-end null gondermek zorundadir.'
+    }),
+    contactCase('TC-006-22', 'Fax gecersiz format -> 400', "b.fax = '12345';", 400, 'Invalid phone number format'),
+    contactCase('TC-006-23', 'Fax hata mesaji dokumandaki metin degil', "b.fax = '12345';", 400, 'Invalid fax number', {
+      gap: true,
+      description: 'Dokuman faks icin ayri bir mesaj tanimliyor ("Invalid fax number."), API telefon mesajini paylasiyor '
+        + '("Invalid phone number format"). Kullanici hangi alanin hatali oldugunu mesajdan ayirt edemez.'
+    }),
+    req({
+      name: 'TC-006-24 · Var olmayan musterinin iletisim bilgisi -> 404',
+      path: '/api/v1/customers/999999999/contact',
+      test: `${H}
+pm.test('TC-006-24 · Tanimsiz musteri icin 404 doner', function () {
+  expectCode(404);
+  expectMessage('Customer not found with id');
+});`
+    }),
+    req({
+      name: 'TC-006-25 · Pasif musterinin iletisim bilgisi -> 404',
+      path: '/api/v1/customers/{{custIdC}}/contact',
+      description: 'Soft-delete edilmis musteri (Musteri C) icin iletisim bilgisi ucu de kapali olmalidir.',
+      test: `${H}
+pm.test('TC-006-25 · Pasif musteri icin 404 doner', function () { expectCode(404); });`
+    }),
+    req({
+      name: 'TC-006-26 · Gecersiz custId tipi -> 400',
+      path: '/api/v1/customers/abc/contact',
+      test: `${H}
+pm.test('TC-006-26 · Sayisal olmayan custId 400 doner', function () {
+  expectCode(400);
+  expectMessage('Parameter custId has an invalid value.');
+});`
+    }),
+    req({
+      name: 'TC-006-27 · Tokensiz iletisim bilgisi istegi -> 401',
+      path: '/api/v1/customers/{{custIdE}}/contact',
+      noAuth: true,
+      test: `${H}
+pm.test('TC-006-27 · Yetkisiz istek 401 doner', function () { expectCode(401); });`
+    })
+  ]
+);
+
+// ===========================================================================
+// 07 - FR-007 MUSTERI SILME
+// ===========================================================================
+const fr007 = folder(
+  '07 · FR-007 Musteri Silme',
+  'FR-007. Aktif fatura hesabi bulunan musteri silinemez; aktif hesabi olmayan musteri soft-delete edilir. '
+  + 'Musteri G uzerinde uctan uca calisir: once aktif hesap eklenir ve silme reddedilir, sonra hesap pasiflestirilip silme basarili olur.',
+  [
+    req({
+      name: 'TC-007-01 · Silme oncesi musteri erisilebilir [on kosul]',
+      path: '/api/v1/customers/{{custIdG}}',
+      test: `${H}
+pm.test('TC-007-01 · Musteri detayi 200 doner', function () { expectCode(200); });
+pm.test('TC-007-01 · Musteri aktif durumda', function () {
+  pm.expect(String(jsonBody().custId)).to.eql(String(pm.collectionVariables.get('custIdG')));
+});`
+    }),
+    req({
+      name: 'TC-007-02 · [Musteri G] aktif fatura hesabi eklenir -> 201 [ACC-002 on kosul]',
+      method: 'POST',
+      path: '/api/v1/customers/{{custIdG}}/accounts',
+      body: '{{gAccountBody}}',
+      pre: `${H}
+pm.collectionVariables.set('gAccountBody', JSON.stringify({ accountName: 'Silme testi ' + uniq(), accountDesc: 'FR-007 on kosul hesabi', addressId: Number(pm.collectionVariables.get('addressIdG1')) }));`,
+      test: `${H}
+var r = jsonBody();
+pm.test('TC-007-02 · Fatura hesabi olusturuldu (201)', function () { expectCode(201); });
+pm.test('TC-007-02 · Hesap aktif olarak acildi', function () { pm.expect(r.active, 'active').to.eql(true); });
+if (r.custAcctId) { pm.collectionVariables.set('acctIdG', r.custAcctId); }`
+    }),
+    req({
+      name: 'TC-007-03 · Aktif fatura hesabi olan musteri silinemez -> 409 [ACC-002, ACC-003]',
+      method: 'DELETE',
+      path: '/api/v1/customers/{{custIdG}}',
+      test: `${H}
+pm.test('TC-007-03 · Silme engellenir ve bilgilendirme mesaji doner', function () {
+  expectCode(409);
+  expectMessage('This customer has an active billing account and cannot be deleted.');
+});`
+    }),
+    req({
+      name: 'TC-007-04 · Silme engellendikten sonra musteri hala aktif [ACC-003]',
+      path: '/api/v1/customers/{{custIdG}}',
+      description: 'Reddedilen bir silme islemi hicbir yan etki birakmamalidir - musteri kaydi bozulmadan durmalidir.',
+      test: `${H}
+pm.test('TC-007-04 · Musteri kaydi bozulmadan duruyor', function () { expectCode(200); });`
+    }),
+    statusCase('TC-007-05', 'Fatura hesabi pasiflestirilir -> 200 [ACC-005 on kosul]', 'PASSIVE', 200, null, {
+      path: '/api/v1/customers/{{custIdG}}/accounts/{{acctIdG}}/status',
+      extraTest: `pm.test('TC-007-05 · Hesap pasif duruma gecti', function () { pm.expect(jsonBody().active, 'active').to.eql(false); });`
+    }),
+    req({
+      name: 'TC-007-06 · Pasif hesaba bagli urun kontrolu yapiliyor [ACC-004]',
+      path: '/api/v1/orders?custAcctId={{acctIdG}}',
+      description: 'ACC-004: "fatura hesabi pasif olsa dahi bagli urunu varsa musteri silinemez". '
+        + 'customer-service bu kontrolu NoOpBillingAccountProductGuard uzerinden yapiyor ve guard HER ZAMAN false donuyor '
+        + '(order-service entegrasyonu henuz baglanmamis). Yani kural kod icinde mevcut ama etkisiz. '
+        + 'Bu test, urun sorgusunun calistigini ve hesabin gercekten urunsuz oldugunu belgeleyerek '
+        + 'TC-007-07\'nin gecerli bir on kosulda kostugunu garanti eder.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-007-06 · Hesabin urun listesi sorgulanabiliyor', function () {
+  expectCode(200);
+  pm.expect(b, 'urun listesi').to.be.an('array');
+});
+pm.test('TC-007-06 · Pasif hesabin bagli urunu yok (silme on kosulu saglandi)', function () {
+  pm.expect(b.length, 'bagli urun sayisi').to.eql(0);
+});
+gapTest('TC-007-06 · Bagli urun guard\\'i order-service ile entegre', function () {
+  throw new Error('NoOpBillingAccountProductGuard her zaman false donuyor - urunlu hesap senaryosu dogrulanamiyor.');
+});`
+    }),
+    req({
+      name: 'TC-007-07 · Aktif hesabi olmayan musteri soft-delete edilir -> 204 [ACC-005]',
+      method: 'DELETE',
+      path: '/api/v1/customers/{{custIdG}}',
+      test: `${H}
+pm.test('TC-007-07 · Musteri silindi (204)', function () { expectCode(204); });`
+    }),
+    req({
+      name: 'TC-007-08 · Silinen musteri detay ucunda 404 doner [ACC-005]',
+      path: '/api/v1/customers/{{custIdG}}',
+      description: 'Soft-delete edilen musteri, silinmis gibi davranmalidir - kayit veritabaninda dursa da API\'den erisilememelidir.',
+      test: `${H}
+pm.test('TC-007-08 · Silinen musteri okunamaz', function () {
+  expectCode(404);
+  expectMessage('Customer not found with id');
+});`
+    }),
+    req({
+      name: 'TC-007-09 · Silinen musteri arama sonuclarinda gorunmez [ACC-006]',
+      path: '/api/v1/customers/search?tcNo={{tcknG}}',
+      description: 'ACC-006: silme sonrasi kullanici musteri arama ekranina yonlendirilir; silinen musteri orada cikmamalidir. '
+        + 'Arama gorunumu (CUSTOMER_SEARCH_VIEW) Kafka uzerinden ASENKRON guncellendigi icin kisa bir bekleme ile yeniden denenir.',
+      test: `${H}
+var custId = String(pm.collectionVariables.get('custIdG'));
+var searchUrl = pm.environment.get('baseUrl') + '/api/v1/customers/search?tcNo=' + pm.collectionVariables.get('tcknG');
+
+function check(attempt) {
+  var b = attempt === 0 ? jsonBody() : null;
+  function evaluate(body) {
+    var found = ids(body.content).indexOf(custId) > -1;
+    if (!found || attempt >= 4) {
+      pm.test('TC-007-09 · Silinen musteri arama sonuclarinda yok (deneme ' + (attempt + 1) + ')', function () {
+        pm.expect(found, 'silinen musteri arama sonucunda gorunuyor').to.eql(false);
+      });
+      return;
+    }
+    setTimeout(function () {
+      pm.sendRequest({ url: searchUrl, method: 'GET', header: jsonHeaders() }, function (err, res) {
+        if (err) {
+          pm.test('TC-007-09 · Arama tekrar denemesi', function () { throw new Error(String(err)); });
+          return;
+        }
+        evaluate(res.json());
+      });
+    }, 700);
+  }
+  evaluate(b);
+}
+pm.test('TC-007-09 · Arama ucu 200 doner', function () { expectCode(200); });
+check(0);`
+    }),
+    req({
+      name: 'TC-007-10 · Silinen musterinin hesap listesi 404 doner',
+      path: '/api/v1/customers/{{custIdG}}/accounts',
+      description: 'Silinen musterinin diger tum uclari 404 donerken (TC-007-08, TC-006-25), hesap listeleme ucu 200 + bos sayfa donuyor. '
+        + 'BillingAccountServiceImpl.getAccounts, diger metotlarin aksine customerFinder.getActiveCustomerOrThrow cagirmiyor. '
+        + 'Sonuc: silinmis bir musteri, front-end\'de "hesabi olmayan gecerli musteri" gibi gorunur (FR-009 ACC-001 bos tablo mesaji).',
+      test: `${H}
+gapTest('TC-007-10 · Silinen musteri icin hesap listesi 404 doner', function () {
+  expectCode(404);
+});
+if (pm.response.code === 200) {
+  console.warn('[TC-007-10] Silinen musteri icin 200 + bos sayfa donduruldu - uc tutarsizligi.');
+}`
+    }),
+    req({
+      name: 'TC-007-11 · Silinen musteri tekrar silinemez -> 404',
+      method: 'DELETE',
+      path: '/api/v1/customers/{{custIdG}}',
+      test: `${H}
+pm.test('TC-007-11 · Ikinci silme istegi 404 doner', function () { expectCode(404); });`
+    }),
+    req({
+      name: 'TC-007-12 · Var olmayan musteri silinemez -> 404',
+      method: 'DELETE',
+      path: '/api/v1/customers/999999999',
+      test: `${H}
+pm.test('TC-007-12 · Tanimsiz musteri icin 404 doner', function () { expectCode(404); });`
+    }),
+    req({
+      name: 'TC-007-13 · Gecersiz custId tipi ile silme -> 400',
+      method: 'DELETE',
+      path: '/api/v1/customers/abc',
+      test: `${H}
+pm.test('TC-007-13 · Sayisal olmayan custId 400 doner', function () {
+  expectCode(400);
+  expectMessage('Parameter custId has an invalid value.');
+});`
+    }),
+    req({
+      name: 'TC-007-14 · Tokensiz silme istegi -> 401',
+      method: 'DELETE',
+      path: '/api/v1/customers/{{custIdA}}',
+      noAuth: true,
+      description: 'Guvenlik: kimlik dogrulanmamis bir istek silme islemini tetikleyememelidir. '
+        + 'Musteri A uzerinde denenir - istek 401 ile reddedildigi icin A\'ya zarar vermez.',
+      test: `${H}
+pm.test('TC-007-14 · Yetkisiz silme istegi 401 doner', function () { expectCode(401); });`
+    })
+  ]
+);
+
+// ===========================================================================
+// 08 - FR-008 YENI MUSTERI FATURA HESABI OLUSTURMA
+// ===========================================================================
+const fr008 = folder(
+  '08 · FR-008 Fatura Hesabi Olusturma',
+  'FR-008. "Create Billing Account" ekraninin orta katman karsiligi (POST /accounts). '
+  + 'Hesap 224 (billing account) tipinde acilmali; adres icin mevcut bir adres SECILEBILMELI ya da YENI adres olusturulabilmelidir - '
+  + 'ikisi birden ya da hicbiri gonderilemez. Musteri F kullanilir; F FR-009..FR-011 boyunca da ayni hesaplarla devam eder.',
+  [
+    req({
+      name: 'TC-008-01 · Customer Account ekrani acilir, varsayilan hesap listelenir [ACC-001]',
+      path: '/api/v1/customers/{{custIdF}}/accounts',
+      description: 'Onboarding her musteriye CUST_ACCT (223) tipinde varsayilan bir hesap acar. '
+        + 'Bu hesap "billing account" degildir - FR-011 kapsaminda silinemez.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-008-01 · Hesap listesi 200 doner', function () { expectCode(200); });
+pm.test('TC-008-01 · Onboarding varsayilan hesabi listede', function () {
+  pm.expect(b.content, 'hesap listesi').to.be.an('array').that.is.not.empty;
+});
+pm.test('TC-008-01 · Varsayilan hesap billing account tipinde DEGIL', function () {
+  var def = b.content.filter(function (a) { return String(a.custAcctId) === String(pm.collectionVariables.get('defaultAcctIdF')); })[0];
+  pm.expect(def, 'varsayilan hesap').to.not.be.undefined;
+  pm.expect(def.accountTpId, 'accountTpId').to.not.eql(224);
+});`
+    }),
+    billingCase('TC-008-02', 'Mevcut adres secilerek fatura hesabi olusturulur -> 201 [ACC-004, ACC-011]', `
+b.accountName = 'Ev Faturasi';
+b.accountDesc = 'Aylik elektrik ve su faturasi';`, 201, null, {
+      extraTest: `var r = jsonBody();
+pm.test('TC-008-02 · Gonderilen alanlar dogru kaydedildi', function () {
+  pm.expect(r.accountName).to.eql('Ev Faturasi');
+  pm.expect(r.accountDesc).to.eql('Aylik elektrik ve su faturasi');
+  pm.expect(String(r.addressId)).to.eql(String(pm.collectionVariables.get('addressIdF1')));
+});
+if (r.custAcctId) {
+  pm.collectionVariables.set('acctIdF', r.custAcctId);
+  pm.collectionVariables.set('acctNoF', r.accountNo);
+}`
+    }),
+    req({
+      name: 'TC-008-03 · Olusan hesap 224 (billing account) tipindedir [ACC-012]',
+      path: '/api/v1/customers/{{custIdF}}/accounts?size=20',
+      description: 'ACC-012 dokumandaki en somut kabul kriteridir: yaratilan fatura hesabi Account Type olarak 224 olmalidir.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-008-03 · Yeni hesabin tipi 224', function () {
+  expectCode(200);
+  var acct = b.content.filter(function (a) { return String(a.custAcctId) === String(pm.collectionVariables.get('acctIdF')); })[0];
+  pm.expect(acct, 'yeni hesap listede').to.not.be.undefined;
+  pm.expect(acct.accountTpId, 'accountTpId').to.eql(224);
+});
+pm.test('TC-008-03 · Hesap numarasi uretildi ve bos degil', function () {
+  pm.expect(pm.collectionVariables.get('acctNoF'), 'accountNo').to.be.a('string').and.not.empty;
+});`
+    }),
+    billingCase('TC-008-04', 'Yeni adres olusturularak fatura hesabi acilir -> 201 [ACC-004, ACC-005, ACC-007]', `
+delete b.addressId;
+b.newAddress = newBillingAddress();
+b.accountName = 'Is Faturasi';`, 201, null, {
+      extraTest: `var r = jsonBody();
+pm.test('TC-008-04 · Hesap yeni olusturulan adrese baglandi', function () {
+  pm.expect(r.addressId, 'addressId').to.be.a('number');
+  pm.expect(String(r.addressId)).to.not.eql(String(pm.collectionVariables.get('addressIdF1')));
+});
+if (r.addressId) { pm.collectionVariables.set('addressIdF2', r.addressId); }
+if (r.custAcctId) { pm.collectionVariables.set('acctIdF2', r.custAcctId); }`
+    }),
+    req({
+      name: 'TC-008-05 · Yeni adres musterinin adres listesine eklendi [ACC-007, ACC-008]',
+      path: '/api/v1/customers/{{custIdF}}/addresses',
+      description: 'ACC-007/008: adres kaydedilmeli ve Create Billing Account ekraninda listelenmelidir. '
+        + 'Orta katman karsiligi: hesapla birlikte olusturulan adres, musterinin adres listesinde de yer almalidir.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-008-05 · Hesapla olusturulan adres musterinin adresleri arasinda', function () {
+  expectCode(200);
+  var found = b.map(function (a) { return String(a.id); });
+  pm.expect(found, 'adres listesi').to.include(String(pm.collectionVariables.get('addressIdF2')));
+});`
+    }),
+    req({
+      name: 'TC-008-06 · Yeni hesap Customer Account listesinde gorunur [ACC-014]',
+      path: '/api/v1/customers/{{custIdF}}/accounts?size=20',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-008-06 · Olusturulan iki hesap da listede', function () {
+  expectCode(200);
+  var found = b.content.map(function (a) { return String(a.custAcctId); });
+  pm.expect(found).to.include(String(pm.collectionVariables.get('acctIdF')));
+  pm.expect(found).to.include(String(pm.collectionVariables.get('acctIdF2')));
+});`
+    }),
+    billingCase('TC-008-07', 'Account Name bos -> 400 [ACC-009]', "b.accountName = '';", 400, 'This field is required.'),
+    billingCase('TC-008-08', 'Account Name hic gonderilmez -> 400 [ACC-009]', 'delete b.accountName;', 400, 'This field is required.'),
+    billingCase('TC-008-09', 'Account Name 50 karakter -> 201 (BVA gecerli sinir)', "b.accountName = repeat('a', 50);", 201, null, {
+      extraTest: `pm.test('TC-008-09 · 50 karakterlik ad tam olarak kaydedildi', function () {
+  pm.expect(String(jsonBody().accountName).length, 'accountName uzunlugu').to.eql(50);
+});
+if (pm.response.code === 201) { pm.collectionVariables.set('acctIdF3', jsonBody().custAcctId); }`
+    }),
+    billingCase('TC-008-10', 'Account Name 51 karakter -> 400 (BVA sinir disi)', "b.accountName = repeat('a', 51);", 400),
+    billingCase('TC-008-11', 'Account Name 51 karakter hata mesaji uzunluk kuralini anlatir', "b.accountName = repeat('a', 51);", 400,
+      'must be at most 50', {
+        gap: true,
+        description: 'Uzunluk siniri dogru uygulaniyor (400) ancak @Size kisiti FIELD_REQUIRED mesajini paylasiyor: '
+          + 'kullanici dolu bir alan icin "This field is required." goruyor. Mesaj, ihlal edilen kurali anlatmalidir.'
+      }),
+    billingCase('TC-008-12', 'Account Description bos -> 400 (dokuman zorunlu diyor)', "b.accountDesc = '';", 400,
+      'This field is required.', {
+        gap: true,
+        description: 'Dokumanin FR-008 validasyon tablosu Account Description\'i ZORUNLU isaretliyor ("This field is required."). '
+          + 'CreateBillingAccountRequest.accountDesc uzerinde hicbir kisit yok; bos string de, alanin hic gonderilmemesi de 201 donuyor. '
+          + 'ACC-009 ("Account Name, Account Description ve en az bir adres girilmeden Create aktif olmamalidir") sadece front-end\'de karsilaniyor.'
+      }),
+    billingCase('TC-008-13', 'Adres bilgisi hic gonderilmez -> 400 [ACC-009]', 'delete b.addressId;', 400,
+      'Please provide an existing address or a new one for the billing account.'),
+    billingCase('TC-008-14', 'Hem mevcut adres hem yeni adres gonderilir -> 400', 'b.newAddress = newBillingAddress();', 400,
+      'Please provide either an existing address or a new one, not both.', {
+        description: 'addressId ve newAddress karsilikli dislayicidir (XOR). Ikisi birden gonderildiginde hangisinin '
+          + 'kazandigi belirsiz kalmamali, istek reddedilmelidir.'
+      }),
+    billingCase('TC-008-15', 'Yeni adres - City bos -> 400 [ACC-005]', `
+delete b.addressId;
+b.newAddress = newBillingAddress();
+b.newAddress.cityId = null;`, 400, 'This field is required.'),
+    billingCase('TC-008-16', 'Yeni adres - Street bos -> 400 [ACC-005]', `
+delete b.addressId;
+b.newAddress = newBillingAddress();
+b.newAddress.streetName = '';`, 400, 'This field is required.'),
+    billingCase('TC-008-17', 'Yeni adres - House-Flat Number bos -> 400 [ACC-005]', `
+delete b.addressId;
+b.newAddress = newBillingAddress();
+b.newAddress.buildingName = '';`, 400, 'This field is required.'),
+    billingCase('TC-008-18', 'Yeni adres - Address Description bos -> 400 [ACC-005]', `
+delete b.addressId;
+b.newAddress = newBillingAddress();
+b.newAddress.addressDesc = '';`, 400, 'This field is required.'),
+    billingCase('TC-008-19', 'Yeni adres - Street 201 karakter -> 400 (BVA sinir disi)', `
+delete b.addressId;
+b.newAddress = newBillingAddress();
+b.newAddress.streetName = repeat('c', 201);`, 400),
+    billingCase('TC-008-20', 'Yeni adres - listede olmayan City id -> 400', `
+delete b.addressId;
+b.newAddress = newBillingAddress();
+b.newAddress.cityId = 999999;`, 400, null, {
+      gap: true,
+      description: 'Dokuman City icin "listeden secim" diyor. Fatura hesabi yolunda da (FR-005 TC-005-20 ile ayni kok neden) '
+        + 'cityId lookup-service\'te tanimli mi diye dogrulanmiyor; @NotNull disinda kontrol yok. '
+        + 'Sonuc: gecersiz bir sehir id\'siyle adres ve ona bagli fatura hesabi olusabiliyor.',
+      extraTest: `if (pm.response.code === 201) {
+  console.warn('[TC-008-20] Gecersiz cityId (999999) ile fatura hesabi olusturuldu - lookup dogrulamasi yok.');
+}`
+    }),
+    billingCase('TC-008-21', 'IDOR - baska musterinin adres id\'si ile hesap acilamaz -> 404', `
+b.addressId = Number(pm.collectionVariables.get('addressIdE1'));`, 404, null, {
+      description: 'Guvenlik: Musteri E\'ye ait bir adres id\'si, Musteri F\'nin hesabina baglanmaya calisilir. '
+        + 'Adres id\'leri tahmin edilebilir oldugu icin bu kontrol sunucu tarafinda yapilmak zorundadir.'
+    }),
+    billingCase('TC-008-22', 'Var olmayan adres id -> 404', 'b.addressId = 999999999;', 404),
+    billingCase('TC-008-23', 'Var olmayan musteriye hesap acilamaz -> 404', '', 404, 'Customer not found with id', {
+      path: '/api/v1/customers/999999999/accounts'
+    }),
+    billingCase('TC-008-24', 'Pasif musteriye hesap acilamaz -> 404', '', 404, null, {
+      path: '/api/v1/customers/{{custIdC}}/accounts',
+      description: 'Soft-delete edilmis Musteri C\'ye yeni fatura hesabi acilamamalidir.'
+    }),
+    billingCase('TC-008-25', 'Tokensiz hesap olusturma istegi -> 401', '', 401, null, { noAuth: true })
+  ]
+);
+
+// ===========================================================================
+// 09 - FR-009 FATURA HESABI VE BAGLI URUN GORUNTULEME
+// ===========================================================================
+const fr009 = folder(
+  '09 · FR-009 Fatura Hesabi ve Bagli Urun Goruntuleme',
+  'FR-009. Hesap listeleme sozlesmesi (ACC-002 kolonlari), sayfalama (ACC-009: ilk 5 kayit) ve '
+  + 'hesaba bagli urunlerin listelenmesi (ACC-004/005). Urun detay modali (ACC-006/007) icin gereken alanlar '
+  + 'orta katmanda henuz karsilanmiyor - bkz. TC-009-10.',
+  [
+    req({
+      name: 'TC-009-01 · Hesap listesi sayfali kontrat doner [ACC-001]',
+      path: '/api/v1/customers/{{custIdF}}/accounts',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-009-01 · Hesap listesi 200 doner', function () { expectCode(200); });
+pm.test('TC-009-01 · Sayfali (Page) kontrat alanlari mevcut', function () {
+  ['content', 'totalElements', 'totalPages', 'size', 'number'].forEach(function (f) {
+    pm.expect(b, f + ' alani').to.have.property(f);
+  });
+});
+pm.test('TC-009-01 · Musterinin en az bir hesabi var (bos tablo mesaji gosterilmez)', function () {
+  pm.expect(b.totalElements, 'toplam hesap sayisi').to.be.above(0);
+});`
+    }),
+    req({
+      name: 'TC-009-02 · Hesap satirinda ekranda gosterilen alanlar yer alir [ACC-002]',
+      path: '/api/v1/customers/{{custIdF}}/accounts',
+      description: 'ACC-002 tablo kolonlari: Account Status, Account Number, Account Name, Account Type. '
+        + 'Orta katman karsiliklari sirasiyla acctStId/active, accountNo, accountName, accountTpId alanlaridir.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-009-02 · Kolon karsiliklari her satirda mevcut', function () {
+  expectCode(200);
+  pm.expect(b.content, 'hesap listesi').to.be.an('array').that.is.not.empty;
+  b.content.forEach(function (a) {
+    ['custAcctId', 'accountNo', 'accountName', 'accountTpId', 'acctStId', 'active'].forEach(function (f) {
+      pm.expect(a, f + ' alani (hesap ' + a.custAcctId + ')').to.have.property(f);
+    });
+  });
+});
+pm.test('TC-009-02 · Account Number ve Account Status alanlari dolu', function () {
+  b.content.forEach(function (a) {
+    pm.expect(a.accountNo, 'accountNo (hesap ' + a.custAcctId + ')').to.be.a('string').and.not.empty;
+    pm.expect(a.active, 'active (hesap ' + a.custAcctId + ')').to.be.a('boolean');
+  });
+});`
+    }),
+    req({
+      name: 'TC-009-03 · Varsayilan sayfa boyutu 5 [ACC-009]',
+      path: '/api/v1/customers/{{custIdF}}/accounts',
+      test: `${H}
+pm.test('TC-009-03 · Parametresiz istekte sayfa boyutu 5', function () {
+  expectCode(200);
+  pm.expect(jsonBody().size, 'size').to.eql(5);
+});`
+    }),
+    req({
+      name: 'TC-009-04 · Hesap sayisi 6\'ya tamamlanir [ACC-009 on kosul]',
+      path: '/actuator/health',
+      description: 'Sayfalama ancak 5\'ten fazla kayit varken anlamli test edilir. Musterinin mevcut hesap sayisi okunur ve '
+        + 'eksik kalan kadar hesap acilir - koleksiyon kac kez kosarsa kossun sonuc 6 hesaptir.',
+      test: `${H}
+var custId = pm.collectionVariables.get('custIdF');
+var acctUrl = pm.environment.get('baseUrl') + '/api/v1/customers/' + custId + '/accounts';
+
+pm.sendRequest({ url: acctUrl + '?size=50', method: 'GET', header: jsonHeaders() }, function (err, res) {
+  if (err || res.code !== 200) {
+    pm.test('TC-009-04 · Sayfalama on kosulu hazirlanamadi', function () { throw new Error('hesap listesi alinamadi: ' + (err || res.code)); });
+    return;
+  }
+  var current = res.json().totalElements;
+  var i = current;
+  function addNext() {
+    if (i >= 6) {
+      pm.test('TC-009-04 · Musterinin hesap sayisi 6\\'ya tamamlandi', function () {
+        pm.expect(i, 'toplam hesap sayisi').to.be.at.least(6);
+      });
+      return;
+    }
+    var n = i + 1;
+    pm.sendRequest({
+      url: acctUrl, method: 'POST', header: jsonHeaders(),
+      body: { mode: 'raw', raw: JSON.stringify({ accountName: 'Sayfalama hesabi ' + n, accountDesc: 'ACC-009 sayfalama testi', addressId: Number(pm.collectionVariables.get('addressIdF1')) }) }
+    }, function (e2, r2) {
+      pm.test('TC-009-04 · ' + n + '. hesap acilabilir (201)', function () {
+        if (e2) { throw new Error(String(e2)); }
+        pm.expect(r2.code, String(r2.text()).slice(0, 200)).to.eql(201);
+      });
+      if (!e2 && r2.code === 201) { trackId('createdAccountIds', r2.json().custAcctId); }
+      i++;
+      addNext();
+    });
+  }
+  addNext();
+});`
+    }),
+    req({
+      name: 'TC-009-05 · Ilk sayfada 5 kayit doner [ACC-009]',
+      path: '/api/v1/customers/{{custIdF}}/accounts',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-009-05 · Ilk sayfa tam olarak 5 kayit icerir', function () {
+  expectCode(200);
+  pm.expect(b.content.length, 'ilk sayfadaki kayit sayisi').to.eql(5);
+});
+pm.test('TC-009-05 · Toplam kayit sayisi 5\\'ten fazla, sayfalama devrede', function () {
+  pm.expect(b.totalElements, 'toplam kayit').to.be.above(5);
+  pm.expect(b.totalPages, 'sayfa sayisi').to.be.above(1);
+});`
+    }),
+    req({
+      name: 'TC-009-06 · Ikinci sayfa kalan kayitlari doner [ACC-009]',
+      path: '/api/v1/customers/{{custIdF}}/accounts?page=1',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-009-06 · Ikinci sayfa bos degil', function () {
+  expectCode(200);
+  pm.expect(b.number, 'sayfa numarasi').to.eql(1);
+  pm.expect(b.content, 'ikinci sayfa icerigi').to.be.an('array').that.is.not.empty;
+});`
+    }),
+    req({
+      name: 'TC-009-07 · size parametresi ile sayfa boyutu degistirilebilir [ACC-009]',
+      path: '/api/v1/customers/{{custIdF}}/accounts?page=0&size=2',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-009-07 · Istenen sayfa boyutu uygulanir', function () {
+  expectCode(200);
+  pm.expect(b.size, 'size').to.eql(2);
+  pm.expect(b.content.length, 'donen kayit sayisi').to.eql(2);
+});`
+    }),
+    req({
+      name: 'TC-009-08 · Hesaba bagli urunler listelenir [ACC-004, ACC-005]',
+      path: '/api/v1/orders?custAcctId={{acctIdF}}',
+      description: 'ACC-004: hesap satiri genisletildiginde bagli urunler tablo halinde gosterilir. '
+        + 'Orta katman karsiligi order-service uzerindeki GET /api/v1/orders?custAcctId={id} ucudur.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-009-08 · Urun listesi 200 ve dizi doner', function () {
+  expectCode(200);
+  pm.expect(b, 'urun listesi').to.be.an('array');
+});`
+    }),
+    req({
+      name: 'TC-009-09 · Urun tablosu kolon sozlesmesi [ACC-005]',
+      path: '/api/v1/orders?custAcctId={{acctIdF}}',
+      description: 'ACC-005 kolonlari: Product ID, Product Name, Campaign Name, Campaign ID. '
+        + 'CustOrdItemResponse karsiliklari prodId / prodName / cmpgName / cmpgId alanlaridir. '
+        + 'FR-012 satis akisi bu koleksiyonun kapsaminda olmadigi icin liste bos gelebilir; '
+        + 'bos listede sozlesme dogrulanamaz ve bu durum acikca raporlanir.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-009-09 · Urun listesi okunabiliyor', function () {
+  expectCode(200);
+  pm.expect(b, 'urun listesi').to.be.an('array');
+});
+if (b.length > 0) {
+  pm.test('TC-009-09 · Urun satirinda ACC-005 kolonlari mevcut', function () {
+    b.forEach(function (p) {
+      ['prodId', 'prodName', 'cmpgId', 'cmpgName', 'custAcctId'].forEach(function (f) {
+        pm.expect(p, f + ' alani').to.have.property(f);
+      });
+    });
+  });
+} else {
+  pm.test('TC-009-09 · [KAPSAM DISI] Bagli urun yok, kolon sozlesmesi dogrulanamadi', function () {
+    console.warn('[TC-009-09] Hesaba bagli urun bulunmuyor - urun olusturmak FR-012 satis akisini gerektirir (bu koleksiyonun kapsami disinda).');
+    pm.expect(true).to.be.true;
+  });
+}`
+    }),
+    req({
+      name: 'TC-009-10 · Urun detay modali icin gereken alanlar donuyor [ACC-006, ACC-007]',
+      path: '/api/v1/orders?custAcctId={{acctIdF}}',
+      description: 'ACC-007 modalda su alanlari istiyor: Product Offer Name, Product Offer ID, Product Spec ID, '
+        + 'Service Start Date, Prod Chars, Service Address. order-service\'in CustOrdItemResponse kaydi yalnizca '
+        + 'custOrdItemId / prodId / prodName / cmpgId / cmpgName / custAcctId alanlarini tasiyor ve urun detayi icin '
+        + 'ayri bir uc bulunmuyor. Yani ACC-006/ACC-007 orta katmanda henuz karsilanmiyor.',
+      test: `${H}
+gapTest('TC-009-10 · Urun detay modali alanlari (Product Spec ID, Service Start Date, Prod Chars, Service Address) API\\'de mevcut', function () {
+  throw new Error('CustOrdItemResponse bu alanlari tasimiyor ve urun detayi icin ayri bir uc tanimli degil.');
+});`
+    }),
+    req({
+      name: 'TC-009-11 · Var olmayan musterinin hesap listesi 404 doner',
+      path: '/api/v1/customers/999999999/accounts',
+      description: 'Ayni servisin diger tum uclari (POST/PUT/PATCH/DELETE accounts, GET contact, GET customers/{id}) '
+        + 'tanimsiz musteri icin 404 donuyor. GET /accounts ise 200 + bos sayfa donuyor: '
+        + 'BillingAccountServiceImpl.getAccounts, customerFinder.getActiveCustomerOrThrow cagirmiyor. '
+        + 'Front-end acisindan sonuc, "var olmayan musteri" ile "hesabi olmayan musteri"nin ayirt edilememesidir (ACC-001 bos tablo mesaji).',
+      test: `${H}
+gapTest('TC-009-11 · Tanimsiz musteri icin hesap listesi 404 doner', function () {
+  expectCode(404);
+});
+if (pm.response.code === 200) {
+  console.warn('[TC-009-11] Tanimsiz musteri icin 200 + bos sayfa donduruldu - uc tutarsizligi (bkz. TC-007-10).');
+}`
+    }),
+    req({
+      name: 'TC-009-12 · Negatif sayfa numarasi -> 400',
+      path: '/api/v1/customers/{{custIdF}}/accounts?page=-1',
+      description: 'Sayfalama parametreleri istemciden gelir ve dogrulanmalidir. PageRequest.of(-1, 5) '
+        + 'IllegalArgumentException firlatir; bu istisna ele alinmadigi icin istemciye 500 donuyor. '
+        + 'Gecersiz istemci girdisi 4xx ile karsilanmalidir.',
+      test: `${H}
+pm.test('TC-009-12 · Gecersiz sayfa numarasi istemci hatasi olarak doner', function () {
+  expectCode(400);
+});`
+    }),
+    req({
+      name: 'TC-009-13 · Sifir sayfa boyutu -> 400',
+      path: '/api/v1/customers/{{custIdF}}/accounts?size=0',
+      description: 'TC-009-12 ile ayni kok neden: PageRequest.of(0, 0) IllegalArgumentException firlatir ve 500 doner.',
+      test: `${H}
+pm.test('TC-009-13 · Gecersiz sayfa boyutu istemci hatasi olarak doner', function () {
+  expectCode(400);
+});`
+    }),
+    req({
+      name: 'TC-009-14 · IDOR - baska musterinin hesabi listede gorunmez',
+      path: '/api/v1/customers/{{custIdA}}/accounts?size=50',
+      description: 'Guvenlik: hesap listesi yalnizca istenen musterinin hesaplarini icermelidir.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-009-14 · Musteri A\\'nin listesinde Musteri F\\'nin hesaplari yok', function () {
+  expectCode(200);
+  var found = b.content.map(function (a) { return String(a.custAcctId); });
+  pm.expect(found).to.not.include(String(pm.collectionVariables.get('acctIdF')));
+  pm.expect(found).to.not.include(String(pm.collectionVariables.get('acctIdF2')));
+});`
+    }),
+    req({
+      name: 'TC-009-15 · Gecersiz custId tipi -> 400',
+      path: '/api/v1/customers/abc/accounts',
+      test: `${H}
+pm.test('TC-009-15 · Sayisal olmayan custId 400 doner', function () {
+  expectCode(400);
+  expectMessage('Parameter custId has an invalid value.');
+});`
+    }),
+    req({
+      name: 'TC-009-16 · Tokensiz hesap listeleme istegi -> 401',
+      path: '/api/v1/customers/{{custIdF}}/accounts',
+      noAuth: true,
+      test: `${H}
+pm.test('TC-009-16 · Yetkisiz istek 401 doner', function () { expectCode(401); });`
+    })
+  ]
+);
+
+// ===========================================================================
+// 10 - FR-010 BILLING ACCOUNT GUNCELLEME
+// ===========================================================================
+const UPD = '/api/v1/customers/{{custIdF}}/accounts/{{acctIdF}}';
+const fr010 = folder(
+  '10 · FR-010 Fatura Hesabi Guncelleme',
+  'FR-010. "Update Billing Account" ekraninin orta katman karsiligi (PUT /accounts/{accountId}). '
+  + 'Guncellenebilir alanlar Account Name, Account Description ve adrestir; accountNo ile accountTpId '
+  + 'HICBIR ZAMAN degismemelidir - bu iki alan icin ayri regresyon testleri vardir.',
+  [
+    req({
+      name: 'TC-010-01 · Guncellenecek hesap mevcut bilgileriyle listelenir [ACC-001, ACC-002]',
+      path: '/api/v1/customers/{{custIdF}}/accounts?size=20',
+      description: 'ACC-002: Update ekrani alanlari mevcut degerlerle dolu gelmelidir. '
+        + 'Orta katmanda bunun karsiligi, hesabin okundugunda guncel degerlerini dondurmesidir.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-010-01 · Hesap mevcut bilgileriyle okunuyor', function () {
+  expectCode(200);
+  var acct = b.content.filter(function (a) { return String(a.custAcctId) === String(pm.collectionVariables.get('acctIdF')); })[0];
+  pm.expect(acct, 'guncellenecek hesap').to.not.be.undefined;
+  pm.expect(acct.accountName, 'accountName').to.eql('Ev Faturasi');
+  pm.expect(acct.accountDesc, 'accountDesc').to.eql('Aylik elektrik ve su faturasi');
+});`
+    }),
+    billingCase('TC-010-02', 'Account Name ve Description guncellenir -> 200 [ACC-010]', `
+b.accountName = 'Guncellenen Hesap';
+b.accountDesc = 'Guncellenen aciklama';`, 200, null, {
+      method: 'PUT', path: UPD,
+      extraTest: `var r = jsonBody();
+pm.test('TC-010-02 · Yanit guncel degerleri tasir', function () {
+  pm.expect(r.accountName).to.eql('Guncellenen Hesap');
+  pm.expect(r.accountDesc).to.eql('Guncellenen aciklama');
+});`
+    }),
+    req({
+      name: 'TC-010-03 · Guncelleme kalicidir, listede guncel gorunur [ACC-011, ACC-012]',
+      path: '/api/v1/customers/{{custIdF}}/accounts?size=20',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-010-03 · Guncel degerler listede okunuyor', function () {
+  expectCode(200);
+  var acct = b.content.filter(function (a) { return String(a.custAcctId) === String(pm.collectionVariables.get('acctIdF')); })[0];
+  pm.expect(acct, 'hesap listede').to.not.be.undefined;
+  pm.expect(acct.accountName).to.eql('Guncellenen Hesap');
+  pm.expect(acct.accountDesc).to.eql('Guncellenen aciklama');
+});`
+    }),
+    req({
+      name: 'TC-010-04 · Hesap numarasi guncellemeyle degismez',
+      path: '/api/v1/customers/{{custIdF}}/accounts?size=20',
+      description: 'accountNo istemciden alinmaz ve guncellenemez - hesabin kalici kimligidir. '
+        + 'TC-008-02\'de kaydedilen deger ile karsilastirilir.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-010-04 · accountNo olusturuldugu gibi kaldi', function () {
+  expectCode(200);
+  var acct = b.content.filter(function (a) { return String(a.custAcctId) === String(pm.collectionVariables.get('acctIdF')); })[0];
+  pm.expect(acct.accountNo, 'accountNo').to.eql(pm.collectionVariables.get('acctNoF'));
+});`
+    }),
+    req({
+      name: 'TC-010-05 · Hesap tipi guncellemeyle degismez',
+      path: '/api/v1/customers/{{custIdF}}/accounts?size=20',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-010-05 · accountTpId 224 olarak kaldi', function () {
+  expectCode(200);
+  var acct = b.content.filter(function (a) { return String(a.custAcctId) === String(pm.collectionVariables.get('acctIdF')); })[0];
+  pm.expect(acct.accountTpId, 'accountTpId').to.eql(224);
+});`
+    }),
+    billingCase('TC-010-06', 'Mevcut baska adres secilerek guncellenir -> 200 [ACC-003, ACC-007]', `
+b.accountName = 'Guncellenen Hesap';
+b.accountDesc = 'Guncellenen aciklama';
+b.addressId = Number(pm.collectionVariables.get('addressIdF2'));`, 200, null, {
+      method: 'PUT', path: UPD,
+      extraTest: `pm.test('TC-010-06 · Hesap secilen adrese baglandi', function () {
+  pm.expect(String(jsonBody().addressId)).to.eql(String(pm.collectionVariables.get('addressIdF2')));
+});`
+    }),
+    billingCase('TC-010-07', 'Yeni adres olusturularak guncellenir -> 200 [ACC-003, ACC-004, ACC-006]', `
+b.accountName = 'Guncellenen Hesap';
+b.accountDesc = 'Guncellenen aciklama';
+delete b.addressId;
+b.newAddress = newBillingAddress();
+b.newAddress.streetName = 'Guncelleme Sokak';
+b.newAddress.addressDesc = 'Guncelleme ile eklenen adres';`, 200, null, {
+      method: 'PUT', path: UPD,
+      extraTest: `var r = jsonBody();
+pm.test('TC-010-07 · Hesap yeni olusturulan adrese baglandi', function () {
+  pm.expect(r.addressId, 'addressId').to.be.a('number');
+  pm.expect(String(r.addressId)).to.not.eql(String(pm.collectionVariables.get('addressIdF2')));
+});
+if (r.addressId) { pm.collectionVariables.set('addressIdF3', r.addressId); }`
+    }),
+    billingCase('TC-010-08', 'Account Name bos -> 400 [ACC-008]', "b.accountName = '';", 400, 'This field is required.', {
+      method: 'PUT', path: UPD
+    }),
+    billingCase('TC-010-09', 'Account Name 50 karakter -> 200 (BVA gecerli sinir)', `
+b.accountName = repeat('a', 50);
+b.addressId = Number(pm.collectionVariables.get('addressIdF3'));`, 200, null, {
+      method: 'PUT', path: UPD,
+      extraTest: `pm.test('TC-010-09 · 50 karakterlik ad tam olarak kaydedildi', function () {
+  pm.expect(String(jsonBody().accountName).length, 'accountName uzunlugu').to.eql(50);
+});`
+    }),
+    billingCase('TC-010-10', 'Account Name 51 karakter -> 400 (BVA sinir disi)', "b.accountName = repeat('a', 51);", 400, null, {
+      method: 'PUT', path: UPD
+    }),
+    billingCase('TC-010-11', 'Account Description bos -> 400 (dokuman zorunlu diyor)', "b.accountDesc = '';", 400,
+      'This field is required.', {
+        method: 'PUT', path: UPD, gap: true,
+        description: 'TC-008-12 ile ayni kok neden: UpdateBillingAccountRequest.accountDesc uzerinde de kisit yok. '
+          + 'ACC-008 ("Account Name, Account Description ve en az bir adres girilmeden Save aktif olmamalidir") '
+          + 'orta katmanda yalnizca accountName ve adres icin uygulaniyor.'
+      }),
+    billingCase('TC-010-12', 'Adres bilgisi gonderilmez -> 400 [ACC-008]', 'delete b.addressId;', 400,
+      'Please provide an existing address or a new one for the billing account.', { method: 'PUT', path: UPD }),
+    billingCase('TC-010-13', 'Hem mevcut adres hem yeni adres gonderilir -> 400', 'b.newAddress = newBillingAddress();', 400,
+      'Please provide either an existing address or a new one, not both.', { method: 'PUT', path: UPD }),
+    billingCase('TC-010-14', 'Var olmayan hesap guncellenemez -> 404', '', 404, 'Billing account not found with id', {
+      method: 'PUT', path: '/api/v1/customers/{{custIdF}}/accounts/999999999'
+    }),
+    billingCase('TC-010-15', 'IDOR - baska musterinin hesabi guncellenemez -> 404', `
+b.addressId = Number(pm.collectionVariables.get('addressIdE1'));`, 404, null, {
+      method: 'PUT', path: '/api/v1/customers/{{custIdE}}/accounts/{{acctIdF}}',
+      description: 'Guvenlik: Musteri F\'ye ait hesap id\'si, Musteri E\'nin yolundan guncellenmeye calisilir. '
+        + 'Hesap gercekten var oldugu icin 404, "yok" degil "sana ait degil" anlamindadir - dogru davranis budur '
+        + '(403 yerine 404 donmek hesabin varligini da sizdirmaz).'
+    }),
+    billingCase('TC-010-16', 'Var olmayan musterinin hesabi guncellenemez -> 404', '', 404, 'Customer not found with id', {
+      method: 'PUT', path: '/api/v1/customers/999999999/accounts/{{acctIdF}}'
+    }),
+    billingCase('TC-010-17', 'Gecersiz accountId tipi -> 400', '', 400, 'Parameter accountId has an invalid value.', {
+      method: 'PUT', path: '/api/v1/customers/{{custIdF}}/accounts/abc'
+    }),
+    billingCase('TC-010-18', 'Tokensiz guncelleme istegi -> 401', '', 401, null, { method: 'PUT', path: UPD, noAuth: true })
+  ]
+);
+
+// ===========================================================================
+// 11 - FR-011 BILLING ACCOUNT SILME
+// ===========================================================================
+const fr011 = folder(
+  '11 · FR-011 Fatura Hesabi Silme',
+  'FR-011. Aktif hesap silinemez (ACC-003); pasif ve bagli urunu olmayan hesap soft-delete edilir (ACC-005). '
+  + 'Silme (DELETE, acct_st_id=DEL) ile aktiflik degisimi (PATCH .../status, ACTIVE<->PASSIVE) ayri kavramlardir; '
+  + 'ikisi de burada dogrulanir. Onboarding\'de acilan varsayilan (CUST_ACCT) hesap hicbir zaman silinemez.',
+  [
+    req({
+      name: 'TC-011-01 · Aktif fatura hesabi silinemez -> 409 [ACC-002, ACC-003]',
+      method: 'DELETE',
+      path: UPD,
+      test: `${H}
+pm.test('TC-011-01 · Aktif hesap silme engellenir', function () {
+  expectCode(409);
+  expectMessage('This billing account is active and cannot be deleted.');
+});`
+    }),
+    req({
+      name: 'TC-011-02 · Silme engellendikten sonra hesap listede duruyor [ACC-003]',
+      path: '/api/v1/customers/{{custIdF}}/accounts?size=20',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-011-02 · Reddedilen silme yan etki birakmadi', function () {
+  expectCode(200);
+  var found = b.content.map(function (a) { return String(a.custAcctId); });
+  pm.expect(found).to.include(String(pm.collectionVariables.get('acctIdF')));
+});`
+    }),
+    req({
+      name: 'TC-011-03 · Varsayilan musteri hesabi silinemez -> 409',
+      method: 'DELETE',
+      path: '/api/v1/customers/{{custIdF}}/accounts/{{defaultAcctIdF}}',
+      description: 'Onboarding\'de acilan CUST_ACCT (223) tipindeki hesap bir "billing account" degildir; '
+        + 'FR-011 kapsaminda silinemez. Bu kontrol aktiflik guard\'indan ONCE calisir.',
+      test: `${H}
+pm.test('TC-011-03 · Varsayilan hesap icin silme engellenir', function () {
+  expectCode(409);
+  expectMessage('This account is not a billing account and cannot be deleted.');
+});`
+    }),
+    statusCase('TC-011-04', 'Varsayilan hesabin durumu degistirilemez -> 409', 'PASSIVE', 409, null, {
+      path: '/api/v1/customers/{{custIdF}}/accounts/{{defaultAcctIdF}}/status',
+      description: 'Varsayilan hesap ne silinebilir ne de pasiflestirilebilir - aksi halde FR-007\'deki '
+        + '"aktif fatura hesabi" kontrolu dolanilabilirdi.'
+    }),
+    statusCase('TC-011-05', 'Varsayilan hesap durum hatasi yapilan islemi dogru anlatir', 'PASSIVE', 409,
+      'cannot be changed', {
+        path: '/api/v1/customers/{{custIdF}}/accounts/{{defaultAcctIdF}}/status',
+        gap: true,
+        description: 'Durum degistirme istegi, silme mesajini ("This account is not a billing account and cannot be deleted.") '
+          + 'yeniden kullaniyor. Kullanici hicbir silme islemi yapmadigi halde silme hatasi goruyor. '
+          + 'DefaultAccountCannotBeDeletedException iki farkli akista paylasiliyor; durum degisimi icin ayri bir mesaj gerekir.'
+      }),
+    statusCase('TC-011-06', 'Hesap pasiflestirilir -> 200 [ACC-005 on kosul]', 'PASSIVE', 200, null, {
+      extraTest: `pm.test('TC-011-06 · Hesap pasif duruma gecti', function () { pm.expect(jsonBody().active, 'active').to.eql(false); });`
+    }),
+    req({
+      name: 'TC-011-07 · Pasif hesap listede pasif olarak gorunur [FR-009 ACC-002]',
+      path: '/api/v1/customers/{{custIdF}}/accounts?size=20',
+      description: 'Pasiflestirme SILME DEGILDIR: hesap listeden kaybolmaz, yalnizca Account Status kolonu degisir.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-011-07 · Pasif hesap listede duruyor ve active=false', function () {
+  expectCode(200);
+  var acct = b.content.filter(function (a) { return String(a.custAcctId) === String(pm.collectionVariables.get('acctIdF')); })[0];
+  pm.expect(acct, 'pasif hesap listede').to.not.be.undefined;
+  pm.expect(acct.active, 'active').to.eql(false);
+});`
+    }),
+    statusCase('TC-011-08', 'Pasif hesap yeniden aktif yapilabilir -> 200', 'ACTIVE', 200, null, {
+      description: 'Durum degisimi tek yonlu degildir; ACTIVE<->PASSIVE gecisi her iki yonde de calismalidir.',
+      extraTest: `pm.test('TC-011-08 · Hesap yeniden aktif', function () { pm.expect(jsonBody().active, 'active').to.eql(true); });`
+    }),
+    statusCase('TC-011-09', 'Hesap silinmek uzere yeniden pasiflestirilir -> 200', 'PASSIVE', 200, null, {
+      extraTest: `pm.test('TC-011-09 · Hesap pasif', function () { pm.expect(jsonBody().active, 'active').to.eql(false); });`
+    }),
+    req({
+      name: 'TC-011-10 · Pasif hesaba bagli urun kontrolu yapiliyor [ACC-004]',
+      path: '/api/v1/orders?custAcctId={{acctIdF}}',
+      description: 'ACC-004: pasif hesap bile olsa bagli urunu varsa silinemez ve '
+        + '"This billing account has active products and cannot be deleted." mesaji gosterilmelidir. '
+        + 'Kural BillingAccountBusinessRules.ensureNoLinkedProducts icinde yazili ancak besleyen guard '
+        + 'NoOpBillingAccountProductGuard her zaman false donuyor - kural etkisiz durumda. '
+        + 'Bu test, silme oncesi hesabin gercekten urunsuz oldugunu dogrular.',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-011-10 · Hesabin urun listesi sorgulanabiliyor', function () {
+  expectCode(200);
+  pm.expect(b, 'urun listesi').to.be.an('array');
+});
+pm.test('TC-011-10 · Silinecek hesabin bagli urunu yok (on kosul saglandi)', function () {
+  pm.expect(b.length, 'bagli urun sayisi').to.eql(0);
+});
+gapTest('TC-011-10 · Bagli urun guard\\'i order-service ile entegre', function () {
+  throw new Error('NoOpBillingAccountProductGuard her zaman false donuyor - "urunlu hesap silinemez" kurali dogrulanamiyor.');
+});`
+    }),
+    req({
+      name: 'TC-011-11 · Pasif ve urunsuz hesap silinir -> 204 [ACC-005]',
+      method: 'DELETE',
+      path: UPD,
+      test: `${H}
+pm.test('TC-011-11 · Hesap soft-delete edildi', function () { expectCode(204); });`
+    }),
+    req({
+      name: 'TC-011-12 · Silinen hesap listede gorunmez [ACC-005]',
+      path: '/api/v1/customers/{{custIdF}}/accounts?size=20',
+      test: `${H}
+var b = jsonBody();
+pm.test('TC-011-12 · Silinen hesap listeden cikti', function () {
+  expectCode(200);
+  var found = b.content.map(function (a) { return String(a.custAcctId); });
+  pm.expect(found).to.not.include(String(pm.collectionVariables.get('acctIdF')));
+});`
+    }),
+    req({
+      name: 'TC-011-13 · Silinen hesap tekrar silinemez -> 404',
+      method: 'DELETE',
+      path: UPD,
+      test: `${H}
+pm.test('TC-011-13 · Ikinci silme istegi 404 doner', function () { expectCode(404); });`
+    }),
+    billingCase('TC-011-14', 'Silinen hesap guncellenemez -> 404', '', 404, 'Billing account not found with id', {
+      method: 'PUT', path: UPD
+    }),
+    statusCase('TC-011-15', 'Gecersiz durum degeri -> 400', 'DELETED', 400, 'Status must be ACTIVE or PASSIVE.', {
+      path: '/api/v1/customers/{{custIdF}}/accounts/{{acctIdF2}}/status',
+      description: 'DELETED durumu bu uctan set edilemez - silme yalnizca DELETE ucundan yapilir.'
+    }),
+    statusCase('TC-011-16', 'Durum degeri bos -> 400', '', 400,
+      ['This field is required.', 'Status must be ACTIVE or PASSIVE.'], {
+        path: '/api/v1/customers/{{custIdF}}/accounts/{{acctIdF2}}/status',
+        description: 'Bos deger hem @NotBlank hem @Pattern kisitini ihlal eder; Bean Validation sirasi garanti '
+          + 'olmadigi icin iki mesajdan biri kabul edilir.'
+      }),
+    req({
+      name: 'TC-011-17 · IDOR - baska musterinin hesabi silinemez -> 404',
+      method: 'DELETE',
+      path: '/api/v1/customers/{{custIdE}}/accounts/{{acctIdF2}}',
+      description: 'Guvenlik: Musteri F\'ye ait hesap id\'si, Musteri E\'nin yolundan silinmeye calisilir.',
+      test: `${H}
+pm.test('TC-011-17 · Baska musterinin hesabi icin 404 doner', function () { expectCode(404); });`
+    }),
+    req({
+      name: 'TC-011-18 · Var olmayan hesap silinemez -> 404',
+      method: 'DELETE',
+      path: '/api/v1/customers/{{custIdF}}/accounts/999999999',
+      test: `${H}
+pm.test('TC-011-18 · Tanimsiz hesap icin 404 doner', function () { expectCode(404); });`
+    }),
+    req({
+      name: 'TC-011-19 · Fatura hesabina bagli adres silinemez -> 409 [FR-005 ACC-011 capraz]',
+      method: 'DELETE',
+      path: '/api/v1/customers/{{custIdF}}/addresses/{{addressIdF2}}',
+      description: 'FR-005 ACC-011 ile FR-008/FR-010 arasindaki capraz kural: bir adres herhangi bir fatura hesabinda '
+        + 'kullaniliyorsa silinemez. contact-info-service, silmeden once customer-service\'e '
+        + 'GET /accounts/exists-by-address/{addressId} ile sorar. addressIdF2, TC-008-04\'te acilan hesaba baglidir.',
+      test: `${H}
+pm.test('TC-011-19 · Hesaba bagli adres silme engellenir', function () {
+  expectCode(409);
+  expectMessage('Please change the related billing address in customer account.');
+});`
+    }),
+    req({
+      name: 'TC-011-20 · Tokensiz silme istegi -> 401',
+      method: 'DELETE',
+      path: '/api/v1/customers/{{custIdF}}/accounts/{{acctIdF2}}',
+      noAuth: true,
+      test: `${H}
+pm.test('TC-011-20 · Yetkisiz istek 401 doner', function () { expectCode(401); });`
+    })
+  ]
+);
+
+// ===========================================================================
 // 99 - TEMIZLIK
 // ===========================================================================
 const teardown = folder(
@@ -1214,18 +2411,59 @@ if (!cleanupOn || list.length === 0) {
   pm.collectionVariables.set('createdCustomerIds', JSON.stringify(list));
 }`,
       test: `${H}
+function next() {
+  var remaining = JSON.parse(pm.collectionVariables.get('createdCustomerIds') || '[]');
+  if (remaining.length > 0) { postman.setNextRequest('Z01 · Test musterilerini sil (dongu)'); }
+}
+
 if (pm.collectionVariables.get('cleanupSkip') === 'true') {
   pm.test('[ATLANDI] Silinecek kayit yok veya cleanup=false', function () { pm.expect(true).to.be.true; });
 } else {
   var id = pm.collectionVariables.get('cleanupCustId');
-  pm.test('Z01 · Test musterisi ' + id + ' temizlendi', function () { expectCode(204, 404, 409); });
-  if (pm.response.code === 409) {
-    var left = JSON.parse(pm.collectionVariables.get('cleanupLeftovers') || '[]');
-    left.push(id);
-    pm.collectionVariables.set('cleanupLeftovers', JSON.stringify(left));
+  var base = pm.environment.get('baseUrl') + '/api/v1/customers/' + id;
+
+  if (pm.response.code !== 409) {
+    pm.test('Z01 · Test musterisi ' + id + ' temizlendi', function () { expectCode(204, 404); });
+    next();
+  } else {
+    // FR-008..FR-011 testleri musteriye AKTIF fatura hesaplari birakir; aktif hesabi olan musteri
+    // silinemez (FR-007 ACC-003). Koleksiyonun sinirsiz kez kosulabilmesi icin hesaplar once
+    // pasiflestirilip silinir, ardindan musteri silme yeniden denenir.
+    pm.sendRequest({ url: base + '/accounts?size=50', method: 'GET', header: jsonHeaders() }, function (err, res) {
+      var accounts = (!err && res.code === 200) ? res.json().content : [];
+      // Varsayilan (CUST_ACCT) hesap silinemez ve zaten musteri silinirken kaskad kapanir.
+      var billing = accounts.filter(function (a) { return a.accountTpId === 224; });
+      var i = 0;
+      function closeNext() {
+        if (i >= billing.length) {
+          pm.sendRequest({ url: base, method: 'DELETE', header: jsonHeaders() }, function (e3, r3) {
+            pm.test('Z01 · Test musterisi ' + id + ' temizlendi (hesaplari kapatildiktan sonra)', function () {
+              if (e3) { throw new Error(String(e3)); }
+              pm.expect([204, 404], 'silme sonucu: ' + r3.code + ' | ' + String(r3.text()).slice(0, 150)).to.include(r3.code);
+            });
+            if (e3 || [204, 404].indexOf(r3.code) === -1) {
+              var left = JSON.parse(pm.collectionVariables.get('cleanupLeftovers') || '[]');
+              left.push(id);
+              pm.collectionVariables.set('cleanupLeftovers', JSON.stringify(left));
+            }
+            next();
+          });
+          return;
+        }
+        var acctUrl = base + '/accounts/' + billing[i].custAcctId;
+        pm.sendRequest({
+          url: acctUrl + '/status', method: 'PATCH', header: jsonHeaders(),
+          body: { mode: 'raw', raw: JSON.stringify({ status: 'PASSIVE' }) }
+        }, function () {
+          pm.sendRequest({ url: acctUrl, method: 'DELETE', header: jsonHeaders() }, function () {
+            i++;
+            closeNext();
+          });
+        });
+      }
+      closeNext();
+    });
   }
-  var remaining = JSON.parse(pm.collectionVariables.get('createdCustomerIds') || '[]');
-  if (remaining.length > 0) { postman.setNextRequest('Z01 · Test musterilerini sil (dongu)'); }
 }`
     }),
     req({
@@ -1235,7 +2473,7 @@ if (pm.collectionVariables.get('cleanupSkip') === 'true') {
       test: `${H}
 var gaps = JSON.parse(pm.collectionVariables.get('gapLog') || '[]');
 var left = JSON.parse(pm.collectionVariables.get('cleanupLeftovers') || '[]');
-console.log('==================== CRM Lite (FR-001..FR-005) kosum ozeti ====================');
+console.log('==================== CRM Lite (FR-001..FR-011) kosum ozeti ====================');
 console.log('runId                  : ' + pm.collectionVariables.get('runId'));
 console.log('strictMode             : ' + pm.environment.get('strictMode'));
 console.log('Bekleyen boslik sayisi : ' + gaps.length);
@@ -1252,20 +2490,24 @@ pm.test('Z02 · Kosum ozeti uretildi (bekleyen boslik: ' + gaps.length + ', kali
 // ===========================================================================
 const collection = {
   info: {
-    _postman_id: 'crm-lite-fr001-fr005-v1',
-    name: 'CRM Lite - Backend API Testleri (FR-001..FR-005) v1.0',
+    _postman_id: 'crm-lite-fr001-fr011-v2',
+    name: 'CRM Lite - Backend API Testleri (FR-001..FR-011) v2.0',
     description: [
-      'CRM Lite gereksinim dokumanindaki FR-001 … FR-005 maddelerinin orta katman (API) karsiliklarini dogrulayan regresyon takimi.',
+      'CRM Lite gereksinim dokumanindaki FR-001 … FR-011 maddelerinin orta katman (API) karsiliklarini dogrulayan regresyon takimi.',
+      '',
+      'Kapsam:',
+      '- FR-001 Sistem Girisi · FR-002 Musteri Arama · FR-003 Musteri Olusturma · FR-004 Musteri Guncelleme · FR-005 Adres Yonetimi',
+      '- FR-006 Iletisim Bilgileri · FR-007 Musteri Silme · FR-008 Fatura Hesabi Olusturma · FR-009 Hesap ve Urun Goruntuleme · FR-010 Hesap Guncelleme · FR-011 Hesap Silme',
       '',
       'Tasarim ilkeleri:',
       '- Her test senaryosu ayri bir istek: Postman arayuzunde tek tek gorunur, tek tek kosulabilir, Allure raporunda ayri test case olur.',
       '- Tum istekler API Gateway (baseUrl) uzerinden gider; gercek JWT ile calisir, token yonetimi otomatiktir.',
-      '- 00 klasoru deterministik veri seti kurar: Musteri A ve B ayni soyadi tasir (AND/OR testleri), C pasiflestirilir, D adres testlerine ayrilir.',
+      '- 00 klasoru deterministik veri seti kurar; her fixture musteri tek bir sorumluluk alanina ayrilmistir (A/B arama, C pasif, D adres, E iletisim, F fatura hesabi, G silme).',
       '- Her kosum kendi verisini uretir (runId + gecerli TCKN uretici) ve 99 klasorunde temizler; koleksiyon sinirsiz kez kosulabilir.',
       '- Test adlari TC-XXX-YY formatindadir ve ilgili ACC maddesini tasir; docs/traceability-matrix.md ile birebir eslesir.',
       '- Dokumanda tanimli olup kodda karsiligi olmayan maddeler gapTest ile [BEKLEYEN BOSLUK] olarak raporlanir; strictMode=true yapildiginda gercek hataya donusur.',
       '',
-      'Kosum sirasi anlamlidir: 00 Setup -> 01..05 -> 99 Temizlik.'
+      'Kosum sirasi anlamlidir: 00 Setup -> 01..11 -> 99 Temizlik.'
     ].join('\n'),
     schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'
   },
@@ -1281,12 +2523,13 @@ const collection = {
     { key: 'runId', value: '', type: 'string' },
     { key: 'gapLog', value: '[]', type: 'string' },
     { key: 'createdCustomerIds', value: '[]', type: 'string' },
+    { key: 'createdAccountIds', value: '[]', type: 'string' },
     { key: 'cleanupLeftovers', value: '[]', type: 'string' },
     { key: 'cityId', value: '', type: 'string' },
     { key: 'genderId', value: '', type: 'string' },
     { key: 'genderIdFemale', value: '', type: 'string' }
   ],
-  item: [setup, fr001, fr002, fr003, fr004, fr005, teardown]
+  item: [setup, fr001, fr002, fr003, fr004, fr005, fr006, fr007, fr008, fr009, fr010, fr011, teardown]
 };
 
 fs.mkdirSync(require('path').dirname(OUT), { recursive: true });
