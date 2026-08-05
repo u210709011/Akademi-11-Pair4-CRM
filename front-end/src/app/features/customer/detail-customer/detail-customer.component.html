@@ -173,7 +173,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (account of accounts(); track account.id) {
+                            @for (account of pagedAccounts(); track account.id) {
                                 <tr>
                                     <td class="account-expand-cell">
                                         <button type="button" class="account-expand-toggle" [class.expanded]="expandedAccountId() === account.id" [attr.aria-label]="i18n.t('detail.expandAccount')" (click)="toggleAccountRow(account.id)">
@@ -268,6 +268,40 @@
                             }
                         </tbody>
                     </table>
+
+                    @if (accountsTotalPages() > 1) {
+                        <div class="pagination">
+                            <span class="pagination-range">{{ accountsRangeLabel() }}</span>
+                            <div class="pagination-controls">
+                                <button
+                                    type="button"
+                                    class="pagination-arrow"
+                                    [disabled]="accountsPage() === 0"
+                                    (click)="goToAccountsPage(accountsPage() - 1)"
+                                    [attr.aria-label]="i18n.t('search.previousPage')"
+                                >
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+                                </button>
+                                @for (page of accountsPageNumbers(); track page) {
+                                    <button
+                                        type="button"
+                                        class="pagination-page"
+                                        [class.active]="page === accountsPage()"
+                                        (click)="goToAccountsPage(page)"
+                                    >{{ page + 1 }}</button>
+                                }
+                                <button
+                                    type="button"
+                                    class="pagination-arrow"
+                                    [disabled]="accountsPage() >= accountsTotalPages() - 1"
+                                    (click)="goToAccountsPage(accountsPage() + 1)"
+                                    [attr.aria-label]="i18n.t('search.nextPage')"
+                                >
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                    }
                 </div>
             } @else if (activeTab() === 'address') {
                 <div class="info-panel-header">

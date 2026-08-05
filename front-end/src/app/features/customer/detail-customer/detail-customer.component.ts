@@ -62,6 +62,8 @@ const EMPTY_CREATE_ACCOUNT_FORM: CreateAccountFormModel = { accountName: '', acc
 
 type DetailTab = 'information' | 'accounts' | 'address' | 'contact';
 
+const ACCOUNTS_PAGE_SIZE = 5;
+
 const UNKNOWN = '—';
 
 const EMPTY_CUSTOMER_DETAIL: CustomerDetail = {
@@ -112,6 +114,23 @@ export class DetailCustomerComponent {
   protected readonly maxAddresses = 5;
   protected readonly openAddressMenuId = signal<number | null>(null);
   protected readonly expandedAccountId = signal<number | null>(null);
+
+  // Billing Accounts tablosu istemci tarafinda sayfalanir - accounts() zaten getById() ile tam
+  // yuklu (bkz. search-customer.component.ts'teki sunucu-tarafli pagination'in ayni sekli,
+  // burada sadece dilimleme var, ekstra istek yok).
+  protected readonly accountsPage = signal(0);
+  protected readonly pagedAccounts = computed(() =>
+    this.accounts().slice(this.accountsPage() * ACCOUNTS_PAGE_SIZE, this.accountsPage() * ACCOUNTS_PAGE_SIZE + ACCOUNTS_PAGE_SIZE)
+  );
+  protected readonly accountsTotalPages = computed(() => Math.max(1, Math.ceil(this.accounts().length / ACCOUNTS_PAGE_SIZE)));
+  protected readonly accountsRangeStart = computed(() =>
+    this.accounts().length === 0 ? 0 : this.accountsPage() * ACCOUNTS_PAGE_SIZE + 1
+  );
+  protected readonly accountsRangeEnd = computed(() =>
+    Math.min(this.accounts().length, (this.accountsPage() + 1) * ACCOUNTS_PAGE_SIZE)
+  );
+  protected readonly accountsRangeLabel = computed(() => `${this.accountsRangeStart()}-${this.accountsRangeEnd()} of ${this.accounts().length}`);
+  protected readonly accountsPageNumbers = computed(() => Array.from({ length: this.accountsTotalPages() }, (_, i) => i));
 
   protected readonly isAddressModalOpen = signal(false);
   protected readonly editingAddressId = signal<number | null>(null);
@@ -248,6 +267,15 @@ export class DetailCustomerComponent {
     for (const field of CONTACT_PHONE_FIELDS) {
       effect(() => this.sanitizeContactPhoneField(field));
     }
+
+    // hesap silindiginde (ileride) mevcut sayfa bosalirsa son gecerli sayfaya klemplenir -
+    // accounts().length degisen her durumu kapsar, sadece silme akisina bagli degildir.
+    effect(() => {
+      const maxPage = this.accountsTotalPages() - 1;
+      if (this.accountsPage() > maxPage) {
+        this.accountsPage.set(maxPage);
+      }
+    });
   }
 
   // order-service'te custAcctId'ye gore filtrelenen tek bir toplu endpoint yok, o yuzden
@@ -328,6 +356,13 @@ export class DetailCustomerComponent {
     this.expandedAccountId.set(this.expandedAccountId() === accountId ? null : accountId);
   }
 
+  protected goToAccountsPage(page: number): void {
+    if (page < 0 || page >= this.accountsTotalPages() || page === this.accountsPage()) {
+      return;
+    }
+    this.accountsPage.set(page);
+  }
+
   protected openCreateAccountModal(): void {
     this.createAccountError.set(null);
     this.isAddingNewAddressForAccount.set(false);
@@ -366,6 +401,7 @@ export class DetailCustomerComponent {
         this.isSavingAccount.set(false);
         this.isCreateAccountModalOpen.set(false);
         this.showToast(this.i18n.t('detail.createAccountSuccess'));
+        this.accountsPage.set(0);
         this.refreshAccounts();
       },
       error: (httpError: HttpErrorResponse) => {
