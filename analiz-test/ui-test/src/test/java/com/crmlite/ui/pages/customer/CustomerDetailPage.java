@@ -4,6 +4,7 @@ import com.crmlite.ui.pages.BasePage;
 import com.crmlite.ui.pages.components.AddressCardComponent;
 import com.crmlite.ui.pages.components.AddressModalComponent;
 import com.crmlite.ui.pages.components.ConfirmDialogComponent;
+import com.crmlite.ui.pages.components.ContactModalComponent;
 import com.crmlite.ui.pages.components.NavbarComponent;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -49,6 +50,13 @@ public class CustomerDetailPage extends BasePage {
 
     // Accounts sekmesi
     private static final By ACCOUNT_ROWS = By.cssSelector("table.accounts-table tbody tr");
+
+    // Contact Medium sekmesi (FR-006)
+    private static final By CONTACT_GRID = By.cssSelector(".contact-info-grid");
+    private static final By CONTACT_ITEMS = By.cssSelector(".contact-info-grid .contact-info-item");
+    private static final By EDIT_CONTACT_BUTTON = By.cssSelector(".info-panel-actions .icon-button");
+    private static final By SUCCESS_TOAST = By.cssSelector(".success-toast");
+    private static final By SUCCESS_TOAST_MESSAGE = By.cssSelector(".success-toast .success-toast-message");
 
     /** Sekmeler, render sirasina gore. */
     public enum Tab {
@@ -299,5 +307,70 @@ public class CustomerDetailPage extends BasePage {
 
     public String addressActionError() {
         return getText(ADDRESS_ACTION_ERROR);
+    }
+
+    // --- Contact Medium sekmesi (FR-006) ---
+
+    /**
+     * Contact sekmesindeki alanlar, {@code .contact-info-grid} icindeki render sirasi ile.
+     *
+     * <p>Adres sekmesinden farkli olarak burada {@code .info-grid/.info-row} degil
+     * {@code .contact-info-grid/.contact-info-item} kullaniliyor; locator'lar buna gore.
+     */
+    public enum ContactField {
+        EMAIL(0),
+        MOBILE_PHONE(1),
+        HOME_PHONE(2),
+        FAX(3);
+
+        private final int index;
+
+        ContactField(int index) {
+            this.index = index;
+        }
+
+        public int index() {
+            return index;
+        }
+    }
+
+    /**
+     * ACC-001: Contact Medium sekmesini acar ve bilgilerin render edilmesini bekler.
+     *
+     * <p>Bekleme burada olmali: {@link #contactValue} beklemeyen bir okuma yapar ve
+     * sekmeye tiklandiktan hemen sonra cagirilirsa Angular henuz render etmemis olur.
+     */
+    public CustomerDetailPage openContactTab() {
+        selectTab(Tab.CONTACT);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(CONTACT_GRID));
+        return this;
+    }
+
+    /** ACC-001: sekmede gosterilen iletisim bilgisi degeri. */
+    public String contactValue(ContactField field) {
+        return getText(By.cssSelector(String.format(
+                ".contact-info-grid .contact-info-item:nth-child(%d) .contact-info-value",
+                field.index() + 1)));
+    }
+
+    public int contactRowCount() {
+        return findAll(CONTACT_ITEMS).size();
+    }
+
+    /** ACC-002: kalem ikonu → "Edit Contact Information" modal'i. */
+    public ContactModalComponent openEditContactModal() {
+        click(EDIT_CONTACT_BUTTON);
+        ContactModalComponent modal = new ContactModalComponent(driver);
+        modal.waitUntilLoaded();
+        return modal;
+    }
+
+    /** ACC-007: kaydetme sonrasi gosterilen basari bildirimi (toast). */
+    public boolean hasSuccessToast() {
+        return isDisplayedAfterWait(SUCCESS_TOAST);
+    }
+
+    public String successToastText() {
+        return getText(SUCCESS_TOAST_MESSAGE);
     }
 }

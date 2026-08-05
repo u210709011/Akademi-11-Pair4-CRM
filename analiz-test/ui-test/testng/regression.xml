@@ -78,4 +78,16 @@
         </classes>
     </test>
 
+    <!--
+      ContactCancelConfirmationTests bilincli olarak disarida: ACC-006'nin sart kostugu
+      onay mesaji uygulamada yok ve test dokumana gore yazildi. Regresyon suite'inin
+      yesil kalmasi icin yalnizca fr006.xml uzerinden kosulur.
+    -->
+    <test name="FR-006 Iletisim Bilgileri Yonetimi">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr006contact.ContactMediumTests"/>
+            <class name="com.crmlite.ui.tests.fr006contact.ContactMediumValidationTests"/>
+        </classes>
+    </test>
+
 </suite>

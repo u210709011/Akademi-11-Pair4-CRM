@@ -56,6 +56,19 @@ public final class TestDataFactory {
     }
 
     /**
+     * FR-007 ACC-003 on kosulu: <b>aktif fatura hesabi</b> bulunan musteri.
+     *
+     * <p>Onboarding'de acilan varsayilan {@code CUST_ACCT} hesabi silmeyi engellemez;
+     * engel icin ayrica {@code BILL_ACCT} tipinde bir hesap acilmalidir. Bu yuzden
+     * {@link #simpleCustomer()} ile kurulan musteri silinebilirken, buradaki silinemez.
+     */
+    public static CreatedCustomer customerWithBillingAccount() {
+        CreatedCustomer customer = simpleCustomer();
+        BillingAccountApi.createOnPrimaryAddress(customer.custId());
+        return customer;
+    }
+
+    /**
      * FR-002 ACC-007 / ACC-008: sayfalama ve siralama icin ayni soyada sahip
      * {@code count} adet musteri uretir ve ortak soyadi dondurur.
      *

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  FR-006 Iletisim Bilgileri Yonetimi (UC-EACRML-006).
+  Calistirma: ./mvnw test -Dsuite=fr006
+
+  ContactCancelConfirmationTests bilincli olarak KIRMIZI kalir: ACC-006'nin sart kostugu
+  "kaydedilmeden donulecek" onay mesaji uygulamada yok. Test dokumana gore yazildi;
+  uyumsuzluk goruntur kalsin diye devre disi birakilmadi. CI'da haric tutulmasi
+  gerekirse "documented-gap" grubu dislanabilir.
+-->
+<!-- configfailurepolicy=continue: tek bir @BeforeMethod hatasi, sinifin geri kalan
+     testlerinin config metotlarinin da atlanmasina yol acmamalidir. -->
+<suite name="CRM Lite UI - FR-006" verbose="1" parallel="false" configfailurepolicy="continue">
+
+    <listeners>
+        <listener class-name="com.crmlite.ui.core.listeners.SuiteListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.TestListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
+    <test name="FR-006 Iletisim Bilgileri Yonetimi">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr006contact.ContactMediumTests"/>
+            <class name="com.crmlite.ui.tests.fr006contact.ContactMediumValidationTests"/>
+            <class name="com.crmlite.ui.tests.fr006contact.ContactCancelConfirmationTests"/>
+        </classes>
+    </test>
+
+</suite>

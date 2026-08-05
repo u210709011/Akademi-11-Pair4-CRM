@@ -19,6 +19,7 @@ public final class ValidationDataProvider {
     private static final String DEMOGRAPHIC = "testdata/demographic-validation.json";
     private static final String CONTACT = "testdata/contact-validation.json";
     private static final String ADDRESS = "testdata/address-validation.json";
+    private static final String CONTACT_MEDIUM = "testdata/contact-medium-validation.json";
 
     private ValidationDataProvider() {
     }
@@ -53,13 +54,25 @@ public final class ValidationDataProvider {
         return toDataProvider(ADDRESS);
     }
 
+    /**
+     * FR-006 ACC-005 — Contact Medium guncelleme format matrisi.
+     *
+     * <p>FR-003'un {@code contactValidation} matrisinden ayridir: FR-006 Home Phone'u
+     * zorunlu tutmaz ve 10-11 hane kabul eder, FR-003 ise "2 ile baslar, 10 hane" der.
+     * Iki kural ayni fixture'da tutulursa hangi ekranin test edildigi belirsizlesir.
+     */
+    @DataProvider(name = "contactMediumValidation")
+    public static Object[][] contactMediumValidation() {
+        return toDataProvider(CONTACT_MEDIUM);
+    }
+
     /** Bir fixture dosyasini dogrudan okumak icin (dogrulama testleri). */
     public static List<ValidationCase> read(String classpathResource) {
         return JsonReader.readList(classpathResource, ValidationCase.class);
     }
 
     public static List<String> allFixtures() {
-        return List.of(LOGIN, SEARCH_FILTER, DEMOGRAPHIC, CONTACT, ADDRESS);
+        return List.of(LOGIN, SEARCH_FILTER, DEMOGRAPHIC, CONTACT, ADDRESS, CONTACT_MEDIUM);
     }
 
     private static Object[][] toDataProvider(String classpathResource) {
