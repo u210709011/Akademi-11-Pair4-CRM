@@ -80,6 +80,7 @@ public class CustomerServiceImpl implements CustomerService {
 		List<CustomerAccount> accounts = customerAccountRepository
 				.findByCustomer_CustIdAndAcctStIdNotDeleted(custId, lookupResolver.resolveDeletedAccountStatusId());
 		billingAccountService.ensureNoActiveBillingAccount(accounts);
+		billingAccountService.ensureNoBillingAccountWithLinkedProducts(accounts);
 
 		customer.setActive(false);
 		customerRepository.save(customer);

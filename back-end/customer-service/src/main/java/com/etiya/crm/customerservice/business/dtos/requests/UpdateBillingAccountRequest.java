@@ -5,6 +5,7 @@ import com.etiya.crm.customerservice.constants.MessageKeys;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 /**
  * FR-010: "Update Billing Account" ekrani. Guncellenebilir alanlar accountName/
@@ -21,6 +22,7 @@ public record UpdateBillingAccountRequest(
 
 		@Schema(description = "Hesap adi", example = "Home")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Size(max = 50, message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		String accountName,
 
 		@Schema(description = "Hesap aciklamasi (opsiyonel)", example = "Aylik elektrik/su faturasi icin")

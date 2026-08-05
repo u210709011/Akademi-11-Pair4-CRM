@@ -175,4 +175,13 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 		rules.ensureNoActiveBillingAccount(accounts, lookupResolver.resolveBillingAccountTypeId(),
 				lookupResolver.resolveActiveAccountStatusId());
 	}
+
+	@Override
+	public void ensureNoBillingAccountWithLinkedProducts(List<CustomerAccount> accounts) {
+		Long billingAccountTypeId = lookupResolver.resolveBillingAccountTypeId();
+		boolean hasLinkedProducts = accounts.stream()
+				.filter(account -> billingAccountTypeId.equals(account.getAccountTpId()))
+				.anyMatch(account -> productGuard.hasLinkedProducts(account.getCustAcctId()));
+		rules.ensureNoLinkedProducts(hasLinkedProducts);
+	}
 }
