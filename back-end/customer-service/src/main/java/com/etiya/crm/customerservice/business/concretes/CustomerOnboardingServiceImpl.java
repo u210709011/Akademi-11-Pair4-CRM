@@ -21,7 +21,6 @@ import com.etiya.crm.customerservice.business.rules.AddressBusinessRules;
 import com.etiya.crm.customerservice.business.rules.IdentityValidationRules;
 import com.etiya.crm.customerservice.clients.controllers.ContactAddressClient;
 import com.etiya.crm.customerservice.clients.controllers.PartyClient;
-import com.etiya.crm.customerservice.constants.AccountDefaults;
 import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerAccountRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerRepository;
@@ -59,6 +58,7 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 	private final CustomerLookupResolver lookupResolver;
 	private final CustomerMapper customerMapper;
 	private final OutboxEventPublisher outboxEventPublisher;
+	private final AccountNumberGenerator accountNumberGenerator;
 
 	@Override
 	public IdentityVerificationResponse verifyIdentity(IndividualInfo individual) {
@@ -121,9 +121,15 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 		// ACC-025: musteri olusturulurken otomatik olarak varsayilan tipte tek bir hesap acilir.
 		CustomerAccount account = new CustomerAccount();
 		account.setCustomer(customer);
-		account.setAccountNo(AccountDefaults.formatAccountNo(customer.getCustId()));
 		account.setAccountTpId(lookupResolver.resolveCustomerAccountTypeId());
 		account.setAcctStId(lookupResolver.resolveActiveAccountStatusId());
+		// acct_no NOT NULL+UNIQUE oldugu icin gecici bir deger ile ilk kayit yapilir, IDENTITY'den
+		// donen custAcctId ile asil numara ikinci kayitta yazilir - B-06: onceden burada custId
+		// kullaniliyordu, cust_acct ile ayni sequence olmadigi icin billing account'larla (custAcctId
+		// kullanan) cakisip acct_no UNIQUE constraint'ini kirabiliyordu (bkz. AccountNumberGenerator).
+		account.setAccountNo(UUID.randomUUID().toString());
+		account = customerAccountRepository.save(account);
+		account.setAccountNo(accountNumberGenerator.generate(account.getCustAcctId()));
 		account = customerAccountRepository.save(account);
 
 		customer.getAccounts().add(account);
