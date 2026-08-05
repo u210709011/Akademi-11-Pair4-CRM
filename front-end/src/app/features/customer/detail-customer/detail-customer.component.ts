@@ -278,6 +278,10 @@ export class DetailCustomerComponent {
     this.router.navigate(['/detail-customer', this.custId, 'update']);
   }
 
+  protected startNewSale(custAcctId: number): void {
+    this.router.navigate(['/new-sale', this.custId, custAcctId]);
+  }
+
   protected openDeleteConfirm(): void {
     this.deleteError.set(null);
     this.isDeleteConfirmOpen.set(true);
