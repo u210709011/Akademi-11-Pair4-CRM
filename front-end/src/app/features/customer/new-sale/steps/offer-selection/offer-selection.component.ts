@@ -5,6 +5,14 @@ import { forkJoin } from 'rxjs';
 import { I18nService } from '../../../../../core/i18n';
 import { Campaign, CampaignOffering, ProductCatalog, ProductCatalogOffering, ProductOffering, ProductService } from '../../../../../core/product';
 import { BasketLine, NewSaleFormStateService } from '../../new-sale.component';
+import { NEW_SALE_MOCK_MODE } from '../../mock/new-sale-mock.config';
+import {
+  MOCK_CAMPAIGN_OFFERINGS,
+  MOCK_CAMPAIGNS,
+  MOCK_CATALOG_OFFERINGS,
+  MOCK_CATALOGS,
+  MOCK_OFFERINGS
+} from '../../mock/new-sale-mock.data';
 
 type OfferTab = 'catalog' | 'campaigns';
 
@@ -65,16 +73,32 @@ export class OfferSelectionComponent {
   protected readonly hasSearchedCampaign = signal(false);
   protected readonly catalogResults = signal<CatalogResultRow[]>([]);
   protected readonly campaignResults = signal<CampaignResultRow[]>([]);
+  protected readonly expandedCampaignId = signal<number | null>(null);
 
   protected readonly toastMessage = signal<string | null>(null);
+  protected readonly toastType = signal<'success' | 'error'>('success');
   private toastTimeoutId?: ReturnType<typeof setTimeout>;
 
   protected readonly basketQuantity = computed(() => this.formState.basket().length);
   protected readonly basketTotal = computed(() =>
     this.formState.basket().reduce((sum, line) => sum + line.price, 0)
   );
+  protected readonly selectedLines = computed(() => this.formState.basket().filter(line => !line.isAutoAdded));
+  protected readonly autoAddedLines = computed(() => this.formState.basket().filter(line => line.isAutoAdded));
 
   constructor() {
+    // GECICI MOCK MODU - backend product-service (gateway route + seed data) hazir olana kadar.
+    // Kaldirmak icin: bu if bloguyla mock/ klasorunu silin, alttaki forkJoin cagrisi tek basina kalsin.
+    if (NEW_SALE_MOCK_MODE) {
+      this.catalogs.set(MOCK_CATALOGS);
+      this.campaigns.set(MOCK_CAMPAIGNS);
+      this.offerings.set(MOCK_OFFERINGS);
+      this.catalogOfferings.set(MOCK_CATALOG_OFFERINGS);
+      this.campaignOfferings.set(MOCK_CAMPAIGN_OFFERINGS);
+      this.isLoadingCatalogData.set(false);
+      return;
+    }
+
     forkJoin({
       catalogs: this.productService.getCatalogs(),
       campaigns: this.productService.getCampaigns(),
@@ -184,11 +208,36 @@ export class OfferSelectionComponent {
     return this.formState.basket().some(line => line.prodOfrId === productOfferingId);
   }
 
+  protected isCampaignInBasket(campaign: CampaignResultRow): boolean {
+    return campaign.offerings.every(offering => this.isInBasket(offering.productOfferingId));
+  }
+
+  protected toggleCampaignExpanded(campaignId: number): void {
+    this.expandedCampaignId.update(current => (current === campaignId ? null : campaignId));
+  }
+
+  // Bir katalogdan (Mobile/Internet/TV) ayni anda sadece bir urun sepette olabilir.
+  private catalogNameForOffering(productOfferingId: number): string | null {
+    const catalogOffering = this.catalogOfferings().find(co => co.productOfferingId === productOfferingId);
+    if (!catalogOffering) {
+      return null;
+    }
+    return this.catalogs().find(c => c.productCatalogId === catalogOffering.productCatalogId)?.name ?? null;
+  }
+
   protected addOfferToBasket(offer: CatalogResultRow): void {
-    const selectedCatalogId = this.catalogForm.controls.catalogId.value;
-    const catalogName = selectedCatalogId
-      ? this.catalogs().find(c => c.productCatalogId === Number(selectedCatalogId))?.name ?? null
-      : null;
+    const catalogName = this.catalogNameForOffering(offer.productOfferingId);
+
+    const conflictingLine = catalogName
+      ? this.selectedLines().find(
+          line => line.catalogName === catalogName && line.prodOfrId !== offer.productOfferingId
+        )
+      : undefined;
+
+    if (conflictingLine) {
+      this.showToast(this.i18n.t('newSale.categoryConflictError'), 'error');
+      return;
+    }
 
     const line: BasketLine = {
       prodOfrId: offer.productOfferingId,
@@ -196,13 +245,16 @@ export class OfferSelectionComponent {
       price: offer.price,
       cmpgId: null,
       cmpgName: null,
-      catalogName
+      catalogName,
+      isAutoAdded: false,
+      triggeredBy: null
     };
-    this.formState.addToBasket(line);
-    this.showToast(this.i18n.t('newSale.addedToBasket').replace('{name}', offer.name));
+    const addedRequiredNames = this.formState.addToBasket(line);
+    this.showToast(this.toastMessageFor(offer.name, addedRequiredNames.length));
   }
 
   protected addCampaignToBasket(campaign: CampaignResultRow): void {
+    let addedRequiredCount = 0;
     for (const offering of campaign.offerings) {
       const line: BasketLine = {
         prodOfrId: offering.productOfferingId,
@@ -210,11 +262,23 @@ export class OfferSelectionComponent {
         price: offering.price,
         cmpgId: campaign.campaignId,
         cmpgName: campaign.name,
-        catalogName: null
+        catalogName: null,
+        isAutoAdded: false,
+        triggeredBy: null
       };
-      this.formState.addToBasket(line);
+      addedRequiredCount += this.formState.addToBasket(line).length;
     }
-    this.showToast(this.i18n.t('newSale.addedToBasket').replace('{name}', campaign.name));
+    this.showToast(this.toastMessageFor(campaign.name, addedRequiredCount));
+  }
+
+  private toastMessageFor(name: string, requiredCount: number): string {
+    if (requiredCount === 0) {
+      return this.i18n.t('newSale.addedToBasket').replace('{name}', name);
+    }
+    return this.i18n
+      .t('newSale.addedToBasketWithRequired')
+      .replace('{name}', name)
+      .replace('{count}', String(requiredCount));
   }
 
   protected removeFromBasket(prodOfrId: number): void {
@@ -225,8 +289,9 @@ export class OfferSelectionComponent {
     this.formState.clearBasket();
   }
 
-  private showToast(message: string): void {
+  private showToast(message: string, type: 'success' | 'error' = 'success'): void {
     clearTimeout(this.toastTimeoutId);
+    this.toastType.set(type);
     this.toastMessage.set(message);
     this.toastTimeoutId = setTimeout(() => this.toastMessage.set(null), 3000);
   }

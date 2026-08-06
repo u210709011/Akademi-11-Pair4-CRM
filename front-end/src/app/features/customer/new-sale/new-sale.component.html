@@ -58,13 +58,15 @@
     }
 
     <div class="wizard-actions">
-        @if (activeStepIndex() === 0) {
-            <button type="button" class="cancel-button" (click)="cancel()">{{ i18n.t('newSale.cancelBtn') }}</button>
-        } @else {
-            <button type="button" class="cancel-button" (click)="previous()">{{ i18n.t('newSale.previousBtn') }}</button>
-        }
+        <div class="wizard-buttons-group">
+            @if (activeStepIndex() === 0) {
+                <button type="button" class="cancel-button" (click)="cancel()">{{ i18n.t('newSale.cancelBtn') }}</button>
+            } @else {
+                <button type="button" class="cancel-button" (click)="previous()">{{ i18n.t('newSale.previousBtn') }}</button>
+            }
 
-        <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="next()">{{ nextButtonLabel() }}</button>
+            <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="next()">{{ nextButtonLabel() }}</button>
+        </div>
     </div>
 
 </div>

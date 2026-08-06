@@ -1,4 +1,4 @@
-@for (line of formState.basket(); track line.prodOfrId) {
+@for (line of configurableLines(); track line.prodOfrId) {
     <div class="config-product-card">
         <div class="config-product-header">
             <span class="config-product-icon">
@@ -12,9 +12,55 @@
                 <span class="config-product-name">{{ line.offerName }}</span>
                 <span class="config-product-id">OFR-{{ line.prodOfrId }}</span>
             </div>
-            <span class="config-status-badge">{{ i18n.t('newSale.notConfigured') }}</span>
+            <span class="config-status-badge" [class.config-status-done]="isConfigured(line)">
+                {{ isConfigured(line) ? i18n.t('newSale.configured') : i18n.t('newSale.notConfigured') }}
+            </span>
+            <button type="button" class="config-collapse-toggle" (click)="toggleCollapsed(line.prodOfrId)" [attr.aria-label]="i18n.t('newSale.toggleConfiguration')">
+                <svg class="config-collapse-chevron" [class.collapsed]="isCollapsed(line.prodOfrId)" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+            </button>
         </div>
-        <p class="config-product-note">{{ i18n.t('newSale.configurationFieldsPending') }}</p>
+
+        @if (!isCollapsed(line.prodOfrId)) {
+            @if (fieldsFor(line.prodOfrId).length === 0) {
+                <p class="config-product-note">{{ i18n.t('newSale.configurationFieldsPending') }}</p>
+            } @else {
+                <div class="config-fields-grid">
+                    @for (field of fieldsFor(line.prodOfrId); track field.key) {
+                        <div class="config-field" [class.config-field-full]="!field.required">
+                            <label [for]="line.prodOfrId + '-' + field.key">
+                                {{ field.label }}
+                                @if (field.required) {
+                                    <span class="required">*</span>
+                                }
+                            </label>
+                            @if (field.type === 'select') {
+                                <div class="select-wrapper">
+                                    <select
+                                        [id]="line.prodOfrId + '-' + field.key"
+                                        [value]="fieldValue(line.prodOfrId, field.key)"
+                                        (change)="setFieldValue(line.prodOfrId, field.key, $any($event.target).value)"
+                                    >
+                                        <option value="">{{ i18n.t('create.selectPlaceholder') }}</option>
+                                        @for (option of field.options; track option.value) {
+                                            <option [value]="option.value">{{ option.label }}</option>
+                                        }
+                                    </select>
+                                    <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                                </div>
+                            } @else {
+                                <input
+                                    [id]="line.prodOfrId + '-' + field.key"
+                                    type="text"
+                                    [value]="fieldValue(line.prodOfrId, field.key)"
+                                    [placeholder]="field.placeholder ?? ''"
+                                    (input)="setFieldValue(line.prodOfrId, field.key, $any($event.target).value)"
+                                >
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        }
     </div>
 }
 

@@ -4,7 +4,9 @@ import { form, FormField, required } from '@angular/forms/signals';
 import { AddressEditRequest, AddressResponse, CustomerService } from '../../../../../core/customer';
 import { CITY_NAMES } from '../../../detail-customer/detail-customer.mapper';
 import { I18nService } from '../../../../../core/i18n';
-import { NewSaleFormStateService } from '../../new-sale.component';
+import { BasketLine, NewSaleFormStateService } from '../../new-sale.component';
+import { NEW_SALE_MOCK_MODE } from '../../mock/new-sale-mock.config';
+import { MOCK_CHARACTERISTICS_BY_OFFERING, MockCharacteristicField } from '../../mock/new-sale-mock.data';
 
 const UNKNOWN = '—';
 
@@ -34,6 +36,52 @@ export class ConfigurationStepComponent {
   protected readonly selectedAddress = computed<AddressResponse | null>(
     () => this.formState.addresses().find(address => address.id === this.formState.selectedAddressId()) ?? null
   );
+
+  // Zorunlu urun olarak otomatik eklenenler (ör. Wi-Fi Router) icin ayri config karti gosterilmiyor.
+  protected readonly configurableLines = computed(() => this.formState.basket().filter(line => !line.isAutoAdded));
+
+  // GECICI MOCK - karakteristik semasi/degerleri sadece mock modda tutuluyor (bkz. new-sale-mock.data.ts).
+  protected readonly charValues = signal<Record<number, Record<string, string>>>({});
+  protected readonly collapsedProductIds = signal<Set<number>>(new Set());
+
+  protected fieldsFor(prodOfrId: number): MockCharacteristicField[] {
+    return NEW_SALE_MOCK_MODE ? MOCK_CHARACTERISTICS_BY_OFFERING[prodOfrId] ?? [] : [];
+  }
+
+  protected fieldValue(prodOfrId: number, key: string): string {
+    return this.charValues()[prodOfrId]?.[key] ?? '';
+  }
+
+  protected setFieldValue(prodOfrId: number, key: string, value: string): void {
+    this.charValues.update(all => ({
+      ...all,
+      [prodOfrId]: { ...all[prodOfrId], [key]: value }
+    }));
+  }
+
+  protected isConfigured(line: BasketLine): boolean {
+    const fields = this.fieldsFor(line.prodOfrId);
+    if (fields.length === 0) {
+      return false;
+    }
+    return fields.filter(f => f.required).every(f => this.fieldValue(line.prodOfrId, f.key).trim().length > 0);
+  }
+
+  protected isCollapsed(prodOfrId: number): boolean {
+    return this.collapsedProductIds().has(prodOfrId);
+  }
+
+  protected toggleCollapsed(prodOfrId: number): void {
+    this.collapsedProductIds.update(current => {
+      const next = new Set(current);
+      if (next.has(prodOfrId)) {
+        next.delete(prodOfrId);
+      } else {
+        next.add(prodOfrId);
+      }
+      return next;
+    });
+  }
 
   protected readonly isChangeAddressModalOpen = signal(false);
   protected readonly isAddAddressModalOpen = signal(false);
