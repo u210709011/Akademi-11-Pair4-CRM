@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.etiya.crm.orderservice.constants.LogMessages;
 import com.etiya.crm.orderservice.constants.MessageKeys;
 import com.etiya.crm.shared.contracts.error.AbstractDownstreamExceptionHandler;
 import com.etiya.crm.shared.contracts.error.ErrorResponse;
@@ -54,7 +55,7 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
     @ExceptionHandler({ AddressSelectionInvalidException.class, AccountNotBelongToCustomerException.class,
             DuplicateBasketItemException.class, ServiceAddressMissingException.class,
-            AddressNotBelongToCustomerException.class })
+            AddressNotBelongToCustomerException.class, CharacteristicValueMismatchException.class })
     public ResponseEntity<ErrorResponse> handleBadRequest(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex, request);
     }
@@ -80,7 +81,7 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
-        log.error("Unexpected error", ex);
+        log.error(LogMessages.UNEXPECTED_ERROR, ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, resolve(MessageKeys.UNEXPECTED_ERROR), request);
     }
 
