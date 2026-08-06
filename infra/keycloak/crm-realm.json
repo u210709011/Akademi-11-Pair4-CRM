@@ -114,6 +114,30 @@
         { "type": "password", "value": "password", "temporary": false }
       ],
       "realmRoles": ["CRM_AGENT"]
+    },
+    {
+      "username": "service-account-contact-info-service-m2m",
+      "enabled": true,
+      "serviceAccountClientId": "contact-info-service-m2m",
+      "realmRoles": ["CRM_AGENT"]
+    },
+    {
+      "username": "service-account-order-service-m2m",
+      "enabled": true,
+      "serviceAccountClientId": "order-service-m2m",
+      "realmRoles": ["CRM_AGENT"]
+    },
+    {
+      "username": "service-account-customer-service-m2m",
+      "enabled": true,
+      "serviceAccountClientId": "customer-service-m2m",
+      "realmRoles": ["CRM_AGENT"]
+    },
+    {
+      "username": "service-account-party-service-m2m",
+      "enabled": true,
+      "serviceAccountClientId": "party-service-m2m",
+      "realmRoles": ["CRM_AGENT"]
     }
   ]
 }

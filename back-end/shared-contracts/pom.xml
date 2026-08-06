@@ -59,6 +59,14 @@
 			<artifactId>resilience4j-circuitbreaker</artifactId>
 		</dependency>
 		<dependency>
+			<!-- NoFallbackAvailableException burada yasar (org.springframework.cloud.client.circuitbreaker) -
+			     fallback tanimlanmadiginda FeignCircuitBreakerInvocationHandler'in HER exception'i
+			     (FeignException/CallNotPermittedException dahil) bununla sardigini gormek icin bkz.
+			     AbstractDownstreamExceptionHandler. -->
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-commons</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 		</dependency>

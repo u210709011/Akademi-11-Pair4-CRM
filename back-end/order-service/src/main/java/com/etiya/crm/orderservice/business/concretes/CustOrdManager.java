@@ -5,9 +5,11 @@ import com.etiya.crm.orderservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.orderservice.business.dtos.requests.AddressInfoRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.BasketItemRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.CreateOrderRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.ItemCharValsRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.OrderConfigurationRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ProdCharValRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ValidateBasketRequest;
+import com.etiya.crm.orderservice.business.dtos.responses.ActiveOfferResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.AddressSummaryResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.CustOrdItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderItemSummaryResponse;
@@ -15,6 +17,7 @@ import com.etiya.crm.orderservice.business.dtos.responses.OrderListItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderSummaryResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.ProdCharValResponse;
 import com.etiya.crm.orderservice.business.exceptions.BsnInterSpecNotFoundException;
+import com.etiya.crm.orderservice.business.exceptions.CharacteristicValueMismatchException;
 import com.etiya.crm.orderservice.business.exceptions.OrderItemNotFoundException;
 import com.etiya.crm.orderservice.business.exceptions.OrderNotEditableException;
 import com.etiya.crm.orderservice.business.exceptions.OrderNotFoundException;
@@ -24,7 +27,9 @@ import com.etiya.crm.orderservice.constants.LookupCodes;
 import com.etiya.crm.orderservice.clients.controllers.ContactAddressClient;
 import com.etiya.crm.orderservice.clients.controllers.CustomerClient;
 import com.etiya.crm.orderservice.clients.controllers.ProductClient;
+import com.etiya.crm.orderservice.clients.requests.CreateProductRequest;
 import com.etiya.crm.orderservice.clients.responses.CampaignResponse;
+import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingResponse;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
@@ -44,6 +49,7 @@ import com.etiya.crm.orderservice.mapper.CustOrderItemMapper;
 import com.etiya.crm.orderservice.mapper.AddressMapper;
 import com.etiya.crm.shared.contracts.address.AddressResponse;
 import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.gnlcharval.GnlCharValResponse;
 import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import com.etiya.crm.shared.contracts.typevalue.TypeValueTables;
@@ -57,6 +63,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -199,9 +206,10 @@ public class CustOrdManager implements CustOrdService {
     }
 
     /**
-     * FR-015: Product Configuration ekraninda kullanicinin girdigi karakteristikleri ve servis
-     * adresini WAIT durumundaki siparise yazar. Sayfa yenilense de kaybolmasin diye her cagrida
-     * charVals baştan yazilir (replace-all, idempotent); adres sadece gonderildiyse guncellenir.
+     * FR-015: Product Configuration ekraninda basket item basina girilen karakteristikleri ve
+     * siparisin servis adresini WAIT durumundaki siparise yazar. Sayfa yenilense de kaybolmasin
+     * diye her cagrida gonderilen item'in karakteristikleri bastan yazilir (replace-all,
+     * idempotent); adres sadece gonderildiyse guncellenir.
      */
     @Override
     @Transactional
@@ -210,12 +218,22 @@ public class CustOrdManager implements CustOrdService {
                 .orElseThrow(() -> new OrderNotFoundException(custOrdId));
         ensureEditable(custOrd);
 
-        custOrdCharValRepository.deleteByCustOrd_CustOrdId(custOrdId);
-        if (request.charVals() != null) {
-            for (ProdCharValRequest charValRequest : request.charVals()) {
-                CustOrdCharVal charVal = custOrdCharValMapper.toEntity(charValRequest);
-                charVal.setCustOrd(custOrd);
-                custOrdCharValRepository.save(charVal);
+        if (request.items() != null) {
+            for (ItemCharValsRequest itemRequest : request.items()) {
+                CustOrdItem item = custOrd.getItems().stream()
+                        .filter(i -> i.getCustOrdItemId().equals(itemRequest.custOrdItemId()))
+                        .findFirst()
+                        .orElseThrow(() -> new OrderItemNotFoundException(itemRequest.custOrdItemId(), custOrdId));
+
+                custOrdCharValRepository.deleteByCustOrdItem_CustOrdItemId(item.getCustOrdItemId());
+                if (itemRequest.charVals() != null) {
+                    for (ProdCharValRequest charValRequest : itemRequest.charVals()) {
+                        validateCharacteristic(charValRequest);
+                        CustOrdCharVal charVal = custOrdCharValMapper.toEntity(charValRequest);
+                        charVal.setCustOrdItem(item);
+                        custOrdCharValRepository.save(charVal);
+                    }
+                }
             }
         }
 
@@ -246,9 +264,25 @@ public class CustOrdManager implements CustOrdService {
         custOrd.setOrdStId(processingStatusId);
         custOrd = custOrdRepository.save(custOrd);
 
+        provisionProducts(custOrd);
         publishOrderSubmittedEvent(custOrd);
 
         return buildSummary(custOrd);
+    }
+
+    /**
+     * FR-021: Finish'te her item icin product-service'te gercek Product instance'ini
+     * (subscription provisioning) olusturur ve donen productId'yi item'a yazar.
+     */
+    private void provisionProducts(CustOrd custOrd) {
+        for (CustOrdItem item : custOrd.getItems()) {
+            CreateProductRequest request = new CreateProductRequest(null, item.getProdOfrId(),
+                    item.getProdSpecId(), item.getOfrName(), null, item.getCmpgId(), GnlStCodes.ACTIVE);
+            CreatedProductResponse created = productClient.createProduct(request);
+            item.setProdId(created.productId());
+            item.setProdName(created.name());
+            custOrdItemRepository.save(item);
+        }
     }
 
     /** Review & Confirm'de "Cancel" - WAIT durumundaki siparisi REJECTED'e cevirir. */
@@ -279,6 +313,24 @@ public class CustOrdManager implements CustOrdService {
     public List<CustOrdItemResponse> getItemsByCustAcctId(Long custAcctId) {
         return custOrdItemRepository.findByCustAcctId(custAcctId).stream()
                 .map(custOrderItemMapper::toItemResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * BR-03 "Already Active": Offer Selection'da bir teklifin bu hesap icin zaten aktif olup
+     * olmadigini gostermek icin. product-service'e gitmeye gerek yok - hesabin gercekten
+     * tamamlanmis (PROCESSING/FINISHED) siparislerindeki item'lar zaten bu bilgiyi tasir.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<ActiveOfferResponse> getActiveOffersByCustAcctId(Long custAcctId) {
+        Long processingStatusId = lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING);
+        Long finishedStatusId = lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.FINISHED);
+
+        return custOrdItemRepository
+                .findByCustAcctIdAndCustOrd_OrdStIdIn(custAcctId, List.of(processingStatusId, finishedStatusId))
+                .stream()
+                .map(item -> new ActiveOfferResponse(item.getProdOfrId(), item.getCustOrdItemId(), item.getProdId()))
                 .collect(Collectors.toList());
     }
 
@@ -316,6 +368,18 @@ public class CustOrdManager implements CustOrdService {
         }
     }
 
+    /** charId'nin var oldugunu, verildiyse charValId'nin de o charId'ye ait oldugunu dogrular. */
+    private void validateCharacteristic(ProdCharValRequest request) {
+        lookupCacheService.getCharacteristic(request.charId());
+
+        if (request.charValId() != null) {
+            GnlCharValResponse charVal = lookupCacheService.getCharacteristicValue(request.charValId());
+            if (!charVal.charId().equals(request.charId())) {
+                throw new CharacteristicValueMismatchException(request.charValId(), request.charId());
+            }
+        }
+    }
+
     private Long resolveAddressId(Long addressId, AddressInfoRequest newAddress, CustOrd custOrd) {
         basketValidationRules.ensureAddressProvided(addressId, newAddress);
 
@@ -336,20 +400,31 @@ public class CustOrdManager implements CustOrdService {
     }
 
     private OrderSummaryResponse buildSummary(CustOrd custOrd) {
-        List<OrderItemSummaryResponse> itemResponses = custOrd.getItems().stream()
-                .map(custOrderItemMapper::toSummaryResponse)
-                .collect(Collectors.toList());
+        Map<Long, List<ProdCharValResponse>> charValsByItem = custOrdCharValRepository
+                .findByCustOrdItem_CustOrd_CustOrdId(custOrd.getCustOrdId()).stream()
+                .collect(Collectors.groupingBy(cv -> cv.getCustOrdItem().getCustOrdItemId(),
+                        Collectors.mapping(custOrdCharValMapper::toResponse, Collectors.toList())));
 
-        List<ProdCharValResponse> charValResponses = custOrd.getCharVals().stream()
-                .map(custOrdCharValMapper::toResponse)
+        List<OrderItemSummaryResponse> itemResponses = custOrd.getItems().stream()
+                .map(item -> custOrderItemMapper.toSummaryResponse(item,
+                        charValsByItem.getOrDefault(item.getCustOrdItemId(), List.of())))
                 .collect(Collectors.toList());
 
         AddressSummaryResponse addressSummary = custOrd.getAddressId() != null
-                ? addressMapper.toSummaryResponse(contactAddressClient.getById(custOrd.getAddressId()))
+                ? buildAddressSummary(contactAddressClient.getById(custOrd.getAddressId()))
                 : null;
 
         return new OrderSummaryResponse(custOrd.getCustOrdId(), custOrd.getOrdStId(),
-                itemResponses, charValResponses, addressSummary, calculateTotalAmount(custOrd));
+                itemResponses, addressSummary, calculateTotalAmount(custOrd));
+    }
+
+    // cityName AddressResponse'ta yok (sadece cityId) - "Ürün Teklifi Detayları" ekraninda
+    // sehir adinin gosterilebilmesi icin lookup-service'ten ayrica cekilip eklenir.
+    private AddressSummaryResponse buildAddressSummary(AddressResponse address) {
+        AddressSummaryResponse base = addressMapper.toSummaryResponse(address);
+        String cityName = lookupCacheService.getGeneralType(address.cityId()).name();
+        return new AddressSummaryResponse(base.addressId(), base.cityId(), cityName, base.streetName(),
+                base.buildingName(), base.addressDesc());
     }
 
     private BigDecimal calculateTotalAmount(CustOrd custOrd) {

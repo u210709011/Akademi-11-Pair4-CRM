@@ -11,6 +11,7 @@ import org.springframework.util.StringUtils;
 import com.etiya.crm.customerservice.business.abstracts.CustomerOnboardingService;
 import com.etiya.crm.customerservice.business.abstracts.CustomerLookupResolver;
 import com.etiya.crm.customerservice.business.abstracts.IdentityVerificationService;
+import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.business.dtos.requests.ContactInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.IndividualInfo;
 import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerRequest;
@@ -21,7 +22,6 @@ import com.etiya.crm.customerservice.business.rules.AddressBusinessRules;
 import com.etiya.crm.customerservice.business.rules.IdentityValidationRules;
 import com.etiya.crm.customerservice.clients.controllers.ContactAddressClient;
 import com.etiya.crm.customerservice.clients.controllers.PartyClient;
-import com.etiya.crm.customerservice.constants.AccountDefaults;
 import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerAccountRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerRepository;
@@ -59,6 +59,8 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 	private final CustomerLookupResolver lookupResolver;
 	private final CustomerMapper customerMapper;
 	private final OutboxEventPublisher outboxEventPublisher;
+	private final AccountNumberGenerator accountNumberGenerator;
+	private final LookupCacheService lookupCacheService;
 
 	@Override
 	public IdentityVerificationResponse verifyIdentity(IndividualInfo individual) {
@@ -121,9 +123,15 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 		// ACC-025: musteri olusturulurken otomatik olarak varsayilan tipte tek bir hesap acilir.
 		CustomerAccount account = new CustomerAccount();
 		account.setCustomer(customer);
-		account.setAccountNo(AccountDefaults.formatAccountNo(customer.getCustId()));
 		account.setAccountTpId(lookupResolver.resolveCustomerAccountTypeId());
 		account.setAcctStId(lookupResolver.resolveActiveAccountStatusId());
+		// acct_no NOT NULL+UNIQUE oldugu icin gecici bir deger ile ilk kayit yapilir, IDENTITY'den
+		// donen custAcctId ile asil numara ikinci kayitta yazilir - B-06: onceden burada custId
+		// kullaniliyordu, cust_acct ile ayni sequence olmadigi icin billing account'larla (custAcctId
+		// kullanan) cakisip acct_no UNIQUE constraint'ini kirabiliyordu (bkz. AccountNumberGenerator).
+		account.setAccountNo(UUID.randomUUID().toString());
+		account = customerAccountRepository.save(account);
+		account.setAccountNo(accountNumberGenerator.generate(account.getCustAcctId()));
 		account = customerAccountRepository.save(account);
 
 		customer.getAccounts().add(account);
@@ -148,9 +156,15 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 	/**
 	 * firstName/middleName/lastName/tcNo/gsm burada senkron yazilir: hepsi bu
 	 * istekte customer-service'e caller tarafindan verilen degerlerdir, baska
-	 * bir servisin karari degildir. role BURADA YAZILMAZ: rol (partyRoleTypeId)
-	 * party-service'in karari - PartyEventListener'in az sonra tuketecegi
-	 * IndividualPartyCreated event'i ile async doldurulur (bkz. PartyEventListener).
+	 * bir servisin karari degildir. role de artik burada senkron yazilir -
+	 * onceden SADECE PartyEventListener'in async tuketecegi IndividualPartyCreated
+	 * event'i ile dolduruluyordu; event kaybolursa/lookup-service cagrisi basarisiz
+	 * olup 4 denemeden sonra DLQ'ya duserse role kalici olarak null kaliyordu, hicbir
+	 * hata da gorunmuyordu. onboard() sadece bireysel akis oldugundan ve party-service
+	 * her bireysel musteriye SABIT olarak ayni rolu (CUSTOMER_ROLE) atadigindan
+	 * (bkz. party-service IndividualManager), bu deger onboarding aninda zaten
+	 * biliniyor - async event'i beklemeye gerek yok. PartyEventListener, gelecekte
+	 * rol degisirse diye (INDIVIDUAL_UPDATED) hala calismaya devam ediyor.
 	 */
 	private void createSearchView(Customer customer, IndividualInfo individual, ContactInfo contact,
 			String accountNo) {
@@ -163,6 +177,7 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 		view.setTcNo(individual.nationalId());
 		view.setGsm(contact.mobilePhone());
 		view.setAcctNo(accountNo);
+		view.setRole(lookupCacheService.resolveTypeValue(lookupResolver.resolveCustomerRoleTypeId()));
 		view.setStatus("ACTIVE");
 		view.setDeleted(false);
 		customerSearchViewRepository.save(view);

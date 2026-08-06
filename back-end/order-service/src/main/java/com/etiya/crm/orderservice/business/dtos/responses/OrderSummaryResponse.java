@@ -9,7 +9,6 @@ public record OrderSummaryResponse(
     Long custOrdId,
     Long ordStId,
     List<OrderItemSummaryResponse> items,
-    List<ProdCharValResponse> charVals,
     AddressSummaryResponse serviceAddress,
     BigDecimal totalAmount
 ) {

@@ -4,9 +4,16 @@ import com.etiya.crm.orderservice.entities.concretes.CustOrdCharVal;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface CustOrdCharValRepository extends JpaRepository<CustOrdCharVal, Long> {
 
-    // saveConfiguration idempotent (replace-all) calisir: her cagrida onceki karakteristikler silinip yenileri yazilir.
-    void deleteByCustOrd_CustOrdId(Long custOrdId);
+    // saveConfiguration idempotent (replace-all) calisir: her cagrida ilgili item'in onceki
+    // karakteristikleri silinip yenileri yazilir.
+    void deleteByCustOrdItem_CustOrdItemId(Long custOrdItemId);
+
+    // buildSummary'de siparisin butun item'larinin karakteristiklerini tek sorguda cekip
+    // item bazinda gruplamak icin.
+    List<CustOrdCharVal> findByCustOrdItem_CustOrd_CustOrdId(Long custOrdId);
 }

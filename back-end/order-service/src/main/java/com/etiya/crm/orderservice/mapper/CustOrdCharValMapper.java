@@ -11,7 +11,7 @@ import com.etiya.crm.orderservice.entities.concretes.CustOrdCharVal;
 public interface CustOrdCharValMapper {
 
     @Mapping(target = "custOrdCharValId", ignore = true)
-    @Mapping(target = "custOrd", ignore = true)
+    @Mapping(target = "custOrdItem", ignore = true)
     @Mapping(target = "active", ignore = true)
     @Mapping(target = "cdate", ignore = true)
     @Mapping(target = "cuser", ignore = true)

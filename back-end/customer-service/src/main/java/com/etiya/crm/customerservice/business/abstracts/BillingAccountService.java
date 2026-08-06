@@ -34,4 +34,11 @@ public interface BillingAccountService {
 
 	/** FR-007 ACC-003: musteri silinirken aktif bir fatura hesabi varsa engellenir. */
 	void ensureNoActiveBillingAccount(List<CustomerAccount> accounts);
+
+	/**
+	 * FR-007 ACC-004: fatura hesabi pasif olsa dahi, bu hesaba bagli bir urun varsa musteri
+	 * silinemez. ensureNoActiveBillingAccount'tan (ACC-003) SONRA cagrilmali - ikisi birlikte
+	 * FR-007'nin tam kontrolunu olusturur.
+	 */
+	void ensureNoBillingAccountWithLinkedProducts(List<CustomerAccount> accounts);
 }

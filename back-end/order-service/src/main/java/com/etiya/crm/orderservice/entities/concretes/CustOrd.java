@@ -48,11 +48,7 @@ public class CustOrd extends BaseEntity {
 	@JoinColumn(name = "bsn_inter_spec_id")
 	private BsnInterSpec bsnInterSpec;
 
-	//soft delete 
+	//soft delete
 	@OneToMany(mappedBy = "custOrd", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
 	private List<CustOrdItem> items = new ArrayList<>();
-
-	//soft delete 
-	@OneToMany(mappedBy = "custOrd", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-	private List<CustOrdCharVal> charVals = new ArrayList<>();
 }

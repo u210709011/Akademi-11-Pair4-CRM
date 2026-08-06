@@ -5,6 +5,7 @@ import com.etiya.crm.customerservice.constants.MessageKeys;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 /**
  * contact-info-service'e (ADDR) gidecek adres bilgisi. ACC-015.
@@ -21,6 +22,7 @@ public record AddressInfo(
 
 		@Schema(description = "Cadde/sokak", example = "Ataturk Cad.")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Size(max = 200, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
 		String streetName,
 
 		@Schema(description = "Bina/kat/daire no", example = "No:12 Kat:3")

@@ -5,6 +5,7 @@ import com.etiya.crm.customerservice.constants.MessageKeys;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 /**
  * Adres ekleme/guncelleme istegi. AddressInfo'dan (onboarding) farki:
@@ -21,6 +22,7 @@ public record AddressEditRequest(
 
 		@Schema(description = "Cadde/sokak", example = "Cumhuriyet Mah.")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Size(max = 200, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
 		String streetName,
 
 		@Schema(description = "Bina/kat/daire no", example = "No:5 D:2")

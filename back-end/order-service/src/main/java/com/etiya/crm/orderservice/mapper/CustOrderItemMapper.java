@@ -1,19 +1,26 @@
 package com.etiya.crm.orderservice.mapper;
 
+import java.util.List;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import com.etiya.crm.orderservice.business.dtos.requests.BasketItemRequest;
 import com.etiya.crm.orderservice.business.dtos.responses.CustOrdItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderItemSummaryResponse;
+import com.etiya.crm.orderservice.business.dtos.responses.ProdCharValResponse;
 import com.etiya.crm.orderservice.entities.concretes.CustOrdItem;
 
 @Mapper(componentModel = "spring")
 public interface CustOrderItemMapper {
 
     //createOrder VE getById'de aynı satırlar tekrarlanıyordu
-    //price: entity'deki alanla ayni isimde oldugu icin MapStruct otomatik esler
-    OrderItemSummaryResponse toSummaryResponse(CustOrdItem item);
+    //price/prodSpecId: entity'deki alanla ayni isimde oldugu icin MapStruct otomatik esler
+    //charVals: entity'de yok, ikinci parametreden (buildSummary'de custOrdItemId'ye gore
+    //gruplanmis, ayri sorguyla cekilmis liste) parametre adi eslesmesiyle otomatik alinir
+    //serviceStartDate: FR'da ayri bir alan yok, item'in olusturuldugu an (cdate) kullanilir
+    @Mapping(target = "serviceStartDate", source = "item.cdate")
+    OrderItemSummaryResponse toSummaryResponse(CustOrdItem item, List<ProdCharValResponse> charVals);
     //getItemsByCustAcctId
     CustOrdItemResponse toItemResponse(CustOrdItem item);
 

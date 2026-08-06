@@ -77,7 +77,9 @@ export function mapToCustomerDetail(
   const billingAccountsCount = customerDetail.accounts.filter(account => account.accountTpId === BILLING_ACCOUNT_TYPE_ID).length;
 
   return {
-    customerId: `CUST-${customerDetail.custId}`,
+    // custNo backend'den zaten sifirla soldan doldurulmus gelir (bkz. CustomerMapper.formatCustNo) -
+    // CUST- burada sadece gorsel, stored/hesaplanan deger degil.
+    customerId: `CUST-${customerDetail.custNo}`,
     fullName: `${individual.firstName} ${individual.lastName}`,
     active: customerDetail.active,
     accountsCount: billingAccountsCount,
@@ -100,7 +102,9 @@ export function mapToCustomerAccounts(customerDetail: CustomerDetailResponse): C
     .filter(account => account.accountTpId === BILLING_ACCOUNT_TYPE_ID)
     .map(account => ({
       id: account.custAcctId,
-      accountNumber: account.accountNo,
+      // account.accountNo backend'den zaten sifirla soldan doldurulmus, oneksiz gelir (bkz.
+      // AccountDefaults) - ACC- burada da customerId'deki CUST- gibi sadece gorsel.
+      accountNumber: `ACC-${account.accountNo}`,
       accountName: account.accountName ?? UNKNOWN,
       accountType: account.accountDesc ?? UNKNOWN,
       status: account.active ? 'Active' : 'Inactive',
