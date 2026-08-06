@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.ProductSpecServiceSpec;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,14 +21,14 @@ public class UpdateProductSpecServiceSpecRequest {
     @NotNull(message = "Servis tanımı id alanı zorunludur")
     private Long serviceSpecId;
 
-    @NotNull(message = "İlişki tipi id alanı zorunludur")
-    private Long relationTypeId;
+    @NotBlank(message = "İlişki tipi kodu zorunludur")
+    private String relationTypeCode;
 
     @NotNull(message = "Başlangıç tarihi zorunludur")
     private LocalDate startDate;
 
     private LocalDate endDate;
 
-    @NotNull(message = "Durum zorunludur")
-    private Long statusId;
+    @NotBlank(message = "Durum kodu zorunludur")
+    private String statusCode;
 }

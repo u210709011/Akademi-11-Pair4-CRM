@@ -22,6 +22,7 @@ public interface ProductRelationMapper {
      * ignore edilir - Manager ikisini de productRepository'den bulup set eder.
      */
     @Mapping(target = "productRelationId", ignore = true)
+    @Mapping(target = "relationTypeId", ignore = true)
     @Mapping(target = "product1", ignore = true)
     @Mapping(target = "product2", ignore = true)
     @Mapping(target = "cdate", ignore = true)
@@ -38,6 +39,7 @@ public interface ProductRelationMapper {
     // ---------- UPDATE ----------
 
     @Mapping(target = "productRelationId", ignore = true)
+    @Mapping(target = "relationTypeId", ignore = true)
     @Mapping(target = "product1", ignore = true)
     @Mapping(target = "product2", ignore = true)
     @Mapping(target = "cdate", ignore = true)

@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.ProductRelation;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,8 +18,8 @@ public class UpdateProductRelationRequest {
     @NotNull(message = "Hedef ürün id alanı zorunludur")
     private Long productId2;
 
-    @NotNull(message = "İlişki tipi id alanı zorunludur")
-    private Long relationTypeId;
+    @NotBlank(message = "İlişki tipi kodu zorunludur")
+    private String relationTypeCode;
 
     @NotNull(message = "Aktiflik alanı zorunludur")
     private Boolean active;

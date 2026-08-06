@@ -8,6 +8,7 @@ import com.etiya.crm.orderservice.clients.controllers.LookupClient;
 import com.etiya.crm.orderservice.constants.CacheNames;
 import com.etiya.crm.shared.contracts.gnlchar.GnlCharResponse;
 import com.etiya.crm.shared.contracts.gnlcharval.GnlCharValResponse;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,5 +41,11 @@ public class LookupCacheServiceImpl implements LookupCacheService {
 	@Cacheable(value = CacheNames.LOOKUPS, key = "'charval_' + #charValId")
 	public GnlCharValResponse getCharacteristicValue(Long charValId) {
 		return lookupClient.getCharacteristicValueById(charValId);
+	}
+
+	@Override
+	@Cacheable(value = CacheNames.LOOKUPS, key = "'gnltp_' + #gnlTpId")
+	public GnlTpResponse getGeneralType(Long gnlTpId) {
+		return lookupClient.getGeneralTypeById(gnlTpId);
 	}
 }

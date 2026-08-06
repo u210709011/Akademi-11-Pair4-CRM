@@ -470,7 +470,7 @@ export class DetailCustomerComponent {
         if (!editing) {
           this.accountsPage.set(0);
         }
-        this.refreshAccounts();
+        this.refreshAccountsAndAddresses();
       },
       error: (httpError: HttpErrorResponse) => {
         this.isSavingAccount.set(false);
@@ -759,6 +759,18 @@ export class DetailCustomerComponent {
       () => this.digitsOnlyErrorField.set(null),
       DIGITS_ONLY_ERROR_TIMEOUT_MS
     );
+  }
+
+  private refreshAccountsAndAddresses(): void {
+    forkJoin({
+      customerDetail: this.customerService.getById(this.custId),
+      addresses: this.customerService.getAddresses(this.custId)
+    }).subscribe(({ customerDetail, addresses }) => {
+      this.customerDetailResponse = customerDetail;
+      this.addresses.set(addresses);
+      this.accounts.set(mapToCustomerAccounts(customerDetail));
+      this.customer.set(mapToCustomerDetail(customerDetail, this.individualResponse, addresses));
+    });
   }
 
   private refreshAddresses(): void {

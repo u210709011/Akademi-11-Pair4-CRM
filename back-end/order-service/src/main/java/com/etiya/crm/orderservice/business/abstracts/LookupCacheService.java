@@ -2,6 +2,7 @@ package com.etiya.crm.orderservice.business.abstracts;
 
 import com.etiya.crm.shared.contracts.gnlchar.GnlCharResponse;
 import com.etiya.crm.shared.contracts.gnlcharval.GnlCharValResponse;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpResponse;
 
 public interface LookupCacheService {
 
@@ -16,4 +17,7 @@ public interface LookupCacheService {
 
 	/** charValId'nin gercekten var oldugunu dogrular (bulunamazsa lookup-service 404 firlatir). */
 	GnlCharValResponse getCharacteristicValue(Long charValId);
+
+	/** servis adresindeki cityId'yi (GNL_TP) isme cevirmek icin. */
+	GnlTpResponse getGeneralType(Long gnlTpId);
 }

@@ -12,6 +12,7 @@ import com.etiya.crm.productservice.business.exceptions.CampaignNotFoundExceptio
 import com.etiya.crm.productservice.dataAccess.abstracts.CampaignRepository;
 import com.etiya.crm.productservice.entities.concretes.Campaign;
 import com.etiya.crm.productservice.mapper.CampaignMapper;
+import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import org.springframework.stereotype.Service;
 
@@ -70,6 +71,8 @@ public class CampaignManager implements CampaignService {
         Campaign campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new CampaignNotFoundException(campaignId));
 
-        campaignRepository.delete(campaign);
+        campaign.setStatusId(
+                lookupCacheService.resolveStatusIdByCode(GnlStGroups.CAMPAIGN, GnlStCodes.DELETED));
+        campaignRepository.save(campaign);
     }
 }
