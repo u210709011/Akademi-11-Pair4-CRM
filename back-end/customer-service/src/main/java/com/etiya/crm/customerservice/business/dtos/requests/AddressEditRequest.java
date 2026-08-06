@@ -22,7 +22,7 @@ public record AddressEditRequest(
 
 		@Schema(description = "Cadde/sokak", example = "Cumhuriyet Mah.")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
-		@Size(max = 200, message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Size(max = 200, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
 		String streetName,
 
 		@Schema(description = "Bina/kat/daire no", example = "No:5 D:2")

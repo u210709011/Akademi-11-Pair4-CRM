@@ -22,7 +22,7 @@ public record UpdateBillingAccountRequest(
 
 		@Schema(description = "Hesap adi", example = "Home")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
-		@Size(max = 50, message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Size(max = 50, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
 		String accountName,
 
 		@Schema(description = "Hesap aciklamasi", example = "Aylik elektrik/su faturasi icin")

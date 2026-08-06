@@ -7,4 +7,9 @@ public interface LookupCacheService {
 
     /** GNL_ST'den koda karşılık gelen id'yi döner. */
     Long resolveStatusIdByCode(String entCodeName, String shrtCode);
+
+    Long validateResourceSpecId(Long resourceSpecId);
+    Long validateServiceSpecId(Long serviceSpecId);
+    Long validateCharacteristicId(Long characteristicId);
+    Long validateCharacteristicValueId(Long characteristicValueId);
 }

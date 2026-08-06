@@ -102,6 +102,7 @@ public class CampaignOfferingManager implements CampaignOfferingService {
                 .orElseThrow(() -> new RuntimeException(
                         "Girilen id'ye ait eşleşme bulunamadı! : " + campaignOfferingId));
 
-        campaignOfferingRepository.delete(campaignOffering);
+        campaignOffering.setActive(false);
+        campaignOfferingRepository.save(campaignOffering);
     }
 }

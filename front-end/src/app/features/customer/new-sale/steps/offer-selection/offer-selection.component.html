@@ -1,11 +1,19 @@
 @if (toastMessage(); as message) {
-    <div class="success-toast">
-        <svg class="success-toast-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" />
-            <path d="m8 12 3 3 5-6" />
-        </svg>
-        <span class="success-toast-message">{{ message }}</span>
-        <button type="button" class="success-toast-close" [attr.aria-label]="i18n.t('detail.dismiss')" (click)="dismissToast()">
+    <div class="app-toast" [class.app-toast-error]="toastType() === 'error'">
+        @if (toastType() === 'error') {
+            <svg class="app-toast-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 9v4" />
+                <path d="M12 17h.01" />
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+            </svg>
+        } @else {
+            <svg class="app-toast-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <path d="m8 12 3 3 5-6" />
+            </svg>
+        }
+        <span class="app-toast-message">{{ message }}</span>
+        <button type="button" class="app-toast-close" [attr.aria-label]="i18n.t('detail.dismiss')" (click)="dismissToast()">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
     </div>
@@ -55,6 +63,7 @@
                 <button type="button" class="offer-search-button" (click)="searchCatalog()">{{ i18n.t('newSale.searchBtn') }}</button>
             </form>
 
+            <div class="offer-results-scroll">
             <table class="offer-results-table">
                 <thead>
                     <tr>
@@ -94,6 +103,7 @@
                     }
                 </tbody>
             </table>
+            </div>
         } @else {
             <form class="offer-search-form" [formGroup]="campaignForm">
                 <div class="offer-search-field">
@@ -125,6 +135,7 @@
                 <button type="button" class="offer-search-button" (click)="searchCampaigns()">{{ i18n.t('newSale.searchBtn') }}</button>
             </form>
 
+            <div class="offer-results-scroll">
             <table class="offer-results-table">
                 <thead>
                     <tr>
@@ -146,19 +157,56 @@
                         </tr>
                     } @else {
                         @for (campaign of campaignResults(); track campaign.campaignId) {
-                            <tr>
+                            <tr [class.selected-row]="isCampaignInBasket(campaign)">
                                 <td class="offer-id-cell">CMP-{{ campaign.campaignId }}</td>
-                                <td>{{ campaign.name }}</td>
-                                <td>{{ campaign.offerings.map(o => o.name).join(', ') }}</td>
+                                <td><div class="offer-name">{{ campaign.name }}</div></td>
+                                <td>
+                                    <button type="button" class="bundled-offers-toggle" (click)="toggleCampaignExpanded(campaign.campaignId)">
+                                        <svg class="bundled-offers-chevron" [class.expanded]="expandedCampaignId() === campaign.campaignId" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                                        {{ campaign.offerings.length }} {{ i18n.t('newSale.offersCount') }}
+                                    </button>
+                                </td>
                                 <td class="offer-price-cell">{{ campaign.totalPrice | number: '1.2-2' }} {{ i18n.t('newSale.currency') }} / {{ i18n.t('newSale.perMonth') }}</td>
                                 <td>
-                                    <button type="button" class="offer-add-button" (click)="addCampaignToBasket(campaign)">{{ i18n.t('newSale.addToBasket') }}</button>
+                                    @if (isCampaignInBasket(campaign)) {
+                                        <button type="button" class="offer-add-button" disabled>{{ i18n.t('newSale.alreadyInBasket') }}</button>
+                                    } @else {
+                                        <button type="button" class="offer-add-button campaign-add-button" (click)="addCampaignToBasket(campaign)">{{ i18n.t('newSale.addCampaignToBasket') }}</button>
+                                    }
                                 </td>
                             </tr>
+                            @if (expandedCampaignId() === campaign.campaignId) {
+                                <tr class="bundled-offers-row">
+                                    <td colspan="5">
+                                        <table class="bundled-offers-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ i18n.t('newSale.prodOfferId') }}</th>
+                                                    <th>{{ i18n.t('newSale.prodOfferName') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @for (offering of campaign.offerings; track offering.productOfferingId) {
+                                                    <tr>
+                                                        <td class="offer-id-cell" [class.in-basket]="isInBasket(offering.productOfferingId)">OFR-{{ offering.productOfferingId }}</td>
+                                                        <td>
+                                                            <span [class.in-basket]="isInBasket(offering.productOfferingId)">{{ offering.name }}</span>
+                                                            @if (isInBasket(offering.productOfferingId)) {
+                                                                <span class="in-basket-badge">{{ i18n.t('newSale.inBasket') }}</span>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            }
                         }
                     }
                 </tbody>
             </table>
+            </div>
         }
 
     </div>
@@ -172,26 +220,54 @@
         @if (formState.basket().length === 0) {
             <p class="basket-empty-text">{{ i18n.t('newSale.basketEmpty') }}</p>
         } @else {
-            <ul class="basket-item-list">
-                @for (line of formState.basket(); track line.prodOfrId) {
-                    <li class="basket-item">
-                        <div class="basket-item-info">
-                            <span class="basket-item-name">{{ line.offerName }}</span>
-                            @if (line.cmpgName) {
-                                <span class="basket-item-campaign">{{ line.cmpgName }}</span>
-                            }
-                        </div>
-                        <button type="button" class="basket-item-remove" [attr.aria-label]="i18n.t('newSale.removeFromBasket')" (click)="removeFromBasket(line.prodOfrId)">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M3 6h18" />
-                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            @if (selectedLines().length > 0) {
+                <div class="basket-section-label">{{ i18n.t('newSale.selectedByCustomer') }}</div>
+                <ul class="basket-item-list">
+                    @for (line of selectedLines(); track line.prodOfrId) {
+                        <li class="basket-item">
+                            <div class="basket-item-info">
+                                <span class="basket-item-name">{{ line.offerName }}</span>
+                                @if (line.cmpgName) {
+                                    <span class="basket-item-campaign">{{ line.cmpgName }}</span>
+                                }
+                            </div>
+                            <button type="button" class="basket-item-remove" [attr.aria-label]="i18n.t('newSale.removeFromBasket')" (click)="removeFromBasket(line.prodOfrId)">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M3 6h18" />
+                                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                </svg>
+                            </button>
+                            <span class="basket-item-price">{{ line.price | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
+                        </li>
+                    }
+                </ul>
+            }
+
+            @if (autoAddedLines().length > 0) {
+                <div class="basket-section-label">{{ i18n.t('newSale.automaticallyAdded') }}</div>
+                <ul class="basket-item-list">
+                    @for (line of autoAddedLines(); track line.prodOfrId) {
+                        <li class="basket-item basket-item-locked">
+                            <div class="basket-item-info">
+                                <span class="basket-item-name">{{ line.offerName }}</span>
+                                <span class="basket-item-required-badge">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <rect x="4" y="10" width="16" height="10" rx="2" />
+                                        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                                    </svg>
+                                    {{ i18n.t('newSale.requiredProduct') }}
+                                </span>
+                            </div>
+                            <svg class="basket-item-lock-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="4" y="10" width="16" height="10" rx="2" />
+                                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
                             </svg>
-                        </button>
-                        <span class="basket-item-price">{{ line.price | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
-                    </li>
-                }
-            </ul>
+                            <span class="basket-item-price">{{ line.price | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
+                        </li>
+                    }
+                </ul>
+            }
         }
 
         <div class="basket-summary-row">

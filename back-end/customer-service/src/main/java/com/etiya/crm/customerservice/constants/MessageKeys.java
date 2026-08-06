@@ -8,11 +8,13 @@ package com.etiya.crm.customerservice.constants;
 public final class MessageKeys {
 
 	public static final String FIELD_REQUIRED = "validation.field.required";
+	public static final String FIELD_MAX_LENGTH = "validation.field.max-length";
 	public static final String NATIONAL_ID_INVALID = "validation.national-id.invalid";
 	public static final String NAME_INVALID = "validation.name.invalid";
 	public static final String BIRTH_DATE_INVALID = "validation.birth-date.invalid";
 	public static final String EMAIL_INVALID = "validation.email.invalid";
 	public static final String PHONE_INVALID = "validation.phone.invalid";
+	public static final String FAX_INVALID = "validation.fax.invalid";
 	public static final String ADDRESS_MAX_EXCEEDED = "validation.address.max-exceeded";
 	public static final String ADDRESS_MIN_REQUIRED = "validation.address.min-required";
 	public static final String BILLING_ACCOUNT_ADDRESS_REQUIRED = "validation.billing-account.address-required";

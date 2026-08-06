@@ -26,6 +26,10 @@ public interface LookupClient {
     @GetMapping("/api/v1/general-types")
     List<GnlTpResponse> getAllGeneralTypes(@RequestParam(required = false) String entCodeName);
 
+    // servis adresindeki cityId'yi (GNL_TP) isme cevirmek icin (ör. Ürün Teklifi Detayları ekrani).
+    @GetMapping("/api/v1/general-types/{id}")
+    GnlTpResponse getGeneralTypeById(@PathVariable Long id);
+
     @GetMapping("/api/v1/general-types/resolve/{entCodeName}/{shrtCode}")
     GnlTpResponse resolveGeneralType(@PathVariable String entCodeName, @PathVariable String shrtCode);
 

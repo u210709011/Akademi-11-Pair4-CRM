@@ -13,6 +13,15 @@ public final class MessageKeys {
     public static final String DOWNSTREAM_CALL_FAILED = "error.downstream.call-failed";
     public static final String DOWNSTREAM_UNAVAILABLE = "error.downstream.unavailable";
     public static final String UNEXPECTED_ERROR = "error.unexpected";
+    public static final String PRODUCT_RELATION_NOT_FOUND = "error.product-relation.not-found";
+    public static final String PRODUCT_SPEC_RESOURCE_SPEC_NOT_FOUND = "error.product-spec-resource-spec.not-found";
+    public static final String PRODUCT_SPEC_SERVICE_SPEC_NOT_FOUND = "error.product-spec-service-spec.not-found";
+    public static final String PRODUCT_CHARACTERISTIC_VALUE_NOT_FOUND = "error.product-characteristic-value.not-found";
+    public static final String RESOURCE_SPEC_NOT_FOUND = "error.resource-spec.not-found";
+    public static final String SERVICE_SPEC_NOT_FOUND = "error.service-spec.not-found";
+    public static final String CHARACTERISTIC_NOT_FOUND = "error.characteristic.not-found";
+    public static final String CHARACTERISTIC_VALUE_NOT_FOUND = "error.characteristic-value.not-found";
+    public static final String PRODUCT_OFFERING_RELATION_NOT_FOUND = "error.product-offering-relation.not-found"
 
     private MessageKeys() {
     }

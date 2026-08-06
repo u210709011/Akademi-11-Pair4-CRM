@@ -4,6 +4,7 @@ import com.etiya.crm.orderservice.business.dtos.requests.BasketItemRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.CreateOrderRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.OrderConfigurationRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ValidateBasketRequest;
+import com.etiya.crm.orderservice.business.dtos.responses.ActiveOfferResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.CustOrdItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderListItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderSummaryResponse;
@@ -23,5 +24,7 @@ public interface CustOrdService {
         List<CustOrdItemResponse> getItemsByCustAcctId(Long custAcctId);
         // tahmini alanlarla eklendi (FR'da kesinlesmis bir order-list sozlesmesi yok, gerekirse revize edilir)
         List<OrderListItemResponse> getOrdersByCustId(Long custId);
+        // BR-03 "Already Active": hesabin PROCESSING/FINISHED siparislerindeki teklifler.
+        List<ActiveOfferResponse> getActiveOffersByCustAcctId(Long custAcctId);
 
 }

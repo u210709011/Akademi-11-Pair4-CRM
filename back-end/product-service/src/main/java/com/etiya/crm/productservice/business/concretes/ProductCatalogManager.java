@@ -12,6 +12,7 @@ import com.etiya.crm.productservice.business.exceptions.ProductCatalogNotFoundEx
 import com.etiya.crm.productservice.dataAccess.abstracts.ProductCatalogRepository;
 import com.etiya.crm.productservice.entities.concretes.ProductCatalog;
 import com.etiya.crm.productservice.mapper.ProductCatalogMapper;
+import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import org.springframework.stereotype.Service;
 
@@ -71,6 +72,8 @@ public class ProductCatalogManager implements ProductCatalogService {
         ProductCatalog productCatalog = productCatalogRepository.findById(productCatalogId)
                 .orElseThrow(() -> new ProductCatalogNotFoundException(productCatalogId));
 
-        productCatalogRepository.delete(productCatalog);
+        productCatalog.setStatusId(
+                lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT_CATALOG, GnlStCodes.DELETED));
+        productCatalogRepository.save(productCatalog);
     }
 }

@@ -18,40 +18,40 @@ import java.util.List;
 @RequestMapping("/api/v1/product-relations")
 public class ProductRelationController {
 
-    private final ProductRelationService productReletionService;
+    private final ProductRelationService productRelationService;
 
     public ProductRelationController(ProductRelationService productReletionService) {
-        this.productReletionService = productReletionService;
+        this.productRelationService = productReletionService;
     }
 
 
     @PostMapping
     public ResponseEntity<CreatedProductRelationResponse> create(@Valid @RequestBody CreateProductRelationRequest request){
-        CreatedProductRelationResponse response = productReletionService.create(request);
+        CreatedProductRelationResponse response = productRelationService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{productRelationId}")
     public ResponseEntity<UpdatedProductRelationResponse> update(@PathVariable Long productRelationId, @Valid @RequestBody UpdateProductRelationRequest request){
-        UpdatedProductRelationResponse response = productReletionService.update(productRelationId, request);
+        UpdatedProductRelationResponse response = productRelationService.update(productRelationId, request);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{productRelationId}")
     public ResponseEntity<GetProductRelationResponse> getById(@PathVariable Long productRelationId){
-        GetProductRelationResponse response = productReletionService.getById(productRelationId);
+        GetProductRelationResponse response = productRelationService.getById(productRelationId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
     public ResponseEntity<List<GetAllProductRelationResponse>> getAll(){
-        List<GetAllProductRelationResponse> response = productReletionService.getAll();
+        List<GetAllProductRelationResponse> response = productRelationService.getAll();
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{productRelationId}")
     public ResponseEntity<Void> delete(@PathVariable Long productRelationId){
-        productReletionService.delete(productRelationId);
+        productRelationService.delete(productRelationId);
         return ResponseEntity.noContent().build();
     }
 }
