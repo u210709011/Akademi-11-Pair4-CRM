@@ -47,6 +47,8 @@ public class ProductSpecServiceSpecManager implements ProductSpecServiceSpecServ
                 lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT_SPEC_SERVICE_SPEC, request.getStatusCode()));
         entity.setRelationTypeId(
                 lookupCacheService.resolveTypeIdByCode(GnlTpGroups.PROD_SPEC_SRVC_SPEC, request.getRelationTypeCode()));
+        entity.setServiceSpecId(lookupCacheService.validateServiceSpecId(request.getServiceSpecId()));
+
 
         ProductSpecServiceSpec saved = productSpecServiceSpecRepository.save(entity);
         return productSpecServiceSpecMapper.toCreatedResponse(saved);
@@ -67,6 +69,8 @@ public class ProductSpecServiceSpecManager implements ProductSpecServiceSpecServ
                 lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT_SPEC_SERVICE_SPEC, request.getStatusCode()));
         entity.setRelationTypeId(
                 lookupCacheService.resolveTypeIdByCode(GnlTpGroups.PROD_SPEC_SRVC_SPEC, request.getRelationTypeCode()));
+        entity.setServiceSpecId(lookupCacheService.validateServiceSpecId(request.getServiceSpecId()));
+
 
         ProductSpecServiceSpec saved = productSpecServiceSpecRepository.save(entity);
         return productSpecServiceSpecMapper.toUpdatedResponse(saved);

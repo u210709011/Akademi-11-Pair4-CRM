@@ -48,6 +48,7 @@ public class ProductSpecResourceSpecManager implements ProductSpecResourceSpecSe
                 lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT_SPEC_RESOURCE_SPEC, request.getStatusCode()));
         entity.setRelationTypeId(
                 lookupCacheService.resolveTypeIdByCode(GnlTpGroups.PROD_SPEC_RSRC_SPEC, request.getRelationTypeCode()));
+        entity.setResourceSpecId(lookupCacheService.validateResourceSpecId(request.getResourceSpecId()));
         ProductSpecResourceSpec saved = productSpecResourceSpecRepository.save(entity);
         return productSpecResourceSpecMapper.toCreatedResponse(saved);
     }
@@ -67,6 +68,7 @@ public class ProductSpecResourceSpecManager implements ProductSpecResourceSpecSe
                 lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT_SPEC_RESOURCE_SPEC, request.getStatusCode()));
         entity.setRelationTypeId(
                 lookupCacheService.resolveTypeIdByCode(GnlTpGroups.PROD_SPEC_RSRC_SPEC, request.getRelationTypeCode()));
+        entity.setResourceSpecId(lookupCacheService.validateResourceSpecId(request.getResourceSpecId()));
 
         ProductSpecResourceSpec saved = productSpecResourceSpecRepository.save(entity);
         return productSpecResourceSpecMapper.toUpdatedResponse(saved);

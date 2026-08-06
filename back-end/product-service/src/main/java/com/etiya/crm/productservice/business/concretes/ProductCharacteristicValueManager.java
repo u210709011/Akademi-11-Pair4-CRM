@@ -46,6 +46,11 @@ public class ProductCharacteristicValueManager implements ProductCharacteristicV
         ProductCharacteristicValue entity = productCharacteristicValueMapper.toEntity(request);
         entity.setProduct(product);
 
+        entity.setCharacteristicId(lookupCacheService.validateCharacteristicId(request.getCharacteristicId()));
+        if (request.getCharacteristicValueId() != null) {
+            entity.setCharacteristicValueId(lookupCacheService.validateCharacteristicValueId(request.getCharacteristicValueId()));
+        }
+
         if (request.getStatusCode() != null) {
             entity.setStatusId(
                     lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT_CHAR_VAL, request.getStatusCode()));
@@ -65,6 +70,11 @@ public class ProductCharacteristicValueManager implements ProductCharacteristicV
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException(request.getProductId()));
         entity.setProduct(product);
+
+        entity.setCharacteristicId(lookupCacheService.validateCharacteristicId(request.getCharacteristicId()));
+        if (request.getCharacteristicValueId() != null) {
+            entity.setCharacteristicValueId(lookupCacheService.validateCharacteristicValueId(request.getCharacteristicValueId()));
+        }
 
         if (request.getStatusCode() != null) {
             entity.setStatusId(
