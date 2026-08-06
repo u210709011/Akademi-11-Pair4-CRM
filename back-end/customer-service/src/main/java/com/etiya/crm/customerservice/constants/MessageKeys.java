@@ -37,6 +37,8 @@ public final class MessageKeys {
 	public static final String DEFAULT_ACCOUNT_CANNOT_BE_DELETED = "error.customer-account.default-cannot-be-deleted";
 	public static final String ACCOUNT_NUMBER_COLLISION = "error.customer-account.number-collision";
 	public static final String PARAMETER_TYPE_MISMATCH = "validation.parameter.type-mismatch";
+	public static final String INVALID_REQUEST_PARAMETER = "validation.parameter.invalid";
+	public static final String CITY_INVALID = "validation.city.invalid";
 
 	private MessageKeys() {
 	}

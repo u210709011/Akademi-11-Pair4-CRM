@@ -46,6 +46,10 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 	@Override
 	@Transactional(readOnly = true)
 	public Page<CustomerAccountResponse> getAccounts(Long custId, Pageable pageable) {
+		// B-11: onceden burada musteri varlik kontrolu yoktu - servisin diger butun uclari
+		// (detay/contact/hesap olusturma/guncelleme) olmayan custId icin 404 donerken, bu uc
+		// 200 + bos liste donuyordu (silinmis bir musteri "hic fatura hesabi yok" gibi gorunuyordu).
+		customerFinder.getActiveCustomerOrThrow(custId);
 		Long activeStatusId = lookupResolver.resolveActiveAccountStatusId();
 		return customerAccountRepository
 				.findByCustomer_CustIdAndAcctStIdNotDeleted(custId, lookupResolver.resolveDeletedAccountStatusId(),
