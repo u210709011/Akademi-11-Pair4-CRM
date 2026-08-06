@@ -16,6 +16,8 @@ public interface AddressMapper {
     @Mapping(target = "addressId", source = "id")
     @Mapping(target = "buildingName", source = "houseName")
     @Mapping(target = "addressDesc", source = "addrDesc")
+    //cityName lookup-service'ten ayrica cekiliyor (AddressResponse'ta sadece cityId var), managerda set edilir
+    @Mapping(target = "cityName", ignore = true)
     AddressSummaryResponse toSummaryResponse(AddressResponse address);
 
     @Mapping(target = "houseName", source = "request.buildingName")

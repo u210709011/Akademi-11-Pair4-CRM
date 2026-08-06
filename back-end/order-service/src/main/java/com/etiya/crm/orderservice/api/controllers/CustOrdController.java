@@ -4,6 +4,7 @@ import com.etiya.crm.orderservice.business.abstracts.CustOrdService;
 import com.etiya.crm.orderservice.business.dtos.requests.CreateOrderRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.OrderConfigurationRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ValidateBasketRequest;
+import com.etiya.crm.orderservice.business.dtos.responses.ActiveOfferResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.CustOrdItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderListItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderSummaryResponse;
@@ -70,5 +71,11 @@ public class CustOrdController {
     @GetMapping(params = "custId")
     public ResponseEntity<List<OrderListItemResponse>> getByCustId(@RequestParam Long custId) {
         return ResponseEntity.ok(custOrdService.getOrdersByCustId(custId));
+    }
+
+    // BR-03 "Already Active": Offer Selection'da bu hesap icin zaten aktif olan teklifler.
+    @GetMapping("/active-offers")
+    public ResponseEntity<List<ActiveOfferResponse>> getActiveOffers(@RequestParam Long custAcctId) {
+        return ResponseEntity.ok(custOrdService.getActiveOffersByCustAcctId(custAcctId));
     }
 }
