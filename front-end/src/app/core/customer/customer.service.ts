@@ -15,7 +15,8 @@ import {
   IndividualInfo,
   IndividualResponse,
   OnboardCustomerRequest,
-  OnboardCustomerResponse
+  OnboardCustomerResponse,
+  UpdateBillingAccountRequest
 } from './customer.model';
 // to align with the object logic implemented on the backend (Spring Data Page).
 interface PagedResponse<T> {
@@ -128,6 +129,23 @@ export class CustomerService {
       `${environment.apiGatewayUrl}/api/v1/customers/${custId}/accounts`,
       request
     );
+  }
+
+  // updates accountName/accountDesc/address on an existing billing account; accountNo/accountTpId never change.
+  updateBillingAccount(
+    custId: number,
+    accountId: number,
+    request: UpdateBillingAccountRequest
+  ): Observable<CustomerAccountSummary> {
+    return this.http.put<CustomerAccountSummary>(
+      `${environment.apiGatewayUrl}/api/v1/customers/${custId}/accounts/${accountId}`,
+      request
+    );
+  }
+
+  // soft-deletes a billing account; backend returns 409 if the account is active or has linked products.
+  deleteBillingAccount(custId: number, accountId: number): Observable<void> {
+    return this.http.delete<void>(`${environment.apiGatewayUrl}/api/v1/customers/${custId}/accounts/${accountId}`);
   }
 
   // ACC-023: Create butonu - tek istekte party+customer(+hesap)+contact/adres yazar (saga, backend tarafında geri alinir).

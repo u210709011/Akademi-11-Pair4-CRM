@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.Product;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,6 +27,6 @@ public class CreateProductRequest {
 
     private Long campaignId;
 
-    @NotNull(message = "Durum alanı boş bırakılamaz")
-    private Long statusId;
+    @NotBlank(message = "Durum kodu zorunludur.")
+    private String statusCode;
 }

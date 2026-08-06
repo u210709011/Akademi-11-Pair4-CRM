@@ -14,6 +14,7 @@ import com.etiya.crm.orderservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.orderservice.business.dtos.requests.AddressInfoRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.BasketItemRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.CreateOrderRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.ItemCharValsRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.OrderConfigurationRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ProdCharValRequest;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderListItemResponse;
@@ -22,6 +23,7 @@ import com.etiya.crm.orderservice.business.dtos.responses.ProdCharValResponse;
 import com.etiya.crm.orderservice.business.exceptions.AccountNotBelongToCustomerException;
 import com.etiya.crm.orderservice.business.exceptions.AddressNotBelongToCustomerException;
 import com.etiya.crm.orderservice.business.exceptions.AddressSelectionInvalidException;
+import com.etiya.crm.orderservice.business.exceptions.CharacteristicValueMismatchException;
 import com.etiya.crm.orderservice.business.exceptions.DuplicateBasketItemException;
 import com.etiya.crm.orderservice.business.exceptions.OrderItemNotFoundException;
 import com.etiya.crm.orderservice.business.exceptions.OrderNotEditableException;
@@ -53,6 +55,8 @@ import com.etiya.crm.orderservice.mapper.CustOrderItemMapper;
 import org.mapstruct.factory.Mappers;
 import com.etiya.crm.shared.contracts.address.AddressResponse;
 import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
+import com.etiya.crm.shared.contracts.gnlchar.GnlCharResponse;
+import com.etiya.crm.shared.contracts.gnlcharval.GnlCharValResponse;
 import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
@@ -61,7 +65,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -144,7 +147,7 @@ class CustOrdManagerTest {
 		assertThat(response.items().get(0).prodOfrId()).isEqualTo(200L);
 		assertThat(response.items().get(0).ofrName()).isEqualTo("Mobile Prepaid 5GB");
 		assertThat(response.totalAmount()).isEqualByComparingTo("89.90");
-		assertThat(response.charVals()).isEmpty();
+		assertThat(response.items().get(0).charVals()).isEmpty();
 		assertThat(response.serviceAddress()).isNull();
 	}
 
@@ -332,20 +335,21 @@ class CustOrdManagerTest {
 	}
 
 	@Test
-	void saveConfiguration_replacesCharVals_andStoresExistingAddressId() {
+	void saveConfiguration_replacesItemCharVals_andStoresExistingAddressId() {
 		CustOrd custOrd = waitingOrder();
-		CustOrdCharVal staleCharVal = new CustOrdCharVal();
-		staleCharVal.setCustOrd(custOrd);
-		custOrd.getCharVals().add(staleCharVal); // onceki (autosave) turdan kalan eski kayit
+		CustOrdItem item = new CustOrdItem();
+		item.setCustOrdItemId(900L);
+		item.setCustOrd(custOrd);
+		custOrd.getItems().add(item);
 
 		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
 		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
-		doAnswer(inv -> {
-			custOrd.getCharVals().clear();
-			return null;
-		}).when(custOrdCharValRepository).deleteByCustOrd_CustOrdId(CUST_ORD_ID);
 
 		ProdCharValRequest charValRequest = new ProdCharValRequest(1L, 2L, "200Mbps");
+		when(lookupCacheService.getCharacteristic(1L))
+				.thenReturn(new GnlCharResponse(1L, "Speed", "descr", null, "SPEED", true, null, null, null, null));
+		when(lookupCacheService.getCharacteristicValue(2L)).thenReturn(
+				new GnlCharValResponse(2L, 1L, false, "200Mbps", "200M", null, null, true, null, null, null, null));
 		when(custOrdCharValMapper.toEntity(charValRequest)).thenAnswer(inv -> {
 			CustOrdCharVal entity = new CustOrdCharVal();
 			entity.setCharId(1L);
@@ -353,13 +357,14 @@ class CustOrdManagerTest {
 			entity.setVal("200Mbps");
 			return entity;
 		});
-		when(custOrdCharValRepository.save(any(CustOrdCharVal.class))).thenAnswer(inv -> {
-			CustOrdCharVal saved = inv.getArgument(0);
-			saved.getCustOrd().getCharVals().add(saved);
-			return saved;
-		});
-		when(custOrdCharValMapper.toResponse(any(CustOrdCharVal.class)))
-				.thenReturn(new ProdCharValResponse(1L, 2L, "200Mbps"));
+		CustOrdCharVal savedCharVal = new CustOrdCharVal();
+		savedCharVal.setCharId(1L);
+		savedCharVal.setCharValId(2L);
+		savedCharVal.setVal("200Mbps");
+		savedCharVal.setCustOrdItem(item);
+		when(custOrdCharValRepository.save(any(CustOrdCharVal.class))).thenReturn(savedCharVal);
+		when(custOrdCharValRepository.findByCustOrdItem_CustOrd_CustOrdId(CUST_ORD_ID)).thenReturn(List.of(savedCharVal));
+		when(custOrdCharValMapper.toResponse(savedCharVal)).thenReturn(new ProdCharValResponse(1L, 2L, "200Mbps"));
 
 		AddressResponse existingAddress = new AddressResponse(77L, CUST_ID, 5L, 1L, "Street", "12", "Desc", true,
 				null, null, null, null);
@@ -369,13 +374,53 @@ class CustOrdManagerTest {
 		when(lookupCacheService.resolveDataTypeId("CUST")).thenReturn(5L);
 		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
 
-		OrderConfigurationRequest request = new OrderConfigurationRequest(List.of(charValRequest), 77L, null);
+		ItemCharValsRequest itemRequest = new ItemCharValsRequest(900L, List.of(charValRequest));
+		OrderConfigurationRequest request = new OrderConfigurationRequest(List.of(itemRequest), 77L, null);
 
 		OrderSummaryResponse response = custOrdManager.saveConfiguration(CUST_ORD_ID, request);
 
-		assertThat(response.charVals()).hasSize(1);
+		assertThat(response.items().get(0).charVals()).hasSize(1);
 		assertThat(custOrd.getAddressId()).isEqualTo(77L);
+		verify(custOrdCharValRepository).deleteByCustOrdItem_CustOrdItemId(900L);
 		verify(contactAddressClient, never()).createAddress(any());
+	}
+
+	@Test
+	void saveConfiguration_throws_whenItemDoesNotBelongToOrder() {
+		CustOrd custOrd = waitingOrder();
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		ItemCharValsRequest itemRequest = new ItemCharValsRequest(999L, List.of());
+		OrderConfigurationRequest request = new OrderConfigurationRequest(List.of(itemRequest), null, null);
+
+		assertThatThrownBy(() -> custOrdManager.saveConfiguration(CUST_ORD_ID, request))
+				.isInstanceOf(OrderItemNotFoundException.class);
+	}
+
+	@Test
+	void saveConfiguration_throws_whenCharValDoesNotBelongToChar() {
+		CustOrd custOrd = waitingOrder();
+		CustOrdItem item = new CustOrdItem();
+		item.setCustOrdItemId(900L);
+		item.setCustOrd(custOrd);
+		custOrd.getItems().add(item);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		ProdCharValRequest charValRequest = new ProdCharValRequest(1L, 2L, "200Mbps");
+		when(lookupCacheService.getCharacteristic(1L))
+				.thenReturn(new GnlCharResponse(1L, "Speed", "descr", null, "SPEED", true, null, null, null, null));
+		// charValId=2, ama gercekte charId=9'a ait - siparisin gonderdigi charId=1 ile eslesmiyor
+		when(lookupCacheService.getCharacteristicValue(2L)).thenReturn(
+				new GnlCharValResponse(2L, 9L, false, "200Mbps", "200M", null, null, true, null, null, null, null));
+
+		ItemCharValsRequest itemRequest = new ItemCharValsRequest(900L, List.of(charValRequest));
+		OrderConfigurationRequest request = new OrderConfigurationRequest(List.of(itemRequest), null, null);
+
+		assertThatThrownBy(() -> custOrdManager.saveConfiguration(CUST_ORD_ID, request))
+				.isInstanceOf(CharacteristicValueMismatchException.class);
 	}
 
 	@Test
@@ -383,7 +428,6 @@ class CustOrdManagerTest {
 		CustOrd custOrd = waitingOrder();
 		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
 		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
-		doAnswer(inv -> null).when(custOrdCharValRepository).deleteByCustOrd_CustOrdId(CUST_ORD_ID);
 
 		AddressResponse someoneElsesAddress = new AddressResponse(77L, 999L, 5L, 1L, "Street", "12", "Desc", true,
 				null, null, null, null);

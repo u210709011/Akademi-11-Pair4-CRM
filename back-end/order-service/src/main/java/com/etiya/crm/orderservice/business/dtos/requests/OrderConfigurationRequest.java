@@ -9,7 +9,7 @@ import jakarta.validation.Valid;
 // (idempotent, replace-all) yazilir - finishOrder'in kendisi bu veriyi tekrar istemez.
 public record OrderConfigurationRequest(
 
-    @Valid List<ProdCharValRequest> charVals,
+    @Valid List<ItemCharValsRequest> items,
     Long addressId,
     @Valid AddressInfoRequest newAddress
 ) {
