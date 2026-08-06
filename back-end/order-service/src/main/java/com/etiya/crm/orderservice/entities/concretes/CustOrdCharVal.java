@@ -25,9 +25,10 @@ public class CustOrdCharVal extends BaseEntity {
 	@Column(name = "cust_ord_char_val_id")
 	private Long custOrdCharValId;
 
+	/** Item bazli konfigurasyon (bkz. V6 migration) - siparis degil, tek bir basket item'a ait. */
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "cust_ord_id", nullable = false)
-	private CustOrd custOrd;
+	@JoinColumn(name = "cust_ord_item_id", nullable = false)
+	private CustOrdItem custOrdItem;
 
 	@Column(name = "char_id", nullable = false)
 	private Long charId;
