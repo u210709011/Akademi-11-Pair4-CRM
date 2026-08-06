@@ -31,6 +31,9 @@ export interface CustomerAccountSummary {
 
 export interface CustomerDetailResponse {
   custId: number;
+  // custId'nin backend'de (AccountDefaults.formatAccountNo) sifirla soldan doldurulmus hali -
+  // accountNo ile ayni kural, front-end burada tekrar hesaplamaz.
+  custNo: string;
   partyRoleId: number;
   custTpId: number | null;
   active: boolean;
@@ -92,6 +95,7 @@ export interface OnboardCustomerRequest {
 // POST /api/v1/customers/onboarding response body.
 export interface OnboardCustomerResponse {
   custId: number;
+  custNo: string;
   partyRoleId: number;
   custTpId: number | null;
   active: boolean;
