@@ -43,6 +43,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
 		Long dataTypeId = lookupResolver.resolveCustomerDataTypeId();
 		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, dataTypeId);
 		rules.validateAddressLimit(existing.size());
+		rules.ensureCityExists(request.cityId());
 
 		CreateAddressRequest command = new CreateAddressRequest(custId, dataTypeId, request.cityId(),
 				request.streetName(), request.buildingName(), request.addressDesc(), request.primary());
@@ -56,6 +57,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
 		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId,
 				lookupResolver.resolveCustomerDataTypeId());
 		rules.ensureAddressBelongsToCustomer(custId, addressId, existing);
+		rules.ensureCityExists(request.cityId());
 
 		UpdateAddressRequest command = new UpdateAddressRequest(request.cityId(), request.streetName(),
 				request.buildingName(), request.addressDesc(), request.primary());
@@ -86,6 +88,8 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
 			// Onceden addAddress'teki gibi max-5 limiti kontrol edilmiyordu - billing account
 			// create/update akisindan yeni adres eklenerek limit delinebiliyordu.
 			rules.validateAddressLimit(existing.size());
+			// B-14: cityId de ayni sekilde hic dogrulanmiyordu (bkz. AddressBusinessRules.ensureCityExists).
+			rules.ensureCityExists(newAddress.cityId());
 			CreateAddressRequest command = new CreateAddressRequest(custId, dataTypeId, newAddress.cityId(),
 					newAddress.streetName(), newAddress.buildingName(), newAddress.addressDesc(), false);
 			return contactAddressClient.addAddress(command);

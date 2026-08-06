@@ -21,6 +21,7 @@ import com.etiya.crm.productservice.entities.concretes.Product;
 import com.etiya.crm.productservice.entities.concretes.ProductOffering;
 import com.etiya.crm.productservice.entities.concretes.ProductSpec;
 import com.etiya.crm.productservice.mapper.ProductMapper;
+import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import org.springframework.stereotype.Service;
 
@@ -134,7 +135,9 @@ public class ProductManager implements ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        productRepository.delete(product);
+        product.setStatusId(
+                lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT, GnlStCodes.DELETED));
+        productRepository.save(product);
     }
 
 }

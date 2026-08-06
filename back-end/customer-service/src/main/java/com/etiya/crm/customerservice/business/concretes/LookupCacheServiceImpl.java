@@ -43,4 +43,23 @@ public class LookupCacheServiceImpl implements LookupCacheService {
 	public String resolveTypeValue(Long id) {
 		return lookupClient.getTypeById(id).name();
 	}
+
+	@Override
+	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
+			key = "'exists_' + #entCodeName + '_' + #id")
+	public boolean existsInGroup(Long id, String entCodeName) {
+		if (id == null) {
+			return false;
+		}
+		try {
+			var type = lookupClient.getTypeById(id);
+			return type.active() && entCodeName.equals(type.entCodeName());
+		} catch (RuntimeException ex) {
+			// id yok (404) ya da downstream baska bir sekilde basarisiz oldu (feign.circuitbreaker.enabled=true
+			// oldugunda ham FeignException degil NoFallbackAvailableException gelir, bkz.
+			// AbstractDownstreamExceptionHandler'daki B-03 notu) - hangisi olursa olsun cityId
+			// dogrulanamadi demektir, "gecersiz" sayilir.
+			return false;
+		}
+	}
 }

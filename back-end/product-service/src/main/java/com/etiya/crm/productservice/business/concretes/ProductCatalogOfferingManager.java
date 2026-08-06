@@ -18,6 +18,7 @@ import com.etiya.crm.productservice.entities.concretes.ProductCatalog;
 import com.etiya.crm.productservice.entities.concretes.ProductCatalogOffering;
 import com.etiya.crm.productservice.entities.concretes.ProductOffering;
 import com.etiya.crm.productservice.mapper.ProductCatalogOfferingMapper;
+import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import org.springframework.stereotype.Service;
 
@@ -107,6 +108,8 @@ public class ProductCatalogOfferingManager implements ProductCatalogOfferingServ
         ProductCatalogOffering productCatalogOffering = productCatalogOfferingRepository
                 .findById(productCatalogOfferingId)
                 .orElseThrow(() -> new ProductCatalogOfferingNotFoundException(productCatalogOfferingId));
-        productCatalogOfferingRepository.delete(productCatalogOffering);
+        productCatalogOffering.setStatusId(
+                lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT_CATALOG_OFFER, GnlStCodes.DELETED));
+        productCatalogOfferingRepository.save(productCatalogOffering);
     }
 }

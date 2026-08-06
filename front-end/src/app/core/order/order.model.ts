@@ -44,10 +44,22 @@ export interface AddressInfoRequest {
   addressDesc: string;
 }
 
-export interface OrderConfigurationRequest {
+// Configuration ekraninda basket item basina bir kart var, her biri kendi karakteristik setini tasir.
+export interface ItemCharValsRequest {
+  custOrdItemId: number;
   charVals: ProdCharValRequest[];
+}
+
+export interface OrderConfigurationRequest {
+  items: ItemCharValsRequest[];
   addressId: number | null;
   newAddress: AddressInfoRequest | null;
+}
+
+export interface ProdCharValResponse {
+  charId: number;
+  charValId: number | null;
+  val: string | null;
 }
 
 export interface OrderItemSummaryResponse {
@@ -59,12 +71,7 @@ export interface OrderItemSummaryResponse {
   cmpgId: number | null;
   cmpgName: string | null;
   price: number;
-}
-
-export interface ProdCharValResponse {
-  charId: number;
-  charValId: number | null;
-  val: string | null;
+  charVals: ProdCharValResponse[];
 }
 
 export interface AddressSummaryResponse {
@@ -80,7 +87,6 @@ export interface OrderSummaryResponse {
   custOrdId: number;
   ordStId: number;
   items: OrderItemSummaryResponse[];
-  charVals: ProdCharValResponse[];
   serviceAddress: AddressSummaryResponse | null;
   totalAmount: number;
 }
