@@ -455,14 +455,15 @@ class CustOrdManagerTest {
 		CustOrd custOrd = waitingOrder();
 		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
 		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
-		when(lookupCacheService.resolveDataTypeId("ORDER")).thenReturn(21L);
+		when(lookupCacheService.resolveDataTypeId("CUST")).thenReturn(21L);
 
 		AddressInfoRequest newAddress = new AddressInfoRequest(5L, "Street", "12", "Desc");
-		CreateAddressRequest createAddressRequest = new CreateAddressRequest(CUST_ORD_ID, 21L, 5L, "Street", "12",
-				"Desc", true);
-		when(addressMapper.toCreateAddressRequest(newAddress, CUST_ORD_ID, 21L, true)).thenReturn(createAddressRequest);
+		// musterinin adres listesine kaydedilsin diye CUSTOMER/custId sahipliginde, primary=false olusturulur
+		CreateAddressRequest createAddressRequest = new CreateAddressRequest(CUST_ID, 21L, 5L, "Street", "12",
+				"Desc", false);
+		when(addressMapper.toCreateAddressRequest(newAddress, CUST_ID, 21L, false)).thenReturn(createAddressRequest);
 
-		AddressResponse createdAddress = new AddressResponse(88L, CUST_ORD_ID, 21L, 5L, "Street", "12", "Desc", true,
+		AddressResponse createdAddress = new AddressResponse(88L, CUST_ID, 21L, 5L, "Street", "12", "Desc", false,
 				null, null, null, null);
 		when(contactAddressClient.createAddress(createAddressRequest)).thenReturn(createdAddress);
 		when(contactAddressClient.getById(88L)).thenReturn(createdAddress);

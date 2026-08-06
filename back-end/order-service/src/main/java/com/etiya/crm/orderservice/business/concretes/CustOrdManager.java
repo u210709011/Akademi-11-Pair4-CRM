@@ -393,9 +393,13 @@ public class CustOrdManager implements CustOrdService {
             return address.id();
         }
 
-        Long dataTypeId = lookupCacheService.resolveDataTypeId(TypeValueTables.ORDER);
-        CreateAddressRequest addressRequest = addressMapper.toCreateAddressRequest(newAddress, custOrd.getCustOrdId(),
-                dataTypeId, true);
+        // musterinin adres listesine kaydedilsin diye CUSTOMER/custId sahipliginde olusturulur
+        // (ORDER/custOrdId degil) - boylece musteri detay ekraninda da gorunur ve ileride tekrar
+        // secilebilir. primary=false: mevcut ana adresi sessizce degistirmemek icin (bkz. contact-info-service
+        // unsetOtherPrimaryAddresses - primary=true her diger primary'yi false yapardi).
+        Long dataTypeId = lookupCacheService.resolveDataTypeId(TypeValueTables.CUSTOMER);
+        CreateAddressRequest addressRequest = addressMapper.toCreateAddressRequest(newAddress, custOrd.getCustId(),
+                dataTypeId, false);
         return contactAddressClient.createAddress(addressRequest).id();
     }
 
