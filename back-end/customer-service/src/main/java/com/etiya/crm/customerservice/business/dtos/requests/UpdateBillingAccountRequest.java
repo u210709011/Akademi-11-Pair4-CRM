@@ -25,7 +25,8 @@ public record UpdateBillingAccountRequest(
 		@Size(max = 50, message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		String accountName,
 
-		@Schema(description = "Hesap aciklamasi (opsiyonel)", example = "Aylik elektrik/su faturasi icin")
+		@Schema(description = "Hesap aciklamasi", example = "Aylik elektrik/su faturasi icin")
+		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		String accountDesc,
 
 		@Schema(description = "Musterinin VAR OLAN bir adresinin id'si (bkz. GET .../addresses). newAddress ile birlikte gonderilmez.",

@@ -1,0 +1,56 @@
+<div class="review-summary-card">
+    <h3>{{ i18n.t('newSale.orderSummary') }}</h3>
+
+    <div class="review-summary-grid">
+        <div class="review-summary-field">
+            <span class="review-summary-label">{{ i18n.t('newSale.orderId') }}</span>
+            <span class="review-summary-value">ORD-{{ formState.custOrdId() }}</span>
+        </div>
+        <div class="review-summary-field">
+            <span class="review-summary-label">{{ i18n.t('newSale.customerName') }}</span>
+            <span class="review-summary-value">{{ formState.customerName() }}</span>
+        </div>
+        <div class="review-summary-field">
+            <span class="review-summary-label">{{ i18n.t('newSale.billingAccount') }}</span>
+            <span class="review-summary-value">{{ formState.billingAccountNo() }}</span>
+        </div>
+        <div class="review-summary-field">
+            <span class="review-summary-label">{{ i18n.t('newSale.orderDate') }}</span>
+            <span class="review-summary-value">{{ orderDate }}</span>
+        </div>
+        <div class="review-summary-field">
+            <span class="review-summary-label">{{ i18n.t('newSale.orderStatus') }}</span>
+            <span class="review-status-badge">{{ i18n.t('newSale.readyToSubmit') }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="review-products-card">
+    <h3>{{ i18n.t('newSale.customerSelectedProducts') }}</h3>
+
+    <table class="review-products-table">
+        <thead>
+            <tr>
+                <th>{{ i18n.t('newSale.prodOfferId') }}</th>
+                <th>{{ i18n.t('newSale.prodOfferName') }}</th>
+                <th>{{ i18n.t('newSale.catalogTab') }}</th>
+                <th>{{ i18n.t('newSale.price') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (line of formState.basket(); track line.prodOfrId) {
+                <tr>
+                    <td class="offer-id-cell">OFR-{{ line.prodOfrId }}</td>
+                    <td>{{ line.offerName }}</td>
+                    <td>{{ line.catalogName ?? '—' }}</td>
+                    <td>{{ line.price | number: '1.2-2' }} {{ i18n.t('newSale.currency') }} / {{ i18n.t('newSale.perMonth') }}</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="review-total-row">
+        <span>{{ i18n.t('newSale.totalAmount') }}</span>
+        <span>{{ totalAmount() | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
+    </div>
+</div>

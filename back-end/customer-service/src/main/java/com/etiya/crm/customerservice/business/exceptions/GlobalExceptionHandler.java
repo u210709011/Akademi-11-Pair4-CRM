@@ -50,6 +50,11 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 		return build(HttpStatus.NOT_FOUND, ex, request);
 	}
 
+	@ExceptionHandler(InvalidCityException.class)
+	public ResponseEntity<ErrorResponse> handleInvalidCity(InvalidCityException ex, HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, ex, request);
+	}
+
 	@ExceptionHandler(AddressLimitExceededException.class)
 	public ResponseEntity<ErrorResponse> handleAddressLimitExceeded(AddressLimitExceededException ex,
 			HttpServletRequest request) {
@@ -115,6 +120,18 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 	public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
 			HttpServletRequest request) {
 		return build(HttpStatus.BAD_REQUEST, resolve(MessageKeys.PARAMETER_TYPE_MISMATCH, ex.getName()), request);
+	}
+
+	/**
+	 * B-10: PageRequest.of(page, size) (CustomerAccountController.getAccounts,
+	 * CustomerController.search) negatif sayfa/sifir boyut icin IllegalArgumentException
+	 * firlatir - onceden hicbir handler'i olmadigi icin genel Exception dalina duşup 500'e
+	 * siziyordu. IllegalArgumentException baska yerlerden de gelebilir ama bu API katmaninda
+	 * anlami hep ayni: caller gecersiz bir deger gonderdi, bu da 500 degil 400'dur.
+	 */
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, resolve(MessageKeys.INVALID_REQUEST_PARAMETER), request);
 	}
 
 	@ExceptionHandler(Exception.class)
