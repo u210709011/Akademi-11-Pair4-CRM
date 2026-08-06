@@ -117,6 +117,24 @@ public class CampaignOfferingManager implements CampaignOfferingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<GetAllCampaignOfferingResponse> getByCampaignId(Long campaignId) {
+        campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new CampaignNotFoundException(campaignId));
+
+        List<CampaignOffering> campaignOfferings = campaignOfferingRepository.findByCampaign_CampaignId(campaignId);
+        List<GetAllCampaignOfferingResponse> responses = campaignOfferingMapper.toGetAllResponseList(campaignOfferings);
+
+        for (int i = 0; i < campaignOfferings.size(); i++) {
+            BigDecimal discountedPrice = calculateDiscountedPrice(
+                    campaignOfferings.get(i).getProductOffering().getTotalPrice(),
+                    campaignOfferings.get(i).getDiscountPct());
+            responses.get(i).setDiscountedPrice(discountedPrice);
+        }
+        return responses;
+    }
+
+    @Override
     public void delete(Long campaignOfferingId) {
         CampaignOffering campaignOffering = campaignOfferingRepository.findById(campaignOfferingId)
                 .orElseThrow(() -> new RuntimeException(
