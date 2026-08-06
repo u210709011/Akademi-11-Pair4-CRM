@@ -1,4 +1,5 @@
 import { Component, HostListener, computed, effect, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -62,6 +63,8 @@ const EMPTY_CREATE_ACCOUNT_FORM: CreateAccountFormModel = { accountName: '', acc
 
 type DetailTab = 'information' | 'accounts' | 'address' | 'contact';
 
+const ACCOUNTS_PAGE_SIZE = 5;
+
 const UNKNOWN = '—';
 
 const EMPTY_CUSTOMER_DETAIL: CustomerDetail = {
@@ -91,7 +94,7 @@ const EMPTY_CUSTOMER_CONTACT: CustomerContact = {
 
 @Component({
   selector: 'app-detail-customer',
-  imports: [RouterLink, FormField],
+  imports: [RouterLink, FormField, NgTemplateOutlet],
   templateUrl: './detail-customer.component.html',
   styleUrl: './detail-customer.component.scss',
 })
@@ -112,6 +115,23 @@ export class DetailCustomerComponent {
   protected readonly maxAddresses = 5;
   protected readonly openAddressMenuId = signal<number | null>(null);
   protected readonly expandedAccountId = signal<number | null>(null);
+
+  // Billing Accounts tablosu istemci tarafinda sayfalanir - accounts() zaten getById() ile tam
+  // yuklu (bkz. search-customer.component.ts'teki sunucu-tarafli pagination'in ayni sekli,
+  // burada sadece dilimleme var, ekstra istek yok).
+  protected readonly accountsPage = signal(0);
+  protected readonly pagedAccounts = computed(() =>
+    this.accounts().slice(this.accountsPage() * ACCOUNTS_PAGE_SIZE, this.accountsPage() * ACCOUNTS_PAGE_SIZE + ACCOUNTS_PAGE_SIZE)
+  );
+  protected readonly accountsTotalPages = computed(() => Math.max(1, Math.ceil(this.accounts().length / ACCOUNTS_PAGE_SIZE)));
+  protected readonly accountsRangeStart = computed(() =>
+    this.accounts().length === 0 ? 0 : this.accountsPage() * ACCOUNTS_PAGE_SIZE + 1
+  );
+  protected readonly accountsRangeEnd = computed(() =>
+    Math.min(this.accounts().length, (this.accountsPage() + 1) * ACCOUNTS_PAGE_SIZE)
+  );
+  protected readonly accountsRangeLabel = computed(() => `${this.accountsRangeStart()}-${this.accountsRangeEnd()} of ${this.accounts().length}`);
+  protected readonly accountsPageNumbers = computed(() => Array.from({ length: this.accountsTotalPages() }, (_, i) => i));
 
   protected readonly isAddressModalOpen = signal(false);
   protected readonly editingAddressId = signal<number | null>(null);
@@ -144,6 +164,15 @@ export class DetailCustomerComponent {
   protected readonly createAccountError = signal<string | null>(null);
   // false: mevcut adres dropdown'i; true: inline "+ Add New Address" formu.
   protected readonly isAddingNewAddressForAccount = signal(false);
+  // kullanici Account Name'i elle degistirdiyse true olur - auto-fill sadece false iken calisir (bkz. constructor'daki effect).
+  protected readonly accountNameTouched = signal(false);
+  // null: Create modu; dolu: Update modu (ayni modal/form adres modalindaki editingAddressId ile ayni desen).
+  protected readonly editingAccount = signal<CustomerAccount | null>(null);
+
+  protected readonly accountToDelete = signal<CustomerAccount | null>(null);
+  protected readonly isDeletingAccount = signal(false);
+  // 409 durumunda backend'den gelen gercek mesaj - "Cannot delete Billing Account" dialogunu tetikler.
+  protected readonly cannotDeleteAccountMessage = signal<string | null>(null);
 
   protected readonly addressModel = signal<AddressFormModel>({ ...EMPTY_ADDRESS_FORM });
 
@@ -200,6 +229,13 @@ export class DetailCustomerComponent {
       : this.accountModel().addressId !== '';
   });
 
+  // Address Preview karti icin - sadece "mevcut adres" modunda ve gecerli bir secim varken dolu.
+  protected readonly selectedExistingAddress = computed(() =>
+    this.isAddingNewAddressForAccount()
+      ? null
+      : this.addresses().find(address => String(address.id) === this.accountModel().addressId) ?? null
+  );
+
   protected readonly tabs: { key: DetailTab; labelKey: string }[] = [
     { key: 'information', labelKey: 'detail.tabInformation' },
     { key: 'accounts', labelKey: 'detail.tabAccounts' },
@@ -248,6 +284,27 @@ export class DetailCustomerComponent {
     for (const field of CONTACT_PHONE_FIELDS) {
       effect(() => this.sanitizeContactPhoneField(field));
     }
+
+    // hesap silindiginde (ileride) mevcut sayfa bosalirsa son gecerli sayfaya klemplenir -
+    // accounts().length degisen her durumu kapsar, sadece silme akisina bagli degildir.
+    effect(() => {
+      const maxPage = this.accountsTotalPages() - 1;
+      if (this.accountsPage() > maxPage) {
+        this.accountsPage.set(maxPage);
+      }
+    });
+
+    // secilen mevcut adresin addrDesc'i Account Name'e otomatik dolar - kullanici elle yazdiysa
+    // (accountNameTouched) veya yeni-adres modundaysa calismaz.
+    effect(() => {
+      if (this.isAddingNewAddressForAccount() || this.accountNameTouched()) {
+        return;
+      }
+      const address = this.addresses().find(candidate => String(candidate.id) === this.accountModel().addressId);
+      if (address) {
+        this.accountForm.accountName().value.set(address.addrDesc);
+      }
+    });
   }
 
   // order-service'te custAcctId'ye gore filtrelenen tek bir toplu endpoint yok, o yuzden
@@ -332,16 +389,50 @@ export class DetailCustomerComponent {
     this.expandedAccountId.set(this.expandedAccountId() === accountId ? null : accountId);
   }
 
+  protected goToAccountsPage(page: number): void {
+    if (page < 0 || page >= this.accountsTotalPages() || page === this.accountsPage()) {
+      return;
+    }
+    this.accountsPage.set(page);
+  }
+
   protected openCreateAccountModal(): void {
+    this.editingAccount.set(null);
     this.createAccountError.set(null);
     this.isAddingNewAddressForAccount.set(false);
+    this.accountNameTouched.set(false);
     this.accountForm().reset({ ...EMPTY_CREATE_ACCOUNT_FORM });
+    this.newAccountAddressForm().reset({ ...EMPTY_ADDRESS_FORM });
+    this.isCreateAccountModalOpen.set(true);
+  }
+
+  protected openEditAccountModal(account: CustomerAccount): void {
+    // CustomerAccount view-model gercek accountDesc'i tasimiyor (bkz. plan) - ham yaniti kullaniyoruz.
+    const rawAccountDesc = this.customerDetailResponse.accounts.find(
+      candidate => candidate.custAcctId === account.id
+    )?.accountDesc;
+
+    this.editingAccount.set(account);
+    this.createAccountError.set(null);
+    this.isAddingNewAddressForAccount.set(false);
+    // onceden kaydedilmis isim zaten "kullanici tarafindan verilmis" sayilir - auto-fill effect'i
+    // modal acilir acilmaz onu adresin addrDesc'iyle ezmesin diye touched=true baslar.
+    this.accountNameTouched.set(true);
+    this.accountForm().reset({
+      accountName: account.accountName,
+      accountDesc: rawAccountDesc ?? '',
+      addressId: account.addressId !== null ? String(account.addressId) : ''
+    });
     this.newAccountAddressForm().reset({ ...EMPTY_ADDRESS_FORM });
     this.isCreateAccountModalOpen.set(true);
   }
 
   protected closeCreateAccountModal(): void {
     this.isCreateAccountModalOpen.set(false);
+  }
+
+  protected markAccountNameTouched(): void {
+    this.accountNameTouched.set(true);
   }
 
   protected toggleAddNewAddressForAccount(): void {
@@ -362,20 +453,30 @@ export class DetailCustomerComponent {
       return;
     }
 
+    const editing = this.editingAccount();
     this.isSavingAccount.set(true);
     this.createAccountError.set(null);
 
-    this.customerService.createBillingAccount(this.custId, this.toCreateBillingAccountRequest()).subscribe({
+    const request = this.toCreateBillingAccountRequest();
+    const save$ = editing
+      ? this.customerService.updateBillingAccount(this.custId, editing.id, request)
+      : this.customerService.createBillingAccount(this.custId, request);
+
+    save$.subscribe({
       next: () => {
         this.isSavingAccount.set(false);
         this.isCreateAccountModalOpen.set(false);
-        this.showToast(this.i18n.t('detail.createAccountSuccess'));
+        this.showToast(this.i18n.t(editing ? 'detail.updateAccountSuccess' : 'detail.createAccountSuccess'));
+        if (!editing) {
+          this.accountsPage.set(0);
+        }
         this.refreshAccounts();
       },
       error: (httpError: HttpErrorResponse) => {
         this.isSavingAccount.set(false);
         this.createAccountError.set(
-          (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('detail.createAccountError')
+          (httpError.error as { message?: string } | null)?.message ??
+            this.i18n.t(editing ? 'detail.updateAccountError' : 'detail.createAccountError')
         );
       }
     });
@@ -403,12 +504,54 @@ export class DetailCustomerComponent {
     return request;
   }
 
+  protected openDeleteAccountConfirm(account: CustomerAccount): void {
+    this.accountToDelete.set(account);
+  }
+
+  protected closeDeleteAccountConfirm(): void {
+    this.accountToDelete.set(null);
+  }
+
+  protected confirmDeleteAccount(): void {
+    const account = this.accountToDelete();
+    if (!account) {
+      return;
+    }
+
+    this.isDeletingAccount.set(true);
+
+    this.customerService.deleteBillingAccount(this.custId, account.id).subscribe({
+      next: () => {
+        this.isDeletingAccount.set(false);
+        this.accountToDelete.set(null);
+        this.showToast(this.i18n.t('detail.deleteAccountSuccess'));
+        this.refreshAccounts();
+      },
+      error: (httpError: HttpErrorResponse) => {
+        this.isDeletingAccount.set(false);
+        this.accountToDelete.set(null);
+        this.cannotDeleteAccountMessage.set(
+          (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('detail.deleteAccountError')
+        );
+      }
+    });
+  }
+
+  protected closeCannotDeleteAccountDialog(): void {
+    this.cannotDeleteAccountMessage.set(null);
+  }
+
   protected serviceAddressLine(addressId: number | null): string {
     const address = this.addresses().find(candidate => candidate.id === addressId);
     if (!address) {
       return UNKNOWN;
     }
     return `${address.addrDesc} — ${address.streetName} ${address.houseName}, ${this.cityName(address.cityId)}`;
+  }
+
+  // Address Preview karti icin - addrDesc'i tekrar etmeyen "salt adres" satiri.
+  protected fullAddressLine(address: AddressResponse): string {
+    return `${address.streetName} ${address.houseName}, ${this.cityName(address.cityId)}`;
   }
 
   protected linkedAccountCount(addressId: number): number {
