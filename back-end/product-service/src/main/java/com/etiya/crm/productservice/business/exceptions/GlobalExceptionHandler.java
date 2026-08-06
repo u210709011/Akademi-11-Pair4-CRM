@@ -53,6 +53,7 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
             ServiceSpecNotFoundException.class,
             CharacteristicNotFoundException.class,
             CharacteristicValueNotFoundException.class,
+            ProductOfferingRelationNotFoundException.class,
             LookupValueNotFoundException.class })
     public ResponseEntity<ErrorResponse> handleNotFound(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, ex, request);

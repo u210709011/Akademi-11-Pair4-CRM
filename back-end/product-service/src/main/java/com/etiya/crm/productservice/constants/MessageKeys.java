@@ -21,6 +21,7 @@ public final class MessageKeys {
     public static final String SERVICE_SPEC_NOT_FOUND = "error.service-spec.not-found";
     public static final String CHARACTERISTIC_NOT_FOUND = "error.characteristic.not-found";
     public static final String CHARACTERISTIC_VALUE_NOT_FOUND = "error.characteristic-value.not-found";
+    public static final String PRODUCT_OFFERING_RELATION_NOT_FOUND = "error.product-offering-relation.not-found"
 
     private MessageKeys() {
     }

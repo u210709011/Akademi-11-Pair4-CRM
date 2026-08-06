@@ -24,6 +24,7 @@ public final class GnlTpGroups {
 	public static final String PROD_SPEC_RSRC_SPEC = "PROD_SPEC_RSRC_SPEC";
 	public static final String PROD_SPEC_SRVC_SPEC = "PROD_SPEC_SRVC_SPEC";
 	public static final String PROD_REL = "PROD_REL";
+	public static final String PROD_OFR_REL = "PROD_OFR_REL";
 
 	private GnlTpGroups() {
 	}
