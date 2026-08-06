@@ -1,0 +1,70 @@
+<div class="new-sale-page">
+
+    <nav class="breadcrumb">
+        <a class="breadcrumb-link" href="#">
+            <svg class="breadcrumb-home-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+        </a>
+        <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" />
+        </svg>
+        <a class="breadcrumb-link" routerLink="/search-customer">{{ i18n.t('search.searchCustomer') }}</a>
+        <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" />
+        </svg>
+        <a class="breadcrumb-link" [routerLink]="['/detail-customer', custId]">{{ formState.customerName() }}</a>
+        <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" />
+        </svg>
+        <span class="breadcrumb-current">{{ i18n.t('newSale.pageTitle') }}</span>
+    </nav>
+
+    <div class="new-sale-header">
+        <h1 class="page-title">{{ i18n.t('newSale.pageTitle') }}</h1>
+        <span class="billing-account-label">{{ i18n.t('newSale.billingAccount') }}</span>
+        <span class="billing-account-value">{{ formState.billingAccountNo() }}</span>
+    </div>
+
+    <div class="stepper">
+        @for (step of steps; track step.key; let i = $index) {
+            <div class="stepper-item" [class.done]="stepState(step.key) === 'done'" [class.active]="stepState(step.key) === 'active'">
+                <span class="stepper-circle">
+                    @if (stepState(step.key) === 'done') {
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7" /></svg>
+                    } @else {
+                        {{ i + 1 }}
+                    }
+                </span>
+                <span class="stepper-label">{{ i18n.t(step.labelKey) }}</span>
+            </div>
+            @if (i < steps.length - 1) {
+                <div class="stepper-connector" [class.done]="stepState(step.key) === 'done'"></div>
+            }
+        }
+    </div>
+
+    <div class="new-sale-body">
+        <ng-container [ngComponentOutlet]="activeStepComponent()" />
+    </div>
+
+    @if (formState.basketError()) {
+        <div class="basket-error-banner">{{ formState.basketError() }}</div>
+    }
+    @if (formState.submitError()) {
+        <div class="basket-error-banner">{{ formState.submitError() }}</div>
+    }
+
+    <div class="wizard-actions">
+        @if (activeStepIndex() === 0) {
+            <button type="button" class="cancel-button" (click)="cancel()">{{ i18n.t('newSale.cancelBtn') }}</button>
+        } @else {
+            <button type="button" class="cancel-button" (click)="previous()">{{ i18n.t('newSale.previousBtn') }}</button>
+        }
+
+        <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="next()">{{ nextButtonLabel() }}</button>
+    </div>
+
+</div>

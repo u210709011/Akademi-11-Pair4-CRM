@@ -1,0 +1,230 @@
+import { NgComponentOutlet } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, Injectable, Type, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { BasketItemRequest, OrderService } from '../../../core/order';
+import { AddressResponse, CustomerService } from '../../../core/customer';
+import { I18nService } from '../../../core/i18n';
+import { ConfigurationStepComponent } from './steps/configuration/configuration-step.component';
+import { OfferSelectionComponent } from './steps/offer-selection/offer-selection.component';
+import { ReviewStepComponent } from './steps/review/review-step.component';
+
+type NewSaleStep = 'offer' | 'configuration' | 'review';
+
+interface StepDefinition {
+  key: NewSaleStep;
+  labelKey: string;
+  component: Type<unknown>;
+}
+
+// Basket satiri - Offer Selection'da toplanir, Configuration'da charVals dolar, Review'da gosterilir.
+export interface BasketLine {
+  prodOfrId: number;
+  offerName: string;
+  price: number;
+  cmpgId: number | null;
+  cmpgName: string | null;
+  // Sadece Catalog tab'inden eklenirse biliniyor (secili katalog) - Campaign tab'inden eklenirse null.
+  catalogName: string | null;
+}
+
+// Adim component'leri NgComponentOutlet ile degistigi icin state kendi icinde degil, bu serviste tutulur.
+@Injectable()
+export class NewSaleFormStateService {
+  readonly basket = signal<BasketLine[]>([]);
+  readonly custOrdId = signal<number | null>(null);
+
+  readonly isValidatingBasket = signal(false);
+  readonly basketError = signal<string | null>(null);
+
+  // Configuration adiminda Service Address karti icin - custId sahibinin adres listesi ve secili adres.
+  readonly custId = signal(0);
+  readonly addresses = signal<AddressResponse[]>([]);
+  readonly selectedAddressId = signal<number | null>(null);
+
+  // Review & Submit ekraninda gosterilir - NgComponentOutlet ile ayrilan adim component'leri
+  // arasinda paylasilmasi gerektigi icin burada tutulur.
+  readonly customerName = signal('');
+  readonly billingAccountNo = signal('');
+  readonly isSubmittingOrder = signal(false);
+  readonly submitError = signal<string | null>(null);
+
+  addToBasket(line: BasketLine): void {
+    if (this.basket().some(item => item.prodOfrId === line.prodOfrId)) {
+      return;
+    }
+    this.basket.update(items => [...items, line]);
+  }
+
+  removeFromBasket(prodOfrId: number): void {
+    this.basket.update(items => items.filter(item => item.prodOfrId !== prodOfrId));
+  }
+
+  clearBasket(): void {
+    this.basket.set([]);
+  }
+
+  toBasketItemRequests(): BasketItemRequest[] {
+    return this.basket().map(line => ({ prodOfrId: line.prodOfrId, cmpgId: line.cmpgId, charVals: [] }));
+  }
+}
+
+@Component({
+  selector: 'app-new-sale',
+  imports: [NgComponentOutlet, RouterLink],
+  templateUrl: './new-sale.component.html',
+  styleUrl: './new-sale.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  providers: [NewSaleFormStateService]
+})
+export class NewSaleComponent {
+  protected readonly i18n = inject(I18nService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly customerService = inject(CustomerService);
+  private readonly orderService = inject(OrderService);
+  protected readonly formState = inject(NewSaleFormStateService);
+
+  protected readonly custId = Number(this.route.snapshot.paramMap.get('custId'));
+  protected readonly custAcctId = Number(this.route.snapshot.paramMap.get('custAcctId'));
+
+  protected readonly steps: StepDefinition[] = [
+    { key: 'offer', labelKey: 'newSale.stepOfferSelection', component: OfferSelectionComponent },
+    { key: 'configuration', labelKey: 'newSale.stepConfiguration', component: ConfigurationStepComponent },
+    { key: 'review', labelKey: 'newSale.stepReview', component: ReviewStepComponent }
+  ];
+
+  protected readonly activeStep = signal<NewSaleStep>('offer');
+  private readonly unlockedIndex = signal(0);
+
+  protected readonly activeStepIndex = computed(() => this.steps.findIndex(step => step.key === this.activeStep()));
+
+  protected readonly activeStepComponent = computed(
+    () => this.steps.find(step => step.key === this.activeStep())?.component ?? null
+  );
+
+  protected readonly isNextDisabled = computed(() => {
+    if (this.formState.isValidatingBasket() || this.formState.isSubmittingOrder()) {
+      return true;
+    }
+    if (this.activeStep() === 'offer') {
+      return this.formState.basket().length === 0;
+    }
+    return false;
+  });
+
+  protected readonly nextButtonLabel = computed(() =>
+    this.activeStep() === 'review' ? this.i18n.t('newSale.submitBtn') : this.i18n.t('newSale.nextBtn')
+  );
+
+  constructor() {
+    this.formState.custId.set(this.custId);
+
+    this.customerService.getById(this.custId).subscribe(detail => {
+      const account = detail.accounts.find(acc => acc.custAcctId === this.custAcctId);
+      this.formState.billingAccountNo.set(account?.accountNo ?? '');
+      this.formState.selectedAddressId.set(account?.addressId ?? null);
+    });
+
+    this.customerService.getIndividual(this.custId).subscribe(individual => {
+      this.formState.customerName.set([individual.firstName, individual.lastName].filter(Boolean).join(' '));
+    });
+
+    this.customerService.getAddresses(this.custId).subscribe(addresses => {
+      this.formState.addresses.set(addresses);
+    });
+  }
+
+  protected stepState(step: NewSaleStep): 'done' | 'active' | 'pending' {
+    const index = this.steps.findIndex(s => s.key === step);
+    if (index < this.activeStepIndex()) {
+      return 'done';
+    }
+    return index === this.activeStepIndex() ? 'active' : 'pending';
+  }
+
+  protected next(): void {
+    if (this.activeStep() === 'offer') {
+      this.validateBasketThenCreateOrder();
+      return;
+    }
+    if (this.activeStep() === 'review') {
+      this.submitOrder();
+      return;
+    }
+    this.advanceStep();
+  }
+
+  protected previous(): void {
+    const currentIndex = this.activeStepIndex();
+    const previousStep = this.steps[currentIndex - 1];
+    if (previousStep) {
+      this.activeStep.set(previousStep.key);
+    }
+  }
+
+  private validateBasketThenCreateOrder(): void {
+    this.formState.isValidatingBasket.set(true);
+    this.formState.basketError.set(null);
+
+    const items = this.formState.toBasketItemRequests();
+
+    this.orderService.validateBasket({ custId: this.custId, custAcctId: this.custAcctId, items }).subscribe({
+      next: () => {
+        this.orderService.createOrder({ custId: this.custId, custAcctId: this.custAcctId, items }).subscribe({
+          next: response => {
+            this.formState.isValidatingBasket.set(false);
+            this.formState.custOrdId.set(response.custOrdId);
+            this.advanceStep();
+          },
+          error: (httpError: HttpErrorResponse) => {
+            this.formState.isValidatingBasket.set(false);
+            this.formState.basketError.set(this.extractErrorMessage(httpError));
+          }
+        });
+      },
+      error: (httpError: HttpErrorResponse) => {
+        this.formState.isValidatingBasket.set(false);
+        this.formState.basketError.set(this.extractErrorMessage(httpError));
+      }
+    });
+  }
+
+  private submitOrder(): void {
+    const custOrdId = this.formState.custOrdId();
+    if (!custOrdId) {
+      return;
+    }
+
+    this.formState.isSubmittingOrder.set(true);
+    this.formState.submitError.set(null);
+
+    this.orderService.finishOrder(custOrdId).subscribe({
+      next: () => {
+        this.formState.isSubmittingOrder.set(false);
+        this.router.navigate(['/detail-customer', this.custId]);
+      },
+      error: (httpError: HttpErrorResponse) => {
+        this.formState.isSubmittingOrder.set(false);
+        this.formState.submitError.set(this.extractErrorMessage(httpError));
+      }
+    });
+  }
+
+  private extractErrorMessage(httpError: HttpErrorResponse): string {
+    return (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('newSale.basketValidationError');
+  }
+
+  private advanceStep(): void {
+    const currentIndex = this.activeStepIndex();
+    const nextStep = this.steps[currentIndex + 1];
+    if (nextStep) {
+      this.activeStep.set(nextStep.key);
+      this.unlockedIndex.update(index => Math.max(index, currentIndex + 1));
+    }
+  }
+
+  protected cancel(): void {
+    this.router.navigate(['/detail-customer', this.custId]);
+  }
+}

@@ -30,8 +30,8 @@ public class CreateProductOfferingRequest {
 
     private Long parentOfferingId;
 
-    @NotNull(message = "Durum zorunludur")
-    private Long statusId;
+    @NotBlank(message = "Durum kodu zorunludur")
+    private String statusCode;
 
     @NotNull(message = "Fiyat alanı boş bırakılamaz")
     @Positive(message = "Fiyat negatif olamaz")

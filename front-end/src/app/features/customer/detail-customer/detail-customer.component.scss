@@ -556,7 +556,14 @@
   color: var(--text-placeholder);
 
   svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    fill: none;
     stroke: var(--text-placeholder);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 }
 
@@ -1001,6 +1008,13 @@
   }
 }
 
+// "Cannot delete Billing Account" dialogu - bilgilendirici, yikici degil, bu yuzden kirmizi
+// yerine amber uyari rengi (mockup).
+.delete-confirm-icon-warning {
+  color: var(--etiya-orange);
+  background: rgba(244, 121, 32, 0.1);
+}
+
 .delete-confirm-message {
   margin: 8px 0 0;
   font-size: 14px;
@@ -1133,27 +1147,6 @@
   border-top: 1px solid #e5e7eb;
 }
 
-// mockup'taki "LINKED REFERENCE - NOT A COPY" statik bilgi etiketi - mevcut .required renk
-// tonuyla ayni aile (etiya-orange), ama kucuk harf araligiyla vurgulanmis bir uyari niteliginde.
-.linked-reference-note {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--etiya-orange);
-
-  svg {
-    width: 14px;
-    height: 14px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-}
 
 // "+ Add New Address" / "‹ Use Existing Address" - duz metin link (butonun aksine cerceve/arka
 // plan yok), Create Billing Account modalindaki iki mod arasi gecis icin.
@@ -1178,4 +1171,100 @@
     font-size: 15px;
     line-height: 1;
   }
+}
+
+// Billing Accounts tablosu sayfalama - search-customer.component.scss'teki .pagination* ile
+// birebir ayni (Angular bilesen stilleri sekilerarasi sizmiyor, bu yuzden buraya tasindi).
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.pagination-range {
+  font-size: 13px;
+  color: var(--text-placeholder);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagination-arrow,
+.pagination-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #f9fafb;
+  }
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+}
+
+.pagination-arrow svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pagination-page.active {
+  color: #fff;
+  background: var(--etiya-orange);
+  border-color: var(--etiya-orange);
+}
+
+// Create Billing Account modalindaki Address Preview karti - .address-card'i genisletir;
+// baslik icin mevcut .service-address-label yeniden kullanilir, alttaki not da mevcut
+// .service-address-note ile ayni (kart icine tasindi, ok ikonuyla).
+.address-preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.address-preview-row {
+  display: flex;
+  gap: 8px;
+}
+
+.address-preview-label {
+  flex-shrink: 0;
+  min-width: 110px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.address-preview-value {
+  font-size: 13px;
+  color: #1f2937;
+}
+
+// .service-address-note'un "margin-left: auto" kurali .service-address-line'in flex-row
+// baglaminda saga yaslamak icindi - burada flex-column bir kart icinde soldan baslamali.
+.address-preview-card .service-address-note {
+  margin-left: 0;
 }

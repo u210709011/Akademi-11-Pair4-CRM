@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.ProductCatalogOffering;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,6 +18,6 @@ public class UpdateProductCatalogOfferingRequest {
     @NotNull(message = "Teklif id alanı zorunludur")
     private Long productOfferingId;
 
-    @NotNull(message = "Durum zorunludur")
-    private Long statusId; // aktf pasif ?
+    @NotBlank(message = "Durum kodu zorunludur")
+    private String statusCode; // aktf pasif ?
 }

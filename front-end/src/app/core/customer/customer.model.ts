@@ -127,3 +127,8 @@ export interface CreateBillingAccountRequest {
   addressId?: number;
   newAddress?: AddressInfo;
 }
+
+// PUT /api/v1/customers/{custId}/accounts/{accountId} request body - identical shape to
+// CreateBillingAccountRequest (confirmed against UpdateBillingAccountRequest.java); accountNo/
+// accountTpId are never part of the body, backend never lets them change.
+export type UpdateBillingAccountRequest = CreateBillingAccountRequest;
