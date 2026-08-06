@@ -89,6 +89,15 @@ export const MOCK_REQUIRED_PRODUCTS: Record<number, number[]> = {
   70160: [70300]
 };
 
+// productOfferingId -> tek seferlik mi (aksi halde aylik/recurring sayilir). Backend'de bu ayrimi
+// veren bir alan yok (ProductOffering'de sadece totalPrice var), sadece mock modda kullanilir.
+export const MOCK_ONE_TIME_OFFERING_IDS: ReadonlySet<number> = new Set([70300]);
+
+// Review & Submit'teki Price Summary icin sabit degerler - backend'de vergi/aktivasyon ucreti
+// hesaplayan bir endpoint yok, sadece mock modda gosterim amacli.
+export const MOCK_TAX_RATE = 0.2;
+export const MOCK_ACTIVATION_FEE = 50;
+
 export interface MockCharacteristicOption {
   value: string;
   label: string;

@@ -40,8 +40,8 @@ export class ConfigurationStepComponent {
   // Zorunlu urun olarak otomatik eklenenler (ör. Wi-Fi Router) icin ayri config karti gosterilmiyor.
   protected readonly configurableLines = computed(() => this.formState.basket().filter(line => !line.isAutoAdded));
 
-  // GECICI MOCK - karakteristik semasi/degerleri sadece mock modda tutuluyor (bkz. new-sale-mock.data.ts).
-  protected readonly charValues = signal<Record<number, Record<string, string>>>({});
+  // GECICI MOCK - karakteristik semasi sadece mock modda tutuluyor (bkz. new-sale-mock.data.ts).
+  // Degerler formState.charValues'ta tutulur (Review adimi da okuyabilsin diye, bkz. new-sale.component.ts).
   protected readonly collapsedProductIds = signal<Set<number>>(new Set());
 
   protected fieldsFor(prodOfrId: number): MockCharacteristicField[] {
@@ -49,22 +49,23 @@ export class ConfigurationStepComponent {
   }
 
   protected fieldValue(prodOfrId: number, key: string): string {
-    return this.charValues()[prodOfrId]?.[key] ?? '';
+    return this.formState.charValues()[prodOfrId]?.[key] ?? '';
   }
 
   protected setFieldValue(prodOfrId: number, key: string, value: string): void {
-    this.charValues.update(all => ({
+    this.formState.charValues.update(all => ({
       ...all,
       [prodOfrId]: { ...all[prodOfrId], [key]: value }
     }));
+
+    // Mockup: tum zorunlu alanlar doldurulunca kart otomatik daralir (collapse).
+    if (this.formState.isConfigured(prodOfrId)) {
+      this.collapsedProductIds.update(current => new Set(current).add(prodOfrId));
+    }
   }
 
   protected isConfigured(line: BasketLine): boolean {
-    const fields = this.fieldsFor(line.prodOfrId);
-    if (fields.length === 0) {
-      return false;
-    }
-    return fields.filter(f => f.required).every(f => this.fieldValue(line.prodOfrId, f.key).trim().length > 0);
+    return this.formState.isConfigured(line.prodOfrId);
   }
 
   protected isCollapsed(prodOfrId: number): boolean {

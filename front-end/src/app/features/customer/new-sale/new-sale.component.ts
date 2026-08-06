@@ -1,6 +1,6 @@
 import { NgComponentOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, Injectable, Type, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injectable, Type, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BasketItemRequest, OrderService } from '../../../core/order';
 import { AddressResponse, CustomerService } from '../../../core/customer';
@@ -9,9 +9,14 @@ import { ConfigurationStepComponent } from './steps/configuration/configuration-
 import { OfferSelectionComponent } from './steps/offer-selection/offer-selection.component';
 import { ReviewStepComponent } from './steps/review/review-step.component';
 import { NEW_SALE_MOCK_MODE } from './mock/new-sale-mock.config';
-import { MOCK_OFFERINGS, MOCK_REQUIRED_PRODUCTS } from './mock/new-sale-mock.data';
+import { MOCK_CHARACTERISTICS_BY_OFFERING, MOCK_OFFERINGS, MOCK_REQUIRED_PRODUCTS } from './mock/new-sale-mock.data';
 
 const MOCK_CUST_ORD_ID = 900001;
+// GECICI MOCK - BsnInter backend'de olusuyor ama OrderSummaryResponse hic disariya expose etmiyor,
+// bu yuzden Review & Submit'teki Business Interaction ID sadece mock modda rastgele uretilir.
+function generateMockBsnInterId(): number {
+  return 400000 + Math.floor(Math.random() * 99999);
+}
 
 type NewSaleStep = 'offer' | 'configuration' | 'review';
 
@@ -40,6 +45,8 @@ export interface BasketLine {
 export class NewSaleFormStateService {
   readonly basket = signal<BasketLine[]>([]);
   readonly custOrdId = signal<number | null>(null);
+  // GECICI MOCK - bkz. generateMockBsnInterId, backend bu alani hic dondurmuyor.
+  readonly bsnInterId = signal<number | null>(null);
 
   readonly isValidatingBasket = signal(false);
   readonly basketError = signal<string | null>(null);
@@ -55,6 +62,26 @@ export class NewSaleFormStateService {
   readonly billingAccountNo = signal('');
   readonly isSubmittingOrder = signal(false);
   readonly submitError = signal<string | null>(null);
+
+  // Review'daki "duzenle" kalemi gibi yerlerden bir onceki adima donmek icin - adim gecisi
+  // NewSaleComponent'te (activeStep) yonetildigi icin bu sinyal uzerinden istek iletilir.
+  readonly requestedStep = signal<NewSaleStep | null>(null);
+
+  // GECICI MOCK - karakteristik degerleri, Configuration adiminda toplanip Review'da da
+  // gosterildigi icin (adim component'leri NgComponentOutlet ile yok edildigi icin) burada tutulur.
+  readonly charValues = signal<Record<number, Record<string, string>>>({});
+
+  isConfigured(prodOfrId: number): boolean {
+    if (!NEW_SALE_MOCK_MODE) {
+      return false;
+    }
+    const fields = MOCK_CHARACTERISTICS_BY_OFFERING[prodOfrId] ?? [];
+    if (fields.length === 0) {
+      return false;
+    }
+    const values = this.charValues()[prodOfrId] ?? {};
+    return fields.filter(f => f.required).every(f => (values[f.key] ?? '').trim().length > 0);
+  }
 
   // Donus degeri: bu ekleme sonucu otomatik eklenen zorunlu urunlerin isimleri (toast mesaji icin).
   addToBasket(line: BasketLine): string[] {
@@ -82,7 +109,7 @@ export class NewSaleFormStateService {
             price: requiredOffering.totalPrice,
             cmpgId: null,
             cmpgName: null,
-            catalogName: null,
+            catalogName: line.catalogName,
             isAutoAdded: true,
             triggeredBy: line.prodOfrId
           }
@@ -181,6 +208,14 @@ export class NewSaleComponent {
     this.customerService.getAddresses(this.custId).subscribe(addresses => {
       this.formState.addresses.set(addresses);
     });
+
+    effect(() => {
+      const requested = this.formState.requestedStep();
+      if (requested) {
+        this.activeStep.set(requested);
+        this.formState.requestedStep.set(null);
+      }
+    });
   }
 
   protected stepState(step: NewSaleStep): 'done' | 'active' | 'pending' {
@@ -220,6 +255,7 @@ export class NewSaleComponent {
     if (NEW_SALE_MOCK_MODE) {
       this.formState.isValidatingBasket.set(false);
       this.formState.custOrdId.set(MOCK_CUST_ORD_ID);
+      this.formState.bsnInterId.set(generateMockBsnInterId());
       this.advanceStep();
       return;
     }

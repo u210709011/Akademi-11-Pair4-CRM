@@ -1,5 +1,7 @@
+<div class="config-content-wrap">
+
 @for (line of configurableLines(); track line.prodOfrId) {
-    <div class="config-product-card">
+    <div class="config-product-card" [class.config-product-card-done]="isConfigured(line)">
         <div class="config-product-header">
             <span class="config-product-icon">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -13,6 +15,9 @@
                 <span class="config-product-id">OFR-{{ line.prodOfrId }}</span>
             </div>
             <span class="config-status-badge" [class.config-status-done]="isConfigured(line)">
+                @if (isConfigured(line)) {
+                    <svg class="config-status-check" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m8 12 3 3 5-6" /></svg>
+                }
                 {{ isConfigured(line) ? i18n.t('newSale.configured') : i18n.t('newSale.notConfigured') }}
             </span>
             <button type="button" class="config-collapse-toggle" (click)="toggleCollapsed(line.prodOfrId)" [attr.aria-label]="i18n.t('newSale.toggleConfiguration')">
@@ -88,6 +93,8 @@
             <button type="button" class="secondary-button" (click)="openAddAddressModal()">{{ i18n.t('newSale.addNewAddress') }}</button>
         </div>
     </div>
+</div>
+
 </div>
 
 @if (isChangeAddressModalOpen()) {
