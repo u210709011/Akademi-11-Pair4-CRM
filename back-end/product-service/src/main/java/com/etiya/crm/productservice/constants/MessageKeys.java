@@ -13,6 +13,7 @@ public final class MessageKeys {
     public static final String DOWNSTREAM_CALL_FAILED = "error.downstream.call-failed";
     public static final String DOWNSTREAM_UNAVAILABLE = "error.downstream.unavailable";
     public static final String UNEXPECTED_ERROR = "error.unexpected";
+    public static final String PRODUCT_RELATION_NOT_FOUND = "error.product-relation.not-found";
 
     private MessageKeys() {
     }

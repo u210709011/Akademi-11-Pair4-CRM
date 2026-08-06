@@ -45,6 +45,7 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
     @ExceptionHandler({ ProductSpecNotFoundException.class, ProductNotFoundException.class,
             ProductOfferingNotFoundException.class, ProductCatalogNotFoundException.class,
             ProductCatalogOfferingNotFoundException.class, CampaignNotFoundException.class,
+            ProductRelationNotFoundException.class,
             LookupValueNotFoundException.class })
     public ResponseEntity<ErrorResponse> handleNotFound(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, ex, request);
