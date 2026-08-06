@@ -19,4 +19,11 @@ public interface LookupCacheService {
 
 	/** general-types/{id} - gosterim metnini (name) doner. */
 	String resolveTypeValue(Long id);
+
+	/**
+	 * general-types/{id}'nin gercekten var, aktif VE belirtilen entCodeName grubuna ait olup
+	 * olmadigini dogrular (bkz. B-07/B-14: cityId'nin hicbir yerde dogrulanmamasi - id var olsun
+	 * olmasin, hangi gruba ait olursa olsun kabul ediliyordu).
+	 */
+	boolean existsInGroup(Long id, String entCodeName);
 }
