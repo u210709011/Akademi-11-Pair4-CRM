@@ -1,4 +1,5 @@
 import { Component, HostListener, computed, effect, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -93,7 +94,7 @@ const EMPTY_CUSTOMER_CONTACT: CustomerContact = {
 
 @Component({
   selector: 'app-detail-customer',
-  imports: [RouterLink, FormField],
+  imports: [RouterLink, FormField, NgTemplateOutlet],
   templateUrl: './detail-customer.component.html',
   styleUrl: './detail-customer.component.scss',
 })
@@ -165,6 +166,13 @@ export class DetailCustomerComponent {
   protected readonly isAddingNewAddressForAccount = signal(false);
   // kullanici Account Name'i elle degistirdiyse true olur - auto-fill sadece false iken calisir (bkz. constructor'daki effect).
   protected readonly accountNameTouched = signal(false);
+  // null: Create modu; dolu: Update modu (ayni modal/form adres modalindaki editingAddressId ile ayni desen).
+  protected readonly editingAccount = signal<CustomerAccount | null>(null);
+
+  protected readonly accountToDelete = signal<CustomerAccount | null>(null);
+  protected readonly isDeletingAccount = signal(false);
+  // 409 durumunda backend'den gelen gercek mesaj - "Cannot delete Billing Account" dialogunu tetikler.
+  protected readonly cannotDeleteAccountMessage = signal<string | null>(null);
 
   protected readonly addressModel = signal<AddressFormModel>({ ...EMPTY_ADDRESS_FORM });
 
@@ -385,10 +393,32 @@ export class DetailCustomerComponent {
   }
 
   protected openCreateAccountModal(): void {
+    this.editingAccount.set(null);
     this.createAccountError.set(null);
     this.isAddingNewAddressForAccount.set(false);
     this.accountNameTouched.set(false);
     this.accountForm().reset({ ...EMPTY_CREATE_ACCOUNT_FORM });
+    this.newAccountAddressForm().reset({ ...EMPTY_ADDRESS_FORM });
+    this.isCreateAccountModalOpen.set(true);
+  }
+
+  protected openEditAccountModal(account: CustomerAccount): void {
+    // CustomerAccount view-model gercek accountDesc'i tasimiyor (bkz. plan) - ham yaniti kullaniyoruz.
+    const rawAccountDesc = this.customerDetailResponse.accounts.find(
+      candidate => candidate.custAcctId === account.id
+    )?.accountDesc;
+
+    this.editingAccount.set(account);
+    this.createAccountError.set(null);
+    this.isAddingNewAddressForAccount.set(false);
+    // onceden kaydedilmis isim zaten "kullanici tarafindan verilmis" sayilir - auto-fill effect'i
+    // modal acilir acilmaz onu adresin addrDesc'iyle ezmesin diye touched=true baslar.
+    this.accountNameTouched.set(true);
+    this.accountForm().reset({
+      accountName: account.accountName,
+      accountDesc: rawAccountDesc ?? '',
+      addressId: account.addressId !== null ? String(account.addressId) : ''
+    });
     this.newAccountAddressForm().reset({ ...EMPTY_ADDRESS_FORM });
     this.isCreateAccountModalOpen.set(true);
   }
@@ -419,21 +449,30 @@ export class DetailCustomerComponent {
       return;
     }
 
+    const editing = this.editingAccount();
     this.isSavingAccount.set(true);
     this.createAccountError.set(null);
 
-    this.customerService.createBillingAccount(this.custId, this.toCreateBillingAccountRequest()).subscribe({
+    const request = this.toCreateBillingAccountRequest();
+    const save$ = editing
+      ? this.customerService.updateBillingAccount(this.custId, editing.id, request)
+      : this.customerService.createBillingAccount(this.custId, request);
+
+    save$.subscribe({
       next: () => {
         this.isSavingAccount.set(false);
         this.isCreateAccountModalOpen.set(false);
-        this.showToast(this.i18n.t('detail.createAccountSuccess'));
-        this.accountsPage.set(0);
+        this.showToast(this.i18n.t(editing ? 'detail.updateAccountSuccess' : 'detail.createAccountSuccess'));
+        if (!editing) {
+          this.accountsPage.set(0);
+        }
         this.refreshAccounts();
       },
       error: (httpError: HttpErrorResponse) => {
         this.isSavingAccount.set(false);
         this.createAccountError.set(
-          (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('detail.createAccountError')
+          (httpError.error as { message?: string } | null)?.message ??
+            this.i18n.t(editing ? 'detail.updateAccountError' : 'detail.createAccountError')
         );
       }
     });
@@ -459,6 +498,43 @@ export class DetailCustomerComponent {
     }
 
     return request;
+  }
+
+  protected openDeleteAccountConfirm(account: CustomerAccount): void {
+    this.accountToDelete.set(account);
+  }
+
+  protected closeDeleteAccountConfirm(): void {
+    this.accountToDelete.set(null);
+  }
+
+  protected confirmDeleteAccount(): void {
+    const account = this.accountToDelete();
+    if (!account) {
+      return;
+    }
+
+    this.isDeletingAccount.set(true);
+
+    this.customerService.deleteBillingAccount(this.custId, account.id).subscribe({
+      next: () => {
+        this.isDeletingAccount.set(false);
+        this.accountToDelete.set(null);
+        this.showToast(this.i18n.t('detail.deleteAccountSuccess'));
+        this.refreshAccounts();
+      },
+      error: (httpError: HttpErrorResponse) => {
+        this.isDeletingAccount.set(false);
+        this.accountToDelete.set(null);
+        this.cannotDeleteAccountMessage.set(
+          (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('detail.deleteAccountError')
+        );
+      }
+    });
+  }
+
+  protected closeCannotDeleteAccountDialog(): void {
+    this.cannotDeleteAccountMessage.set(null);
   }
 
   protected serviceAddressLine(addressId: number | null): string {
