@@ -26,6 +26,7 @@ public interface ProductSpecMapper {
 
     /** Gelen istekten yeni entity uretir. Id ve audit alanlari disarida birakilir. */
     @Mapping(target = "productSpecId", ignore = true)
+    @Mapping(target = "statusId", ignore = true)
     @Mapping(target = "cdate", ignore = true)
     @Mapping(target = "cuser", ignore = true)
     @Mapping(target = "udate", ignore = true)
@@ -41,6 +42,7 @@ public interface ProductSpecMapper {
      * @MappingTarget sayesinde productSpecId ve audit alanlari korunur.
      */
     @Mapping(target = "productSpecId", ignore = true)
+    @Mapping(target = "statusId", ignore = true)
     @Mapping(target = "cdate", ignore = true)
     @Mapping(target = "cuser", ignore = true)
     @Mapping(target = "udate", ignore = true)
