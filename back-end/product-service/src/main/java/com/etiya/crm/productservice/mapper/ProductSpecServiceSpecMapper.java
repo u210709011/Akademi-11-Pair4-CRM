@@ -20,6 +20,8 @@ public interface ProductSpecServiceSpecMapper {
 
     @Mapping(target = "productSpecServiceSpecId", ignore = true)
     @Mapping(target = "productSpec", ignore = true)
+    @Mapping(target = "relationTypeId", ignore = true)
+    @Mapping(target = "statusId", ignore = true)
     @Mapping(target = "cdate", ignore = true)
     @Mapping(target = "cuser", ignore = true)
     @Mapping(target = "udate", ignore = true)
@@ -33,6 +35,8 @@ public interface ProductSpecServiceSpecMapper {
 
     @Mapping(target = "productSpecServiceSpecId", ignore = true)
     @Mapping(target = "productSpec", ignore = true)
+    @Mapping(target = "relationTypeId", ignore = true)
+    @Mapping(target = "statusId", ignore = true)
     @Mapping(target = "cdate", ignore = true)
     @Mapping(target = "cuser", ignore = true)
     @Mapping(target = "udate", ignore = true)
