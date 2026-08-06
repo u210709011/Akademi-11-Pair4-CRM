@@ -3,11 +3,13 @@ package com.crmlite.ui.pages.customer;
 import com.crmlite.ui.pages.BasePage;
 import com.crmlite.ui.pages.components.AddressCardComponent;
 import com.crmlite.ui.pages.components.AddressModalComponent;
+import com.crmlite.ui.pages.components.BillingAccountModalComponent;
 import com.crmlite.ui.pages.components.ConfirmDialogComponent;
 import com.crmlite.ui.pages.components.ContactModalComponent;
 import com.crmlite.ui.pages.components.NavbarComponent;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.util.ArrayList;
@@ -50,6 +52,11 @@ public class CustomerDetailPage extends BasePage {
 
     // Accounts sekmesi
     private static final By ACCOUNT_ROWS = By.cssSelector("table.accounts-table tbody tr");
+    private static final By ACCOUNTS_TABLE = By.cssSelector("table.accounts-table");
+    private static final By ACCOUNT_HEADERS = By.cssSelector("table.accounts-table thead th");
+    // Accounts sekmesindeki "+ Create New Account" butonu; adres sekmesindeki ekleme
+    // butonuyla ayni sinifi paylasir, sekme bazinda ayrisir.
+    private static final By CREATE_ACCOUNT_BUTTON = By.cssSelector(".info-panel-actions .add-address-button");
 
     // Contact Medium sekmesi (FR-006)
     private static final By CONTACT_GRID = By.cssSelector(".contact-info-grid");
@@ -372,5 +379,77 @@ public class CustomerDetailPage extends BasePage {
 
     public String successToastText() {
         return getText(SUCCESS_TOAST_MESSAGE);
+    }
+
+    // --- Accounts sekmesi / Fatura hesabi olusturma (FR-008) ---
+
+    /** Accounts tablosunun kolonlari, render sirasi ile (ilk kolon genisletme oku). */
+    public enum AccountColumn {
+        EXPAND(0),
+        STATUS(1),
+        NUMBER(2),
+        NAME(3),
+        TYPE(4),
+        ACTION(5);
+
+        private final int index;
+
+        AccountColumn(int index) {
+            this.index = index;
+        }
+
+        public int index() {
+            return index;
+        }
+    }
+
+    /**
+     * ACC-001: Accounts (Customer Account) sekmesini acar ve tablonun render edilmesini bekler.
+     *
+     * <p>Hazir olma kosulu tablonun kendisidir; onboarding her musteriye varsayilan bir hesap
+     * actigi icin tablo hicbir zaman bos degildir.
+     */
+    public CustomerDetailPage openAccountsTab() {
+        selectTab(Tab.ACCOUNTS);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(ACCOUNTS_TABLE));
+        return this;
+    }
+
+    /** ACC-002: "Create New Account" → "Create Billing Account" modal'i. */
+    public BillingAccountModalComponent openCreateAccountModal() {
+        click(CREATE_ACCOUNT_BUTTON);
+        BillingAccountModalComponent modal = new BillingAccountModalComponent(driver);
+        modal.waitUntilLoaded();
+        return modal;
+    }
+
+    /** ACC-014: tablodaki hesap satiri sayisi (anlik, beklemez). */
+    public int accountCount() {
+        return findAll(ACCOUNT_ROWS).size();
+    }
+
+    /** ACC-014: bir satirdaki kolon degeri. */
+    public String accountValue(int rowIndex, AccountColumn column) {
+        return getText(By.cssSelector(String.format(
+                "table.accounts-table tbody tr:nth-of-type(%d) td:nth-child(%d)",
+                rowIndex + 1, column.index() + 1)));
+    }
+
+    /** Tablodaki tum hesap adlari — yeni hesabin listelendigini dogrulamak icin. */
+    public List<String> accountNames() {
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < accountCount(); i++) {
+            names.add(accountValue(i, AccountColumn.NAME));
+        }
+        return names;
+    }
+
+    /** ACC-001: tablo kolon basliklari. */
+    public List<String> accountColumnHeaders() {
+        List<String> headers = new ArrayList<>();
+        for (WebElement header : findAll(ACCOUNT_HEADERS)) {
+            headers.add(header.getText().trim());
+        }
+        return headers;
     }
 }
