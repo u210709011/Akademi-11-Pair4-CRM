@@ -15,6 +15,7 @@ import com.etiya.crm.productservice.dataAccess.abstracts.ProductSpecRepository;
 import com.etiya.crm.productservice.entities.concretes.ProductOffering;
 import com.etiya.crm.productservice.entities.concretes.ProductSpec;
 import com.etiya.crm.productservice.mapper.ProductOfferingMapper;
+import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import org.springframework.stereotype.Service;
 
@@ -94,12 +95,13 @@ public class ProductOfferingManager implements ProductOfferingService {
     }
 
     // (TODO) bağlı kayıt kontrolü: katalog/kampanya/prod ilişkisi varsa silme engellenecek
-    // (TODO) soft delete (statusId=Pasif) mantığı düşünülecek (rules katmanında halledecğim)
     @Override
     public void delete(Long productOfferingId) {
         ProductOffering productOffering = productOfferingRepository.findById(productOfferingId)
                 .orElseThrow(() -> new ProductOfferingNotFoundException(productOfferingId));
 
-        productOfferingRepository.delete(productOffering);
+        productOffering.setStatusId(
+                lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT_OFFER, GnlStCodes.DELETED));
+        productOfferingRepository.save(productOffering);
     }
 }

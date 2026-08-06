@@ -15,6 +15,7 @@ import com.etiya.crm.productservice.dataAccess.abstracts.ProductSpecServiceSpecR
 import com.etiya.crm.productservice.entities.concretes.ProductSpec;
 import com.etiya.crm.productservice.entities.concretes.ProductSpecServiceSpec;
 import com.etiya.crm.productservice.mapper.ProductSpecServiceSpecMapper;
+import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import com.etiya.crm.shared.contracts.gnltp.GnlTpGroups;
 import org.springframework.stereotype.Service;
@@ -93,6 +94,8 @@ public class ProductSpecServiceSpecManager implements ProductSpecServiceSpecServ
     public void delete(Long productSpecServiceSpecId) {
         ProductSpecServiceSpec entity = productSpecServiceSpecRepository.findById(productSpecServiceSpecId)
                 .orElseThrow(() -> new ProductSpecServiceSpecNotFoundException(productSpecServiceSpecId));
-        productSpecServiceSpecRepository.delete(entity);
+        entity.setStatusId(
+                lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT_SPEC_SERVICE_SPEC, GnlStCodes.DELETED));
+        productSpecServiceSpecRepository.save(entity);
     }
 }

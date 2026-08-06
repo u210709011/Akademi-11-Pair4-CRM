@@ -91,7 +91,8 @@ public class ProductRelationManager implements ProductRelationService {
     public void delete(Long productRelationId) {
         ProductRelation productRelation = productRelationRepository.findById(productRelationId)
                 .orElseThrow(() -> new ProductRelationNotFoundException(productRelationId));
-        productRelationRepository.delete(productRelation);
+        productRelation.setActive(false);
+        productRelationRepository.save(productRelation);
     }
 
 

@@ -15,6 +15,7 @@ import com.etiya.crm.productservice.dataAccess.abstracts.ProductRepository;
 import com.etiya.crm.productservice.entities.concretes.Product;
 import com.etiya.crm.productservice.entities.concretes.ProductCharacteristicValue;
 import com.etiya.crm.productservice.mapper.ProductCharacteristicValueMapper;
+import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import org.springframework.stereotype.Service;
 
@@ -102,6 +103,8 @@ public class ProductCharacteristicValueManager implements ProductCharacteristicV
     public void delete(Long productCharacteristicValueId) {
         ProductCharacteristicValue entity = productCharacteristicValueRepository.findById(productCharacteristicValueId)
                 .orElseThrow(() -> new ProductCharacteristicValueNotFoundException(productCharacteristicValueId));
-        productCharacteristicValueRepository.delete(entity);
+        entity.setStatusId(
+                lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT_CHAR_VAL, GnlStCodes.DELETED));
+        productCharacteristicValueRepository.save(entity);
     }
 }
