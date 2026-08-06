@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -13,10 +14,12 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class UpdatedCampaignOfferingResponse {
     private Long campaignOfferingId;      // PK
-    private Long campaignId;              // ilişki 1 → ID
-    private Long productOfferingId;       // ilişki 2 → ID
+    private Long campaignId;              // ilişki
+    private Long productOfferingId;       // ilişki
     private String productOfferingName;   // ← donmuş isim, response'ta VAR
     private Integer priority;
+    private BigDecimal discountPct;
+    private BigDecimal discountedPrice;
     private LocalDate startDate;
     private LocalDate endDate;
     private boolean active;

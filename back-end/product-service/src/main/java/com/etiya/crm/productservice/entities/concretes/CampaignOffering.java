@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -35,6 +36,9 @@ public class CampaignOffering extends BaseEntity {
 
     @Column(name = "prio")
     private Integer priority;
+
+    @Column(name = "discount_pct", nullable = false)
+    private BigDecimal discountPct;
 
     @Column(name = "sdate", nullable = false)
     private LocalDate startDate;
