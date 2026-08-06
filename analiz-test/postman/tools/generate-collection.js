@@ -731,24 +731,27 @@ pm.test('TC-002-04 · GSM ile kayit bulunur', function () {
   pm.expect(found).to.include(String(pm.collectionVariables.get('custIdA')));
 });`),
     req({
-      name: 'TC-002-05 · GSM - +90\'li format (URL-encoded) ile arama',
+      name: 'TC-002-05 · GSM - +90\'li format (URL-encoded) -> 400 (dokuman kurali)',
       path: '/api/v1/customers/search?gsm=%2B90{{gsmA}}',
-      description: 'Numara normalizasyonu bekleniyor mu? Dokumanda "10 hane, 5 ile baslar" deniyor; API tam eslesme yapiyor.',
+      description: 'Dokuman GSM arama filtresini "yalnizca rakam, 10 hane, 5 ile baslamalidir" diye tanimliyor ve '
+        + 'ihlalde "Invalid phone number." mesajini istiyor. "+90" onekli deger bu kurala uymaz, reddedilmelidir. '
+        + 'API hicbir format dogrulamasi yapmadigi icin 200 + bos liste donuyor - kullanici yanlis yazdigini '
+        + 'anlamiyor, "boyle bir musteri yok" saniyor. Ayni kok neden: TC-002-06, TC-002-22, TC-002-23, TC-002-25.',
       test: `${H}
-var found = ids(jsonBody().content);
-pm.test('TC-002-05 · Istek islenir (200)', function () { expectCode(200); });
-gapTest('TC-002-05 · +90\\'li GSM formati normalize edilip ayni musteriyi bulmali', function () {
-  pm.expect(found).to.include(String(pm.collectionVariables.get('custIdA')));
+gapTest('TC-002-05 · Gecersiz GSM formati reddedilmeli', function () {
+  expectCode(400);
+  expectMessage('Invalid phone number.');
 });`
     }),
     req({
-      name: 'TC-002-06 · GSM - 0 ile baslayan format ile arama',
+      name: 'TC-002-06 · GSM - 0 ile baslayan format -> 400 (dokuman kurali)',
       path: '/api/v1/customers/search?gsm=0{{gsmA}}',
+      description: '0 onekli numara 11 hane olur ve 5 ile baslamaz - dokumandaki GSM kuralina uymaz. '
+        + 'TC-002-05 ile ayni kok neden: arama filtrelerinde format dogrulamasi yok.',
       test: `${H}
-var found = ids(jsonBody().content);
-pm.test('TC-002-06 · Istek islenir (200)', function () { expectCode(200); });
-gapTest('TC-002-06 · 0 onekli GSM formati normalize edilmeli', function () {
-  pm.expect(found).to.include(String(pm.collectionVariables.get('custIdA')));
+gapTest('TC-002-06 · Gecersiz GSM formati reddedilmeli', function () {
+  expectCode(400);
+  expectMessage('Invalid phone number.');
 });`
     }),
     searchReq('TC-002-07', 'First Name + Last Name AND - kesisim [ACC-002]', 'firstName={{firstNameA}}&lastName={{lastNameA}}', `
@@ -814,13 +817,21 @@ gapTest('TC-002-13 · BUYUK harfle yazilan ad ayni musteriyi bulmali', function 
 });`
     }),
     req({
-      name: 'TC-002-14 · Bastaki ve sondaki bosluk kirpilir',
+      name: 'TC-002-14 · Bastaki ve sondaki bosluk davranisi (acik analiz sorusu)',
       path: '/api/v1/customers/search?firstName=%20{{firstNameA}}%20',
+      description: 'ACIK ANALIZ SORUSU - kusur degildir. Arama filtrelerinde bastaki/sondaki bosluklarin '
+        + 'kirpilip kirpilmayacagi FR-002 dokumaninda TANIMLI DEGIL. (FR-001 giris tablosunda kullanici adi icin '
+        + 'boyle bir kural var, arama alanlari icin yok.) API su an kirpmiyor: bosluklu deger eslesmiyor. '
+        + 'Kullanici kopyala-yapistir ile arama yaptiginda sonuc alamaz. Analiz tarafi karar verdiginde bu test '
+        + 'ya gercek bir beklentiye donusturulecek ya da kaldirilacaktir.',
       test: `${H}
 var found = ids(jsonBody().content);
 pm.test('TC-002-14 · Istek islenir (200)', function () { expectCode(200); });
-gapTest('TC-002-14 · Bosluklu girilen ad kirpilarak eslestirilmeli', function () {
-  pm.expect(found).to.include(String(pm.collectionVariables.get('custIdA')));
+pm.test('TC-002-14 · Mevcut davranis belgelenir: bosluk kirpilmiyor', function () {
+  var trimmed = found.indexOf(String(pm.collectionVariables.get('custIdA'))) > -1;
+  console.log('[TC-002-14] Bosluklu arama musteriyi ' + (trimmed ? 'BULDU (kirpma var)' : 'bulamadi (kirpma yok)')
+    + ' - dokumanda kural tanimli degil, analiz karari bekleniyor.');
+  pm.expect(true).to.be.true;
 });`
     }),
     req({
@@ -863,12 +874,50 @@ pm.test('TC-002-19 · Ikinci sayfa istenebilir', function () {
 gapTest('TC-002-20 · Varsayilan sayfa boyutu 10 olmalidir (API 50 doner)', function () {
   pm.expect(b.size, 'API varsayilani').to.eql(10);
 });`),
-    searchReq('TC-002-21', 'Siralama - sort parametresi destegi [ACC-008]', 'lastName={{lastNameA}}&sort=firstName,asc', `
+    searchReq('TC-002-21', 'Siralama - artan duzen uygulanir [ACC-008]', 'lastName={{lastNameA}}&sortBy=firstName&sortDir=asc', `
 pm.test('TC-002-21 · Istek islenir (200)', function () { expectCode(200); });
-gapTest('TC-002-21 · sort parametresi uygulanmali', function () {
-  var srt = b.sort || (b.pageable && b.pageable.sort) || {};
-  pm.expect(srt.sorted === true || srt.empty === false, 'siralama bilgisi: ' + JSON.stringify(srt)).to.eql(true);
-});`),
+pm.test('TC-002-21 · Siralama yaniti sortBy alanina gore ASC uygulanmis', function () {
+  var srt = (b.pageable && b.pageable.sort) || b.sort || [];
+  var arr = Array.isArray(srt) ? srt : (srt.orders || []);
+  pm.expect(arr, 'siralama bilgisi: ' + JSON.stringify(srt)).to.be.an('array').that.is.not.empty;
+  pm.expect(arr[0].property).to.eql('firstName');
+  pm.expect(arr[0].direction).to.eql('ASC');
+});
+pm.test('TC-002-21 · Sonuclar gercekten alfabetik sirali', function () {
+  var names = (b.content || []).map(function (r) { return String(r.firstName || '').toLowerCase(); });
+  var sorted = names.slice().sort();
+  pm.expect(names).to.eql(sorted);
+});`, {
+      description: 'ACC-008: sutun basligina tiklandiginda liste o sutuna gore siralanir. Orta katman karsiligi '
+        + 'sortBy + sortDir parametreleridir (Spring Data\'nin "sort=alan,yon" bicimi DEGIL - CustomerController '
+        + 'guvenlik icin kendi whitelist\'ini uyguluyor: custId/firstName/middleName/lastName/tcNo/role).'
+    }),
+    searchReq('TC-002-21a', 'Siralama - tekrar tiklamada azalan duzen [ACC-008]', 'lastName={{lastNameA}}&sortBy=firstName&sortDir=desc', `
+pm.test('TC-002-21a · Azalan siralama uygulanir', function () {
+  expectCode(200);
+  var srt = (b.pageable && b.pageable.sort) || [];
+  var arr = Array.isArray(srt) ? srt : (srt.orders || []);
+  pm.expect(arr, 'siralama bilgisi').to.be.an('array').that.is.not.empty;
+  pm.expect(arr[0].direction).to.eql('DESC');
+});
+pm.test('TC-002-21a · Sonuclar ters alfabetik sirali', function () {
+  var names = (b.content || []).map(function (r) { return String(r.firstName || '').toLowerCase(); });
+  var sorted = names.slice().sort().reverse();
+  pm.expect(names).to.eql(sorted);
+});`, {
+      description: 'ACC-008 "Tekrar tiklandiginda siralama tersine doner" maddesinin orta katman karsiligi.'
+    }),
+    searchReq('TC-002-21b', 'Siralama - whitelist disi alan sessizce yok sayilir', 'lastName={{lastNameA}}&sortBy=gecersizAlan&sortDir=asc', `
+pm.test('TC-002-21b · Gecersiz siralama alani istegi kirmaz', function () {
+  expectCode(200);
+  var srt = (b.pageable && b.pageable.sort) || [];
+  var arr = Array.isArray(srt) ? srt : (srt.orders || []);
+  pm.expect(arr, 'whitelist disi alan icin siralama uygulanmamali').to.be.an('array').that.is.empty;
+});`, {
+      description: 'Guvenlik: sortBy dogrudan JPA property-path\'ine gitseydi istemci ilgisiz tablolara '
+        + 'siralama enjekte edebilirdi. CustomerController whitelist disi degerleri sessizce yok sayiyor - '
+        + 'istegi kirmadan guvenli davranis. Bu test o korumanin kalici olmasini garanti eder.'
+    }),
     searchReq('TC-002-22', 'Nationality ID 10 hane -> 400 (dokuman kurali)', 'tcNo=1234567890', `
 gapTest('TC-002-22 · 11 haneden kisa NAT ID reddedilmeli', function () { expectCode(400); });`),
     searchReq('TC-002-23', 'Nationality ID 12 hane -> 400 (dokuman kurali)', 'tcNo=123456789012', `
@@ -993,7 +1042,12 @@ pm.test('TC-003-12 · E-posta ve cep telefonu kaydedildi', function () {
     onboardCase('TC-003-21', 'Demografi - First Name 50 karakter -> 201 (BVA sinir)',
       "b.individual.firstName = repeat('a', 50);", 201),
     onboardCase('TC-003-22', 'Demografi - First Name 51 karakter -> 400 (BVA, dokuman kurali)',
-      "b.individual.firstName = repeat('a', 51);", 400, null, { gap: true }),
+      "b.individual.firstName = repeat('a', 51);", 400, 'Maximum 50 characters are allowed.', {
+        gap: true,
+        description: 'Dokuman First Name icin "Metin, maks 50" diyor ve ihlal mesajini '
+          + '"Maximum 50 characters are allowed." olarak tanimliyor (06.08.2026 guncellemesi). '
+          + 'IndividualInfo.firstName uzerinde @Size kisiti HIC YOK - 51 karakter kabul ediliyor.'
+      }),
     onboardCase('TC-003-23', 'Demografi - Middle, Mother ve Father Name opsiyonel -> 201',
       "b.individual.middleName = null; b.individual.motherName = null; b.individual.fatherName = null;", 201),
     onboardCase('TC-003-24', 'Adres - City bos -> 400', "b.addresses[0].cityId = null;", 400, 'This field is required.'),
@@ -1003,7 +1057,12 @@ pm.test('TC-003-12 · E-posta ve cep telefonu kaydedildi', function () {
     onboardCase('TC-003-28', 'Adres - Street 200 karakter -> 201 (BVA sinir)',
       "b.addresses[0].streetName = repeat('b', 200);", 201),
     onboardCase('TC-003-29', 'Adres - Street 201 karakter -> 400 (BVA, dokuman kurali)',
-      "b.addresses[0].streetName = repeat('b', 201);", 400, null, { gap: true }),
+      "b.addresses[0].streetName = repeat('b', 201);", 400, 'Maximum 200 characters are allowed.', {
+        gap: true,
+        description: 'Uzunluk kisiti dogru calisiyor (400 doner) ancak @Size mesaji FIELD_REQUIRED anahtarini '
+          + 'paylastigi icin "This field is required." donuyor - alan dolu oldugu halde kullanici "zorunlu" '
+          + 'mesaji goruyor. Dokuman bu ihlal icin "Maximum 200 characters are allowed." metnini tanimliyor.'
+      }),
     onboardCase('TC-003-30', 'Adres - hic adres girilmeden kayit -> 400 [ACC-011]',
       "b.addresses = [];", 400, 'At least one address is required.'),
     onboardCase('TC-003-31', 'Adres - 5 adres ile kayit -> 201 (BVA sinir) [ACC-010]', `
@@ -1021,8 +1080,14 @@ for (var i = 0; i < 6; i++) { b.addresses.push({ cityId: a.cityId, streetName: '
     onboardCase('TC-003-37', 'Kontakt - Mobile Phone 9 hane -> 400 (BVA)', "b.contact.mobilePhone = '555123456';", 400, 'Invalid phone number'),
     onboardCase('TC-003-38', 'Kontakt - Home Phone 2 ile baslamali -> 400 (dokuman kurali)',
       "b.contact.homePhone = '3121234567';", 400, null, { gap: true,
-      description: 'FR-003 validasyon tablosu "10 hane, 2 ile baslar" diyor; FR-006 tablosu "10-11 hane" diyor. Kod ikincisini uyguluyor - dokuman ici celiski.' }),
-    onboardCase('TC-003-39', 'Kontakt - Fax harf iceriyor -> 400', "b.contact.fax = '021212345aa';", 400, 'Invalid phone number'),
+      description: 'FR-003 ve FR-006 validasyon tablolari 06.08.2026 guncellemesiyle esitlendi: ikisi de '
+        + '"yalnizca rakam, 10 hane, 2 ile baslar" diyor (onceden celisiyorlardi). ContactInfo.homePhone hala '
+        + '^[0-9]{10,11}$ kullaniyor - ne hane sayisi ne de baslangic rakami dokumanla uyusuyor. '
+        + 'Ayni boslugu guncelleme yolunda TC-006-28 izliyor.' }),
+    onboardCase('TC-003-39', 'Kontakt - Fax harf iceriyor -> 400', "b.contact.fax = '021212345aa';", 400, 'Invalid fax number', {
+      description: 'Faks alani 06.08.2026 duzeltmesiyle kendi mesaj anahtarini (FAX_INVALID) kullanmaya basladi; '
+        + 'onceden telefon mesajini paylasiyordu. Dokuman FR-003 ve FR-006 tablolarinda "Invalid fax number." diyor.'
+    }),
     onboardCase('TC-003-40', 'Kontakt - Home Phone ve Fax opsiyonel -> 201',
       "b.contact.homePhone = null; b.contact.fax = null;", 201),
     req({
@@ -1157,7 +1222,12 @@ b.birthDate = '01/01/1900';`, 200, null, {
 }, function () { console.log('[FR-004] Dogum tarihi test sonrasi geri yuklendi.'); });`
     }),
     individualCase('TC-004-16', 'Isim rakam iceriyor -> 400 (kod kurali)', "b.firstName = 'Ahmet123';", 400, 'Name should contain letters only.'),
-    individualCase('TC-004-17', 'First Name 51 karakter -> 400 (BVA, dokuman kurali)', "b.firstName = repeat('a', 51);", 400, null, { gap: true }),
+    individualCase('TC-004-17', 'First Name 51 karakter -> 400 (BVA, dokuman kurali)', "b.firstName = repeat('a', 51);", 400,
+      'Maximum 50 characters are allowed.', {
+        gap: true,
+        description: 'TC-003-22 ile ayni kok neden, guncelleme yolunda: UpdateIndividualInfo.firstName uzerinde '
+          + 'de @Size kisiti yok. Dokuman "Metin, maks 50" ve "Maximum 50 characters are allowed." diyor.'
+      }),
     individualCase('TC-004-18', 'Olmayan musteri -> 404', '', 404, null, { custIdVar: '999999999' })
   ]
 );
@@ -1258,7 +1328,12 @@ pm.test('TC-005-08 · Silinen adres listeden cikti', function () {
     addressCase('TC-005-13', 'Adres - Street 200 karakter -> 201 (BVA sinir)', "b.streetName = repeat('c', 200);", 201, null, {
       extraTest: `if (pm.response.code === 201) { pm.collectionVariables.set('addressIdD3', jsonBody().id); }`
     }),
-    addressCase('TC-005-14', 'Adres - Street 201 karakter -> 400 (BVA, dokuman kurali)', "b.streetName = repeat('c', 201);", 400, null, { gap: true }),
+    addressCase('TC-005-14', 'Adres - Street 201 karakter -> 400 (BVA, dokuman kurali)', "b.streetName = repeat('c', 201);", 400,
+      'Maximum 200 characters are allowed.', {
+        gap: true,
+        description: 'Kisit uygulaniyor (400) ancak mesaj "This field is required." donuyor. '
+          + 'AddressEditRequest.streetName uzerindeki @Size, FIELD_REQUIRED anahtarini paylasiyor.'
+      }),
     req({
       name: 'TC-005-15 · Adres limiti - 5. adrese kadar eklenebilir -> 201 [ACC-005]',
       path: '/actuator/health',
@@ -1406,39 +1481,53 @@ b = {};`, 400, 'This field is required.'),
     contactCase('TC-006-08', 'E-mail gecersiz format -> 400', "b.email = 'gecersiz-eposta';", 400, 'Invalid email format'),
     contactCase('TC-006-09', 'E-mail - alan adi eksik -> 400', "b.email = 'kullanici@';", 400, 'Invalid email format'),
     contactCase('TC-006-10', 'E-mail hata mesaji dokumandaki metin degil', "b.email = 'gecersiz-eposta';", 400,
-      'Email must be a valid email address.', {
+      'Invalid email format.', {
         gap: true,
-        description: 'Dokumanin validasyon tablosu hata mesajini "Email must be a valid email address." olarak tanimliyor; '
-          + 'API "Invalid email format" donuyor. Islevsel davranis dogru (400), yalnizca metin ayrisiyor - '
-          + 'ekranda gosterilecek mesaj dokumanla birebir olmali mi, analiz sorusu olarak izlenmektedir.'
+        description: 'Dokuman (06.08.2026 guncellemesi) e-posta mesajini FR-003 ve FR-006\'da birebir '
+          + '"Invalid email format." olarak tanimliyor. API noktasiz donuyor ("Invalid email format"). '
+          + 'Islevsel davranis dogru (400), yalnizca metnin sonundaki nokta eksik - '
+          + 'messages*.properties icindeki validation.email.invalid degerine nokta eklenmesi yeterlidir.'
       }),
     contactCase('TC-006-11', 'Mobile Phone bos -> 400 [ACC-005]', "b.mobilePhone = '';", 400,
-      ['This field is required.', 'Invalid phone number format'], {
+      ['This field is required.', 'Invalid phone number'], {
         description: 'Bos deger hem @NotBlank hem @Pattern kisitini ihlal eder. Bean Validation hangisini once '
           + 'raporlayacagini garanti etmedigi icin iki mesajdan biri kabul edilir - test kararli kalir.'
       }),
-    contactCase('TC-006-12', 'Mobile Phone 5 ile baslamiyor -> 400', "b.mobilePhone = '4551234567';", 400, 'Invalid phone number format'),
-    contactCase('TC-006-13', 'Mobile Phone 9 hane -> 400 (BVA alt sinir)', "b.mobilePhone = '512345678';", 400, 'Invalid phone number format'),
-    contactCase('TC-006-14', 'Mobile Phone 11 hane -> 400 (BVA ust sinir)', "b.mobilePhone = '51234567890';", 400, 'Invalid phone number format'),
+    contactCase('TC-006-12', 'Mobile Phone 5 ile baslamiyor -> 400', "b.mobilePhone = '4551234567';", 400, 'Invalid phone number'),
+    contactCase('TC-006-13', 'Mobile Phone 9 hane -> 400 (BVA alt sinir)', "b.mobilePhone = '512345678';", 400, 'Invalid phone number'),
+    contactCase('TC-006-14', 'Mobile Phone 11 hane -> 400 (BVA ust sinir)', "b.mobilePhone = '51234567890';", 400, 'Invalid phone number'),
     contactCase('TC-006-15', 'Mobile Phone 10 hane ve 5 ile baslar -> 200 (BVA gecerli sinir)', "b.mobilePhone = '5321234567';", 200, null, {
       extraTest: `pm.test('TC-006-15 · Gecerli GSM kaydedildi', function () { pm.expect(jsonBody().mobilePhone).to.eql('5321234567'); });`
     }),
-    contactCase('TC-006-16', 'Mobile Phone rakam disi karakter icerir -> 400', "b.mobilePhone = '5A2123456B';", 400, 'Invalid phone number format'),
-    contactCase('TC-006-17', 'Home Phone 10 hane -> 200 (BVA alt sinir)', "b.homePhone = '3121234567';", 200),
-    contactCase('TC-006-18', 'Home Phone 11 hane -> 200 (BVA ust sinir)', "b.homePhone = '03121234567';", 200),
-    contactCase('TC-006-19', 'Home Phone 9 hane -> 400 (BVA sinir disi)', "b.homePhone = '312123456';", 400, 'Invalid phone number format'),
-    contactCase('TC-006-20', 'Home Phone 12 hane -> 400 (BVA sinir disi)', "b.homePhone = '031212345678';", 400, 'Invalid phone number format'),
+    contactCase('TC-006-16', 'Mobile Phone rakam disi karakter icerir -> 400', "b.mobilePhone = '5A2123456B';", 400, 'Invalid phone number'),
+    contactCase('TC-006-17', 'Home Phone 10 hane ve 2 ile baslar -> 200 (gecerli deger)', "b.homePhone = '2321234567';", 200, null, {
+      description: 'Dokuman (FR-003 ve FR-006) ev telefonu icin "yalnizca rakam, 10 hane, 2 ile baslar" diyor. '
+        + 'Bu test kuralin gecerli sinirini dogrular.'
+    }),
+    contactCase('TC-006-18', 'Home Phone 11 hane -> 400 (dokuman 10 hane diyor)', "b.homePhone = '02121234567';", 400, null, {
+      gap: true,
+      description: 'Dokumanin guncel hali ev telefonunu 10 hane olarak tanimliyor (onceki surumde 10-11 idi ve '
+        + 'FR-003 ile FR-006 celisiyordu; celiski 06.08.2026\'da 10 hane lehine giderildi). '
+        + 'ContactInfo.homePhone hala ^[0-9]{10,11}$ kullaniyor, 11 hane kabul ediliyor.'
+    }),
+    contactCase('TC-006-19', 'Home Phone 9 hane -> 400 (BVA sinir disi)', "b.homePhone = '312123456';", 400, 'Invalid phone number'),
+    contactCase('TC-006-20', 'Home Phone 12 hane -> 400 (BVA sinir disi)', "b.homePhone = '031212345678';", 400, 'Invalid phone number'),
     contactCase('TC-006-21', 'Home Phone bos string gonderilir -> 200 (opsiyonel alan)', "b.homePhone = '';", 200, null, {
       gap: true,
       description: 'Dokuman Home Phone\'u opsiyonel sayiyor. Alan null gonderildiginde kabul ediliyor (TC-006-05), '
         + 'ancak BOS STRING gonderildiginde @Pattern devreye girip 400 donuyor. Ekranda bos birakilan bir alanin '
         + 'front-end tarafindan null mi bos string mi gonderilecegi sozlesmede net degil - front-end null gondermek zorundadir.'
     }),
-    contactCase('TC-006-22', 'Fax gecersiz format -> 400', "b.fax = '12345';", 400, 'Invalid phone number format'),
-    contactCase('TC-006-23', 'Fax hata mesaji dokumandaki metin degil', "b.fax = '12345';", 400, 'Invalid fax number', {
+    contactCase('TC-006-22', 'Fax gecersiz format -> 400', "b.fax = '12345';", 400,
+      ['Invalid fax number', 'Invalid phone number'], {
+        description: 'Davranis testi: gecersiz faks reddedilmelidir. Mesaj metni gecis halinde oldugu icin iki '
+          + 'karsiliktan biri kabul edilir; dokumanla birebir uyum ayri bir test olan TC-006-23 tarafindan izlenir.'
+      }),
+    contactCase('TC-006-23', 'Fax hata mesaji dokumandaki metin degil', "b.fax = '12345';", 400, 'Invalid fax number.', {
       gap: true,
-      description: 'Dokuman faks icin ayri bir mesaj tanimliyor ("Invalid fax number."), API telefon mesajini paylasiyor '
-        + '("Invalid phone number format"). Kullanici hangi alanin hatali oldugunu mesajdan ayirt edemez.'
+      description: 'Dokuman (FR-003 ve FR-006 validasyon tablolari) faks icin ayri bir mesaj tanimliyor: '
+        + '"Invalid fax number." API ise telefon mesajini paylasiyor. Kullanici hangi alanin hatali oldugunu '
+        + 'mesajdan ayirt edemez. Beklenen: MessageKeys.FAX_INVALID eklenip ContactInfo.fax bu anahtari kullanmali.'
     }),
     req({
       name: 'TC-006-24 · Var olmayan musterinin iletisim bilgisi -> 404',
@@ -1471,6 +1560,12 @@ pm.test('TC-006-26 · Sayisal olmayan custId 400 doner', function () {
       noAuth: true,
       test: `${H}
 pm.test('TC-006-27 · Yetkisiz istek 401 doner', function () { expectCode(401); });`
+    }),
+    contactCase('TC-006-28', 'Home Phone 2 ile baslamiyor -> 400 (dokuman kurali)', "b.homePhone = '3121234567';", 400, null, {
+      gap: true,
+      description: 'Dokuman ev telefonu icin "2 ile baslar" sartini kosuyor (FR-003 ve FR-006 ayni kurali soyluyor). '
+        + 'ContactInfo.homePhone deseni ^[0-9]{10,11}$ - baslangic rakami hic kontrol edilmiyor. '
+        + 'FR-003 tarafinda ayni boslugu TC-003-38 izliyor; bu test FR-006 (guncelleme) yolunu kapsar.'
     })
   ]
 );
@@ -1752,10 +1847,12 @@ if (pm.response.code === 201) { pm.collectionVariables.set('acctIdF3', jsonBody(
     }),
     billingCase('TC-008-10', 'Account Name 51 karakter -> 400 (BVA sinir disi)', "b.accountName = repeat('a', 51);", 400),
     billingCase('TC-008-11', 'Account Name 51 karakter hata mesaji uzunluk kuralini anlatir', "b.accountName = repeat('a', 51);", 400,
-      'must be at most 50', {
+      'Maximum 50 characters are allowed.', {
         gap: true,
         description: 'Uzunluk siniri dogru uygulaniyor (400) ancak @Size kisiti FIELD_REQUIRED mesajini paylasiyor: '
-          + 'kullanici dolu bir alan icin "This field is required." goruyor. Mesaj, ihlal edilen kurali anlatmalidir.'
+          + 'kullanici dolu bir alan icin "This field is required." goruyor. Dokuman (06.08.2026 guncellemesi) '
+          + 'bu ihlal icin ayri bir satir ve "Maximum 50 characters are allowed." metnini tanimliyor. '
+          + 'Ayni kok neden: TC-010-11a (FR-010), TC-003-22/TC-004-17 (isim alanlari), TC-003-29/TC-005-14 (adres).'
       }),
     billingCase('TC-008-12', 'Account Description bos -> 400 (dokuman zorunlu diyor)', "b.accountDesc = '';", 400,
       'This field is required.', {
@@ -2181,6 +2278,13 @@ b.addressId = Number(pm.collectionVariables.get('addressIdF3'));`, 200, null, {
     billingCase('TC-010-10', 'Account Name 51 karakter -> 400 (BVA sinir disi)', "b.accountName = repeat('a', 51);", 400, null, {
       method: 'PUT', path: UPD
     }),
+    billingCase('TC-010-10a', 'Account Name 51 karakter hata mesaji uzunluk kuralini anlatir', "b.accountName = repeat('a', 51);", 400,
+      'Maximum 50 characters are allowed.', {
+        method: 'PUT', path: UPD, gap: true,
+        description: 'TC-008-11 ile ayni kok neden, guncelleme yolunda: UpdateBillingAccountRequest.accountName '
+          + 'uzerindeki @Size, FIELD_REQUIRED mesajini paylasiyor. FR-010 validasyon tablosu bu ihlal icin '
+          + '"Maximum 50 characters are allowed." metnini tanimliyor.'
+      }),
     billingCase('TC-010-11', 'Account Description bos -> 400 (dokuman zorunlu diyor)', "b.accountDesc = '';", 400,
       'This field is required.', {
         method: 'PUT', path: UPD, gap: true,

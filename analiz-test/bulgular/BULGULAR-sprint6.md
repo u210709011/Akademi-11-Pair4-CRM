@@ -15,17 +15,112 @@ Her bulgu için **kök neden servis loglarından ya da kaynak koddan teyit edilm
 
 ---
 
+# ✅ 2. DOĞRULAMA TURU — 06.08.2026 · commit `9158ad5` (validasyon metinleri)
+
+Gereksinim dokümanının validasyon tabloları 06.08.2026'da güncellendi (uzunluk kuralları ayrı satıra alındı, FR-003 ↔ FR-006 iletişim alanı çelişkileri giderildi). Testler yeni metinlere göre güncellendi, ardından `9158ad5 fix: split shared validation messages per updated FR-003/005/006/008/010 tables` çekilip doğrulandı.
+
+| Koşum | Assertion | Hata | Bekleyen boşluk |
+|---|---|---|---|
+| Doküman güncellemesi sonrası (düzeltme öncesi) | 1167 | 0 | **26** |
+| **Düzeltme sonrası** | 1161 | **0** ✅ | **15** |
+| **`strictMode=true` (kesin kanıt)** | 1161 | **15** — hepsi bu partide olmayan maddeler | — |
+
+**Bu partideki 11 maddenin 11'i de kapandı:**
+
+| Konu | Testler | Durum |
+|---|---|---|
+| `@Size` mesajı `FIELD_REQUIRED`'ı paylaşıyordu (**B-13a**) | `TC-003-29`, `TC-005-14`, `TC-008-11`, `TC-010-10a` | ✅ `FIELD_MAX_LENGTH` anahtarı eklenmiş: `Maximum {max} characters are allowed.` — tek anahtar hem 50 hem 200 için çalışıyor |
+| İsim alanlarında uzunluk kısıtı hiç yoktu | `TC-003-22`, `TC-004-17` | ✅ `IndividualInfo` ve `UpdateIndividualInfo` isim alanlarına `@Size(max=50)` eklenmiş |
+| Faks mesajı telefon mesajını paylaşıyordu (**B-13c**) | `TC-006-23`, `TC-003-39` | ✅ `FAX_INVALID` = `Invalid fax number.` eklenmiş |
+| Ev telefonu kuralı dokümanla uyumsuzdu | `TC-003-38`, `TC-006-18`, `TC-006-28` | ✅ `^[0-9]{10,11}$` → `^2[0-9]{9}$` (10 hane, 2 ile başlar) |
+| E-posta mesajında nokta eksikti | `TC-006-10` | ✅ `Invalid email format.` |
+
+**Test tarafında bir eksiğimiz çıktı ve düzeltildi:** `TC-003-39` (onboarding faks) hâlâ telefon mesajını bekliyordu; faks kendi anahtarına geçince kırmızıya döndü. Bu, davranış testlerinin güvenlik ağı olarak çalıştığını gösteriyor — mesaj yanlış yönde değişseydi aynı şekilde yakalanırdı. Test dokümanın metnine göre güncellendi.
+
+**Assertion 1167 → 1161:** `TC-003-22`, `TC-003-29`, `TC-003-38` artık doğru şekilde 400 dönüyor, dolayısıyla o isteklerde müşteri oluşmuyor; temizlik döngüsü de o kadar az kayıt siliyor.
+
+## `strictMode` ile kalan 15 madde (bu partide değil)
+
+| Alan | Testler |
+|---|---|
+| FR-002 arama kuralları (GSM normalizasyonu, kırpma, sıralama, filtre zorunluluğu, NAT ID uzunluğu) | `TC-002-05/06/14/21/22/23/25/26` |
+| FR-001 kullanıcı adı uzunluğu | `TC-001-10` |
+| Açık analiz sorusu — pasif müşterinin T.C. no'su | `TC-003-41` |
+| Ev telefonu boş string sözleşmesi | `TC-006-21` |
+| Bağlı ürün guard'ı (order-service entegrasyonu bekliyor) | `TC-007-06`, `TC-011-10` |
+| Ürün detay modalı alanları | `TC-009-10` |
+| **B-13b** — durum değiştirme "silinemez" mesajı | `TC-011-05` |
+
+---
+
+# ✅ 1. DOĞRULAMA TURU — 06.08.2026 · commit `e528169`
+
+`e528169 fix: QA-reported bugs B-10/B-11/B-12/B-14` çekildi, `customer-service` ve `order-service` yeni kodla yeniden başlatıldı, test takımı temiz ortamda yeniden koşuldu.
+
+| Koşum | Assertion | Hata | Bekleyen boşluk |
+|---|---|---|---|
+| Düzeltme öncesi | 1157 | **4** | 27 |
+| **Düzeltme sonrası** | **1159** | **0** ✅ | **21** |
+
+| Bulgu | Durum | Doğrulama |
+|---|---|---|
+| **B-10** Sayfalama 500 | ✅ **Çözüldü** | `GlobalExceptionHandler`'a `IllegalArgumentException` handler'ı eklenmiş. `?page=-1` ve `?size=0` artık `400 "Invalid request parameter."` dönüyor. `TC-009-12`, `TC-009-13` yeşil |
+| **B-11** Hesap listesi 404 dönmüyordu | ✅ **Çözüldü** | `getAccounts` başına `customerFinder.getActiveCustomerOrThrow(custId)` eklenmiş. Tanımsız müşteri için `404 "Customer not found with id: 999999999"`. `TC-009-11`, `TC-007-10` → `[GAP KAPANDI]` |
+| **B-12** `accountDesc` doğrulanmıyordu | ✅ **Çözüldü** | Her iki request record'una `@NotBlank` eklenmiş. `TC-008-12`, `TC-010-11` → `[GAP KAPANDI]` |
+| **B-14** `cityId` doğrulanmıyordu | ✅ **Çözüldü** | Önerildiği gibi **`AddressBusinessRules.ensureCityExists`** seviyesinde çözülmüş — onboarding, adres ekleme/güncelleme ve fatura hesabı "yeni adres" akışı aynı metodu çağırıyor. **Sprint-5'te açık kalan B-07 de aynı düzeltmeyle kapandı** (`TC-005-20` ve `TC-008-20` → `[GAP KAPANDI]`) |
+
+Düzeltmenin kalitesine dair not: B-14 için üç ayrı çağrı yolunu tek bir kurala bağlamışlar; ileride yeni bir adres ucu eklendiğinde kontrolün unutulma riski kalmıyor. B-10'un yorum satırında `CustomerController.search`'ün de aynı desende olduğu belirtilmiş — yani sorun tek uçta değil, ailede çözülmüş.
+
+**Toplam assertion 1157 → 1159:** B-11 düzeltmesiyle `TC-009-11` ve `TC-007-10` bekleyen boşluktan gerçek teste dönüştü, her biri bir assertion ekledi.
+
+## Kalan işler
+
+Bu turda gönderilmeyen üç madde hâlâ açık — hepsi hata mesajı metni ilgili:
+
+| # | Konu | Durum |
+|---|---|---|
+| **B-13a** | Uzunluk ihlali "This field is required." diyor | Açık — gereksinim dokümanı güncellendi, hedef metin netleşti |
+| **B-13b** | Durum değiştirme "cannot be deleted" hatası dönüyor | Açık |
+| **B-13c** | Faks hatası telefon mesajı dönüyor | Açık — doküman "Invalid fax number." diyor |
+
+> Gereksinim dokümanının validasyon tabloları 06.08.2026'da güncellendi: uzunluk kuralları ayrı satıra alındı ve `"Maximum 50 characters are allowed."` / `"Maximum 200 characters are allowed."` mesajları tanımlandı; FR-003 ile FR-006 arasındaki iletişim alanı çelişkileri giderildi. Testler bu yeni metinlere göre güncellenecek ve ikinci tur bulgu listesi buna göre çıkarılacaktır.
+
+---
+
 ## Özet tablo
 
-| # | Başlık | Etki | Öncelik | Test |
-|---|---|---|---|---|
-| **B-10** | Geçersiz sayfalama parametresi 500 döndürüyor | 🔴 Sunucu hatası | **Yüksek** | `TC-009-12`, `TC-009-13` |
-| **B-11** | Hesap listeleme ucu var olmayan müşteri için 404 yerine 200 dönüyor | 🟠 Sözleşme tutarsızlığı | Orta | `TC-009-11`, `TC-007-10` |
-| **B-12** | `Account Description` dokümanda zorunlu, API'de hiç doğrulanmıyor | 🟠 Eksik validasyon | Orta | `TC-008-12`, `TC-010-11` |
-| **B-13** | Yanıltıcı hata mesajları (3 ayrı yer) | 🟡 Kullanıcı deneyimi | Düşük | `TC-008-11`, `TC-011-05`, `TC-006-23` |
-| **B-14** | Fatura hesabı adresinde de `cityId` doğrulanmıyor (B-07'nin ikinci yolu) | 🟡 Veri bütünlüğü | Düşük | `TC-008-20` |
+### Düzeltilmesi gerekenler
 
-Ayrıca **kapsam dışı ama bilinmesi gereken** iki nokta en altta ("Henüz test edilemeyen kabul kriterleri") listelenmiştir.
+| # | Sorun | Çözüm | Dosya | Öncelik |
+|---|---|---|---|---|
+| **B-10** | `?page=-1` ve `?size=0` → **500**. `PageRequest.of` `IllegalArgumentException` fırlatıyor, handler yok | `IllegalArgumentException` handler'ı ekle **veya** `@Min(0)`/`@Min(1)` ile parametreleri doğrula | `CustomerAccountController:53` + `GlobalExceptionHandler` | 🔴 **Yüksek** |
+| **B-11** | Var olmayan/silinmiş müşteri için hesap listesi 404 yerine **200 + boş sayfa** dönüyor | Metodun başına `customerFinder.getActiveCustomerOrThrow(custId);` — diğer metotlarla aynı hale gelir | `BillingAccountServiceImpl.getAccounts` | 🟠 Orta |
+| **B-12** | `accountDesc` boş ya da hiç gönderilmemişken **201** dönüyor; dokümanda zorunlu | Her iki record'un `accountDesc` alanına `@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")` | `CreateBillingAccountRequest`, `UpdateBillingAccountRequest` | 🟠 Orta |
+| **B-13a** | 51 karakterlik ad → *"This field is required."* Alan dolu olduğu halde "zorunlu" mesajı çıkıyor | Yeni mesaj anahtarı (ör. `validation.field.max-length`) ekle, `@Size` onu kullansın | `CreateBillingAccountRequest`, `UpdateBillingAccountRequest`, `AddressInfo.streetName` | 🟡 Düşük |
+| **B-13b** | `PATCH .../status` isteği *"...cannot be **deleted**."* hatası dönüyor; kullanıcı silme yapmadı | Durum değişimi için ayrı istisna/mesaj anahtarı (`...default-cannot-be-changed`) | `BillingAccountServiceImpl.updateBillingAccountStatus` | 🟡 Düşük |
+| **B-13c** | Faks hatası telefon mesajını paylaşıyor → kullanıcı hangi alanın hatalı olduğunu ayırt edemiyor | `MessageKeys.FAX_INVALID` ekle, değeri **"Invalid fax number."**, `ContactInfo.fax` bu anahtarı kullansın | `MessageKeys`, `messages*.properties`, `ContactInfo` | 🟡 Düşük |
+| **B-14** | Fatura adresinde de `cityId` lookup'ta var mı diye bakılmıyor — **B-07'nin ikinci giriş yolu** | B-07 düzeltmesini `AddressBusinessRules` seviyesinde yap; her iki yol (FR-005 adres + FR-008/010 fatura adresi) tek seferde kapanır | `AddressBusinessRules` | 🟡 Düşük |
+
+> **Test tarafında hiçbir şey yapmanıza gerek yok.** B-11…B-14 `gapTest` ile yazıldı; düzeltildiklerinde otomatik olarak `[GAP KAPANDI]` etiketiyle yeşile döner. B-10 da düzelince doğrudan yeşile döner.
+
+### Bulgu değil — henüz yapılmamış iş
+
+| Konu | Durum |
+|---|---|
+| Bağlı ürün kontrolü (FR-007 ACC-004, FR-011 ACC-004) | Kural kodda yazılı ama `NoOpBillingAccountProductGuard` sabit `false` dönüyor → kural hiç tetiklenmiyor |
+| Ürün detay modalı alanları (FR-009 ACC-006/007) | `CustOrdItemResponse` altı alanın hiçbirini taşımıyor, ayrı detay ucu da yok |
+
+Ayrıntı: en alttaki "Henüz test edilemeyen kabul kriterleri" bölümü.
+
+### Kapsanan testler
+
+| # | Test |
+|---|---|
+| B-10 | `TC-009-12`, `TC-009-13` |
+| B-11 | `TC-009-11`, `TC-007-10` |
+| B-12 | `TC-008-12`, `TC-010-11` |
+| B-13a / B-13b / B-13c | `TC-008-11` / `TC-011-05` / `TC-006-23` (ayrıca `TC-006-10` e-posta metni) |
+| B-14 | `TC-008-20` |
 
 ---
 
@@ -199,16 +294,21 @@ public record CreateBillingAccountRequest(
 
 Bu kural şu anda **yalnızca front-end'de** karşılanıyor. API'ye doğrudan istek atan (Postman, entegrasyon, mobil istemci) her aktör açıklamasız hesap açabilir. Sunucu tarafı doğrulaması olmayan bir zorunluluk, zorunluluk değildir.
 
-### Önerilen düzeltme
+### Düzeltme
 
-Her iki request record'unda:
+> **Karar verildi (analiz):** `Account Description` **zorunludur** — doküman doğru, kod eksik.
+
+`CreateBillingAccountRequest` ve `UpdateBillingAccountRequest` içinde:
 
 ```java
+@Schema(description = "Hesap aciklamasi", example = "Aylik elektrik/su faturasi icin")
 @NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 String accountDesc,
 ```
 
-**Karar gerekiyor:** Eğer ekip `accountDesc`'in gerçekten opsiyonel olmasını istiyorsa doğru düzeltme **dokümanın güncellenmesidir**, kodun değil. İki kaynağın ayrışmış olması esas sorundur — hangisinin doğru olduğuna analiz/ürün tarafı karar vermelidir. Karar hangisi olursa olsun testi buna göre güncelleyeceğim.
+Alanın Swagger açıklamasındaki "(opsiyonel)" ifadesi de kaldırılmalıdır.
+
+**Düzeltme sonrası:** `TC-008-12` ve `TC-010-11` otomatik olarak `[GAP KAPANDI]` etiketiyle yeşile döner; test değişikliği gerekmez.
 
 ---
 
@@ -268,7 +368,27 @@ Doküman FR-006 validasyon tablosu faks için ayrı bir mesaj tanımlıyor:
 
 `ContactInfo.fax` alanı `MessageKeys.PHONE_INVALID` anahtarını kullanıyor. Kullanıcı hangi alanın hatalı olduğunu mesajdan ayırt edemiyor.
 
-**Düzeltme / karar:** Ya `MessageKeys.FAX_INVALID` eklenip mesajlar dokümanla birebir eşitlenmeli, ya da doküman API'nin metinlerine göre güncellenmeli. Bu bir metin uyumlandırma kararıdır — ekip hangi yönde karar verirse testi ona göre güncelleyeceğim. (`TC-006-10` ve `TC-006-23` bu ayrışmayı izlemektedir.)
+### Düzeltme
+
+> **Karar verildi (analiz):** Faks için ayrı mesaj kullanılacak — doküman doğru.
+
+1. `MessageKeys`'e yeni sabit:
+   ```java
+   public static final String FAX_INVALID = "validation.fax.invalid";
+   ```
+2. `messages.properties`, `messages_en.properties` ve `messages_tr.properties` dosyalarına:
+   ```properties
+   validation.fax.invalid=Invalid fax number.
+   ```
+3. `ContactInfo.fax` alanı bu anahtarı kullansın:
+   ```java
+   @Pattern(regexp = "^[0-9]{10,11}$", message = "{" + MessageKeys.FAX_INVALID + "}")
+   String fax
+   ```
+
+**Düzeltme sonrası:** `TC-006-23` otomatik olarak `[GAP KAPANDI]` etiketiyle yeşile döner.
+
+**E-posta metni ayrı bir karar bekliyor.** Doküman *"Email must be a valid email address."* diyor, API *"Invalid email format"* dönüyor. Faks için verilen karar e-postayı kapsamıyor; `TC-006-10` bu ayrışmayı bekleyen boşluk olarak izlemeye devam ediyor. Aynı yönde karar verilirse `validation.email.invalid` değeri güncellenmesi yeterlidir.
 
 ---
 
