@@ -23,7 +23,7 @@ public final class MessageKeys {
     public static final String CHARACTERISTIC_VALUE_NOT_FOUND = "error.characteristic-value.not-found";
     public static final String PRODUCT_OFFERING_RELATION_NOT_FOUND = "error.product-offering-relation.not-found";
     public static final String CAMPAIGN_OFFERING_NOT_FOUND = "error.campaign-offering.not-found";
-
+    public static final String PRODUCT_OFFERING_CHAR_USE_NOT_FOUND = "error.product-offering-char-use.not-found";
     private MessageKeys() {
     }
 }
