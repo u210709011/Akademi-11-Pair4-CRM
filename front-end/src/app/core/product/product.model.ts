@@ -39,7 +39,7 @@ export interface Campaign {
 }
 
 // GET /api/v1/campaign-offerings - kampanya <-> teklif eslemesi; productOfferingName donmus haliyle var,
-// ama fiyat icin yine GET /api/v1/product-procutOfferings ile birlestirmek gerekiyor.
+// ama fiyat icin yine GET /api/v1/product-offerings ile birlestirmek gerekiyor.
 export interface CampaignOffering {
   campaignOfferingId: number;
   campaignId: number;
@@ -48,5 +48,28 @@ export interface CampaignOffering {
   priority: number;
   startDate: string | null;
   endDate: string | null;
+  active: boolean;
+}
+
+// GET /api/v1/product-offering-relations/by-offering/{id} - bir offering'in zorunlu/opsiyonel
+// bagli oldugu diger offering'ler (orn. Home Fiber 200Mbps -> Broadband Modem, mandatory=true).
+export interface ProductOfferingRelation {
+  productOfferingRelationId: number;
+  productOfferingId1: number;
+  productOfferingId2: number;
+  relationTypeId: number;
+  mandatory: boolean;
+  qty: number;
+  active: boolean;
+}
+
+// GET /api/v1/product-offering-char-uses/by-offering/{id} - bir offering'in Configuration
+// adiminda gosterilmesi gereken karakteristik semasi (hangi GNL_CHAR'lar, zorunlu mu).
+export interface ProductOfferingCharUse {
+  productOfferingCharUseId: number;
+  productOfferingId: number;
+  characteristicId: number;
+  characteristicName: string;
+  mandatory: boolean;
   active: boolean;
 }

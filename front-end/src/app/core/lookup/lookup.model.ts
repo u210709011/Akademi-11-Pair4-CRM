@@ -12,3 +12,23 @@ export const LOOKUP_GROUPS = {
   GENDER: 'GENDER',
   ACCOUNT_TYPE: 'ACCOUNT_TYPE'
 } as const;
+
+// GET /api/v1/characteristics - karakteristik tanimi (orn. "Baglanti Hizi").
+export interface Characteristic {
+  charId: number;
+  name: string;
+  descr: string;
+  shrtCode: string;
+  active: boolean;
+}
+
+// GET /api/v1/characteristic-values - bir karakteristigin alabilecegi degerlerden biri
+// (orn. charId=1/CONN_SPEED icin val="100 Mbps").
+export interface CharacteristicValue {
+  charValId: number;
+  charId: number;
+  dflt: boolean;
+  val: string;
+  shrtCode: string;
+  active: boolean;
+}

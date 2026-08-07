@@ -27,12 +27,19 @@ import java.util.Map;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    // Swagger UI/OpenAPI JSON'un kendisi acik: dokumani gormek icin token
+    // gerekmez, "Try it out" ile yapilan gercek API cagrilari yine JWT ister.
+    private static final String[] SWAGGER_PATHS = {
+            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers(SWAGGER_PATHS).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
         return http.build();

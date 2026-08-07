@@ -7,4 +7,9 @@ import java.util.List;
 
 public interface ProductOfferingCharUseRepository extends JpaRepository<ProductOfferingCharUse, Long> {
     List<ProductOfferingCharUse> findByProductOffering_ProductOfferingId(Long productOfferingId);
+
+    boolean existsByProductOffering_ProductOfferingIdAndCharacteristicId(Long productOfferingId, Long characteristicId);
+
+    boolean existsByProductOffering_ProductOfferingIdAndCharacteristicIdAndProductOfferingCharUseIdNot(
+            Long productOfferingId, Long characteristicId, Long productOfferingCharUseId);
 }

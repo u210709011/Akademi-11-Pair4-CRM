@@ -5,6 +5,7 @@ import com.etiya.crm.productservice.business.abstracts.ProductOfferingCharUseSer
 import com.etiya.crm.productservice.business.dtos.requests.ProductOfferingCharUse.CreateProductOfferingCharUseRequest;
 import com.etiya.crm.productservice.business.dtos.requests.ProductOfferingCharUse.UpdateProductOfferingCharUseRequest;
 import com.etiya.crm.productservice.business.dtos.responses.ProductOfferingCharUse.*;
+import com.etiya.crm.productservice.business.exceptions.ProductOfferingCharUseDuplicateException;
 import com.etiya.crm.productservice.business.exceptions.ProductOfferingCharUseNotFoundException;
 import com.etiya.crm.productservice.business.exceptions.ProductOfferingNotFoundException;
 import com.etiya.crm.productservice.dataAccess.abstracts.ProductOfferingCharUseRepository;
@@ -42,6 +43,11 @@ public class ProductOfferingCharUseManager implements ProductOfferingCharUseServ
 
         lookupCacheService.validateCharacteristicId(request.getCharacteristicId());
 
+        if (productOfferingCharUseRepository.existsByProductOffering_ProductOfferingIdAndCharacteristicId(
+                request.getProductOfferingId(), request.getCharacteristicId())) {
+            throw new ProductOfferingCharUseDuplicateException(request.getProductOfferingId(), request.getCharacteristicId());
+        }
+
         ProductOfferingCharUse entity = productOfferingCharUseMapper.toEntity(request);
         entity.setProductOffering(productOffering);
 
@@ -61,6 +67,11 @@ public class ProductOfferingCharUseManager implements ProductOfferingCharUseServ
                 .orElseThrow(() -> new ProductOfferingNotFoundException(request.getProductOfferingId()));
 
         lookupCacheService.validateCharacteristicId(request.getCharacteristicId());
+
+        if (productOfferingCharUseRepository.existsByProductOffering_ProductOfferingIdAndCharacteristicIdAndProductOfferingCharUseIdNot(
+                request.getProductOfferingId(), request.getCharacteristicId(), id)) {
+            throw new ProductOfferingCharUseDuplicateException(request.getProductOfferingId(), request.getCharacteristicId());
+        }
 
         productOfferingCharUseMapper.updateEntityFromRequest(request, entity);
         entity.setProductOffering(productOffering);

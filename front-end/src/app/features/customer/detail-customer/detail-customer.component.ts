@@ -17,6 +17,8 @@ import { I18nService } from '../../../core/i18n';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../core/lookup';
 import { OrderService } from '../../../core/order';
 import {
+  AccountProduct,
+  CITY_NAMES,
   CustomerAccount,
   CustomerContact,
   CustomerDetail,
@@ -25,6 +27,7 @@ import {
   mapToCustomerContact,
   mapToCustomerDetail
 } from './detail-customer.mapper';
+import { getMockProductDetail, ProductCharacteristic } from './mock/product-detail-mock.data';
 
 interface AddressFormModel {
   city: string;
@@ -52,6 +55,18 @@ const CONTACT_PHONE_MAX_DIGITS: Record<ContactPhoneFieldName, number> = { mobile
 const MOBILE_PHONE_PATTERN = /^5[0-9]{9}$/;
 const HOME_OR_FAX_PHONE_PATTERN = /^[0-9]{10,11}$/;
 const DIGITS_ONLY_ERROR_TIMEOUT_MS = 2000;
+
+// "Product Offer Details" modali icin gercek (AccountProduct + hesabin adresi) ve mock
+// (product-service hazir olunca kaldirilacak spec/karakteristik alanlari) verinin birlestirilmis
+// gorunumu (bkz. openProductDetail).
+interface ProductOfferDetailView {
+  productName: string;
+  productOfferId: string;
+  productSpecId: string;
+  serviceStartDate: string;
+  characteristics: ProductCharacteristic[];
+  address: AddressResponse | null;
+}
 
 interface CreateAccountFormModel {
   accountName: string;
@@ -173,6 +188,9 @@ export class DetailCustomerComponent {
   // harf/gecersiz karakter yazilmaya calisildiginda ilgili alanin altinda gecici uyari gostermek icin (bkz. contact-tab.component.ts, onboarding).
   protected readonly digitsOnlyErrorField = signal<ContactPhoneFieldName | null>(null);
   private digitsOnlyErrorTimeoutId?: ReturnType<typeof setTimeout>;
+
+  protected readonly productDetailOpen = signal(false);
+  protected readonly selectedProductDetail = signal<ProductOfferDetailView | null>(null);
 
   protected readonly isCreateAccountModalOpen = signal(false);
   protected readonly isSavingAccount = signal(false);
@@ -563,6 +581,24 @@ export class DetailCustomerComponent {
 
   protected closeCannotDeleteAccountDialog(): void {
     this.cannotDeleteAccountMessage.set(null);
+  }
+
+  protected openProductDetail(account: CustomerAccount, product: AccountProduct): void {
+    const mock = getMockProductDetail(product.productId);
+    this.selectedProductDetail.set({
+      productName: product.productName,
+      productOfferId: `OFR-${product.productId}`,
+      productSpecId: mock.productSpecId,
+      serviceStartDate: mock.serviceStartDate,
+      characteristics: mock.characteristics,
+      address: this.addresses().find(candidate => candidate.id === account.addressId) ?? null
+    });
+    this.productDetailOpen.set(true);
+  }
+
+  protected closeProductDetail(): void {
+    this.productDetailOpen.set(false);
+    this.selectedProductDetail.set(null);
   }
 
   protected serviceAddressLine(addressId: number | null): string {
