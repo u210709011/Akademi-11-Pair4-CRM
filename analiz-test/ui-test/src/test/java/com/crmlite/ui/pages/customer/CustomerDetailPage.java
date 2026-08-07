@@ -307,6 +307,18 @@ public class CustomerDetailPage extends BasePage {
         return new ConfirmDialogComponent(driver);
     }
 
+    /**
+     * Silme onaylandiktan sonra listenin gercekten kisalmasini bekler.
+     *
+     * <p>{@link #addAddress} ile ayni tuzak: onay diyaloginin kapanmasi kaydin listeden
+     * dustugu anlamina gelmez, liste backend round-trip'inden sonra asenkron yenileniyor.
+     * Beklemeden yapilan {@link #addressCount()} bayat degeri okur.
+     */
+    public CustomerDetailPage waitUntilAddressCountIsLessThan(int previousCount) {
+        wait.until(ExpectedConditions.numberOfElementsToBeLessThan(ADDRESS_TILES, previousCount));
+        return this;
+    }
+
     /** ACC-011: silme reddedildiginde liste ustunde gosterilen hata. */
     public boolean hasAddressActionError() {
         return isDisplayedAfterWait(ADDRESS_ACTION_ERROR);
