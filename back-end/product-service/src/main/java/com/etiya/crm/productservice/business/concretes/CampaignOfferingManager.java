@@ -66,19 +66,16 @@ public class CampaignOfferingManager implements CampaignOfferingService {
     @Override
     public UpdatedCampaignOfferingResponse update(Long campaignOfferingId, UpdateCampaignOfferingRequest request) {
         CampaignOffering campaignOffering = campaignOfferingRepository.findById(campaignOfferingId)
-                .orElseThrow(() -> new RuntimeException(
-                        "Girilen id'ye ait eşleşme bulunamadı! : " + campaignOfferingId));
+                .orElseThrow(() -> new CampaignOfferingNotFoundException(campaignOfferingId));
 
         campaignOfferingMapper.updateEntityFromRequest(request, campaignOffering);
 
         Campaign campaign = campaignRepository.findById(request.getCampaignId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Girilen id'ye ait kampanya bulunamadı! : " + request.getCampaignId()));
+                .orElseThrow(() -> new CampaignNotFoundException(request.getCampaignId()));
         campaignOffering.setCampaign(campaign);
 
         ProductOffering productOffering = productOfferingRepository.findById(request.getProductOfferingId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Girilen id'ye ait teklif bulunamadı! : " + request.getProductOfferingId()));
+                .orElseThrow(() -> new ProductOfferingNotFoundException(request.getProductOfferingId()));
         campaignOffering.setProductOffering(productOffering);
 
         campaignOffering.setProductOfferingName(productOffering.getName());
@@ -137,8 +134,7 @@ public class CampaignOfferingManager implements CampaignOfferingService {
     @Override
     public void delete(Long campaignOfferingId) {
         CampaignOffering campaignOffering = campaignOfferingRepository.findById(campaignOfferingId)
-                .orElseThrow(() -> new RuntimeException(
-                        "Girilen id'ye ait eşleşme bulunamadı! : " + campaignOfferingId));
+                .orElseThrow(() -> new CampaignOfferingNotFoundException(campaignOfferingId));
 
         campaignOffering.setActive(false);
         campaignOfferingRepository.save(campaignOffering);
