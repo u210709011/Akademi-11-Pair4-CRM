@@ -15,6 +15,8 @@ public final class MessageKeys {
 	public static final String ORDER_ITEM_NOT_FOUND = "error.order.item-not-found";
 	public static final String ADDRESS_NOT_BELONG_TO_CUSTOMER = "error.order.address-not-belong-to-customer";
 	public static final String CHARACTERISTIC_VALUE_MISMATCH = "error.order.characteristic-value-mismatch";
+	public static final String CAMPAIGN_NOT_APPLIED_TO_OFFERING = "error.order.campaign-not-applied-to-offering";
+	public static final String OFFER_ALREADY_ACTIVE = "error.order.offer-already-active";
 	public static final String DOWNSTREAM_CALL_FAILED = "error.downstream.call-failed";
 	public static final String DOWNSTREAM_UNAVAILABLE = "error.downstream.unavailable";
 	public static final String VALIDATION_FAILED = "error.validation.failed";
