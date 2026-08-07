@@ -15,9 +15,11 @@ import com.etiya.crm.orderservice.entities.concretes.CustOrdItem;
 public interface CustOrderItemMapper {
 
     //createOrder VE getById'de aynı satırlar tekrarlanıyordu
-    //price: entity'deki alanla ayni isimde oldugu icin MapStruct otomatik esler
+    //price/prodSpecId: entity'deki alanla ayni isimde oldugu icin MapStruct otomatik esler
     //charVals: entity'de yok, ikinci parametreden (buildSummary'de custOrdItemId'ye gore
     //gruplanmis, ayri sorguyla cekilmis liste) parametre adi eslesmesiyle otomatik alinir
+    //serviceStartDate: FR'da ayri bir alan yok, item'in olusturuldugu an (cdate) kullanilir
+    @Mapping(target = "serviceStartDate", source = "item.cdate")
     OrderItemSummaryResponse toSummaryResponse(CustOrdItem item, List<ProdCharValResponse> charVals);
     //getItemsByCustAcctId
     CustOrdItemResponse toItemResponse(CustOrdItem item);

@@ -18,7 +18,9 @@ import com.etiya.crm.productservice.entities.concretes.ProductCatalog;
 import com.etiya.crm.productservice.entities.concretes.ProductCatalogOffering;
 import com.etiya.crm.productservice.entities.concretes.ProductOffering;
 import com.etiya.crm.productservice.mapper.ProductCatalogOfferingMapper;
+import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -101,12 +103,32 @@ public class ProductCatalogOfferingManager implements ProductCatalogOfferingServ
         return productCatalogOfferingMapper.toGetAllResponseList(productCatalogOfferings);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<GetAllProductCatalogOfferingResponse> getByCatalogId(Long productCatalogId) {
+        productCatalogRepository.findById(productCatalogId)
+                .orElseThrow(() -> new ProductCatalogNotFoundException(productCatalogId));
+
+        List<ProductCatalogOffering> entities =
+                productCatalogOfferingRepository.findByProductCatalog_ProductCatalogIdOrderByProductOffering_TotalPriceAsc(productCatalogId);
+
+        List<GetAllProductCatalogOfferingResponse> responses = productCatalogOfferingMapper.toGetAllResponseList(entities);
+
+        for (int i = 0; i < entities.size(); i++) {
+            responses.get(i).setProductOfferingName(entities.get(i).getProductOffering().getName());
+            responses.get(i).setTotalPrice(entities.get(i).getProductOffering().getTotalPrice());
+        }
+        return responses;
+    }
+
 
     @Override
     public void delete(Long productCatalogOfferingId) {
         ProductCatalogOffering productCatalogOffering = productCatalogOfferingRepository
                 .findById(productCatalogOfferingId)
                 .orElseThrow(() -> new ProductCatalogOfferingNotFoundException(productCatalogOfferingId));
-        productCatalogOfferingRepository.delete(productCatalogOffering);
+        productCatalogOffering.setStatusId(
+                lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT_CATALOG_OFFER, GnlStCodes.DELETED));
+        productCatalogOfferingRepository.save(productCatalogOffering);
     }
 }

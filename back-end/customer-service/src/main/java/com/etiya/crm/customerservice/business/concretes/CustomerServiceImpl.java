@@ -17,6 +17,7 @@ import com.etiya.crm.customerservice.business.abstracts.CustomerService;
 import com.etiya.crm.customerservice.business.dtos.requests.CustomerSearchRequest;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
+import com.etiya.crm.customerservice.business.rules.CustomerBusinessRules;
 import com.etiya.crm.customerservice.constants.CacheNames;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerAccountRepository;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerRepository;
@@ -52,10 +53,12 @@ public class CustomerServiceImpl implements CustomerService {
 	private final CustomerLookupResolver lookupResolver;
 	private final CustomerFinder customerFinder;
 	private final BillingAccountService billingAccountService;
+	private final CustomerBusinessRules rules;
 
 	@Override
 	@Transactional(readOnly = true)
 	public Page<CustomerSearchResponse> search(CustomerSearchRequest request, Pageable pageable) {
+		rules.ensureAtLeastOneFilterProvided(request);
 		return customerSearchViewRepository
 				.findAll(CustomerSearchSpecifications.search(request.firstName(), request.lastName(),
 						request.tcNo(), request.acctNo(), request.custId(), request.gsm()), pageable)

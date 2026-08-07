@@ -17,6 +17,7 @@ import com.etiya.crm.orderservice.business.dtos.requests.CreateOrderRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ItemCharValsRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.OrderConfigurationRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ProdCharValRequest;
+import com.etiya.crm.orderservice.business.dtos.responses.ActiveOfferResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderListItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderSummaryResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.ProdCharValResponse;
@@ -33,7 +34,9 @@ import com.etiya.crm.orderservice.business.rules.BasketValidationRules;
 import com.etiya.crm.orderservice.clients.controllers.ContactAddressClient;
 import com.etiya.crm.orderservice.clients.controllers.CustomerClient;
 import com.etiya.crm.orderservice.clients.controllers.ProductClient;
+import com.etiya.crm.orderservice.clients.requests.CreateProductRequest;
 import com.etiya.crm.orderservice.clients.responses.CampaignResponse;
+import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountPageResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerResponse;
@@ -369,6 +372,11 @@ class CustOrdManagerTest {
 		AddressResponse existingAddress = new AddressResponse(77L, CUST_ID, 5L, 1L, "Street", "12", "Desc", true,
 				null, null, null, null);
 		when(contactAddressClient.getById(77L)).thenReturn(existingAddress);
+		when(addressMapper.toSummaryResponse(existingAddress))
+				.thenReturn(new com.etiya.crm.orderservice.business.dtos.responses.AddressSummaryResponse(77L, 1L,
+						null, "Street", "12", "Desc"));
+		when(lookupCacheService.getGeneralType(1L)).thenReturn(new com.etiya.crm.shared.contracts.gnltp.GnlTpResponse(
+				1L, "TestCity", null, "TESTCITY", "CITY", "CITY", true, null, null, null, null));
 		when(customerClient.getAccounts(CUST_ID, 1000)).thenReturn(new CustomerAccountPageResponse(
 				List.of(new CustomerAccountResponse(CUST_ACCT_ID, "AC-1", "n", "d", null, 1L, 1L, true))));
 		when(lookupCacheService.resolveDataTypeId("CUST")).thenReturn(5L);
@@ -457,6 +465,12 @@ class CustOrdManagerTest {
 		AddressResponse createdAddress = new AddressResponse(88L, CUST_ORD_ID, 21L, 5L, "Street", "12", "Desc", true,
 				null, null, null, null);
 		when(contactAddressClient.createAddress(createAddressRequest)).thenReturn(createdAddress);
+		when(contactAddressClient.getById(88L)).thenReturn(createdAddress);
+		when(addressMapper.toSummaryResponse(createdAddress))
+				.thenReturn(new com.etiya.crm.orderservice.business.dtos.responses.AddressSummaryResponse(88L, 5L,
+						null, "Street", "12", "Desc"));
+		when(lookupCacheService.getGeneralType(5L)).thenReturn(new com.etiya.crm.shared.contracts.gnltp.GnlTpResponse(
+				5L, "Ankara", null, "ANKARA", "CITY", "CITY", true, null, null, null, null));
 		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
 
 		OrderConfigurationRequest request = new OrderConfigurationRequest(List.of(), null, newAddress);
@@ -499,6 +513,8 @@ class CustOrdManagerTest {
 		CustOrdItem item = new CustOrdItem();
 		item.setCustOrd(custOrd);
 		item.setCustAcctId(CUST_ACCT_ID);
+		item.setProdOfrId(200L);
+		item.setProdSpecId(9L);
 		custOrd.getItems().add(item);
 
 		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
@@ -509,11 +525,56 @@ class CustOrdManagerTest {
 		AddressResponse address = new AddressResponse(77L, CUST_ORD_ID, 21L, 5L, "Street", "12", "Desc", true, null,
 				null, null, null);
 		when(contactAddressClient.getById(77L)).thenReturn(address);
+		when(addressMapper.toSummaryResponse(address))
+				.thenReturn(new com.etiya.crm.orderservice.business.dtos.responses.AddressSummaryResponse(77L, 5L,
+						null, "Street", "12", "Desc"));
+		when(lookupCacheService.getGeneralType(5L)).thenReturn(new com.etiya.crm.shared.contracts.gnltp.GnlTpResponse(
+				5L, "Ankara", null, "ANKARA", "CITY", "CITY", true, null, null, null, null));
+		when(productClient.createProduct(any()))
+				.thenReturn(new CreatedProductResponse(500L, null, 200L, 9L, "Mobile Prepaid 5GB", null, null, 1L));
 
 		OrderSummaryResponse response = custOrdManager.finishOrder(CUST_ORD_ID);
 
 		assertThat(response.ordStId()).isEqualTo(PROCESSING_STATUS_ID);
+		assertThat(item.getProdId()).isEqualTo(500L);
 		verify(outboxEventPublisher).publish(eq("order"), eq(CUST_ORD_ID.toString()), eq("OrderSubmitted"), any());
+	}
+
+	@Test
+	void finishOrder_provisionsProduct_withOfferAndSpecFromItem() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setAddressId(77L);
+		CustOrdItem item = new CustOrdItem();
+		item.setCustOrd(custOrd);
+		item.setCustAcctId(CUST_ACCT_ID);
+		item.setProdOfrId(200L);
+		item.setProdSpecId(9L);
+		item.setOfrName("Mobile Prepaid 5GB");
+		item.setCmpgId(40L);
+		custOrd.getItems().add(item);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING))
+				.thenReturn(PROCESSING_STATUS_ID);
+		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
+		AddressResponse address = new AddressResponse(77L, CUST_ORD_ID, 21L, 5L, "Street", "12", "Desc", true, null,
+				null, null, null);
+		when(contactAddressClient.getById(77L)).thenReturn(address);
+		when(addressMapper.toSummaryResponse(address))
+				.thenReturn(new com.etiya.crm.orderservice.business.dtos.responses.AddressSummaryResponse(77L, 5L,
+						null, "Street", "12", "Desc"));
+		when(lookupCacheService.getGeneralType(5L)).thenReturn(new com.etiya.crm.shared.contracts.gnltp.GnlTpResponse(
+				5L, "Ankara", null, "ANKARA", "CITY", "CITY", true, null, null, null, null));
+		when(productClient.createProduct(new CreateProductRequest(null, 200L, 9L, "Mobile Prepaid 5GB", null, 40L,
+				GnlStCodes.ACTIVE)))
+				.thenReturn(new CreatedProductResponse(500L, null, 200L, 9L, "Mobile Prepaid 5GB", null, 40L, 1L));
+
+		custOrdManager.finishOrder(CUST_ORD_ID);
+
+		assertThat(item.getProdId()).isEqualTo(500L);
+		assertThat(item.getProdName()).isEqualTo("Mobile Prepaid 5GB");
+		verify(custOrdItemRepository).save(item);
 	}
 
 	// ---- cancelOrder ----
@@ -562,12 +623,15 @@ class CustOrdManagerTest {
 		when(contactAddressClient.getById(77L)).thenReturn(address);
 		when(addressMapper.toSummaryResponse(address))
 				.thenReturn(new com.etiya.crm.orderservice.business.dtos.responses.AddressSummaryResponse(77L, 5L,
-						"Street", "12", "Desc"));
+						null, "Street", "12", "Desc"));
+		when(lookupCacheService.getGeneralType(5L)).thenReturn(new com.etiya.crm.shared.contracts.gnltp.GnlTpResponse(
+				5L, "Ankara", null, "ANKARA", "CITY", "CITY", true, null, null, null, null));
 
 		OrderSummaryResponse response = custOrdManager.getById(CUST_ORD_ID);
 
 		assertThat(response.serviceAddress()).isNotNull();
 		assertThat(response.serviceAddress().addressId()).isEqualTo(77L);
+		assertThat(response.serviceAddress().cityName()).isEqualTo("Ankara");
 	}
 
 	// ---- getOrdersByCustId ----
@@ -594,6 +658,30 @@ class CustOrdManagerTest {
 		assertThat(response.get(0).custOrdId()).isEqualTo(CUST_ORD_ID);
 		assertThat(response.get(0).itemCount()).isEqualTo(2);
 		assertThat(response.get(0).totalAmount()).isEqualByComparingTo("239.80");
+	}
+
+	// ---- getActiveOffersByCustAcctId ----
+
+	@Test
+	void getActiveOffersByCustAcctId_returnsOnlyProcessingAndFinishedItems() {
+		Long finishedStatusId = 54L;
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING))
+				.thenReturn(PROCESSING_STATUS_ID);
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.FINISHED))
+				.thenReturn(finishedStatusId);
+
+		CustOrdItem activeItem = new CustOrdItem();
+		activeItem.setCustOrdItemId(900L);
+		activeItem.setProdOfrId(200L);
+		activeItem.setProdId(500L);
+		when(custOrdItemRepository.findByCustAcctIdAndCustOrd_OrdStIdIn(CUST_ACCT_ID,
+				List.of(PROCESSING_STATUS_ID, finishedStatusId))).thenReturn(List.of(activeItem));
+
+		List<ActiveOfferResponse> response = custOrdManager.getActiveOffersByCustAcctId(CUST_ACCT_ID);
+
+		assertThat(response).hasSize(1);
+		assertThat(response.get(0).prodOfrId()).isEqualTo(200L);
+		assertThat(response.get(0).prodId()).isEqualTo(500L);
 	}
 
 	// ---- helpers ----

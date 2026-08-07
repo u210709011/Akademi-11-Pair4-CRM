@@ -1,20 +1,82 @@
-@for (line of formState.basket(); track line.prodOfrId) {
-    <div class="config-product-card">
+<div class="config-content-wrap">
+
+@for (line of configurableLines(); track line.prodOfrId) {
+    <div class="config-product-card" [class.config-product-card-done]="isConfigured(line)">
         <div class="config-product-header">
             <span class="config-product-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M2 12h20" />
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z" />
-                </svg>
+                @switch (line.catalogName) {
+                    @case ('Mobile') {
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z" /></svg>
+                    }
+                    @case ('TV') {
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="13" rx="2" /><path d="m17 3-5 4-5-4" /></svg>
+                    }
+                    @default {
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M2 12h20" />
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z" />
+                        </svg>
+                    }
+                }
             </span>
             <div class="config-product-title">
                 <span class="config-product-name">{{ line.offerName }}</span>
                 <span class="config-product-id">OFR-{{ line.prodOfrId }}</span>
             </div>
-            <span class="config-status-badge">{{ i18n.t('newSale.notConfigured') }}</span>
+            <span class="config-status-badge" [class.config-status-done]="isConfigured(line)">
+                @if (isConfigured(line)) {
+                    <svg class="config-status-check" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m8 12 3 3 5-6" /></svg>
+                }
+                {{ isConfigured(line) ? i18n.t('newSale.configured') : i18n.t('newSale.notConfigured') }}
+            </span>
+            <button type="button" class="config-collapse-toggle" (click)="toggleCollapsed(line.prodOfrId)" [attr.aria-label]="i18n.t('newSale.toggleConfiguration')">
+                <svg class="config-collapse-chevron" [class.collapsed]="isCollapsed(line.prodOfrId)" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+            </button>
         </div>
-        <p class="config-product-note">{{ i18n.t('newSale.configurationFieldsPending') }}</p>
+
+        @if (!isCollapsed(line.prodOfrId)) {
+            @if (fieldsFor(line.prodOfrId).length === 0) {
+                <p class="config-product-note">{{ i18n.t('newSale.configurationFieldsPending') }}</p>
+            } @else {
+                <div class="config-fields-grid">
+                    @for (field of fieldsFor(line.prodOfrId); track field.key) {
+                        <div class="config-field">
+                            <label [for]="line.prodOfrId + '-' + field.key">
+                                {{ field.label }}
+                                @if (field.required) {
+                                    <span class="required">*</span>
+                                }
+                            </label>
+                            @if (field.type === 'select') {
+                                <div class="select-wrapper">
+                                    <select
+                                        [id]="line.prodOfrId + '-' + field.key"
+                                        [value]="fieldValue(line.prodOfrId, field.key)"
+                                        (change)="setFieldValue(line.prodOfrId, field.key, $any($event.target).value); checkAutoCollapse(line.prodOfrId)"
+                                    >
+                                        <option value="">{{ i18n.t('create.selectPlaceholder') }}</option>
+                                        @for (option of field.options; track option.value) {
+                                            <option [value]="option.value">{{ option.label }}</option>
+                                        }
+                                    </select>
+                                    <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                                </div>
+                            } @else {
+                                <input
+                                    [id]="line.prodOfrId + '-' + field.key"
+                                    type="text"
+                                    [value]="fieldValue(line.prodOfrId, field.key)"
+                                    [placeholder]="field.placeholder ?? ''"
+                                    (input)="setFieldValue(line.prodOfrId, field.key, $any($event.target).value)"
+                                    (blur)="checkAutoCollapse(line.prodOfrId)"
+                                >
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        }
     </div>
 }
 
@@ -42,6 +104,8 @@
             <button type="button" class="secondary-button" (click)="openAddAddressModal()">{{ i18n.t('newSale.addNewAddress') }}</button>
         </div>
     </div>
+</div>
+
 </div>
 
 @if (isChangeAddressModalOpen()) {
@@ -97,7 +161,9 @@
                     <div class="select-wrapper">
                         <select id="new-addr-city" [formField]="addressForm.city">
                             <option value="" disabled selected>{{ i18n.t('create.selectCity') }}</option>
-                            <option value="201">Ankara</option>
+                            @for (city of cities(); track city.gnlTpId) {
+                                <option [value]="city.gnlTpId">{{ city.name }}</option>
+                            }
                         </select>
                         <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
                     </div>

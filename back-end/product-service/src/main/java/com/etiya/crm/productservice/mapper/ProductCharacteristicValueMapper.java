@@ -16,6 +16,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface ProductCharacteristicValueMapper {
     @Mapping(target = "productCharacteristicValueId", ignore = true)
+    @Mapping(target = "statusId", ignore = true)
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "cdate", ignore = true)
     @Mapping(target = "cuser", ignore = true)
@@ -28,6 +29,7 @@ public interface ProductCharacteristicValueMapper {
     CreatedProductCharacteristicValueResponse toCreatedResponse(ProductCharacteristicValue productCharacteristicValue);
 
     @Mapping(target = "productCharacteristicValueId", ignore = true)
+    @Mapping(target = "statusId", ignore = true)
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "cdate", ignore = true)
     @Mapping(target = "cuser", ignore = true)

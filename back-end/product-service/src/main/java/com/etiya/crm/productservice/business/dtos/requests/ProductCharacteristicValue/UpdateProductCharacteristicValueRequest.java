@@ -22,5 +22,5 @@ public class UpdateProductCharacteristicValueRequest {
 
     private String value;
 
-    private Long statusId; // lookup
+    private String statusCode; // lookup, opsiyonel — null kalabilir
 }

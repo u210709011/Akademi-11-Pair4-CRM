@@ -8,11 +8,13 @@ package com.etiya.crm.customerservice.constants;
 public final class MessageKeys {
 
 	public static final String FIELD_REQUIRED = "validation.field.required";
+	public static final String FIELD_MAX_LENGTH = "validation.field.max-length";
 	public static final String NATIONAL_ID_INVALID = "validation.national-id.invalid";
 	public static final String NAME_INVALID = "validation.name.invalid";
 	public static final String BIRTH_DATE_INVALID = "validation.birth-date.invalid";
 	public static final String EMAIL_INVALID = "validation.email.invalid";
 	public static final String PHONE_INVALID = "validation.phone.invalid";
+	public static final String FAX_INVALID = "validation.fax.invalid";
 	public static final String ADDRESS_MAX_EXCEEDED = "validation.address.max-exceeded";
 	public static final String ADDRESS_MIN_REQUIRED = "validation.address.min-required";
 	public static final String BILLING_ACCOUNT_ADDRESS_REQUIRED = "validation.billing-account.address-required";
@@ -39,6 +41,17 @@ public final class MessageKeys {
 	public static final String PARAMETER_TYPE_MISMATCH = "validation.parameter.type-mismatch";
 	public static final String INVALID_REQUEST_PARAMETER = "validation.parameter.invalid";
 	public static final String CITY_INVALID = "validation.city.invalid";
+	public static final String GENDER_INVALID = "validation.gender.invalid";
+
+	// FR-002: /customers/search filtre alanlarina ozel mesajlar - doc'ta her alan icin
+	// ayri, mevcut genel mesajlardan (NATIONAL_ID_INVALID, PHONE_INVALID, NAME_INVALID)
+	// FARKLI bir metin isteniyor, o yuzden onlari degil bunlari kullanirlar.
+	public static final String SEARCH_NATIONAL_ID_INVALID = "validation.search.national-id.invalid";
+	public static final String SEARCH_GSM_INVALID = "validation.search.gsm.invalid";
+	public static final String SEARCH_FIRST_NAME_INVALID = "validation.search.first-name.invalid";
+	public static final String SEARCH_LAST_NAME_INVALID = "validation.search.last-name.invalid";
+	public static final String SEARCH_ACCOUNT_NUMBER_INVALID = "validation.search.account-number.invalid";
+	public static final String SEARCH_FILTER_REQUIRED = "validation.search.filter-required";
 
 	private MessageKeys() {
 	}

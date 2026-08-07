@@ -2,12 +2,22 @@
   display: block;
 }
 
+.config-content-wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
 .config-product-card {
   margin-bottom: 16px;
   background: var(--surface-card);
+  border: 1px solid transparent;
   border-radius: 14px;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
   overflow: hidden;
+
+  &.config-product-card-done {
+    border-color: var(--success);
+  }
 }
 
 .config-product-header {
@@ -56,6 +66,9 @@
 }
 
 .config-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 4px 10px;
   font-size: 12px;
   font-weight: 700;
@@ -63,6 +76,55 @@
   white-space: nowrap;
   background: #f3f4f6;
   border-radius: 999px;
+
+  &.config-status-done {
+    color: var(--success);
+    background: #ecfdf5;
+  }
+}
+
+.config-status-check {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.config-collapse-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+
+.config-collapse-chevron {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #6b7280;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.15s ease;
+
+  &.collapsed {
+    transform: rotate(-90deg);
+  }
 }
 
 .config-product-note {
@@ -70,6 +132,54 @@
   padding: 0 24px 18px;
   font-size: 13px;
   color: var(--text-placeholder);
+}
+
+.config-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+  padding: 0 24px 20px;
+}
+
+.config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .required {
+    font-size: 12px;
+    color: var(--etiya-orange);
+    vertical-align: super;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #111827;
+    background: var(--surface-card);
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--etiya-orange);
+      box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15);
+    }
+  }
 }
 
 .config-address-card {

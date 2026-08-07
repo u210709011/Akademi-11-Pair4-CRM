@@ -12,6 +12,7 @@ import com.etiya.crm.productservice.business.exceptions.ProductSpecNotFoundExcep
 import com.etiya.crm.productservice.dataAccess.abstracts.ProductSpecRepository;
 import com.etiya.crm.productservice.entities.concretes.ProductSpec;
 import com.etiya.crm.productservice.mapper.ProductSpecMapper;
+import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import org.springframework.stereotype.Service;
 
@@ -65,12 +66,13 @@ public class ProductSpecManager implements ProductSpecService {
         return productSpecMapper.toGetAllResponseList(productSpecs);
     }
 
-    //(TODO) şimdilik kalıcı silme soft delete işlemi ayarlanacak
     //(TODO) bağlı olduğu offer'lar varsa silme işlemi kontrolü ayarlanacak
     @Override
     public void delete(Long productSpecId) {
         ProductSpec productSpec = productSpecRepository.findById(productSpecId)
                 .orElseThrow(() -> new ProductSpecNotFoundException(productSpecId));
-        productSpecRepository.delete(productSpec);
+        productSpec.setStatusId(
+                lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT_SPEC, GnlStCodes.DELETED));
+        productSpecRepository.save(productSpec);
     }
 }
