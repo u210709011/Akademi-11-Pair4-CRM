@@ -60,6 +60,11 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
         return build(HttpStatus.NOT_FOUND, ex, request);
     }
 
+    @ExceptionHandler(ProductOfferingCharUseDuplicateException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(BusinessException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, ex, request);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex,
                                                                    HttpServletRequest request) {

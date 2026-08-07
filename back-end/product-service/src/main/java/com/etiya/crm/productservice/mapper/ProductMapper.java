@@ -23,6 +23,7 @@ public interface ProductMapper {
     @Mapping(target = "productSpec", ignore = true)
     @Mapping(target = "campaign", ignore = true)
     @Mapping(target = "statusId", ignore = true)
+    @Mapping(target = "serviceStartDate", ignore = true)
     @Mapping(target = "cdate", ignore = true)
     @Mapping(target = "cuser", ignore = true)
     @Mapping(target = "udate", ignore = true)

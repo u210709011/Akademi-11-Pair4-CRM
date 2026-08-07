@@ -17,6 +17,7 @@ import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.constants.MessageKeys;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -50,11 +51,6 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 		return build(HttpStatus.NOT_FOUND, ex, request);
 	}
 
-	@ExceptionHandler(InvalidCityException.class)
-	public ResponseEntity<ErrorResponse> handleInvalidCity(InvalidCityException ex, HttpServletRequest request) {
-		return build(HttpStatus.BAD_REQUEST, ex, request);
-	}
-
 	@ExceptionHandler(AddressLimitExceededException.class)
 	public ResponseEntity<ErrorResponse> handleAddressLimitExceeded(AddressLimitExceededException ex,
 			HttpServletRequest request) {
@@ -68,6 +64,12 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
 	@ExceptionHandler(InvalidBirthDateException.class)
 	public ResponseEntity<ErrorResponse> handleInvalidBirthDate(InvalidBirthDateException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, ex, request);
+	}
+
+	@ExceptionHandler(SearchFilterRequiredException.class)
+	public ResponseEntity<ErrorResponse> handleSearchFilterRequired(SearchFilterRequiredException ex,
 			HttpServletRequest request) {
 		return build(HttpStatus.BAD_REQUEST, ex, request);
 	}
@@ -114,6 +116,21 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 				.body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(),
 						message, request.getRequestURI()));
+	}
+
+	/**
+	 * FR-002: CustomerController.search() alanlarindaki @Size/@Pattern @RequestParam
+	 * uzerinde oldugu icin (govde degil), ihlaller MethodArgumentNotValidException degil
+	 * ConstraintViolationException olarak gelir - @Validated sinif seviyesinde bunu tetikler.
+	 */
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex,
+			HttpServletRequest request) {
+		String message = ex.getConstraintViolations().stream()
+				.findFirst()
+				.map(violation -> violation.getMessage())
+				.orElseGet(() -> resolve(MessageKeys.INVALID_REQUEST_PARAMETER));
+		return build(HttpStatus.BAD_REQUEST, message, request);
 	}
 
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)

@@ -1,0 +1,435 @@
+================================================================================
+ORDER-SERVICE API DOKUMANTASYONU
+================================================================================
+Guncelleme tarihi: 2026-08-07
+Kapsam: Offer Selection -> Product Configuration -> Review & Confirm siparis
+akisi (FR-012 .. FR-021, BR-03 "Already Active", FR-014 IK-05).
+
+--------------------------------------------------------------------------------
+1. ORTAM / BAGLANTI
+--------------------------------------------------------------------------------
+Base URL (API Gateway uzerinden, onerilen):
+    http://localhost:8080
+
+Gateway route predicate: Path=/api/v1/orders/**  -> lb://order-service
+(order-service kendi basina bir host portu publish etmez, sadece gateway veya
+Eureka discovery uzerinden erisilir.)
+
+Swagger UI (order-service tek basina):
+    http://localhost:8080/swagger-ui.html  -> sag ustten "Order Service" sec
+    OpenAPI JSON: http://localhost:8080/v3/api-docs/order-service
+
+Tum endpoint'ler JWT ister (@PreAuthorize("hasRole('CRM_AGENT')")).
+
+--------------------------------------------------------------------------------
+2. KIMLIK DOGRULAMA (Keycloak)
+--------------------------------------------------------------------------------
+Realm: crm
+Client: crm-client / crm-client-secret
+Test kullanicisi: salesperson / password (rol: CRM_AGENT)
+
+Token alma:
+    POST http://localhost:8180/realms/crm/protocol/openid-connect/token
+    Content-Type: application/x-www-form-urlencoded
+
+    grant_type=password
+    &client_id=crm-client
+    &client_secret=crm-client-secret
+    &username=salesperson
+    &password=password
+
+Donen "access_token"i her istekte su sekilde kullan:
+    Authorization: Bearer <access_token>
+
+NOT (bilinen ortam kuirku): Keycloak dev-mode'da token'in "iss" claim'ini
+istegi hangi hostname ile aldiysa ona gore yazar. docker-compose.yml'deki
+keycloak servisine KC_HOSTNAME=keycloak eklenmemisse, host makineden
+(localhost:8180) alinan token'larin "iss"i container-ici servislerin
+bekledigi (http://keycloak:8180/...) ile eslesmez ve her istek 401
+"iss claim is not valid" doner. Bu order-service'in degil, infra'nin
+sorunudur.
+
+--------------------------------------------------------------------------------
+3. SIPARIS DURUMLARI (GNL_ST, entCodeName=CUST_ORD)
+--------------------------------------------------------------------------------
+    51  WAIT       Beklemede            (Configuration asamasinda duzenlenebilir)
+    52  MIDLWARE   Siparis Alindi Isleniyor  (finish sirasinda gecici ara durum)
+    53  FINISHED   Tamamlandi           (provizyon basariyla bitince)
+    54  REJECTED   Reddedildi           (cancel sonrasi)
+
+Akis: WAIT(51) --create/addItem/configuration--> WAIT(51) --finish--> MIDLWARE(52)
+      --provizyon basarili--> FINISHED(53)
+      WAIT(51) --cancel--> REJECTED(54)
+
+Yalniz WAIT durumundaki bir siparis duzenlenebilir (item ekle/cikar,
+configuration, finish, cancel). Baska durumdaysa 409 OrderNotEditableException.
+
+--------------------------------------------------------------------------------
+4. ENDPOINT LISTESI (mantiksal sira)
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+4.1) POST /api/v1/orders/validate-basket
+--------------------------------------------------------------------------------
+FR-017. Offer Selection'da "Next" - Configuration'a gecmeden once sepeti
+dogrular. Hicbir kayit olusturmaz (read-only).
+
+Request body:
+{
+  "custId": 1,
+  "custAcctId": 1,
+  "items": [
+    { "prodOfrId": 1, "cmpgId": null, "charVals": [] }
+  ]
+}
+
+Alan aciklamalari:
+  custId        Long, zorunlu
+  custAcctId    Long, zorunlu
+  items         List, en az 1 eleman (NotEmpty)
+    prodOfrId   Long, zorunlu - product-service'teki gercek teklif id'si
+    cmpgId      Long, opsiyonel - product-service'teki gercek kampanya id'si
+    charVals    List, opsiyonel (bu asamada genelde bos gelir)
+
+Basarili yanit: 200 OK, govde yok.
+
+Olasi hatalar:
+  404  Customer {custId} bulunamadi (customer-service'ten)
+  400  AccountNotBelongToCustomerException - "Account {0} does not belong to
+       this customer."
+  400  DuplicateBasketItemException - "Product offer {0} is already in the
+       basket." (ayni prodOfrId+cmpgId ikilisi sepette birden fazla)
+  400  OfferAlreadyActiveException - "Product offering {0} is already active
+       on account {1}." (FR-014 IK-05: bu hesabin PROCESSING/FINISHED bir
+       siparisinde zaten bu teklif var)
+
+--------------------------------------------------------------------------------
+4.2) POST /api/v1/orders
+--------------------------------------------------------------------------------
+FR-012/FR-013. Sepet dogrulandiktan sonra siparisi WAIT durumunda acar.
+Ayni gövde sekli validate-basket ile birebir ayni (CreateOrderRequest).
+
+Request body: (validate-basket ile ayni sekil)
+{
+  "custId": 1,
+  "custAcctId": 1,
+  "items": [ { "prodOfrId": 1, "cmpgId": null, "charVals": [] } ]
+}
+
+Basarili yanit: 201 Created
+{
+  "custOrdId": 3,
+  "ordStId": 51,
+  "items": [
+    {
+      "custOrdItemId": 2,
+      "prodId": null,
+      "prodOfrId": 1,
+      "prodSpecId": 1,
+      "ofrName": "Home Fiber 200Mbps",
+      "prodName": null,
+      "cmpgId": null,
+      "cmpgName": null,
+      "price": 399.90,
+      "serviceStartDate": "2026-08-07T09:17:11.093252Z",
+      "charVals": []
+    }
+  ],
+  "serviceAddress": null,
+  "totalAmount": 399.90
+}
+
+Not: cmpgId verilirse fiyat otomatik kampanya indirimli hesaplanir (bkz.
+4.3'teki ornek) ve kampanyanin bu prodOfrId'ye gercekten uygulanip
+uygulanmadigi dogrulanir (CampaignNotAppliedToOfferingException).
+
+Hatalar: validate-basket ile ayni + BsnInterSpecNotFoundException (500,
+servis kurulum hatasi, musteri hatasi degil).
+
+--------------------------------------------------------------------------------
+4.3) POST /api/v1/orders/{custOrdId}/items
+--------------------------------------------------------------------------------
+Offer Selection'da "Add to Basket" - WAIT durumundaki siparise yeni item
+ekler.
+
+Path param: custOrdId (Long)
+
+Request body:
+{ "prodOfrId": 2, "cmpgId": 1, "charVals": [] }
+
+Basarili yanit: 201 Created, guncel OrderSummaryResponse (tum item'lar).
+
+Kampanya indirimi ornegi (canli ortamda dogrulandi):
+  prodOfrId=2 "Home Fiber 100Mbps" taban fiyati 299.90
+  cmpgId=1 "Home Starter Bundle" %10 indirim -> price: 269.91 (otomatik
+  hesaplanip item.price'a yaziliyor, cmpgName: "Home Starter Bundle")
+
+Hatalar:
+  404  OrderNotFoundException
+  409  OrderNotEditableException (siparis WAIT disinda)
+  400  DuplicateBasketItemException
+  400  OfferAlreadyActiveException
+  400  CampaignNotAppliedToOfferingException - cmpgId bu prodOfrId'ye
+       gercekten uygulanmamissa (product-service'teki campaign-offerings
+       eslesmesinde yoksa)
+  404  Product offering / campaign product-service'te yoksa
+
+--------------------------------------------------------------------------------
+4.4) DELETE /api/v1/orders/{custOrdId}/items/{custOrdItemId}
+--------------------------------------------------------------------------------
+Sepetten tek item cikarma.
+
+Path params: custOrdId, custOrdItemId (Long)
+Body: yok
+
+Basarili yanit: 200 OK, guncel OrderSummaryResponse.
+
+Hatalar: 404 OrderNotFoundException, 409 OrderNotEditableException,
+404 OrderItemNotFoundException ("Order item {0} not found in order {1}.")
+
+--------------------------------------------------------------------------------
+4.5) PUT /api/v1/orders/{custOrdId}/configuration
+--------------------------------------------------------------------------------
+FR-015. Product Configuration ekraninda karakteristik/adres girildikce
+(autosave) cagrilir. Idempotent (replace-all): her cagrida ilgili item'in
+onceki karakteristikleri silinip yenileri yazilir.
+
+Path param: custOrdId (Long)
+
+Request body (var olan adresle):
+{
+  "items": [
+    {
+      "custOrdItemId": 2,
+      "charVals": [ { "charId": 1, "charValId": 2, "val": null } ]
+    }
+  ],
+  "addressId": 4,
+  "newAddress": null
+}
+
+Request body (yeni adresle - addressId yerine):
+{
+  "items": [],
+  "addressId": null,
+  "newAddress": {
+    "cityId": 5,
+    "streetName": "Ataturk Cad.",
+    "buildingName": "No:12 Kat:3",
+    "addressDesc": "Ev"
+  }
+}
+
+Alan aciklamalari:
+  items[].custOrdItemId  Long, zorunlu - bu siparise ait olmali
+  items[].charVals[]     ProdCharValRequest - charId zorunlu, charValId
+                          verilirse charId'ye ait olmali, val opsiyonel
+                          (max 255 karakter)
+  addressId               Long, opsiyonel - musterinin/hesabinin VAR OLAN
+                          adresi (addressId veya newAddress'ten TAM OLARAK
+                          biri dolu olmali)
+  newAddress               AddressInfoRequest, opsiyonel - yeni adres olusturur
+    cityId                Long, zorunlu (lookup-service GNL_TP/CITY grubu)
+    streetName            String, zorunlu, max 200
+    buildingName          String, zorunlu, max 100
+    addressDesc           String, zorunlu, max 200
+
+ONEMLI - "yeni adres" olusturulunca ne olur:
+  newAddress verildiginde contact-info-service'te YENI bir adres kaydi
+  aciliyor ve bu adres MUSTERININ KENDI adres listesine (dataTypeId=
+  CUSTOMER, rowId=custId) primary=false olarak ekleniyor - yani sadece bu
+  siparise ozel kalmiyor, musterinin profilinde de gorunur ve ileride
+  "var olan adres" olarak (addressId ile) tekrar secilebilir.
+
+Basarili yanit: 200 OK
+{
+  ...,
+  "serviceAddress": {
+    "addressId": 4,
+    "cityId": 5,
+    "cityName": "Ankara",
+    "streetName": "Ataturk Cad.",
+    "buildingName": "No:12 Kat:3",
+    "addressDesc": "Ev"
+  },
+  ...
+}
+Not: cityName lookup-service'ten ayrica cozulur; cityId lookup-service'te
+bulunamazsa (eski/tutarsiz veri) istegi dusurmez, cityName sessizce null
+doner.
+
+Hatalar:
+  404  OrderNotFoundException
+  409  OrderNotEditableException
+  404  OrderItemNotFoundException - custOrdItemId bu siparise ait degilse
+  400  CharacteristicValueMismatchException
+  400  AddressSelectionInvalidException - "Either addressId or newAddress
+       must be provided, not both or neither."
+  400  AddressNotBelongToCustomerException - "Address {0} does not belong
+       to this customer." (addressId, musterinin/hesaplarindan birine ait
+       degilse)
+
+--------------------------------------------------------------------------------
+4.6) POST /api/v1/orders/{custOrdId}/finish
+--------------------------------------------------------------------------------
+FR-021. Review & Confirm'de Finish - WAIT -> MIDLWARE gecisini yapar,
+product-service'te her item icin GERCEK Product'i senkron olarak
+provizyonlar (fatura hesabi ekraninda urun gorunur hale gelir), Configuration'da
+secilmis karakteristikleri de o urune isler, provizyon basariyla bitince
+MIDLWARE -> FINISHED'e gecirip OrderSubmittedEvent'i (Kafka outbox) yayinlar.
+
+Path param: custOrdId (Long)
+Body: yok
+
+Basarili yanit: 200 OK
+{
+  "custOrdId": 3,minor fixes in enpoints, exceptions and for already active account flo
+  "ordStId": 53,
+  "items": [
+    {
+      "custOrdItemId": 2,
+      "prodId": 1,
+      "prodOfrId": 1,
+      "prodSpecId": 1,
+      "ofrName": "Home Fiber 200Mbps",
+      "prodName": "Home Fiber 200Mbps",
+      ...
+    }
+  ],
+  "serviceAddress": { ... },
+  "totalAmount": 669.81
+}
+
+Onemli: adres set edilmemis bir siparis finish edilemez.
+
+Hatalar:
+  404  OrderNotFoundException
+  409  OrderNotEditableException
+  400  ServiceAddressMissingException - "Order {0} has no service address
+       yet." (once 4.5 ile adres/konfigurasyon kaydedilmeli)
+  502/503  Downstream call failed / unavailable - product-service provizyon
+       cagrisi basarisiz olursa TUM transaction (MIDLWARE kaydi dahil) geri
+       alinir; siparis asla gercekte urun olusmadan FINISHED'e dusmez.
+
+--------------------------------------------------------------------------------
+4.7) POST /api/v1/orders/{custOrdId}/cancel
+--------------------------------------------------------------------------------
+Review & Confirm'de Cancel - WAIT durumundaki siparisi REJECTED'e cevirir.
+
+Path param: custOrdId (Long)
+Body: yok
+
+Basarili yanit: 200 OK, ordStId: 54 (REJECTED).
+
+Hatalar: 404 OrderNotFoundException, 409 OrderNotEditableException (zaten
+WAIT disindaysa - finish edilmis veya zaten iptal edilmis siparis tekrar
+iptal edilemez).
+
+--------------------------------------------------------------------------------
+4.8) GET /api/v1/orders/{custOrdId}
+--------------------------------------------------------------------------------
+Siparis detayini getirir (o anki tam durum - Order Detail / Review&Confirm
+ekrani ana veri kaynagi).
+
+Path param: custOrdId (Long)
+
+Basarili yanit: 200 OK, OrderSummaryResponse (bkz. 4.2 sekli).
+Hatalar: 404 OrderNotFoundException.
+
+--------------------------------------------------------------------------------
+4.9) GET /api/v1/orders/by-account?custAcctId={id}
+--------------------------------------------------------------------------------
+Hesabin (fatura hesabi) satin aldigi urunleri listeler - Musteri detay
+ekranindaki "Fatura Hesaplari" urun tablosu icin.
+
+Query param: custAcctId (Long, zorunlu)
+
+Basarili yanit: 200 OK
+[
+  {
+    "custOrdItemId": 2,
+    "prodId": 1,
+    "prodName": "Home Fiber 200Mbps",
+    "cmpgId": null,
+    "cmpgName": null,
+    "custAcctId": 1
+  }
+]
+Not: sadece finish edilmis (prodId/prodName dolu) item'lar anlamli veri
+tasir; WAIT'teki bir siparisin item'i icin prodId/prodName null gelir.
+
+--------------------------------------------------------------------------------
+4.10) GET /api/v1/orders/by-customer?custId={id}
+--------------------------------------------------------------------------------
+Musterinin tum siparis gecmisini (durumdan bagimsiz) listeler - Order List
+ekrani. NOT: FR'da bu ekran icin kesinlesmis bir sozlesme yok, alanlar
+tahminidir.
+
+Query param: custId (Long, zorunlu)
+
+Basarili yanit: 200 OK
+[
+  { "custOrdId": 4, "ordStId": 54, "itemCount": 1, "totalAmount": 549.90,
+    "cdate": "2026-08-07T09:18:46.666862Z" },
+  { "custOrdId": 3, "ordStId": 53, "itemCount": 2, "totalAmount": 669.81,
+    "cdate": "2026-08-07T09:17:11.044579Z" }
+]
+
+--------------------------------------------------------------------------------
+4.11) GET /api/v1/orders/active-offers?custAcctId={id}
+--------------------------------------------------------------------------------
+BR-03 "Already Active". Bu hesap icin PROCESSING(52)/FINISHED(53)
+durumundaki siparislerdeki teklifleri listeler - Offer Selection'da
+"Already Active" rozeti + FR-014 IK-05'in sunucu tarafi kaynagi.
+
+Query param: custAcctId (Long, zorunlu)
+
+Basarili yanit: 200 OK
+[ { "prodOfrId": 1, "custOrdItemId": 2, "prodId": 1 } ]
+
+--------------------------------------------------------------------------------
+5. IS KURALLARI OZETI (FR/BR referanslariyla)
+--------------------------------------------------------------------------------
+- BR-02 (varsayim): sepette ayni prodOfrId+cmpgId ikilisi tekrar edemez
+  -> DuplicateBasketItemException (validate-basket / create / addItem).
+- FR-014 IK-05: hesapta zaten aktif (PROCESSING/FINISHED) bir teklif tekrar
+  eklenemez -> OfferAlreadyActiveException (validate-basket / create /
+  addItem).
+- FR-014 IK-01 (REQ - iliskili teklifler otomatik eklenmeli) ve IK-04
+  (EXCL - cakisma engellenmeli): HENUZ IMPLEMENTE EDILMEDI. product-service
+  tarafinda offering-bazli iliski sorgu endpoint'i (by-offering) yok, sadece
+  CRUD var (ProductOfferingRelation, MANDATORY/OPTIONAL tipli - REQ/EXCL
+  degil). Bu FR gap product-service tarafinda once cozulmeli.
+- Kampanya indirimi: item.price, cmpgId varsa product-service'teki
+  campaign-offerings eslesmesinin discountedPrice'i olarak hesaplanir;
+  eslesme yoksa CampaignNotAppliedToOfferingException.
+- Adres secimi: addressId XOR newAddress (ikisi birden veya hicbiri olmaz).
+- Yeni adres, musterinin kendi adres listesine (CUSTOMER sahipligi,
+  primary=false) kaydedilir - sadece siparise ozel kalmaz.
+- finish, adres set edilmeden calisamaz (ServiceAddressMissingException).
+- finish'teki provizyon (product-service Product olusturma + secilen
+  karakteristiklerin islenmesi) SENKRON'dur; herhangi bir item'da hata
+  olursa TUM islem (MIDLWARE gecisi dahil) rollback olur.
+- Bilinen limitasyon (bilincli, deger verilmedi): finish icinde ayni
+  siparis icin idempotent tekrar-provizyon koruma guard'i yok (ag hatasi
+  sonrasi retry senaryosunda teorik cift-provizyon riski var, dusuk
+  ihtimalli kabul edilip ertelendi).
+
+--------------------------------------------------------------------------------
+6. TEST SIRASI ONERISI (Postman/Swagger)
+--------------------------------------------------------------------------------
+1.  Token al (bkz. bolum 2)
+2.  POST /validate-basket
+3.  POST /                          (siparis olustur, custOrdId'yi kaydet)
+4.  POST /{custOrdId}/items         (opsiyonel, ikinci urun/kampanya testi)
+5.  DELETE /{custOrdId}/items/{id}  (opsiyonel)
+6.  PUT /{custOrdId}/configuration  (adres + varsa karakteristik)
+7.  GET /{custOrdId}                (durumu dogrula)
+8.  POST /{custOrdId}/finish        (provizyon + FINISHED)
+9.  GET /by-account?custAcctId=     (provizyon edilen urunu dogrula)
+10. GET /active-offers?custAcctId=  (Already Active listesini dogrula)
+11. (Alternatif) adim 3'ten sonra POST /{custOrdId}/cancel ile iptal akisini
+    dene
+12. GET /by-customer?custId=        (siparis gecmisini dogrula)
+
+================================================================================

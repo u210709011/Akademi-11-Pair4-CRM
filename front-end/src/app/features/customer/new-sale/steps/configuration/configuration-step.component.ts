@@ -2,8 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
 import { AddressEditRequest, AddressResponse, CustomerService } from '../../../../../core/customer';
-import { CITY_NAMES } from '../../../detail-customer/detail-customer.mapper';
 import { I18nService } from '../../../../../core/i18n';
+import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
 import { BasketLine, NewSaleFormStateService } from '../../new-sale.component';
 import { NEW_SALE_MOCK_MODE } from '../../mock/new-sale-mock.config';
 import { MOCK_CHARACTERISTICS_BY_OFFERING, MockCharacteristicField } from '../../mock/new-sale-mock.data';
@@ -31,7 +31,14 @@ const EMPTY_ADDRESS_FORM: AddressFormModel = { city: '', street: '', houseNumber
 export class ConfigurationStepComponent {
   protected readonly i18n = inject(I18nService);
   private readonly customerService = inject(CustomerService);
+  private readonly lookupService = inject(LookupService);
   protected readonly formState = inject(NewSaleFormStateService);
+
+  protected readonly cities = signal<GnlType[]>([]);
+
+  constructor() {
+    this.lookupService.getTypesByGroup(LOOKUP_GROUPS.CITY).subscribe(cities => this.cities.set(cities));
+  }
 
   protected readonly selectedAddress = computed<AddressResponse | null>(
     () => this.formState.addresses().find(address => address.id === this.formState.selectedAddressId()) ?? null
@@ -57,8 +64,12 @@ export class ConfigurationStepComponent {
       ...all,
       [prodOfrId]: { ...all[prodOfrId], [key]: value }
     }));
+  }
 
-    // Mockup: tum zorunlu alanlar doldurulunca kart otomatik daralir (collapse).
+  // Mockup: tum zorunlu alanlar doldurulunca kart otomatik daralir (collapse).
+  // Text alanlarda (input) yerine (blur) ile cagrilir - yoksa son zorunlu alana
+  // yazilan ilk karakterde henuz yazma bitmeden kart kapanirdi.
+  protected checkAutoCollapse(prodOfrId: number): void {
     if (this.formState.isConfigured(prodOfrId)) {
       this.collapsedProductIds.update(current => new Set(current).add(prodOfrId));
     }
@@ -98,7 +109,7 @@ export class ConfigurationStepComponent {
   });
 
   protected cityName(cityId: number): string {
-    return CITY_NAMES[cityId] ?? UNKNOWN;
+    return this.cities().find(city => city.gnlTpId === cityId)?.name ?? UNKNOWN;
   }
 
   protected addressLine(address: AddressResponse): string {

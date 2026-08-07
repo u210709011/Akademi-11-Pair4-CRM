@@ -12,4 +12,7 @@ public interface LookupCacheService {
     Long validateServiceSpecId(Long serviceSpecId);
     Long validateCharacteristicId(Long characteristicId);
     Long validateCharacteristicValueId(Long characteristicValueId);
+
+    String getCharacteristicName(Long characteristicId);
+    String getCharacteristicValueName(Long characteristicValueId);
 }

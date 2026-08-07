@@ -32,6 +32,9 @@ public class SwaggerAggregatorConfig {
 				.route("lookup-service-docs", r -> r.path("/v3/api-docs/lookup-service")
 						.filters(f -> f.rewritePath("/v3/api-docs/lookup-service", "/v3/api-docs"))
 						.uri("lb://lookup-service"))
+				.route("order-service-docs", r -> r.path("/v3/api-docs/order-service")
+						.filters(f -> f.rewritePath("/v3/api-docs/order-service", "/v3/api-docs"))
+						.uri("lb://order-service"))
 				.build();
 	}
 }

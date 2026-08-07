@@ -63,6 +63,7 @@ public class ProductManager implements ProductService {
         product.setProductSpec(productSpec);
         product.setStatusId(
                 lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT, request.getStatusCode()));
+        product.setServiceStartDate(java.time.LocalDate.now());
 
         // OPSİYONEL ilişki: parentProduct (varsa bul + set)
         if (request.getParentProductId() != null) {

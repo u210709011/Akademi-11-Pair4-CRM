@@ -154,9 +154,78 @@ const FIBER_CHARACTERISTIC_FIELDS: MockCharacteristicField[] = [
   { key: 'staticIp', label: 'Static IP', type: 'text', required: false, placeholder: 'optional' }
 ];
 
+const TV_CHARACTERISTIC_FIELDS: MockCharacteristicField[] = [
+  {
+    key: 'package',
+    label: 'Package',
+    type: 'select',
+    required: true,
+    options: [
+      { value: 'basic', label: 'Basic' },
+      { value: 'premium', label: 'Premium' },
+      { value: 'sports', label: 'Sports' }
+    ]
+  },
+  {
+    key: 'decoderType',
+    label: 'Decoder Type',
+    type: 'select',
+    required: true,
+    options: [
+      { value: 'hd', label: 'HD Decoder' },
+      { value: '4k', label: '4K Decoder' }
+    ]
+  },
+  { key: 'smartCardNumber', label: 'Smart Card Number', type: 'text', required: true },
+  {
+    key: 'hdOption',
+    label: 'HD Option',
+    type: 'select',
+    required: true,
+    options: [
+      { value: 'sd', label: 'SD' },
+      { value: 'hd', label: 'HD' }
+    ]
+  }
+];
+
+const MOBILE_CHARACTERISTIC_FIELDS: MockCharacteristicField[] = [
+  {
+    key: 'simType',
+    label: 'SIM Type',
+    type: 'select',
+    required: true,
+    options: [
+      { value: 'physical', label: 'Physical SIM' },
+      { value: 'esim', label: 'eSIM' }
+    ]
+  },
+  {
+    key: 'numberType',
+    label: 'Number Type',
+    type: 'select',
+    required: true,
+    options: [
+      { value: 'new', label: 'New Number' },
+      { value: 'portIn', label: 'Number Transfer (Port-In)' }
+    ]
+  },
+  { key: 'portInNumber', label: 'Port-In Number', type: 'text', required: false },
+  { key: 'iccid', label: 'ICCID', type: 'text', required: true },
+  { key: 'imei', label: 'IMEI (optional)', type: 'text', required: false }
+];
+
 export const MOCK_CHARACTERISTICS_BY_OFFERING: Record<number, MockCharacteristicField[]> = {
   70021: FIBER_CHARACTERISTIC_FIELDS,
   70146: FIBER_CHARACTERISTIC_FIELDS,
   70153: FIBER_CHARACTERISTIC_FIELDS,
-  70160: FIBER_CHARACTERISTIC_FIELDS
+  70160: FIBER_CHARACTERISTIC_FIELDS,
+  70500: TV_CHARACTERISTIC_FIELDS,
+  70510: TV_CHARACTERISTIC_FIELDS,
+  70010: MOBILE_CHARACTERISTIC_FIELDS,
+  70035: MOBILE_CHARACTERISTIC_FIELDS,
+  70048: MOBILE_CHARACTERISTIC_FIELDS,
+  70055: MOBILE_CHARACTERISTIC_FIELDS,
+  70062: MOBILE_CHARACTERISTIC_FIELDS,
+  70520: MOBILE_CHARACTERISTIC_FIELDS
 };

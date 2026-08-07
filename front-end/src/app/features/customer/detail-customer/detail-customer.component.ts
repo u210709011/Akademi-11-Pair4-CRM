@@ -14,6 +14,7 @@ import {
   IndividualResponse
 } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
+import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../core/lookup';
 import { OrderService } from '../../../core/order';
 import {
   AccountProduct,
@@ -118,9 +119,24 @@ export class DetailCustomerComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly customerService = inject(CustomerService);
   private readonly orderService = inject(OrderService);
+  private readonly lookupService = inject(LookupService);
 
   protected readonly isLoading = signal(true);
   protected readonly loadError = signal(false);
+
+  protected readonly cities = signal<GnlType[]>([]);
+  private readonly cityNames = computed<Record<number, string>>(() =>
+    Object.fromEntries(this.cities().map(city => [city.gnlTpId, city.name]))
+  );
+
+  protected readonly genders = signal<GnlType[]>([]);
+
+  protected readonly accountTypes = signal<GnlType[]>([]);
+  // fatura hesabi tipi (BILL_ACCT) - accountTypes yuklenmeden -1 doner ki henuz hicbir hesap
+  // yanlislikla "fatura hesabi" sayilmasin (bkz. mapToCustomerAccounts/mapToCustomerDetail).
+  private readonly billingAccountTypeId = computed(
+    () => this.accountTypes().find(type => type.shrtCode === 'BILL_ACCT')?.gnlTpId ?? -1
+  );
 
   protected readonly customer = signal<CustomerDetail>(EMPTY_CUSTOMER_DETAIL);
   protected readonly accounts = signal<CustomerAccount[]>([]);
@@ -278,14 +294,22 @@ export class DetailCustomerComponent {
       customerDetail: this.customerService.getById(this.custId),
       individual: this.customerService.getIndividual(this.custId),
       contact: this.customerService.getContact(this.custId),
-      addresses: this.customerService.getAddresses(this.custId)
+      addresses: this.customerService.getAddresses(this.custId),
+      cities: this.lookupService.getTypesByGroup(LOOKUP_GROUPS.CITY),
+      genders: this.lookupService.getTypesByGroup(LOOKUP_GROUPS.GENDER),
+      accountTypes: this.lookupService.getTypesByGroup(LOOKUP_GROUPS.ACCOUNT_TYPE)
     }).subscribe({
-      next: ({ customerDetail, individual, contact, addresses }) => {
+      next: ({ customerDetail, individual, contact, addresses, cities, genders, accountTypes }) => {
         this.customerDetailResponse = customerDetail;
         this.individualResponse = individual;
         this.contactResponse = contact;
-        this.customer.set(mapToCustomerDetail(customerDetail, individual, addresses));
-        this.accounts.set(mapToCustomerAccounts(customerDetail));
+        this.cities.set(cities);
+        this.genders.set(genders);
+        this.accountTypes.set(accountTypes);
+        this.customer.set(
+          mapToCustomerDetail(customerDetail, individual, addresses, this.cityNames(), this.billingAccountTypeId())
+        );
+        this.accounts.set(mapToCustomerAccounts(customerDetail, this.billingAccountTypeId()));
         this.contact.set(mapToCustomerContact(contact));
         this.addresses.set(addresses);
         this.isLoading.set(false);
@@ -385,11 +409,12 @@ export class DetailCustomerComponent {
   }
 
   protected genderLabel(genderId: number): string {
-    return genderId === 1 ? this.i18n.t('create.genderMale') : this.i18n.t('create.genderFemale');
+    const shrtCode = this.genders().find(gender => gender.gnlTpId === genderId)?.shrtCode;
+    return shrtCode === 'MALE' ? this.i18n.t('create.genderMale') : this.i18n.t('create.genderFemale');
   }
 
   protected cityName(cityId: number): string {
-    return CITY_NAMES[cityId] ?? UNKNOWN;
+    return this.cityNames()[cityId] ?? UNKNOWN;
   }
 
   protected toggleAddressMenu(addressId: number, event: Event): void {
@@ -803,23 +828,41 @@ export class DetailCustomerComponent {
     }).subscribe(({ customerDetail, addresses }) => {
       this.customerDetailResponse = customerDetail;
       this.addresses.set(addresses);
-      this.accounts.set(mapToCustomerAccounts(customerDetail));
-      this.customer.set(mapToCustomerDetail(customerDetail, this.individualResponse, addresses));
+      this.accounts.set(mapToCustomerAccounts(customerDetail, this.billingAccountTypeId()));
+      this.customer.set(
+        mapToCustomerDetail(customerDetail, this.individualResponse, addresses, this.cityNames(), this.billingAccountTypeId())
+      );
     });
   }
 
   private refreshAddresses(): void {
     this.customerService.getAddresses(this.custId).subscribe(addresses => {
       this.addresses.set(addresses);
-      this.customer.set(mapToCustomerDetail(this.customerDetailResponse, this.individualResponse, addresses));
+      this.customer.set(
+        mapToCustomerDetail(
+          this.customerDetailResponse,
+          this.individualResponse,
+          addresses,
+          this.cityNames(),
+          this.billingAccountTypeId()
+        )
+      );
     });
   }
 
   private refreshAccounts(): void {
     this.customerService.getById(this.custId).subscribe(customerDetail => {
       this.customerDetailResponse = customerDetail;
-      this.accounts.set(mapToCustomerAccounts(customerDetail));
-      this.customer.set(mapToCustomerDetail(customerDetail, this.individualResponse, this.addresses()));
+      this.accounts.set(mapToCustomerAccounts(customerDetail, this.billingAccountTypeId()));
+      this.customer.set(
+        mapToCustomerDetail(
+          customerDetail,
+          this.individualResponse,
+          this.addresses(),
+          this.cityNames(),
+          this.billingAccountTypeId()
+        )
+      );
     });
   }
 
