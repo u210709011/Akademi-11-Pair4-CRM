@@ -48,6 +48,12 @@ public class ProductOfferingRelationController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/by-offering/{productOfferingId}")
+    public ResponseEntity<List<GetAllProductOfferingRelationResponse>> getByProductOfferingId(@PathVariable Long productOfferingId) {
+        List<GetAllProductOfferingRelationResponse> response = productOfferingRelationService.getByProductOfferingId(productOfferingId);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{productOfferingRelationId}")
     public ResponseEntity<Void> delete(@PathVariable Long productOfferingRelationId) {
         productOfferingRelationService.delete(productOfferingRelationId);
