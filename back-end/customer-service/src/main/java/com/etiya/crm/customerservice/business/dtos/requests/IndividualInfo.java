@@ -2,7 +2,9 @@ package com.etiya.crm.customerservice.business.dtos.requests;
 
 import java.time.LocalDate;
 
+import com.etiya.crm.customerservice.business.validation.ExistsInLookupGroup;
 import com.etiya.crm.customerservice.constants.MessageKeys;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpGroups;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -40,6 +42,7 @@ public record IndividualInfo(
 
 		@Schema(description = "lookup-service GENDER grubundaki deger id'si (1=MALE, 2=FEMALE).", example = "1")
 		@NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@ExistsInLookupGroup(group = GnlTpGroups.GENDER, message = "{" + MessageKeys.GENDER_INVALID + "}")
 		Long genderId,
 
 		@Schema(description = "Anne adi (opsiyonel)", example = "Ayse")
