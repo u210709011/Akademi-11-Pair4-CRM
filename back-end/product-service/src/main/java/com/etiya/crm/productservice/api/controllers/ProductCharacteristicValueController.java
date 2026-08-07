@@ -47,6 +47,12 @@ public class ProductCharacteristicValueController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/by-product/{productId}")
+    public ResponseEntity<List<GetAllProductCharacteristicValueResponse>> getByProductId(@PathVariable Long productId) {
+        List<GetAllProductCharacteristicValueResponse> response = productCharacteristicValueService.getByProductId(productId);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{productCharacteristicValueId}")
     public ResponseEntity<Void> delete(@PathVariable Long productCharacteristicValueId) {
         productCharacteristicValueService.delete(productCharacteristicValueId);

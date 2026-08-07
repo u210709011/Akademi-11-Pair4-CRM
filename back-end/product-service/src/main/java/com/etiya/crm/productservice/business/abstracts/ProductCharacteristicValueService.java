@@ -20,5 +20,6 @@ public interface ProductCharacteristicValueService {
     UpdatedProductCharacteristicValueResponse update(Long productCharacteristicValueId, UpdateProductCharacteristicValueRequest request);
     GetProductCharacteristicValueResponse getById(Long productCharacteristicValueId);
     List<GetAllProductCharacteristicValueResponse> getAll();
+    List<GetAllProductCharacteristicValueResponse> getByProductId(Long productId);
     void delete(Long productCharacteristicValueId);
 }

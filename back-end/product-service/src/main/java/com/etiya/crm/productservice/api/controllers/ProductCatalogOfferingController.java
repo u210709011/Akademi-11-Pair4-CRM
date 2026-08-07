@@ -47,6 +47,12 @@ public class ProductCatalogOfferingController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/by-catalog/{productCatalogId}")
+    public ResponseEntity<List<GetAllProductCatalogOfferingResponse>> getByCatalogId(@PathVariable Long productCatalogId) {
+        List<GetAllProductCatalogOfferingResponse> response = productCatalogOfferingService.getByCatalogId(productCatalogId);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{productCatalogOfferingId}")
     public ResponseEntity<Void> delete(@PathVariable Long productCatalogOfferingId) {
         productCatalogOfferingService.delete(productCatalogOfferingId);
