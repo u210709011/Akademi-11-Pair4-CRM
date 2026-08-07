@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/product-procutOfferings")
+@RequestMapping("/api/v1/product-offerings")
 public class ProductOfferingController {
 
     private final ProductOfferingService productOfferingService;
@@ -47,6 +47,8 @@ public class ProductOfferingController {
         List<GetAllProductOfferingResponse> response = productOfferingService.getAll();
         return ResponseEntity.ok(response);
     }
+
+
 
     @DeleteMapping("/{productOfferingId}")
     public ResponseEntity<Void> delete(@PathVariable Long productOfferingId){
