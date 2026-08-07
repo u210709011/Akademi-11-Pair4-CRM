@@ -24,6 +24,7 @@ import com.etiya.crm.productservice.mapper.ProductMapper;
 import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -117,17 +118,32 @@ public class ProductManager implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public GetProductResponse getById(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        return productMapper.toGetResponse(product);
+        GetProductResponse response = productMapper.toGetResponse(product);
+        response.setProductOfferingName(product.getProductOffering().getName());
+        if (product.getCampaign() != null) {
+            response.setCampaignName(product.getCampaign().getName());
+        }
+        return response;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<GetAllProductResponse> getAll() {
         List<Product> products = productRepository.findAll();
-        return productMapper.toGetAllResponseList(products);
+        List<GetAllProductResponse> responses = productMapper.toGetAllResponseList(products);
+
+        for (int i = 0; i < products.size(); i++) {
+            responses.get(i).setProductOfferingName(products.get(i).getProductOffering().getName());
+            if (products.get(i).getCampaign() != null) {
+                responses.get(i).setCampaignName(products.get(i).getCampaign().getName());
+            }
+        }
+        return responses;
     }
 
     @Override

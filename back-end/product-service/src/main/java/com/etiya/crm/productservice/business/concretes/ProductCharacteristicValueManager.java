@@ -18,6 +18,7 @@ import com.etiya.crm.productservice.mapper.ProductCharacteristicValueMapper;
 import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -96,6 +97,16 @@ public class ProductCharacteristicValueManager implements ProductCharacteristicV
     @Override
     public List<GetAllProductCharacteristicValueResponse> getAll() {
         List<ProductCharacteristicValue> entities = productCharacteristicValueRepository.findAll();
+        return productCharacteristicValueMapper.toGetAllResponseList(entities);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GetAllProductCharacteristicValueResponse> getByProductId(Long productId) {
+        productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        List<ProductCharacteristicValue> entities = productCharacteristicValueRepository.findByProduct_ProductId(productId);
         return productCharacteristicValueMapper.toGetAllResponseList(entities);
     }
 
