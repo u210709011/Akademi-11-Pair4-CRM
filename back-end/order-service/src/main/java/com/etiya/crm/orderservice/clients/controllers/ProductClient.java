@@ -16,7 +16,7 @@ public interface ProductClient {
 
     // sepete eklenen prodOfrId'nin gercekten var olup olmadigini dogrulamak ve
     // ofrName/fiyat snapshot'ini almak icin (bkz. createOrder/addItem).
-    @GetMapping("/api/v1/product-procutOfferings/{productOfferingId}")
+    @GetMapping("/api/v1/product-offerings/{productOfferingId}")
     ProductOfferingResponse getById(@PathVariable("productOfferingId") Long productOfferingId);
 
     // sepete eklenen cmpgId'nin gercekten var olup olmadigini dogrulamak ve
