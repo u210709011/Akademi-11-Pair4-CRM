@@ -3,13 +3,13 @@
 }
 
 .review-content-wrap {
-  max-width: 900px;
+  max-width: 1150px;
   margin: 0 auto;
 }
 
 .review-summary-card,
 .review-products-card {
-  padding: 20px 24px;
+  padding: 28px;
   margin-bottom: 20px;
   background: var(--surface-card);
   border-radius: 14px;
@@ -33,22 +33,31 @@
 
 .review-summary-field {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
 }
 
 .review-summary-label {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--text-placeholder);
-  text-transform: uppercase;
+  font-family: var(--font-ui);
+  font-size: var(--fs-info);
+  font-weight: var(--fw-semibold);
+  letter-spacing: normal;
+  color: var(--text-body);
+  line-height: 1;
+  white-space: nowrap;
+
+  &::after {
+    content: ':';
+  }
 }
 
 .review-summary-value {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1f2937;
+  font-family: var(--font-ui);
+  font-size: var(--fs-info);
+  font-weight: var(--fw-regular);
+  color: var(--text-body);
+  line-height: 1;
 }
 
 .review-status-badge {
@@ -81,10 +90,28 @@
     letter-spacing: 0.04em;
     color: #9ca3af;
     text-transform: uppercase;
+    background: #f8f9fb;
   }
 
   td {
     color: #374151;
+  }
+}
+
+.catalog-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 }
 
@@ -137,7 +164,7 @@
 }
 
 .review-address-card {
-  padding: 20px 24px;
+  padding: 28px;
   margin-bottom: 20px;
   background: var(--surface-card);
   border-radius: 14px;

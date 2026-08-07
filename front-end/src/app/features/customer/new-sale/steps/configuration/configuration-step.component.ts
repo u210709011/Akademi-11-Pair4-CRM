@@ -57,8 +57,12 @@ export class ConfigurationStepComponent {
       ...all,
       [prodOfrId]: { ...all[prodOfrId], [key]: value }
     }));
+  }
 
-    // Mockup: tum zorunlu alanlar doldurulunca kart otomatik daralir (collapse).
+  // Mockup: tum zorunlu alanlar doldurulunca kart otomatik daralir (collapse).
+  // Text alanlarda (input) yerine (blur) ile cagrilir - yoksa son zorunlu alana
+  // yazilan ilk karakterde henuz yazma bitmeden kart kapanirdi.
+  protected checkAutoCollapse(prodOfrId: number): void {
     if (this.formState.isConfigured(prodOfrId)) {
       this.collapsedProductIds.update(current => new Set(current).add(prodOfrId));
     }
