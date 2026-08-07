@@ -6,17 +6,21 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.etiya.crm.orderservice.clients.requests.CreateProductCharacteristicValueRequest;
 import com.etiya.crm.orderservice.clients.requests.CreateProductRequest;
+import com.etiya.crm.orderservice.clients.responses.CampaignOfferingResponse;
 import com.etiya.crm.orderservice.clients.responses.CampaignResponse;
 import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingResponse;
+
+import java.util.List;
 
 @FeignClient(name = "product-service")
 public interface ProductClient {
 
     // sepete eklenen prodOfrId'nin gercekten var olup olmadigini dogrulamak ve
     // ofrName/fiyat snapshot'ini almak icin (bkz. createOrder/addItem).
-    @GetMapping("/api/v1/product-procutOfferings/{productOfferingId}")
+    @GetMapping("/api/v1/product-offerings/{productOfferingId}")
     ProductOfferingResponse getById(@PathVariable("productOfferingId") Long productOfferingId);
 
     // sepete eklenen cmpgId'nin gercekten var olup olmadigini dogrulamak ve
@@ -28,5 +32,15 @@ public interface ProductClient {
     // provisioning) olusturmak icin.
     @PostMapping("/api/v1/products")
     CreatedProductResponse createProduct(@RequestBody CreateProductRequest request);
+
+    // cmpgId secilen bir item'in fiyatini indirimli hesaplamak icin: campaign'in hangi
+    // offering'lere uygulandigini ve indirimli fiyatini (discountedPrice) doner.
+    @GetMapping("/api/v1/campaign-offerings/by-campaign/{campaignId}")
+    List<CampaignOfferingResponse> getCampaignOfferingsByCampaignId(@PathVariable("campaignId") Long campaignId);
+
+    // FR-021: finishOrder'da provizyon edilen Product'a, Configuration'da secilen
+    // karakteristikleri (CustOrdCharVal) islemek icin.
+    @PostMapping("/api/v1/product-characteristic-values")
+    void createProductCharacteristicValue(@RequestBody CreateProductCharacteristicValueRequest request);
 
 }

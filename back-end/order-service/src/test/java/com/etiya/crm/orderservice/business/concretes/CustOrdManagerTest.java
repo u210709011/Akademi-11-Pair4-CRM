@@ -24,8 +24,10 @@ import com.etiya.crm.orderservice.business.dtos.responses.ProdCharValResponse;
 import com.etiya.crm.orderservice.business.exceptions.AccountNotBelongToCustomerException;
 import com.etiya.crm.orderservice.business.exceptions.AddressNotBelongToCustomerException;
 import com.etiya.crm.orderservice.business.exceptions.AddressSelectionInvalidException;
+import com.etiya.crm.orderservice.business.exceptions.CampaignNotAppliedToOfferingException;
 import com.etiya.crm.orderservice.business.exceptions.CharacteristicValueMismatchException;
 import com.etiya.crm.orderservice.business.exceptions.DuplicateBasketItemException;
+import com.etiya.crm.orderservice.business.exceptions.OfferAlreadyActiveException;
 import com.etiya.crm.orderservice.business.exceptions.OrderItemNotFoundException;
 import com.etiya.crm.orderservice.business.exceptions.OrderNotEditableException;
 import com.etiya.crm.orderservice.business.exceptions.OrderNotFoundException;
@@ -35,6 +37,7 @@ import com.etiya.crm.orderservice.clients.controllers.ContactAddressClient;
 import com.etiya.crm.orderservice.clients.controllers.CustomerClient;
 import com.etiya.crm.orderservice.clients.controllers.ProductClient;
 import com.etiya.crm.orderservice.clients.requests.CreateProductRequest;
+import com.etiya.crm.orderservice.clients.responses.CampaignOfferingResponse;
 import com.etiya.crm.orderservice.clients.responses.CampaignResponse;
 import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountPageResponse;
@@ -68,6 +71,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -86,6 +90,7 @@ class CustOrdManagerTest {
 	private static final Long CUST_ORD_ID = 100L;
 	private static final Long WAIT_STATUS_ID = 51L;
 	private static final Long PROCESSING_STATUS_ID = 52L;
+	private static final Long FINISHED_STATUS_ID = 54L;
 
 	@Mock
 	private AddressMapper addressMapper;
@@ -124,6 +129,15 @@ class CustOrdManagerTest {
 				custOrdRepository, custOrdItemRepository, custOrdCharValRepository, bsnInterRepository,
 				bsnInterItemRepository, bsnInterSpecRepository, customerClient, contactAddressClient,
 				productClient, lookupCacheService, new BasketValidationRules(), outboxEventPublisher);
+
+		// FR-014 IK-05: validateBasket/createOrder/addItem artik her cagrida "zaten aktif mi"
+		// diye findActiveItems (PROCESSING+FINISHED statusId resolve) kontrolu yapiyor - testlerin
+		// coguna bu senaryo ile ilgisiz oldugu icin varsayilan (bos) davranisi burada lenient
+		// olarak tanimlariz, ilgili testler kendi ozel senaryosunu ustune yazar.
+		lenient().when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING))
+				.thenReturn(PROCESSING_STATUS_ID);
+		lenient().when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.FINISHED))
+				.thenReturn(FINISHED_STATUS_ID);
 	}
 
 	// ---- createOrder ----
@@ -152,6 +166,21 @@ class CustOrdManagerTest {
 		assertThat(response.totalAmount()).isEqualByComparingTo("89.90");
 		assertThat(response.items().get(0).charVals()).isEmpty();
 		assertThat(response.serviceAddress()).isNull();
+	}
+
+	@Test
+	void createOrder_throws_whenOfferAlreadyActiveOnAccount() {
+		stubCustomerAndAccount();
+		CustOrdItem activeItem = new CustOrdItem();
+		activeItem.setProdOfrId(200L);
+		when(custOrdItemRepository.findByCustAcctIdAndCustOrd_OrdStIdIn(CUST_ACCT_ID,
+				List.of(PROCESSING_STATUS_ID, FINISHED_STATUS_ID))).thenReturn(List.of(activeItem));
+
+		CreateOrderRequest request = new CreateOrderRequest(CUST_ID, CUST_ACCT_ID,
+				List.of(new BasketItemRequest(200L, null, null)));
+
+		assertThatThrownBy(() -> custOrdManager.createOrder(request))
+				.isInstanceOf(OfferAlreadyActiveException.class);
 	}
 
 	@Test
@@ -240,6 +269,9 @@ class CustOrdManagerTest {
 				new ProductOfferingResponse(300L, 9L, "International Roaming Pack", "descr", null, 1L, new BigDecimal("149.90")));
 		when(productClient.getCampaignById(40L))
 				.thenReturn(new CampaignResponse(40L, "Summer Discount", "descr", "CMP-40", null, 1L, false));
+		when(productClient.getCampaignOfferingsByCampaignId(40L)).thenReturn(List.of(
+				new CampaignOfferingResponse(1L, 40L, 300L, "International Roaming Pack", 1,
+						new BigDecimal("10.00"), new BigDecimal("134.91"), null, null, true)));
 		when(custOrdItemRepository.save(any(CustOrdItem.class))).thenAnswer(inv -> {
 			CustOrdItem item = inv.getArgument(0);
 			item.setCustOrdItemId(901L);
@@ -249,6 +281,29 @@ class CustOrdManagerTest {
 		OrderSummaryResponse response = custOrdManager.addItem(CUST_ORD_ID, new BasketItemRequest(300L, 40L, null));
 
 		assertThat(response.items().get(1).cmpgName()).isEqualTo("Summer Discount");
+		assertThat(response.items().get(1).price()).isEqualByComparingTo("134.91");
+	}
+
+	@Test
+	void addItem_throws_whenCampaignNotAppliedToOffering() {
+		CustOrd custOrd = waitingOrder();
+		CustOrdItem existingItem = new CustOrdItem();
+		existingItem.setCustOrdItemId(900L);
+		existingItem.setCustOrd(custOrd);
+		existingItem.setCustAcctId(CUST_ACCT_ID);
+		existingItem.setProdOfrId(200L);
+		custOrd.getItems().add(existingItem);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(productClient.getById(300L)).thenReturn(
+				new ProductOfferingResponse(300L, 9L, "International Roaming Pack", "descr", null, 1L, new BigDecimal("149.90")));
+		when(productClient.getCampaignById(40L))
+				.thenReturn(new CampaignResponse(40L, "Summer Discount", "descr", "CMP-40", null, 1L, false));
+		when(productClient.getCampaignOfferingsByCampaignId(40L)).thenReturn(List.of());
+
+		assertThatThrownBy(() -> custOrdManager.addItem(CUST_ORD_ID, new BasketItemRequest(300L, 40L, null)))
+				.isInstanceOf(CampaignNotAppliedToOfferingException.class);
 	}
 
 	// ---- removeItem ----
@@ -508,7 +563,7 @@ class CustOrdManagerTest {
 	}
 
 	@Test
-	void finishOrder_transitionsToProcessing_andPublishesEvent() {
+	void finishOrder_transitionsToFinished_afterProvisioning_andPublishesEvent() {
 		CustOrd custOrd = waitingOrder();
 		custOrd.setAddressId(77L);
 		CustOrdItem item = new CustOrdItem();
@@ -522,6 +577,8 @@ class CustOrdManagerTest {
 		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
 		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING))
 				.thenReturn(PROCESSING_STATUS_ID);
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.FINISHED))
+				.thenReturn(FINISHED_STATUS_ID);
 		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
 		AddressResponse address = new AddressResponse(77L, CUST_ORD_ID, 21L, 5L, "Street", "12", "Desc", true, null,
 				null, null, null);
@@ -536,7 +593,7 @@ class CustOrdManagerTest {
 
 		OrderSummaryResponse response = custOrdManager.finishOrder(CUST_ORD_ID);
 
-		assertThat(response.ordStId()).isEqualTo(PROCESSING_STATUS_ID);
+		assertThat(response.ordStId()).isEqualTo(FINISHED_STATUS_ID);
 		assertThat(item.getProdId()).isEqualTo(500L);
 		verify(outboxEventPublisher).publish(eq("order"), eq(CUST_ORD_ID.toString()), eq("OrderSubmitted"), any());
 	}
@@ -558,6 +615,8 @@ class CustOrdManagerTest {
 		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
 		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING))
 				.thenReturn(PROCESSING_STATUS_ID);
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.FINISHED))
+				.thenReturn(FINISHED_STATUS_ID);
 		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
 		AddressResponse address = new AddressResponse(77L, CUST_ORD_ID, 21L, 5L, "Street", "12", "Desc", true, null,
 				null, null, null);
@@ -576,6 +635,50 @@ class CustOrdManagerTest {
 		assertThat(item.getProdId()).isEqualTo(500L);
 		assertThat(item.getProdName()).isEqualTo("Mobile Prepaid 5GB");
 		verify(custOrdItemRepository).save(item);
+	}
+
+	@Test
+	void finishOrder_provisionsCharacteristics_selectedDuringConfiguration() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setAddressId(77L);
+		CustOrdItem item = new CustOrdItem();
+		item.setCustOrdItemId(900L);
+		item.setCustOrd(custOrd);
+		item.setCustAcctId(CUST_ACCT_ID);
+		item.setProdOfrId(200L);
+		item.setProdSpecId(9L);
+		item.setOfrName("Mobile Prepaid 5GB");
+		custOrd.getItems().add(item);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING))
+				.thenReturn(PROCESSING_STATUS_ID);
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.FINISHED))
+				.thenReturn(FINISHED_STATUS_ID);
+		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
+		AddressResponse address = new AddressResponse(77L, CUST_ORD_ID, 21L, 5L, "Street", "12", "Desc", true, null,
+				null, null, null);
+		when(contactAddressClient.getById(77L)).thenReturn(address);
+		when(addressMapper.toSummaryResponse(address))
+				.thenReturn(new com.etiya.crm.orderservice.business.dtos.responses.AddressSummaryResponse(77L, 5L,
+						null, "Street", "12", "Desc"));
+		when(lookupCacheService.getGeneralType(5L)).thenReturn(new com.etiya.crm.shared.contracts.gnltp.GnlTpResponse(
+				5L, "Ankara", null, "ANKARA", "CITY", "CITY", true, null, null, null, null));
+		when(productClient.createProduct(any()))
+				.thenReturn(new CreatedProductResponse(500L, null, 200L, 9L, "Mobile Prepaid 5GB", null, null, 1L));
+
+		CustOrdCharVal charVal = new CustOrdCharVal();
+		charVal.setCharId(1L);
+		charVal.setCharValId(2L);
+		charVal.setVal("200Mbps");
+		when(custOrdCharValRepository.findByCustOrdItem_CustOrdItemId(900L)).thenReturn(List.of(charVal));
+
+		custOrdManager.finishOrder(CUST_ORD_ID);
+
+		verify(productClient).createProductCharacteristicValue(
+				new com.etiya.crm.orderservice.clients.requests.CreateProductCharacteristicValueRequest(
+						500L, 1L, 2L, "200Mbps", null));
 	}
 
 	// ---- cancelOrder ----
@@ -633,6 +736,38 @@ class CustOrdManagerTest {
 		assertThat(response.serviceAddress()).isNotNull();
 		assertThat(response.serviceAddress().addressId()).isEqualTo(77L);
 		assertThat(response.serviceAddress().cityName()).isEqualTo("Ankara");
+	}
+
+	@Test
+	void getById_fallsBackToNullCityName_whenCityIdNotFoundInLookup() {
+		// gercek ortamda gozlemlendi: adresteki cityId lookup-service'te artik yoksa
+		// (eski/tutarsiz veri) cityName enrichment tum cagriyi dusurmemeli.
+		CustOrd custOrd = waitingOrder();
+		custOrd.setAddressId(77L);
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		AddressResponse address = new AddressResponse(77L, CUST_ORD_ID, 21L, 201L, "Street", "12", "Desc", true, null,
+				null, null, null);
+		when(contactAddressClient.getById(77L)).thenReturn(address);
+		when(addressMapper.toSummaryResponse(address))
+				.thenReturn(new com.etiya.crm.orderservice.business.dtos.responses.AddressSummaryResponse(77L, 201L,
+						null, "Street", "12", "Desc"));
+		// hicbir Feign client'ta fallback tanimli olmadigi icin resilience4j gercek ortamda
+		// 404'u de NoFallbackAvailableException'a sarar (bkz. AbstractDownstreamExceptionHandler) -
+		// ham FeignException fircalamak bu davranisi yanlis simule ederdi.
+		feign.Request feignRequest = feign.Request.create(feign.Request.HttpMethod.GET,
+				"/api/v1/general-types/201", java.util.Map.of(), null, java.nio.charset.StandardCharsets.UTF_8, null);
+		feign.Response feignResponse = feign.Response.builder().status(404).reason("Not Found")
+				.request(feignRequest).headers(java.util.Map.of()).build();
+		feign.FeignException notFound = feign.FeignException.errorStatus("LookupClient#getGeneralTypeById(Long)",
+				feignResponse);
+		when(lookupCacheService.getGeneralType(201L)).thenThrow(
+				new org.springframework.cloud.client.circuitbreaker.NoFallbackAvailableException(
+						notFound.getMessage(), notFound));
+
+		OrderSummaryResponse response = custOrdManager.getById(CUST_ORD_ID);
+
+		assertThat(response.serviceAddress()).isNotNull();
+		assertThat(response.serviceAddress().cityName()).isNull();
 	}
 
 	// ---- getOrdersByCustId ----
