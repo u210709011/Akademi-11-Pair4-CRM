@@ -88,16 +88,39 @@ public class ProductCharacteristicValueManager implements ProductCharacteristicV
     }
 
     @Override
+    @Transactional(readOnly = true)
     public GetProductCharacteristicValueResponse getById(Long productCharacteristicValueId) {
         ProductCharacteristicValue entity = productCharacteristicValueRepository.findById(productCharacteristicValueId)
                 .orElseThrow(() -> new ProductCharacteristicValueNotFoundException(productCharacteristicValueId));
-        return productCharacteristicValueMapper.toGetResponse(entity);
+
+        GetProductCharacteristicValueResponse response = productCharacteristicValueMapper.toGetResponse(entity);
+
+        response.setCharacteristicName(lookupCacheService.getCharacteristicName(entity.getCharacteristicId()));
+
+        if (entity.getCharacteristicValueId() != null) {
+            response.setCharacteristicValueName(lookupCacheService.getCharacteristicValueName(entity.getCharacteristicValueId()));
+        }
+
+        return response;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<GetAllProductCharacteristicValueResponse> getAll() {
         List<ProductCharacteristicValue> entities = productCharacteristicValueRepository.findAll();
-        return productCharacteristicValueMapper.toGetAllResponseList(entities);
+        List<GetAllProductCharacteristicValueResponse> responses = productCharacteristicValueMapper.toGetAllResponseList(entities);
+
+        for (int i = 0; i < entities.size(); i++) {
+            responses.get(i).setCharacteristicName(
+                    lookupCacheService.getCharacteristicName(entities.get(i).getCharacteristicId()));
+
+            Long characteristicValueId = entities.get(i).getCharacteristicValueId();
+            if (characteristicValueId != null) {
+                responses.get(i).setCharacteristicValueName(
+                        lookupCacheService.getCharacteristicValueName(characteristicValueId));
+            }
+        }
+        return responses;
     }
 
     @Override
@@ -107,7 +130,20 @@ public class ProductCharacteristicValueManager implements ProductCharacteristicV
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         List<ProductCharacteristicValue> entities = productCharacteristicValueRepository.findByProduct_ProductId(productId);
-        return productCharacteristicValueMapper.toGetAllResponseList(entities);
+        List<GetAllProductCharacteristicValueResponse> responses = productCharacteristicValueMapper.toGetAllResponseList(entities);
+
+        for (int i = 0; i < entities.size(); i++) {
+            responses.get(i).setCharacteristicName(
+                    lookupCacheService.getCharacteristicName(entities.get(i).getCharacteristicId()));
+
+            Long characteristicValueId = entities.get(i).getCharacteristicValueId();
+            if (characteristicValueId != null) {
+                responses.get(i).setCharacteristicValueName(
+                        lookupCacheService.getCharacteristicValueName(characteristicValueId));
+            }
+        }
+
+        return responses;
     }
 
     @Override
