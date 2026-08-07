@@ -334,6 +334,40 @@ class CustOrdManagerTest {
 	}
 
 	@Test
+	void removeItem_cascadesToOtherItems_sharingSameCampaign() {
+		CustOrd custOrd = waitingOrder();
+		CustOrdItem fiber = new CustOrdItem();
+		fiber.setCustOrdItemId(900L);
+		fiber.setCustOrd(custOrd);
+		fiber.setProdOfrId(200L);
+		fiber.setCmpgId(40L);
+		CustOrdItem mobile = new CustOrdItem();
+		mobile.setCustOrdItemId(901L);
+		mobile.setCustOrd(custOrd);
+		mobile.setProdOfrId(300L);
+		mobile.setCmpgId(40L);
+		CustOrdItem unrelated = new CustOrdItem();
+		unrelated.setCustOrdItemId(902L);
+		unrelated.setCustOrd(custOrd);
+		unrelated.setProdOfrId(400L);
+		unrelated.setCmpgId(null);
+		custOrd.getItems().add(fiber);
+		custOrd.getItems().add(mobile);
+		custOrd.getItems().add(unrelated);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+
+		OrderSummaryResponse response = custOrdManager.removeItem(CUST_ORD_ID, 900L);
+
+		assertThat(response.items()).hasSize(1);
+		assertThat(response.items().get(0).prodOfrId()).isEqualTo(400L);
+		verify(custOrdItemRepository).delete(fiber);
+		verify(custOrdItemRepository).delete(mobile);
+		verify(custOrdItemRepository, never()).delete(unrelated);
+	}
+
+	@Test
 	void removeItem_throws_whenItemNotFound() {
 		CustOrd custOrd = waitingOrder();
 		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));

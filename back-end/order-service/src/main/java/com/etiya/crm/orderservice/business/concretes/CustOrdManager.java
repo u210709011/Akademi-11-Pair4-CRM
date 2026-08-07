@@ -193,7 +193,12 @@ public class CustOrdManager implements CustOrdService {
         return buildSummary(custOrd);
     }
 
-    /** Sepetten cop kutusuyla tek item cikarma. */
+    /**
+     * FR-014 "In Basket": sepetten cop kutusuyla item cikarma. Item bir kampanyaya
+     * (cmpgId) baglıysa, o kampanyayla sepete birlikte eklenmis butun item'lar birlikte
+     * cikarilir - kampanyali bagli urunler sepette tek tek degil, hep bir arada
+     * yasar/gider.
+     */
     @Override
     @Transactional
     public OrderSummaryResponse removeItem(Long custOrdId, Long custOrdItemId) {
@@ -206,9 +211,17 @@ public class CustOrdManager implements CustOrdService {
                 .findFirst()
                 .orElseThrow(() -> new OrderItemNotFoundException(custOrdItemId, custOrdId));
 
-        custOrd.getItems().remove(item);
-        bsnInterItemRepository.deleteByRowId(item.getCustOrdItemId());
-        custOrdItemRepository.delete(item);
+        List<CustOrdItem> itemsToRemove = item.getCmpgId() == null
+                ? List.of(item)
+                : custOrd.getItems().stream()
+                        .filter(i -> item.getCmpgId().equals(i.getCmpgId()))
+                        .collect(Collectors.toList());
+
+        for (CustOrdItem toRemove : itemsToRemove) {
+            custOrd.getItems().remove(toRemove);
+            bsnInterItemRepository.deleteByRowId(toRemove.getCustOrdItemId());
+            custOrdItemRepository.delete(toRemove);
+        }
 
         return buildSummary(custOrd);
     }
