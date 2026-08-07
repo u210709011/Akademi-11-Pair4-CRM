@@ -54,6 +54,12 @@ public class CampaignOfferingController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/by-campaign/{campaignId}")
+    public ResponseEntity<List<GetAllCampaignOfferingResponse>> getByCampaignId(@PathVariable Long campaignId) {
+        List<GetAllCampaignOfferingResponse> response = campaignOfferingService.getByCampaignId(campaignId);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{campaignOfferingId}")
     public ResponseEntity<Void> delete(@PathVariable Long campaignOfferingId) {
         campaignOfferingService.delete(campaignOfferingId);

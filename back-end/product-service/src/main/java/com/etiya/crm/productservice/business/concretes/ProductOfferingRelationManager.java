@@ -89,6 +89,16 @@ public class ProductOfferingRelationManager implements ProductOfferingRelationSe
     }
 
     @Override
+    public List<GetAllProductOfferingRelationResponse> getByProductOfferingId(Long productOfferingId) {
+        productOfferingRepository.findById(productOfferingId)
+                .orElseThrow(() -> new ProductOfferingNotFoundException(productOfferingId));
+
+        List<ProductOfferingRelation> entities =
+                productOfferingRelationRepository.findByProductOffering1_ProductOfferingIdAndActiveTrue(productOfferingId);
+        return productOfferingRelationMapper.toGetAllResponseList(entities);
+    }
+
+    @Override
     public void delete(Long productOfferingRelationId) {
         ProductOfferingRelation entity = productOfferingRelationRepository.findById(productOfferingRelationId)
                 .orElseThrow(() -> new ProductOfferingRelationNotFoundException(productOfferingRelationId));

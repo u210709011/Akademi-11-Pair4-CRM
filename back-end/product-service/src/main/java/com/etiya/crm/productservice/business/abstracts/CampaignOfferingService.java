@@ -19,5 +19,7 @@ public interface CampaignOfferingService {
 
     List<GetAllCampaignOfferingResponse> getAll();
 
+    List<GetAllCampaignOfferingResponse> getByCampaignId(Long campaignId);
+
     void delete(Long campaignOfferingId);
 }
