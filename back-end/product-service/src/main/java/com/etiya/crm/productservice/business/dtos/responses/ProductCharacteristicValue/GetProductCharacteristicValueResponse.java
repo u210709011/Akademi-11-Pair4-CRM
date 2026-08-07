@@ -11,9 +11,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class GetProductCharacteristicValueResponse {
     private Long productCharacteristicValueId;   // PK
+    private String characteristicName;
     private Long productId;                       // ilişki → ID
     private Long characteristicId;                // lookup, düz Long
     private Long characteristicValueId;           // lookup, düz Long (opsiyonel, null olabilir)
+    private String characteristicValueName;
     private String value;                         // düz String (opsiyonel)
     private Long statusId;                        // lookup
 }
