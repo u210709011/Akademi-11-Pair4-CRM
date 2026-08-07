@@ -13,9 +13,11 @@ public class GetProductResponse {
     private Long productId;              // PK
     private Long parentProductId;        // ilişki → ID (opsiyonel, null olabilir)
     private Long productOfferingId;      // ilişki → ID
+    private String productOfferingName;
     private Long productSpecId;          // ilişki → ID
     private String name;
     private String descr;
     private Long campaignId;             // ilişki → ID (opsiyonel, null olabilir)
+    private String campaignName;
     private Long statusId;
 }
