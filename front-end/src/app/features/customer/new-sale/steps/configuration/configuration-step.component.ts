@@ -1,12 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
 import { AddressEditRequest, AddressResponse, CustomerService } from '../../../../../core/customer';
 import { I18nService } from '../../../../../core/i18n';
-import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
+import { CharacteristicValue, GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
+import { ProductService } from '../../../../../core/product';
 import { BasketLine, NewSaleFormStateService } from '../../new-sale.component';
-import { NEW_SALE_MOCK_MODE } from '../../mock/new-sale-mock.config';
-import { MOCK_CHARACTERISTICS_BY_OFFERING, MockCharacteristicField } from '../../mock/new-sale-mock.data';
 
 const UNKNOWN = '—';
 
@@ -19,8 +18,22 @@ interface AddressFormModel {
 
 const EMPTY_ADDRESS_FORM: AddressFormModel = { city: '', street: '', houseNumber: '', description: '' };
 
-// Karakteristik formu (Connection Type/Modem Model vb.) icin product-service'te sema/tanim endpoint'i
-// yok, bu yuzden bilincli olarak atlandi - sadece Service Address karti kuruldu (kullanicinin karariyla).
+interface CharacteristicOption {
+  value: string;
+  label: string;
+}
+
+// Configuration adiminda gosterilen bir karakteristik alani - product-offering-char-uses (sema)
+// ve characteristic-values (secim listesi varsa) birlestirilerek olusturulur.
+interface CharacteristicField {
+  key: string;
+  label: string;
+  type: 'select' | 'text';
+  required: boolean;
+  options?: CharacteristicOption[];
+  placeholder?: string;
+}
+
 @Component({
   selector: 'app-configuration-step',
   imports: [FormField],
@@ -32,12 +45,30 @@ export class ConfigurationStepComponent {
   protected readonly i18n = inject(I18nService);
   private readonly customerService = inject(CustomerService);
   private readonly lookupService = inject(LookupService);
+  private readonly productService = inject(ProductService);
   protected readonly formState = inject(NewSaleFormStateService);
 
   protected readonly cities = signal<GnlType[]>([]);
+  private readonly characteristicValues = signal<CharacteristicValue[]>([]);
+  private readonly loadedCharUseOfferingIds = new Set<number>();
 
   constructor() {
     this.lookupService.getTypesByGroup(LOOKUP_GROUPS.CITY).subscribe(cities => this.cities.set(cities));
+    this.lookupService.getCharacteristicValues().subscribe(values => this.characteristicValues.set(values));
+
+    // Sepetteki her offering icin karakteristik semasini bir kere ceker (formState.charUsesByOffering'e
+    // yazar ki Review adimi da ayni veriyi tekrar cekmeden kullanabilsin).
+    effect(() => {
+      for (const line of this.configurableLines()) {
+        if (this.loadedCharUseOfferingIds.has(line.prodOfrId)) {
+          continue;
+        }
+        this.loadedCharUseOfferingIds.add(line.prodOfrId);
+        this.productService.getCharUsesByOffering(line.prodOfrId).subscribe(charUses => {
+          this.formState.charUsesByOffering.update(all => ({ ...all, [line.prodOfrId]: charUses }));
+        });
+      }
+    });
   }
 
   protected readonly selectedAddress = computed<AddressResponse | null>(
@@ -47,12 +78,22 @@ export class ConfigurationStepComponent {
   // Zorunlu urun olarak otomatik eklenenler (ör. Wi-Fi Router) icin ayri config karti gosterilmiyor.
   protected readonly configurableLines = computed(() => this.formState.basket().filter(line => !line.isAutoAdded));
 
-  // GECICI MOCK - karakteristik semasi sadece mock modda tutuluyor (bkz. new-sale-mock.data.ts).
-  // Degerler formState.charValues'ta tutulur (Review adimi da okuyabilsin diye, bkz. new-sale.component.ts).
   protected readonly collapsedProductIds = signal<Set<number>>(new Set());
 
-  protected fieldsFor(prodOfrId: number): MockCharacteristicField[] {
-    return NEW_SALE_MOCK_MODE ? MOCK_CHARACTERISTICS_BY_OFFERING[prodOfrId] ?? [] : [];
+  protected fieldsFor(prodOfrId: number): CharacteristicField[] {
+    const charUses = this.formState.charUsesByOffering()[prodOfrId] ?? [];
+    return charUses
+      .filter(cu => cu.active)
+      .map(cu => {
+        const values = this.characteristicValues().filter(v => v.charId === cu.characteristicId && v.active);
+        return {
+          key: String(cu.characteristicId),
+          label: cu.characteristicName,
+          required: cu.mandatory,
+          type: values.length > 0 ? 'select' : 'text',
+          options: values.map(v => ({ value: String(v.charValId), label: v.val }))
+        };
+      });
   }
 
   protected fieldValue(prodOfrId: number, key: string): string {

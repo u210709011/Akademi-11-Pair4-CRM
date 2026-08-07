@@ -2,21 +2,14 @@ import { NgComponentOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, Injectable, Type, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { BasketItemRequest, OrderService } from '../../../core/order';
+import { BasketItemRequest, ItemCharValsRequest, OrderConfigurationRequest, OrderItemSummaryResponse, OrderService } from '../../../core/order';
 import { AddressResponse, CustomerService } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
+import { LookupService } from '../../../core/lookup';
+import { ProductOfferingCharUse } from '../../../core/product';
 import { ConfigurationStepComponent } from './steps/configuration/configuration-step.component';
 import { OfferSelectionComponent } from './steps/offer-selection/offer-selection.component';
 import { ReviewStepComponent } from './steps/review/review-step.component';
-import { NEW_SALE_MOCK_MODE } from './mock/new-sale-mock.config';
-import { MOCK_CHARACTERISTICS_BY_OFFERING, MOCK_OFFERINGS, MOCK_REQUIRED_PRODUCTS } from './mock/new-sale-mock.data';
-
-const MOCK_CUST_ORD_ID = 900001;
-// GECICI MOCK - BsnInter backend'de olusuyor ama OrderSummaryResponse hic disariya expose etmiyor,
-// bu yuzden Review & Submit'teki Business Interaction ID sadece mock modda rastgele uretilir.
-function generateMockBsnInterId(): number {
-  return 400000 + Math.floor(Math.random() * 99999);
-}
 
 type NewSaleStep = 'offer' | 'configuration' | 'review';
 
@@ -35,21 +28,46 @@ export interface BasketLine {
   cmpgName: string | null;
   // Sadece Catalog tab'inden eklenirse biliniyor (secili katalog) - Campaign tab'inden eklenirse null.
   catalogName: string | null;
-  // GECICI MOCK ALANLARI - zorunlu urun otomatik ekleme sadece mock modda calisir (bkz. MOCK_REQUIRED_PRODUCTS).
+  // product-offering-relations'tan (mandatory=true) otomatik eklenen zorunlu urunler icin.
   isAutoAdded: boolean;
   triggeredBy: number | null;
+}
+
+interface RequiredOffering {
+  productOfferingId: number;
+  name: string;
+  price: number;
 }
 
 // Adim component'leri NgComponentOutlet ile degistigi icin state kendi icinde degil, bu serviste tutulur.
 @Injectable()
 export class NewSaleFormStateService {
+  private readonly lookupService = inject(LookupService);
+  // Hangi charId'lerin secim listesi (GNL_CHAR_VAL) oldugunu belirler - saveConfiguration
+  // isteginde charValId mi yoksa serbest metin (val) mi gonderilecegine karar vermek icin.
+  private readonly selectableCharIds = signal<ReadonlySet<number>>(new Set());
+
+  constructor() {
+    this.lookupService.getCharacteristicValues().subscribe(values => {
+      this.selectableCharIds.set(new Set(values.map(v => v.charId)));
+    });
+  }
+
   readonly basket = signal<BasketLine[]>([]);
   readonly custOrdId = signal<number | null>(null);
-  // GECICI MOCK - bkz. generateMockBsnInterId, backend bu alani hic dondurmuyor.
-  readonly bsnInterId = signal<number | null>(null);
+  readonly orderItems = signal<OrderItemSummaryResponse[]>([]);
+  readonly totalAmount = signal(0);
 
   readonly isValidatingBasket = signal(false);
   readonly basketError = signal<string | null>(null);
+
+  // Offer Selection yuklenirken bir kere doldurulur (mandatory=true, active=true iliskiler,
+  // hedef offering'in ad/fiyatiyla zenginlestirilmis) - sepete zorunlu urun otomatik eklemek icin.
+  readonly requiredOfferingsMap = signal<Record<number, RequiredOffering[]>>({});
+
+  // Configuration adiminda basket'teki her offering icin bir kere cekilip burada saklanir -
+  // Review adimi da isConfigured() uzerinden ayni veriye erismesi gerektigi icin.
+  readonly charUsesByOffering = signal<Record<number, ProductOfferingCharUse[]>>({});
 
   // Configuration adiminda Service Address karti icin - custId sahibinin adres listesi ve secili adres.
   readonly custId = signal(0);
@@ -67,20 +85,19 @@ export class NewSaleFormStateService {
   // NewSaleComponent'te (activeStep) yonetildigi icin bu sinyal uzerinden istek iletilir.
   readonly requestedStep = signal<NewSaleStep | null>(null);
 
-  // GECICI MOCK - karakteristik degerleri, Configuration adiminda toplanip Review'da da
-  // gosterildigi icin (adim component'leri NgComponentOutlet ile yok edildigi icin) burada tutulur.
+  // Karakteristik degerleri - Configuration adiminda toplanip Review'da da gosterildigi icin
+  // (adim component'leri NgComponentOutlet ile yok edildigi icin) burada tutulur.
+  // prodOfrId -> charId(string) -> secilen deger (select icin charValId'nin string hali, text icin ham metin).
   readonly charValues = signal<Record<number, Record<string, string>>>({});
 
   isConfigured(prodOfrId: number): boolean {
-    if (!NEW_SALE_MOCK_MODE) {
+    const charUses = this.charUsesByOffering()[prodOfrId];
+    if (!charUses || charUses.length === 0) {
       return false;
     }
-    const fields = MOCK_CHARACTERISTICS_BY_OFFERING[prodOfrId] ?? [];
-    if (fields.length === 0) {
-      return false;
-    }
+    const mandatory = charUses.filter(cu => cu.mandatory && cu.active);
     const values = this.charValues()[prodOfrId] ?? {};
-    return fields.filter(f => f.required).every(f => (values[f.key] ?? '').trim().length > 0);
+    return mandatory.every(cu => (values[String(cu.characteristicId)] ?? '').trim().length > 0);
   }
 
   // Donus degeri: bu ekleme sonucu otomatik eklenen zorunlu urunlerin isimleri (toast mesaji icin).
@@ -91,31 +108,25 @@ export class NewSaleFormStateService {
     this.basket.update(items => [...items, line]);
 
     const addedRequiredNames: string[] = [];
-    if (NEW_SALE_MOCK_MODE) {
-      const requiredIds = MOCK_REQUIRED_PRODUCTS[line.prodOfrId] ?? [];
-      for (const requiredId of requiredIds) {
-        if (this.basket().some(item => item.prodOfrId === requiredId)) {
-          continue;
-        }
-        const requiredOffering = MOCK_OFFERINGS.find(o => o.productOfferingId === requiredId);
-        if (!requiredOffering) {
-          continue;
-        }
-        this.basket.update(items => [
-          ...items,
-          {
-            prodOfrId: requiredOffering.productOfferingId,
-            offerName: requiredOffering.name,
-            price: requiredOffering.totalPrice,
-            cmpgId: null,
-            cmpgName: null,
-            catalogName: line.catalogName,
-            isAutoAdded: true,
-            triggeredBy: line.prodOfrId
-          }
-        ]);
-        addedRequiredNames.push(requiredOffering.name);
+    const requiredOfferings = this.requiredOfferingsMap()[line.prodOfrId] ?? [];
+    for (const required of requiredOfferings) {
+      if (this.basket().some(item => item.prodOfrId === required.productOfferingId)) {
+        continue;
       }
+      this.basket.update(items => [
+        ...items,
+        {
+          prodOfrId: required.productOfferingId,
+          offerName: required.name,
+          price: required.price,
+          cmpgId: null,
+          cmpgName: null,
+          catalogName: line.catalogName,
+          isAutoAdded: true,
+          triggeredBy: line.prodOfrId
+        }
+      ]);
+      addedRequiredNames.push(required.name);
     }
     return addedRequiredNames;
   }
@@ -129,7 +140,8 @@ export class NewSaleFormStateService {
           return true;
         }
         return remaining.some(other =>
-          !other.isAutoAdded && (MOCK_REQUIRED_PRODUCTS[other.prodOfrId] ?? []).includes(item.prodOfrId)
+          !other.isAutoAdded &&
+          (this.requiredOfferingsMap()[other.prodOfrId] ?? []).some(r => r.productOfferingId === item.prodOfrId)
         );
       });
     });
@@ -141,6 +153,34 @@ export class NewSaleFormStateService {
 
   toBasketItemRequests(): BasketItemRequest[] {
     return this.basket().map(line => ({ prodOfrId: line.prodOfrId, cmpgId: line.cmpgId, charVals: [] }));
+  }
+
+  // Configuration adiminda toplanan karakteristik degerlerini saveConfiguration icin hazirlar.
+  // custOrdItemId eslesmesi orderItems'tan (createOrder yanitindan) gelir.
+  toOrderConfigurationRequest(): OrderConfigurationRequest {
+    const items: ItemCharValsRequest[] = this.orderItems().map(item => {
+      const charUses = this.charUsesByOffering()[item.prodOfrId] ?? [];
+      const values = this.charValues()[item.prodOfrId] ?? {};
+      const selectable = this.selectableCharIds();
+      const charVals = charUses
+        .filter(cu => (values[String(cu.characteristicId)] ?? '').trim().length > 0)
+        .map(cu => {
+          const raw = values[String(cu.characteristicId)];
+          const isSelect = selectable.has(cu.characteristicId);
+          return {
+            charId: cu.characteristicId,
+            charValId: isSelect ? Number(raw) : null,
+            val: isSelect ? null : raw
+          };
+        });
+      return { custOrdItemId: item.custOrdItemId, charVals };
+    });
+
+    return {
+      items,
+      addressId: this.selectedAddressId(),
+      newAddress: null
+    };
   }
 }
 
@@ -178,8 +218,10 @@ export class NewSaleComponent {
     () => this.steps.find(step => step.key === this.activeStep())?.component ?? null
   );
 
+  private readonly isSavingConfiguration = signal(false);
+
   protected readonly isNextDisabled = computed(() => {
-    if (this.formState.isValidatingBasket() || this.formState.isSubmittingOrder()) {
+    if (this.formState.isValidatingBasket() || this.formState.isSubmittingOrder() || this.isSavingConfiguration()) {
       return true;
     }
     if (this.activeStep() === 'offer') {
@@ -231,6 +273,10 @@ export class NewSaleComponent {
       this.validateBasketThenCreateOrder();
       return;
     }
+    if (this.activeStep() === 'configuration') {
+      this.saveConfigurationThenAdvance();
+      return;
+    }
     if (this.activeStep() === 'review') {
       this.submitOrder();
       return;
@@ -250,16 +296,6 @@ export class NewSaleComponent {
     this.formState.isValidatingBasket.set(true);
     this.formState.basketError.set(null);
 
-    // GECICI MOCK MODU - backend product-service hazir olana kadar validate-basket/createOrder
-    // gercek cagrilari atlanip sahte bir custOrdId ile devam edilir. Kaldirmak icin bu bloğu silin.
-    if (NEW_SALE_MOCK_MODE) {
-      this.formState.isValidatingBasket.set(false);
-      this.formState.custOrdId.set(MOCK_CUST_ORD_ID);
-      this.formState.bsnInterId.set(generateMockBsnInterId());
-      this.advanceStep();
-      return;
-    }
-
     const items = this.formState.toBasketItemRequests();
 
     this.orderService.validateBasket({ custId: this.custId, custAcctId: this.custAcctId, items }).subscribe({
@@ -268,6 +304,8 @@ export class NewSaleComponent {
           next: response => {
             this.formState.isValidatingBasket.set(false);
             this.formState.custOrdId.set(response.custOrdId);
+            this.formState.orderItems.set(response.items);
+            this.formState.totalAmount.set(response.totalAmount);
             this.advanceStep();
           },
           error: (httpError: HttpErrorResponse) => {
@@ -283,6 +321,28 @@ export class NewSaleComponent {
     });
   }
 
+  private saveConfigurationThenAdvance(): void {
+    const custOrdId = this.formState.custOrdId();
+    if (!custOrdId) {
+      return;
+    }
+
+    this.isSavingConfiguration.set(true);
+    this.formState.basketError.set(null);
+
+    this.orderService.saveConfiguration(custOrdId, this.formState.toOrderConfigurationRequest()).subscribe({
+      next: response => {
+        this.isSavingConfiguration.set(false);
+        this.formState.totalAmount.set(response.totalAmount);
+        this.advanceStep();
+      },
+      error: (httpError: HttpErrorResponse) => {
+        this.isSavingConfiguration.set(false);
+        this.formState.basketError.set(this.extractErrorMessage(httpError));
+      }
+    });
+  }
+
   private submitOrder(): void {
     const custOrdId = this.formState.custOrdId();
     if (!custOrdId) {
@@ -291,13 +351,6 @@ export class NewSaleComponent {
 
     this.formState.isSubmittingOrder.set(true);
     this.formState.submitError.set(null);
-
-    // GECICI MOCK MODU - bkz. validateBasketThenCreateOrder yorumu.
-    if (NEW_SALE_MOCK_MODE) {
-      this.formState.isSubmittingOrder.set(false);
-      this.router.navigate(['/detail-customer', this.custId]);
-      return;
-    }
 
     this.orderService.finishOrder(custOrdId).subscribe({
       next: () => {

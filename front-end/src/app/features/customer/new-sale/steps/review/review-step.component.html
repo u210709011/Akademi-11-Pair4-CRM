@@ -17,10 +17,6 @@
             <span class="review-summary-value">{{ formState.billingAccountNo() }}</span>
         </div>
         <div class="review-summary-field">
-            <span class="review-summary-label">{{ i18n.t('newSale.businessInteractionId') }}</span>
-            <span class="review-summary-value">BI-{{ formState.bsnInterId() }}</span>
-        </div>
-        <div class="review-summary-field">
             <span class="review-summary-label">{{ i18n.t('newSale.orderDate') }}</span>
             <span class="review-summary-value">{{ orderDate }}</span>
         </div>
@@ -179,27 +175,6 @@
 
 <div class="review-price-card">
     <h3>{{ i18n.t('newSale.priceSummary') }}</h3>
-
-    <div class="review-price-row">
-        <span>{{ i18n.t('newSale.monthlyCharges') }}</span>
-        <span>{{ monthlyCharges() | number: '1.2-2' }} {{ i18n.t('newSale.currency') }} / {{ i18n.t('newSale.perMonth') }}</span>
-    </div>
-    <div class="review-price-row">
-        <span>{{ i18n.t('newSale.oneTimeCharges') }}</span>
-        <span>{{ oneTimeCharges() | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
-    </div>
-    <div class="review-price-row">
-        <span>{{ i18n.t('newSale.discounts') }}</span>
-        <span>- {{ discounts() | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
-    </div>
-    <div class="review-price-row">
-        <span>{{ i18n.t('newSale.taxes') }}</span>
-        <span>{{ taxes() | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
-    </div>
-    <div class="review-price-row">
-        <span>{{ i18n.t('newSale.activationFee') }}</span>
-        <span>{{ activationFee | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
-    </div>
 
     <div class="review-total-row">
         <span>{{ i18n.t('newSale.grandTotal') }}</span>

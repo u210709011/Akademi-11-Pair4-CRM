@@ -2,7 +2,15 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Campaign, CampaignOffering, ProductCatalog, ProductCatalogOffering, ProductOffering } from './product.model';
+import {
+  Campaign,
+  CampaignOffering,
+  ProductCatalog,
+  ProductCatalogOffering,
+  ProductOffering,
+  ProductOfferingCharUse,
+  ProductOfferingRelation
+} from './product.model';
 
 // product-service'te arama/filtreleme destekleyen bir GET endpoint yok (sadece getAll/getById),
 // bu yuzden Offer Selection ekrani tum listeleri ceker ve filtrelemeyi kendi icinde yapar.
@@ -19,7 +27,7 @@ export class ProductService {
   }
 
   getOfferings(): Observable<ProductOffering[]> {
-    return this.http.get<ProductOffering[]>(`${environment.apiGatewayUrl}/api/v1/product-procutOfferings`);
+    return this.http.get<ProductOffering[]>(`${environment.apiGatewayUrl}/api/v1/product-offerings`);
   }
 
   getCampaigns(): Observable<Campaign[]> {
@@ -28,5 +36,18 @@ export class ProductService {
 
   getCampaignOfferings(): Observable<CampaignOffering[]> {
     return this.http.get<CampaignOffering[]>(`${environment.apiGatewayUrl}/api/v1/campaign-offerings`);
+  }
+
+  // Tum offering-offering iliskileri (orn. Fiber -> Modem, zorunlu/opsiyonel) - New Sale
+  // Offer Selection ekrani sepete eklerken zorunlu urunleri otomatik eklemek icin bunu bir kere ceker.
+  getOfferingRelations(): Observable<ProductOfferingRelation[]> {
+    return this.http.get<ProductOfferingRelation[]>(`${environment.apiGatewayUrl}/api/v1/product-offering-relations`);
+  }
+
+  // Bir offering'in Configuration adiminda gosterilmesi gereken karakteristik semasi.
+  getCharUsesByOffering(productOfferingId: number): Observable<ProductOfferingCharUse[]> {
+    return this.http.get<ProductOfferingCharUse[]>(
+      `${environment.apiGatewayUrl}/api/v1/product-offering-char-uses/by-offering/${productOfferingId}`
+    );
   }
 }
