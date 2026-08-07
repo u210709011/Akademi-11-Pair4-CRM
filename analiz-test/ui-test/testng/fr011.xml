@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  FR-011 Billing Account Silme (UC-EACRML-011).
+  Calistirma: ./mvnw test -Dsuite=fr011
+
+  ON KOSUL: ACC-004 senaryosu urun gerektirir, order-service ve product-service ayakta olmalidir.
+
+  BILINCLI KIRMIZI (documented-gap grubu, CI'da dislanabilir):
+    - passiveAccountWithProductCannotBeDeleted: ACC-004'un sart kostugu bagli urun kontrolu
+      uygulamada YOK. Guard bagli ancak NoOpBillingAccountProductGuard her zaman false doner;
+      DELETE ucunun Swagger aciklamasi da "order-service'i bekliyor, henuz uygulanmadi - TODO"
+      diyor. Urunu olan hesap sessizce siliniyor.
+    - confirmDialogShowsDocumentedText: onay metni dokumandakinden farkli (kural ayni).
+-->
+<!-- configfailurepolicy=continue: tek bir @BeforeMethod hatasi, sinifin geri kalan
+     testlerinin config metotlarinin da atlanmasina yol acmamalidir. -->
+<suite name="CRM Lite UI - FR-011" verbose="1" parallel="false" configfailurepolicy="continue">
+
+    <listeners>
+        <listener class-name="com.crmlite.ui.core.listeners.SuiteListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.TestListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
+    <test name="FR-011 Billing Account Silme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr011accountdelete.DeleteBillingAccountTests"/>
+        </classes>
+    </test>
+
+</suite>

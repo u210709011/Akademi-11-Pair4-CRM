@@ -23,6 +23,7 @@ import java.util.Map;
 public final class BillingAccountApi {
 
     private static final String ACCOUNTS = "/api/v1/customers/{custId}/accounts";
+    private static final String ACCOUNT_STATUS = "/api/v1/customers/{custId}/accounts/{accountId}/status";
 
     private BillingAccountApi() {
     }
@@ -66,5 +67,31 @@ public final class BillingAccountApi {
     public static BillingAccountResponse createOnPrimaryAddress(long custId) {
         long addressId = AddressApi.primaryAddress(custId).id();
         return create(custId, addressId, "UI Test Billing");
+    }
+
+    /**
+     * Hesabi pasife ceker — FR-011 on kosulu.
+     *
+     * <p>Silme yalnizca <b>pasif</b> hesaplar icin mumkundur (ACC-003); aktif hesabi silme
+     * denemesi 409 doner. Arayuzde hesabi pasiflestiren bir kontrol bulunmadigi icin bu
+     * durum yalnizca API ile kurulabilir. Soft-delete <b>degildir</b>, ayri bir uctur.
+     */
+    public static BillingAccountResponse deactivate(long custId, long accountId) {
+        return updateStatus(custId, accountId, "PASSIVE");
+    }
+
+    public static BillingAccountResponse updateStatus(long custId, long accountId, String status) {
+        Response response = ApiClient.authenticated()
+                .pathParam("custId", custId)
+                .pathParam("accountId", accountId)
+                .body(Map.of("status", status))
+                .patch(ACCOUNT_STATUS);
+
+        if (response.statusCode() != 200) {
+            throw new TestDataSetupException(String.format(
+                    "Hesap durumu degistirilemedi (custId=%d, accountId=%d, status=%s, HTTP %d). Yanit: %s",
+                    custId, accountId, status, response.statusCode(), response.getBody().asString()));
+        }
+        return response.as(BillingAccountResponse.class);
     }
 }

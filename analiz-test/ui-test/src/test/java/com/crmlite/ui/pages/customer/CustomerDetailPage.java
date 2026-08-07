@@ -59,6 +59,16 @@ public class CustomerDetailPage extends BasePage {
     // butonuyla ayni sinifi paylasir, sekme bazinda ayrisir.
     private static final By CREATE_ACCOUNT_BUTTON = By.cssSelector(".info-panel-actions .add-address-button");
 
+    // FR-011: "silinemez" diyalogu. Silme onay diyaloguyla ayni .delete-confirm-card sinifini
+    // paylasir; ayirt edici isaret uyari ikonu ve OK butonudur (.save-button) — onay
+    // diyalogunda .delete-confirm-button vardir, .save-button yoktur.
+    private static final By CANNOT_DELETE_DIALOG =
+            By.cssSelector(".modal-card.delete-confirm-card .delete-confirm-icon-warning");
+    private static final By CANNOT_DELETE_MESSAGE =
+            By.cssSelector(".modal-card.delete-confirm-card .delete-confirm-message");
+    private static final By CANNOT_DELETE_CLOSE =
+            By.cssSelector(".modal-card.delete-confirm-card .modal-actions .save-button");
+
     // FR-009: genisletilmis hesap satirindaki urun tablosu ve sayfalama.
     private static final By PRODUCTS_TABLE = By.cssSelector("table.products-table");
     private static final By PRODUCT_HEADERS = By.cssSelector("table.products-table thead th");
@@ -563,6 +573,32 @@ public class CustomerDetailPage extends BasePage {
                 "table.accounts-table tbody tr:nth-of-type(%d) .account-row-actions "
                         + ".icon-button-danger", rowIndex + 1)));
         return new ConfirmDialogComponent(driver);
+    }
+
+    /**
+     * FR-011 ACC-003/ACC-004: silme reddedildiginde acilan "silinemez" diyalogu.
+     *
+     * <p>Onay diyalogundan <b>ayri</b> bir modaldir: silme istegi 409 dondugunde onay
+     * diyalogu kapanir ve backend'in mesajini tasiyan bu diyalog acilir.
+     */
+    public boolean hasCannotDeleteAccountDialog() {
+        return isDisplayedAfterWait(CANNOT_DELETE_DIALOG);
+    }
+
+    public String cannotDeleteAccountMessage() {
+        return getText(CANNOT_DELETE_MESSAGE);
+    }
+
+    public CustomerDetailPage closeCannotDeleteAccountDialog() {
+        click(CANNOT_DELETE_CLOSE);
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(CANNOT_DELETE_DIALOG));
+        return this;
+    }
+
+    /** Silme sonrasi hesap sayisinin gercekten azalmasini bekler (liste asenkron yenilenir). */
+    public CustomerDetailPage waitUntilAccountCountIsLessThan(int previousCount) {
+        wait.until(ExpectedConditions.numberOfElementsToBeLessThan(ACCOUNT_ROWS, previousCount));
+        return this;
     }
 
     // --- FR-009 ACC-009: sayfalama ---
