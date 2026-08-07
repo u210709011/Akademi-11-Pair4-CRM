@@ -4,6 +4,7 @@ import com.crmlite.ui.pages.BasePage;
 import com.crmlite.ui.pages.components.AddressCardComponent;
 import com.crmlite.ui.pages.components.AddressModalComponent;
 import com.crmlite.ui.pages.components.BillingAccountModalComponent;
+import com.crmlite.ui.pages.components.ProductDetailModalComponent;
 import com.crmlite.ui.pages.components.ConfirmDialogComponent;
 import com.crmlite.ui.pages.components.ContactModalComponent;
 import com.crmlite.ui.pages.components.NavbarComponent;
@@ -57,6 +58,14 @@ public class CustomerDetailPage extends BasePage {
     // Accounts sekmesindeki "+ Create New Account" butonu; adres sekmesindeki ekleme
     // butonuyla ayni sinifi paylasir, sekme bazinda ayrisir.
     private static final By CREATE_ACCOUNT_BUTTON = By.cssSelector(".info-panel-actions .add-address-button");
+
+    // FR-009: genisletilmis hesap satirindaki urun tablosu ve sayfalama.
+    private static final By PRODUCTS_TABLE = By.cssSelector("table.products-table");
+    private static final By PRODUCT_HEADERS = By.cssSelector("table.products-table thead th");
+    private static final By NO_PRODUCTS_MESSAGE = By.cssSelector(".account-no-products");
+    private static final By ACCOUNTS_PAGINATION = By.cssSelector(".accounts-table-wrapper .pagination");
+    private static final By ACCOUNTS_PAGINATION_RANGE =
+            By.cssSelector(".accounts-table-wrapper .pagination .pagination-range");
 
     // Contact Medium sekmesi (FR-006)
     private static final By CONTACT_GRID = By.cssSelector(".contact-info-grid");
@@ -463,5 +472,98 @@ public class CustomerDetailPage extends BasePage {
             headers.add(header.getText().trim());
         }
         return headers;
+    }
+
+    // --- FR-009: hesap satirini genisletme ve bagli urunler ---
+
+    /** FR-009 ACC-003: satiri genisletip daraltan ok, her hesap satirinda bulunur. */
+    public boolean hasExpandToggle(int rowIndex) {
+        return isDisplayed(expandToggle(rowIndex));
+    }
+
+    /** FR-009 ACC-004: oka tiklar. Ayni oka tekrar tiklamak satiri daraltir. */
+    public CustomerDetailPage toggleAccountRow(int rowIndex) {
+        click(expandToggle(rowIndex));
+        return this;
+    }
+
+    /** Satirin acik olup olmadigi — uygulama acik satirdaki oka {@code expanded} sinifi ekler. */
+    public boolean isAccountRowExpanded(int rowIndex) {
+        return find(expandToggle(rowIndex)).getAttribute("class").contains("expanded");
+    }
+
+    /** FR-009 ACC-004: genisletilmis satirdaki urun tablosu goruntuleniyor mu. */
+    public boolean isProductTableDisplayed() {
+        return isDisplayedAfterWait(PRODUCTS_TABLE);
+    }
+
+    /** Satir daraltildiktan sonra urun tablosunun DOM'dan kalktigini bekler. */
+    public CustomerDetailPage waitUntilProductTableHidden() {
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(PRODUCTS_TABLE));
+        return this;
+    }
+
+    /** FR-009 ACC-005: urun tablosu kolon basliklari. */
+    public List<String> productColumnHeaders() {
+        List<String> headers = new ArrayList<>();
+        for (WebElement header : findAll(PRODUCT_HEADERS)) {
+            headers.add(header.getText().trim());
+        }
+        return headers;
+    }
+
+    /** Urun tablosundaki urun adlari (2. kolon). */
+    public List<String> productNames() {
+        List<String> names = new ArrayList<>();
+        for (WebElement cell : findAll(By.cssSelector("table.products-table tbody tr td:nth-child(2)"))) {
+            names.add(cell.getText().trim());
+        }
+        return names;
+    }
+
+    /** Hesabin hic urunu yoksa tablo yerine gosterilen metin. */
+    public boolean hasNoProductsMessage() {
+        return isDisplayedAfterWait(NO_PRODUCTS_MESSAGE);
+    }
+
+    public String noProductsMessage() {
+        return getText(NO_PRODUCTS_MESSAGE);
+    }
+
+    /** FR-009 ACC-006: urun satirindaki goz ikonu → Product Offer Details modal'i. */
+    public ProductDetailModalComponent openProductDetail(int productRowIndex) {
+        click(By.cssSelector(String.format(
+                "table.products-table tbody tr:nth-of-type(%d) .icon-button", productRowIndex + 1)));
+        ProductDetailModalComponent modal = new ProductDetailModalComponent(driver);
+        modal.waitUntilLoaded();
+        return modal;
+    }
+
+    // --- FR-009 ACC-009: sayfalama ---
+
+    /** Sayfalama kontrolleri yalnizca birden fazla sayfa varsa render edilir. */
+    public boolean hasAccountsPagination() {
+        return isDisplayed(ACCOUNTS_PAGINATION);
+    }
+
+    /** "1-5 / 7" bicimindeki aralik etiketi. */
+    public String accountsRangeLabel() {
+        return getText(ACCOUNTS_PAGINATION_RANGE);
+    }
+
+    /**
+     * Panelin gorunen metni.
+     *
+     * <p>Beklenen bir metnin ekranda <b>hic bulunmadigini</b> gostermek icin kullanilir:
+     * metin implement edilmediginde ona ait bir locator da olmadigi icin normal yontemle
+     * assert edilemez (FR-009 ACC-001 bos durum mesaji).
+     */
+    public String pageText() {
+        return getText(ROOT);
+    }
+
+    private By expandToggle(int rowIndex) {
+        return By.cssSelector(String.format(
+                "table.accounts-table tbody tr:nth-of-type(%d) .account-expand-toggle", rowIndex + 1));
     }
 }
