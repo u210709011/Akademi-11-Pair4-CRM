@@ -219,6 +219,49 @@ public class BillingAccountModalComponent extends BaseComponent {
         clickAction(CREATE_BUTTON);
     }
 
+    /**
+     * FR-010 ACC-010: guncelleme akisinda ayni buton "Save" olarak gorunur.
+     * Ayri bir locator yoktur — modal olusturma ve guncelleme icin ortaktir.
+     */
+    public void save() {
+        clickAction(CREATE_BUTTON);
+    }
+
+    // --- FR-010 ACC-002: alanlarin mevcut bilgilerle dolu gelmesi ---
+
+    public String accountNameValue() {
+        return getValue(Field.ACCOUNT_NAME.locator());
+    }
+
+    public String accountDescriptionValue() {
+        return getValue(Field.ACCOUNT_DESC.locator());
+    }
+
+    /** Secili adresin option degeri (adres id'si). */
+    public String selectedAddressValue() {
+        return getValue(Field.SERVICE_ADDRESS.locator());
+    }
+
+    /**
+     * Account Name alanini bosaltir ve odagi kaldirir.
+     *
+     * <p>Odak kaldirilmadan Signal Forms alani {@code touched} saymaz ve buton durumu
+     * guncellenmeyebilir — FR-006'da ayni tuzaga dusuldu.
+     */
+    public BillingAccountModalComponent clearAccountName() {
+        clear(Field.ACCOUNT_NAME.locator());
+        blur(Field.ACCOUNT_NAME.locator());
+        return this;
+    }
+
+    public boolean isSaveEnabled() {
+        return becomesEnabled(CREATE_BUTTON);
+    }
+
+    public boolean isSaveDisabled() {
+        return remainsDisabled(CREATE_BUTTON);
+    }
+
     public void cancel() {
         clickAction(CANCEL_BUTTON);
     }

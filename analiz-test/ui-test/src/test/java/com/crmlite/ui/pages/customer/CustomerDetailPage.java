@@ -539,6 +539,32 @@ public class CustomerDetailPage extends BasePage {
         return modal;
     }
 
+    // --- FR-010 / FR-011: hesap satiri aksiyonlari ---
+
+    /**
+     * FR-010 ACC-001: kalem ikonu → "Update Billing Account" ekrani.
+     *
+     * <p>Uygulama <b>ayni modal'i</b> kullanir; baslik {@code editingAccount()} degerine gore
+     * degisir. Bu yuzden alan id'leri, kaydet butonu ve FR-008'de bulunan modal tasmasi
+     * (UI-01) guncelleme akisi icin de gecerlidir.
+     */
+    public BillingAccountModalComponent openEditAccountModal(int rowIndex) {
+        click(By.cssSelector(String.format(
+                "table.accounts-table tbody tr:nth-of-type(%d) .account-row-actions "
+                        + ".icon-button:not(.icon-button-danger)", rowIndex + 1)));
+        BillingAccountModalComponent modal = new BillingAccountModalComponent(driver);
+        modal.waitUntilLoaded();
+        return modal;
+    }
+
+    /** FR-011 ACC-001: cop ikonu → silme onay diyalogu. */
+    public ConfirmDialogComponent deleteAccount(int rowIndex) {
+        click(By.cssSelector(String.format(
+                "table.accounts-table tbody tr:nth-of-type(%d) .account-row-actions "
+                        + ".icon-button-danger", rowIndex + 1)));
+        return new ConfirmDialogComponent(driver);
+    }
+
     // --- FR-009 ACC-009: sayfalama ---
 
     /** Sayfalama kontrolleri yalnizca birden fazla sayfa varsa render edilir. */
