@@ -1,5 +1,6 @@
 package com.crmlite.ui.tests.fr004update;
 
+import com.crmlite.ui.data.model.Gender;
 import com.crmlite.ui.core.utils.DateUtil;
 import com.crmlite.ui.data.ExpectedMessages;
 import com.crmlite.ui.data.api.TestDataFactory;
@@ -147,7 +148,7 @@ public class UpdateValidationTests extends AuthenticatedTest {
                 .as("placeholder secilemez, dolayisiyla gender bosaltilamaz").isTrue();
 
         // Diger secenege gecilebilir; form gecerli kalmalidir.
-        update.selectGender(UpdateCustomerPage.GENDER_FEMALE);
+        update.selectGender(Gender.FEMALE);
         assertThat(update.isSaveEnabled())
                 .as("gecerli bir gender secildiginde Save aktif").isTrue();
     }

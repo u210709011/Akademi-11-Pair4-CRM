@@ -34,8 +34,8 @@ public class BillingAccountModalComponent extends BaseComponent {
     private static final By SAVE_ERROR = By.cssSelector(".modal-card .address-save-error");
     private static final By TOGGLE_ADDRESS_MODE = By.cssSelector(".modal-card .add-new-address-link");
 
-    /** Ankara, her iki sablonda da {@code value="201"} (bkz. AddressModalComponent). */
-    public static final String CITY_ANKARA = "201";
+    /** Ankara — deger yerine etikete gore secilir (bkz. AddressModalComponent). */
+    public static final String CITY_ANKARA_LABEL = "Ankara";
 
     /** Modal alanlari; id'ler {@code detail-customer.component.html} ile birebir. */
     public enum Field {
@@ -130,8 +130,9 @@ public class BillingAccountModalComponent extends BaseComponent {
                 && isDisplayed(Field.NEW_DESCRIPTION.locator());
     }
 
-    public BillingAccountModalComponent selectNewAddressCity(String cityValue) {
-        selectByValue(Field.NEW_CITY.locator(), cityValue);
+    /** Sehri ekranda gorunen etikete gore secer (secenek degerleri lookup id'sidir, kayabilir). */
+    public BillingAccountModalComponent selectNewAddressCity(String cityLabel) {
+        selectByVisibleText(Field.NEW_CITY.locator(), cityLabel);
         return this;
     }
 
@@ -152,7 +153,7 @@ public class BillingAccountModalComponent extends BaseComponent {
 
     /** Yeni adres formunu tumuyle doldurur (City varsayilan Ankara). */
     public BillingAccountModalComponent fillNewAddress(String street, String houseNumber, String description) {
-        return selectNewAddressCity(CITY_ANKARA)
+        return selectNewAddressCity(CITY_ANKARA_LABEL)
                 .enterNewStreet(street)
                 .enterNewHouseNumber(houseNumber)
                 .enterNewAddressDescription(description);

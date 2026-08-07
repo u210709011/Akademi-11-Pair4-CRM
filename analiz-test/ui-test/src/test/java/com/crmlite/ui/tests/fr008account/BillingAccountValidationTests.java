@@ -130,7 +130,7 @@ public class BillingAccountValidationTests extends AuthenticatedTest {
         modal.enterAccountName("Eksik Adresli").enterAccountDescription("Aciklama");
         modal.toggleAddressMode();
         // Address Description bilincli olarak bos birakilir.
-        modal.selectNewAddressCity(BillingAccountModalComponent.CITY_ANKARA)
+        modal.selectNewAddressCity(BillingAccountModalComponent.CITY_ANKARA_LABEL)
                 .enterNewStreet("Eksik Sokak")
                 .enterNewHouseNumber("No:1");
 

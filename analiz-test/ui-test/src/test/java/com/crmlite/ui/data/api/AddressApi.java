@@ -55,7 +55,7 @@ public final class AddressApi {
         int current = list(custId).size();
         for (int i = current; i < targetCount; i++) {
             create(custId, new AddressInfo(
-                    AddressInfo.CITY_ANKARA,
+                    LookupApi.cityAnkara(),
                     "Hazirlik Sokak " + i,
                     "No:" + (i + 1),
                     "Ek adres " + i,

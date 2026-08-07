@@ -98,7 +98,7 @@ public final class TestDataFactory {
     /** Musteriye ek adres ekler ve olusan adresi dondurur. */
     public static long addAddress(CreatedCustomer customer, String street, String buildingName, String desc) {
         return AddressApi.create(customer.custId(),
-                new AddressInfo(AddressInfo.CITY_ANKARA, street, buildingName, desc, false)).id();
+                new AddressInfo(LookupApi.cityAnkara(), street, buildingName, desc, false)).id();
     }
 
     /**
