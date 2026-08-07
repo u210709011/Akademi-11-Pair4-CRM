@@ -55,7 +55,8 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
     @ExceptionHandler({ AddressSelectionInvalidException.class, AccountNotBelongToCustomerException.class,
             DuplicateBasketItemException.class, ServiceAddressMissingException.class,
-            AddressNotBelongToCustomerException.class, CharacteristicValueMismatchException.class })
+            AddressNotBelongToCustomerException.class, CharacteristicValueMismatchException.class,
+            CampaignNotAppliedToOfferingException.class, OfferAlreadyActiveException.class })
     public ResponseEntity<ErrorResponse> handleBadRequest(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex, request);
     }
