@@ -9,21 +9,24 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.etiya.crm.customerservice.business.abstracts.BillingAccountProductGuard;
 import com.etiya.crm.customerservice.business.abstracts.BillingAccountService;
 import com.etiya.crm.customerservice.business.abstracts.CustomerAddressService;
 import com.etiya.crm.customerservice.business.abstracts.CustomerFinder;
 import com.etiya.crm.customerservice.business.abstracts.CustomerLookupResolver;
 import com.etiya.crm.customerservice.business.dtos.requests.CreateBillingAccountRequest;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateBillingAccountRequest;
+import com.etiya.crm.customerservice.business.dtos.requests.UpdateBillingAccountStatusRequest;
+import com.etiya.crm.customerservice.business.dtos.responses.AddressBillingAccountsResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.business.exceptions.BillingAccountNotFoundException;
 import com.etiya.crm.customerservice.business.rules.BillingAccountBusinessRules;
-import com.etiya.crm.customerservice.constants.AccountDefaults;
 import com.etiya.crm.customerservice.constants.CacheNames;
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerAccountRepository;
 import com.etiya.crm.customerservice.entities.concretes.Customer;
 import com.etiya.crm.customerservice.entities.concretes.CustomerAccount;
 import com.etiya.crm.customerservice.mapper.CustomerMapper;
+import com.etiya.crm.shared.contracts.address.AddressResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,14 +40,21 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 	private final CustomerLookupResolver lookupResolver;
 	private final CustomerAddressService addressService;
 	private final CustomerFinder customerFinder;
+	private final BillingAccountProductGuard productGuard;
+	private final AccountNumberGenerator accountNumberGenerator;
 
 	@Override
 	@Transactional(readOnly = true)
 	public Page<CustomerAccountResponse> getAccounts(Long custId, Pageable pageable) {
+		// B-11: onceden burada musteri varlik kontrolu yoktu - servisin diger butun uclari
+		// (detay/contact/hesap olusturma/guncelleme) olmayan custId icin 404 donerken, bu uc
+		// 200 + bos liste donuyordu (silinmis bir musteri "hic fatura hesabi yok" gibi gorunuyordu).
+		customerFinder.getActiveCustomerOrThrow(custId);
+		Long activeStatusId = lookupResolver.resolveActiveAccountStatusId();
 		return customerAccountRepository
 				.findByCustomer_CustIdAndAcctStIdNotDeleted(custId, lookupResolver.resolveDeletedAccountStatusId(),
 						pageable)
-				.map(customerMapper::toResponse);
+				.map(account -> customerMapper.toResponse(account, activeStatusId));
 	}
 
 	@Override
@@ -54,7 +64,7 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 		Customer customer = customerFinder.getActiveCustomerOrThrow(custId);
 		rules.ensureAddressProvided(request.addressId(), request.newAddress());
 
-		Long addressId = addressService.resolveBillingAddressId(custId, request.addressId(),
+		AddressResponse address = addressService.resolveBillingAddress(custId, request.addressId(),
 				request.newAddress());
 
 		CustomerAccount account = new CustomerAccount();
@@ -62,16 +72,16 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 		account.setAccountName(request.accountName());
 		account.setAccountDesc(request.accountDesc());
 		account.setAccountTpId(lookupResolver.resolveBillingAccountTypeId());
-		account.setAddressId(addressId);
+		account.setAddressId(address.id());
 		account.setAcctStId(lookupResolver.resolveActiveAccountStatusId());
 		// acct_no NOT NULL+UNIQUE oldugu icin gecici bir deger ile ilk kayit yapilir,
 		// IDENTITY'den donen custAcctId ile asil numara ikinci kayitta yazilir.
 		account.setAccountNo(UUID.randomUUID().toString());
 		account = customerAccountRepository.save(account);
-		account.setAccountNo(AccountDefaults.formatAccountNo(account.getCustAcctId()));
+		account.setAccountNo(accountNumberGenerator.generate(account.getCustAcctId()));
 		account = customerAccountRepository.save(account);
 
-		return customerMapper.toResponse(account);
+		return customerMapper.toResponse(account, lookupResolver.resolveActiveAccountStatusId());
 	}
 
 	@Override
@@ -86,15 +96,39 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 						lookupResolver.resolveDeletedAccountStatusId())
 				.orElseThrow(() -> new BillingAccountNotFoundException(custId, accountId));
 
-		Long addressId = addressService.resolveBillingAddressId(custId, request.addressId(), request.newAddress());
+		AddressResponse address = addressService.resolveBillingAddress(custId, request.addressId(), request.newAddress());
 
 		// accountNo/accountTpId burada DEGISTIRILMEZ - sadece name/desc/adres guncellenebilir.
 		account.setAccountName(request.accountName());
 		account.setAccountDesc(request.accountDesc());
-		account.setAddressId(addressId);
+		account.setAddressId(address.id());
 		account = customerAccountRepository.save(account);
 
-		return customerMapper.toResponse(account);
+		return customerMapper.toResponse(account, lookupResolver.resolveActiveAccountStatusId());
+	}
+
+	@Override
+	@Transactional
+	@CacheEvict(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
+	public CustomerAccountResponse updateBillingAccountStatus(Long custId, Long accountId,
+			UpdateBillingAccountStatusRequest request) {
+		customerFinder.getActiveCustomerOrThrow(custId);
+		CustomerAccount account = customerAccountRepository
+				.findByCustAcctIdAndCustomer_CustIdAndAcctStIdNotDeleted(accountId, custId,
+						lookupResolver.resolveDeletedAccountStatusId())
+				.orElseThrow(() -> new BillingAccountNotFoundException(custId, accountId));
+
+		// Onboarding'de acilan varsayilan CUST_ACCT tipi hesabin durumu da degistirilemez -
+		// deleteBillingAccount'taki ile ayni guard.
+		rules.ensureAccountIsBillingType(account, lookupResolver.resolveBillingAccountTypeId());
+
+		Long activeStatusId = lookupResolver.resolveActiveAccountStatusId();
+		Long targetStatusId = "ACTIVE".equals(request.status()) ? activeStatusId
+				: lookupResolver.resolvePassiveAccountStatusId();
+		account.setAcctStId(targetStatusId);
+		account = customerAccountRepository.save(account);
+
+		return customerMapper.toResponse(account, activeStatusId);
 	}
 
 	@Override
@@ -111,9 +145,11 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 		// zaman FR-011 ile silinemez.
 		rules.ensureAccountIsBillingType(account, lookupResolver.resolveBillingAccountTypeId());
 
-		// Urun guard'i (ACC-004, pasif hesaba bagli urun) order-service'i bekliyor - TODO,
-		// burada uygulanmiyor (bkz. BRAIN SS3 FR-011).
 		rules.ensureBillingAccountNotActive(account, lookupResolver.resolveActiveAccountStatusId());
+
+		// ACC-004: order-service entegrasyonu gelene kadar productGuard (NoOpBillingAccountProductGuard)
+		// hep false doner - bkz. BillingAccountProductGuard.
+		rules.ensureNoLinkedProducts(productGuard.hasLinkedProducts(account.getCustAcctId()));
 
 		account.setAcctStId(lookupResolver.resolveDeletedAccountStatusId());
 		customerAccountRepository.save(account);
@@ -127,8 +163,29 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	public AddressBillingAccountsResponse getAccountsByAddressId(Long addressId) {
+		Long activeStatusId = lookupResolver.resolveActiveAccountStatusId();
+		List<CustomerAccountResponse> accounts = customerAccountRepository
+				.findByAddressIdAndAcctStIdNotDeleted(addressId, lookupResolver.resolveDeletedAccountStatusId())
+				.stream()
+				.map(account -> customerMapper.toResponse(account, activeStatusId))
+				.toList();
+		return new AddressBillingAccountsResponse(accounts.size(), accounts);
+	}
+
+	@Override
 	public void ensureNoActiveBillingAccount(List<CustomerAccount> accounts) {
 		rules.ensureNoActiveBillingAccount(accounts, lookupResolver.resolveBillingAccountTypeId(),
 				lookupResolver.resolveActiveAccountStatusId());
+	}
+
+	@Override
+	public void ensureNoBillingAccountWithLinkedProducts(List<CustomerAccount> accounts) {
+		Long billingAccountTypeId = lookupResolver.resolveBillingAccountTypeId();
+		boolean hasLinkedProducts = accounts.stream()
+				.filter(account -> billingAccountTypeId.equals(account.getAccountTpId()))
+				.anyMatch(account -> productGuard.hasLinkedProducts(account.getCustAcctId()));
+		rules.ensureNoLinkedProducts(hasLinkedProducts);
 	}
 }

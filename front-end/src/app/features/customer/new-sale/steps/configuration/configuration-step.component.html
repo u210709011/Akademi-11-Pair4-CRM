@@ -1,0 +1,195 @@
+<div class="config-content-wrap">
+
+@for (line of configurableLines(); track line.prodOfrId) {
+    <div class="config-product-card" [class.config-product-card-done]="isConfigured(line)">
+        <div class="config-product-header">
+            <span class="config-product-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M2 12h20" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z" />
+                </svg>
+            </span>
+            <div class="config-product-title">
+                <span class="config-product-name">{{ line.offerName }}</span>
+                <span class="config-product-id">OFR-{{ line.prodOfrId }}</span>
+            </div>
+            <span class="config-status-badge" [class.config-status-done]="isConfigured(line)">
+                @if (isConfigured(line)) {
+                    <svg class="config-status-check" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m8 12 3 3 5-6" /></svg>
+                }
+                {{ isConfigured(line) ? i18n.t('newSale.configured') : i18n.t('newSale.notConfigured') }}
+            </span>
+            <button type="button" class="config-collapse-toggle" (click)="toggleCollapsed(line.prodOfrId)" [attr.aria-label]="i18n.t('newSale.toggleConfiguration')">
+                <svg class="config-collapse-chevron" [class.collapsed]="isCollapsed(line.prodOfrId)" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+            </button>
+        </div>
+
+        @if (!isCollapsed(line.prodOfrId)) {
+            @if (fieldsFor(line.prodOfrId).length === 0) {
+                <p class="config-product-note">{{ i18n.t('newSale.configurationFieldsPending') }}</p>
+            } @else {
+                <div class="config-fields-grid">
+                    @for (field of fieldsFor(line.prodOfrId); track field.key) {
+                        <div class="config-field" [class.config-field-full]="!field.required">
+                            <label [for]="line.prodOfrId + '-' + field.key">
+                                {{ field.label }}
+                                @if (field.required) {
+                                    <span class="required">*</span>
+                                }
+                            </label>
+                            @if (field.type === 'select') {
+                                <div class="select-wrapper">
+                                    <select
+                                        [id]="line.prodOfrId + '-' + field.key"
+                                        [value]="fieldValue(line.prodOfrId, field.key)"
+                                        (change)="setFieldValue(line.prodOfrId, field.key, $any($event.target).value)"
+                                    >
+                                        <option value="">{{ i18n.t('create.selectPlaceholder') }}</option>
+                                        @for (option of field.options; track option.value) {
+                                            <option [value]="option.value">{{ option.label }}</option>
+                                        }
+                                    </select>
+                                    <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                                </div>
+                            } @else {
+                                <input
+                                    [id]="line.prodOfrId + '-' + field.key"
+                                    type="text"
+                                    [value]="fieldValue(line.prodOfrId, field.key)"
+                                    [placeholder]="field.placeholder ?? ''"
+                                    (input)="setFieldValue(line.prodOfrId, field.key, $any($event.target).value)"
+                                >
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+}
+
+<div class="config-address-card">
+    <div class="config-address-header">
+        <svg class="config-address-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        </svg>
+        <h3>{{ i18n.t('newSale.serviceAddress') }}</h3>
+    </div>
+
+    <div class="config-address-body">
+        @if (selectedAddress(); as address) {
+            <div class="config-address-info">
+                <span class="config-address-label">{{ address.addrDesc }}</span>
+                <span class="config-address-value">{{ addressLine(address) }}</span>
+            </div>
+        } @else {
+            <span class="config-address-empty">{{ i18n.t('newSale.noAddressSelected') }}</span>
+        }
+
+        <div class="config-address-actions">
+            <button type="button" class="secondary-button" (click)="openChangeAddressModal()">{{ i18n.t('newSale.changeAddress') }}</button>
+            <button type="button" class="secondary-button" (click)="openAddAddressModal()">{{ i18n.t('newSale.addNewAddress') }}</button>
+        </div>
+    </div>
+</div>
+
+</div>
+
+@if (isChangeAddressModalOpen()) {
+    <div class="modal-backdrop" (click)="closeChangeAddressModal()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3 class="modal-title">{{ i18n.t('newSale.changeAddress') }}</h3>
+                <button type="button" class="modal-close" (click)="closeChangeAddressModal()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+            </div>
+
+            <div class="address-option-list">
+                @for (address of formState.addresses(); track address.id) {
+                    <button
+                        type="button"
+                        class="address-option"
+                        [class.selected]="address.id === formState.selectedAddressId()"
+                        (click)="selectAddress(address.id)"
+                    >
+                        <span class="address-option-info">
+                            <span class="config-address-label">{{ address.addrDesc }}</span>
+                            <span class="config-address-value">{{ addressLine(address) }}</span>
+                        </span>
+                        @if (address.id === formState.selectedAddressId()) {
+                            <svg class="address-option-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7" /></svg>
+                        }
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@if (isAddAddressModalOpen()) {
+    <div class="modal-backdrop" (click)="closeAddAddressModal()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3 class="modal-title">{{ i18n.t('create.addNewAddress') }}</h3>
+                <button type="button" class="modal-close" (click)="closeAddAddressModal()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+            </div>
+
+            <form class="modal-form">
+
+                @if (addressSaveError()) {
+                    <p class="address-save-error">{{ addressSaveError() }}</p>
+                }
+
+                <div class="modal-field">
+                    <label for="new-addr-city">{{ i18n.t('create.city') }} <span class="required">*</span></label>
+                    <div class="select-wrapper">
+                        <select id="new-addr-city" [formField]="addressForm.city">
+                            <option value="" disabled selected>{{ i18n.t('create.selectCity') }}</option>
+                            <option value="201">Ankara</option>
+                        </select>
+                        <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                    </div>
+                    @if (addressForm.city().invalid() && addressForm.city().touched()) {
+                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                    }
+                </div>
+
+                <div class="modal-field">
+                    <label for="new-addr-street">{{ i18n.t('create.street') }} <span class="required">*</span></label>
+                    <input id="new-addr-street" type="text" [formField]="addressForm.street" [placeholder]="i18n.t('create.streetPlaceholder')">
+                    @if (addressForm.street().invalid() && addressForm.street().touched()) {
+                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                    }
+                </div>
+
+                <div class="modal-field">
+                    <label for="new-addr-houseNumber">{{ i18n.t('create.houseNumber') }} <span class="required">*</span></label>
+                    <input id="new-addr-houseNumber" type="text" [formField]="addressForm.houseNumber" [placeholder]="i18n.t('create.houseNumberPlaceholder')">
+                    @if (addressForm.houseNumber().invalid() && addressForm.houseNumber().touched()) {
+                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                    }
+                </div>
+
+                <div class="modal-field">
+                    <label for="new-addr-description">{{ i18n.t('create.addressDescription') }} <span class="required">*</span></label>
+                    <input id="new-addr-description" type="text" [formField]="addressForm.description" [placeholder]="i18n.t('create.addressDescriptionPlaceholder')">
+                    @if (addressForm.description().invalid() && addressForm.description().touched()) {
+                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                    }
+                </div>
+
+            </form>
+
+            <div class="modal-actions">
+                <button type="button" class="cancel-button" (click)="closeAddAddressModal()">{{ i18n.t('create.cancelBtn') }}</button>
+                <button type="button" class="save-button" [disabled]="addressForm().invalid() || isSavingAddress()" (click)="saveNewAddress()">{{ i18n.t('create.saveBtn') }}</button>
+            </div>
+
+        </div>
+    </div>
+}

@@ -36,6 +36,10 @@ public class CustOrd extends BaseEntity {
 	@Column(name = "cust_id", nullable = false)
 	private Long custId;
 
+	/** Configuration adiminda kaydedilir (bkz. V4 migration) - contact-info-service ADDR.addr_id'ye mantiksal referans. */
+	@Column(name = "address_id")
+	private Long addressId;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "bsn_inter_id")
 	private BsnInter bsnInter;
@@ -44,11 +48,7 @@ public class CustOrd extends BaseEntity {
 	@JoinColumn(name = "bsn_inter_spec_id")
 	private BsnInterSpec bsnInterSpec;
 
-	//soft delete 
+	//soft delete
 	@OneToMany(mappedBy = "custOrd", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
 	private List<CustOrdItem> items = new ArrayList<>();
-
-	//soft delete 
-	@OneToMany(mappedBy = "custOrd", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-	private List<CustOrdCharVal> charVals = new ArrayList<>();
 }

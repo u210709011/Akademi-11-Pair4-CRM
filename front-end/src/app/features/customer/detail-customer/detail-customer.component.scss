@@ -213,9 +213,9 @@
 }
 
 .status-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  width: 100%;
+  width: fit-content;
   box-sizing: border-box;
   gap: 8px;
   padding: 4px 22px 4px 10px;
@@ -324,23 +324,87 @@
 }
 
 .info-row {
-  display: flex;
-  gap: 6px;
-  font-size: 14px;
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    align-items: baseline;
+    column-gap: 24px;
+    padding: 15px 0px;
+    border-bottom: 1px solid var(--border-hairline);
 }
 
 .info-label {
-  font-weight: 700;
-  color: #1f2937;
+    font-family: var(--font-ui);
+    font-size: 15px;
+    font-weight: var(--fw-medium);
+    color: var(--text-secondary);
+    white-space: nowrap;
 }
 
 .info-value {
-  color: #374151;
+    margin: 0px;
+    font-family: var(--font-ui);
+    font-size: 18px;
+    font-weight: var(--fw-semibold);
+    color: var(--text-primary);
+    line-height: 1.3;
 }
 
 .tab-placeholder {
   margin: 0;
   color: var(--text-placeholder);
+}
+
+.contact-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0 48px;
+}
+
+.contact-info-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.contact-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  color: var(--etiya-orange);
+  background: var(--etiya-orange-soft);
+  border-radius: 8px;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+.contact-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-info-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.contact-info-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .accounts-table-wrapper {
@@ -372,12 +436,197 @@
   td {
     color: #374151;
     border-bottom: 1px solid var(--border-hairline);
+
+    &.account-number-cell {
+      color: var(--etiya-orange);
+    }
   }
 }
 
 .account-number-cell {
   font-weight: 700;
+}
+
+.account-expand-header {
+  width: 40px;
+}
+
+.account-expand-cell {
+  width: 40px;
+}
+
+.account-expand-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: #6b7280;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  transition: background 0.2s ease, transform 0.2s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover {
+    background: var(--border-hairline);
+  }
+
+  &.expanded svg {
+    transform: rotate(180deg);
+  }
+}
+
+.account-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.account-detail-row td {
+  padding: 0;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.account-detail-panel {
+  padding: 20px 24px 24px;
+  background: #fafafa;
+}
+
+.service-address-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: var(--surface-card);
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: var(--etiya-orange);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+.service-address-icon {
   color: var(--etiya-orange);
+}
+
+.service-address-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  text-transform: uppercase;
+}
+
+.service-address-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.service-address-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-placeholder);
+
+  svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: var(--text-placeholder);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+.products-table {
+  width: 100%;
+  margin-bottom: 16px;
+  background: var(--surface-card);
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  border-collapse: collapse;
+  overflow: hidden;
+
+  th,
+  td {
+    padding: 12px 16px;
+    font-size: 13px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+    text-transform: uppercase;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  td {
+    color: #374151;
+    border-bottom: 1px solid var(--border-hairline);
+
+    &.account-number-cell {
+      color: var(--etiya-orange);
+    }
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.account-no-products {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-placeholder);
+}
+
+.start-new-sale-button {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: var(--etiya-orange);
+  border: none;
+  border-radius: 8px;
+  transition: filter 0.2s ease;
+
+  &:hover {
+    filter: brightness(1.05);
+  }
 }
 
 .add-address-button {
@@ -505,7 +754,7 @@
 .menu-dropdown button svg,
 .address-linked-line svg {
   fill: none;
-  stroke: currentColor;
+  stroke: var(--etiya-orange);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -642,9 +891,9 @@
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--etiya-orange);
+  color: var(--etiya-secondary);
   background: #f9fafb;
   border-radius: 8px;
 
@@ -659,6 +908,70 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--error);
+}
+
+// mockup'taki gercek "basari" bildirimi: sag ust, sabit, yesil tonlu, X ile kapatilabilir toast.
+// hem contact save hem de billing account create bunu paylasir (bkz. showToast() component.ts).
+.success-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 420px;
+  padding: 14px 16px;
+  background: rgba(31, 138, 91, 0.08);
+  border: 1px solid rgba(31, 138, 91, 0.3);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.success-toast-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--success);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.success-toast-message {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.success-toast-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: #6b7280;
+  cursor: pointer;
+  background: none;
+  border: none;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  &:hover {
+    color: #1f2937;
+  }
 }
 
 .delete-confirm-card {
@@ -692,6 +1005,13 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
+}
+
+// "Cannot delete Billing Account" dialogu - bilgilendirici, yikici degil, bu yuzden kirmizi
+// yerine amber uyari rengi (mockup).
+.delete-confirm-icon-warning {
+  color: var(--etiya-orange);
+  background: rgba(244, 121, 32, 0.1);
 }
 
 .delete-confirm-message {
@@ -729,3 +1049,221 @@
 // .modal-* / .select-wrapper / .cancel-button / .save-button paylasilan adres modal
 // stilleri src/styles.scss'e tasindi (address-tab.component.scss ile ayni modal duzeni).
 
+// contact modal icin: .modal-field iki sutunlu (Mobile/Home Phone) yerlesim - onboarding'in
+// .contact-form grid deseniyle ayni mantik, sadece .modal-form'un tek sutunlu akisi icine gomulu.
+.modal-field-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px 16px;
+}
+
+// Mobile Phone zorunlu (*), Home Phone degil - etiketler farkli yukseklikte olursa (asterisk'in
+// vertical-align: super'i satir yuksekligini degistiriyor) yan yana kutular hizasiz gorunuyordu.
+// Home Phone etiketine gorunmez bir '*' koyarak iki etiketin yuksekligini esitliyoruz.
+.required-hidden {
+  visibility: hidden;
+}
+
+// asagidaki .input-with-icon / .phone-field / .phone-prefix / .flag-icon kurallari
+// contact-tab.component.scss (onboarding +90 telefon deseni) ile ayni - contact modal da
+// ayni gorunumu kullandigi icin buraya tasindi.
+.input-with-icon {
+  position: relative;
+
+  input {
+    padding-right: 40px;
+  }
+
+  .mail-icon {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--text-placeholder);
+    pointer-events: none;
+  }
+}
+
+.phone-field {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  background: var(--surface-card);
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus-within {
+    border-color: var(--etiya-orange);
+    box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15);
+  }
+
+  .phone-prefix {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    padding: 0 12px;
+    border-right: 1px solid #d1d5db;
+    font-size: 13px;
+    color: #1f2937;
+    white-space: nowrap;
+
+    strong {
+      font-weight: 700;
+    }
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0 12px;
+    font-size: 14px;
+    color: #111827;
+    background: transparent;
+    border: none;
+    box-sizing: border-box;
+
+    &:focus {
+      outline: none;
+    }
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+}
+
+// Create Billing Account modal icin - Account Name/Description ile Service Address bolumlerini
+// mockup'taki gibi ince bir cizgiyle ayirir.
+.modal-divider {
+  margin: 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+
+// "+ Add New Address" / "‹ Use Existing Address" - duz metin link (butonun aksine cerceve/arka
+// plan yok), Create Billing Account modalindaki iki mod arasi gecis icin.
+.add-new-address-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--etiya-orange);
+  cursor: pointer;
+  background: none;
+  border: none;
+
+  &:hover {
+    color: var(--etiya-orange-hover);
+  }
+
+  .add-address-icon {
+    font-size: 15px;
+    line-height: 1;
+  }
+}
+
+// Billing Accounts tablosu sayfalama - search-customer.component.scss'teki .pagination* ile
+// birebir ayni (Angular bilesen stilleri sekilerarasi sizmiyor, bu yuzden buraya tasindi).
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.pagination-range {
+  font-size: 13px;
+  color: var(--text-placeholder);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagination-arrow,
+.pagination-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #f9fafb;
+  }
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+}
+
+.pagination-arrow svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pagination-page.active {
+  color: #fff;
+  background: var(--etiya-orange);
+  border-color: var(--etiya-orange);
+}
+
+// Create Billing Account modalindaki Address Preview karti - .address-card'i genisletir;
+// baslik icin mevcut .service-address-label yeniden kullanilir, alttaki not da mevcut
+// .service-address-note ile ayni (kart icine tasindi, ok ikonuyla).
+.address-preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.address-preview-row {
+  display: flex;
+  gap: 8px;
+}
+
+.address-preview-label {
+  flex-shrink: 0;
+  min-width: 110px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.address-preview-value {
+  font-size: 13px;
+  color: #1f2937;
+}
+
+// .service-address-note'un "margin-left: auto" kurali .service-address-line'in flex-row
+// baglaminda saga yaslamak icindi - burada flex-column bir kart icinde soldan baslamali.
+.address-preview-card .service-address-note {
+  margin-left: 0;
+}

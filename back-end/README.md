@@ -6,11 +6,6 @@ Microservice mimarisi ile geliştirilen CRM projesinin back-end altyapısı.
 
 ```
 back-end/
-├── infra/                     # Podman compose ve altyapı dosyaları
-│   ├── compose.yml            # PostgreSQL, Kafka, Kafka UI, Debezium (+ auto-connector-register), Redis, Keycloak
-│   ├── postgres-init/         # Servis başına veritabanı oluşturan SQL
-│   ├── keycloak/               # crm realm import dosyası (crm-realm.json)
-│   └── debezium/               # Outbox connector tanımları + outbox/inbox SQL + register-connectors.sh
 ├── config-server/              # Spring Cloud Config Server (port 8888)
 ├── discovery-server/           # Eureka Server (port 8761)
 ├── api-gateway/                # Spring Cloud Gateway (port 8080) + merkezi Swagger UI aggregation
@@ -28,6 +23,12 @@ back-end/
 bu repo'nun içinde DEĞİL, ayrı bir git deposunda tutulur — Config Server oradan
 klonlayıp servislere sunar (bkz. "Konfigürasyon ve Ortam Profilleri").
 
+**Not:** Projeyi (altyapı + tüm servisler + front-end) nasıl ayağa kaldıracağın
+artık kök **[README.md](../README.md#projeyi-ayağa-kaldırma)**'da anlatılıyor —
+tek komut: `infra/run/{dev,test,prod}/start.bat`. Bu dosyadaki geri kalan
+bölümler back-end'e özgü detaylar (config profilleri, Feign/circuit breaker,
+outbox/Debezium, yeni servis ekleme) içindir.
+
 ## Sürümler
 
 - Java 21/25, Spring Boot 3.5.x, Spring Cloud 2025.0.x (Northfields), Resilience4j
@@ -44,44 +45,19 @@ klonlayıp servislere sunar (bkz. "Konfigürasyon ve Ortam Profilleri").
 | lookup-service | Genel tip/durum/type-value referans verisi | yok (REST-only) | - | - |
 | product-service | Ürün katalog/kampanya/teklif | yok (REST-only) | - | - |
 
-## Altyapıyı Başlatma (Podman)
+## Manuel / Tek Tek Başlatma (IntelliJ vb.)
 
-`podman compose` bir compose sağlayıcısına ihtiyaç duyar. `docker-compose` veya
-`podman-compose` kurulu değilse: `pip install podman-compose`
-
-```bash
-cd back-end/infra
-podman compose -f compose.yml up -d
-```
-
-| Servis | Adres | Notlar |
-|---|---|---|
-| PostgreSQL | localhost:5432 | user/pass: `crm` / `crm`, `wal_level=logical` (CDC için) |
-| Kafka | localhost:9092 | Container içinden `kafka:29092` |
-| Kafka UI | http://localhost:8090 | Topic/mesaj izleme (`kafbat/kafka-ui` imajı) |
-| Debezium Connect | http://localhost:8083 | REST API |
-| Redis | localhost:6379 | `customer-service` cache'i için |
-| Keycloak | http://localhost:8180 | admin/admin, `crm` realm otomatik import edilir |
-
-## Uygulamaları Başlatma Sırası
-
-Her projede Maven wrapper (`mvnw`) mevcuttur, ayrıca Maven kurulumu gerekmez.
-
-Config Server tüm konfigürasyonların kaynağı olduğu için ilk o başlatılır;
-diğer tüm uygulamalar (Eureka dahil) ayarlarını ondan çeker.
+Otomatik script (`infra/run/dev/start.bat`, bkz. kök README) her servisi zaten
+bu sırayla ve vendored Maven ile başlatır. Bir servisi IntelliJ'den veya elle
+çalıştırman gerekirse aynı sıra geçerli — Config Server tüm konfigürasyonun
+kaynağı olduğu için ilk o, sonra Eureka, sonra Gateway, sonra iş servisleri
+(herhangi bir sırada). Her projede Maven wrapper (`mvnw`) mevcuttur.
 
 ```bash
-# 1. Config Server - http://localhost:8888
-cd back-end/config-server && ./mvnw spring-boot:run
-
-# 2. Discovery Server (Eureka) - http://localhost:8761
-cd back-end/discovery-server && ./mvnw spring-boot:run
-
-# 3. API Gateway - http://localhost:8080
-cd back-end/api-gateway && ./mvnw spring-boot:run
-
-# 4. İş servisleri (herhangi bir sırada)
-cd back-end/customer-service && ./mvnw spring-boot:run
+cd back-end/config-server && ./mvnw spring-boot:run       # 1. http://localhost:8888
+cd back-end/discovery-server && ./mvnw spring-boot:run    # 2. http://localhost:8761
+cd back-end/api-gateway && ./mvnw spring-boot:run         # 3. http://localhost:8080
+cd back-end/customer-service && ./mvnw spring-boot:run    # 4. herhangi bir sırada
 cd back-end/party-service && ./mvnw spring-boot:run
 cd back-end/contact-info-service && ./mvnw spring-boot:run
 cd back-end/order-service && ./mvnw spring-boot:run
@@ -130,7 +106,7 @@ veya import başarısızsa uygulama **başlamaz** (yerel fallback değer tutulma
 
 ## Keycloak ile Token Alma
 
-Realm import dosyası (`infra/keycloak/crm-realm.json`) şunları içerir:
+Realm import dosyası (proje kökünde `infra/keycloak/crm-realm.json`) şunları içerir:
 
 - Client'lar: `crm-client` (interaktif login, confidential), `crm-client-short`
   (30sn token TTL, expiry testleri için), `customer-service-m2m` (sadece
@@ -193,7 +169,7 @@ downstream'in yavaşlaması/çökmesi tüm zinciri askıya almasın diye:
 ## Outbox / Inbox / Debezium
 
 1. Outbox/Kafka kullanan servisler (customer, party, contact-info, order) kendi
-   veritabanında `infra/debezium/outbox-table.sql`'deki `outbox`/`inbox`
+   veritabanında (proje kökündeki) `infra/debezium/outbox-table.sql`'deki `outbox`/`inbox`
    tablolarını Flyway migration ile oluşturur (lookup-service ve product-service
    REST-only olduğu için bu tablolara sahip değil).
 2. İş mantığı ile outbox insert'ü **aynı transaction** içinde yapılır
@@ -201,22 +177,22 @@ downstream'in yavaşlaması/çökmesi tüm zinciri askıya almasın diye:
 3. Debezium, WAL üzerinden outbox tablosunu izler ve EventRouter SMT ile
    `<aggregate_type>-events` topic'ine yayınlar (örn. `customer-events`).
 4. Connector kaydı **compose ayağa kalktığında otomatik** yapılır
-   (`debezium-connectors` container'ı, `infra/debezium/*-connector.json`
+   (`debezium-connectors` container'ı, proje kökündeki `infra/debezium/*-connector.json`
    dosyalarını registre eder). Elle tekrar kaydetmek gerekirse:
 
 ```bash
-cd back-end/infra/debezium
+cd infra/debezium
 ./register-connectors.sh
 ```
 
-Yeni servis için `infra/debezium/customer-outbox-connector.json` kopyalanıp
+Yeni servis için (proje kökünde) `infra/debezium/customer-outbox-connector.json` kopyalanıp
 `database.dbname`, `topic.prefix` ve `slot.name` alanları güncellenir.
 
 ## Yeni Microservice Ekleme Adımları
 
 1. [start.spring.io](https://start.spring.io) üzerinden Java 21+ / Boot 3.5.x projesi oluştur
    (bağımlılıklar: Web, JPA, PostgreSQL, Eureka Client, Config Client, Kafka, Redis, Lombok, Actuator).
-2. `infra/postgres-init/01-create-databases.sql` dosyasına veritabanını ekle
+2. Proje kökündeki `infra/postgres-init/01-create-databases.sql` dosyasına veritabanını ekle
    (mevcut PostgreSQL volume'ü varsa veritabanını elle oluştur).
 3. Merkezi config deposunda `configs/<servis-adi>/` klasörünü oluştur; içine
    `application.yml`, `application-dev.yml`, `application-test.yml` ve

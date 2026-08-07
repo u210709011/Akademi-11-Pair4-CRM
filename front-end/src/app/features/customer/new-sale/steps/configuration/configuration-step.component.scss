@@ -1,0 +1,333 @@
+:host {
+  display: block;
+}
+
+.config-content-wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.config-product-card {
+  margin-bottom: 16px;
+  background: var(--surface-card);
+  border: 1px solid transparent;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  overflow: hidden;
+
+  &.config-product-card-done {
+    border-color: var(--success);
+  }
+}
+
+.config-product-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 24px;
+}
+
+.config-product-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background: var(--etiya-orange-soft);
+  border-radius: 10px;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: var(--etiya-orange);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+.config-product-title {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.config-product-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.config-product-id {
+  font-size: 12px;
+  color: var(--text-placeholder);
+}
+
+.config-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  white-space: nowrap;
+  background: #f3f4f6;
+  border-radius: 999px;
+
+  &.config-status-done {
+    color: var(--success);
+    background: #ecfdf5;
+  }
+}
+
+.config-status-check {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.config-collapse-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+
+.config-collapse-chevron {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #6b7280;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.15s ease;
+
+  &.collapsed {
+    transform: rotate(-90deg);
+  }
+}
+
+.config-product-note {
+  margin: 0;
+  padding: 0 24px 18px;
+  font-size: 13px;
+  color: var(--text-placeholder);
+}
+
+.config-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+  padding: 0 24px 20px;
+}
+
+.config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &.config-field-full {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .required {
+    font-size: 12px;
+    color: var(--etiya-orange);
+    vertical-align: super;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #111827;
+    background: var(--surface-card);
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--etiya-orange);
+      box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15);
+    }
+  }
+}
+
+.config-address-card {
+  padding: 20px 24px;
+  background: var(--surface-card);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+}
+
+.config-address-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+}
+
+.config-address-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--etiya-orange);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.config-address-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.config-address-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.config-address-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.config-address-value {
+  font-size: 13px;
+  color: var(--text-placeholder);
+}
+
+.config-address-empty {
+  font-size: 13px;
+  color: var(--text-placeholder);
+}
+
+.config-address-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.secondary-button {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  white-space: nowrap;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #f9fafb;
+  }
+}
+
+.address-option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+}
+
+.address-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  background: #f9fafb;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+
+  &.selected {
+    background: var(--etiya-orange-soft);
+    border-color: var(--etiya-orange);
+  }
+}
+
+.address-option-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.address-option-check {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: var(--etiya-orange);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.address-save-error {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--error);
+}
+
+.field-error {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--error);
+}

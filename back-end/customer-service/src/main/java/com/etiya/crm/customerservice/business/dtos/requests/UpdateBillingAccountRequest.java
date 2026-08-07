@@ -8,9 +8,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * FR-010: "Update Billing Account" ekrani. Guncellenebilir alanlar sadece
- * accountName/accountDesc/adres - accountNo ve accountTpId burada YOK, hicbir
- * zaman degistirilemez (bkz. CustomerServiceImpl.updateBillingAccount).
+ * FR-010: "Update Billing Account" ekrani. Guncellenebilir alanlar accountName/
+ * accountDesc/adres - accountNo ve accountTpId burada YOK, hicbir zaman
+ * degistirilemez (bkz. CustomerServiceImpl.updateBillingAccount). accountName
+ * ZORUNLUDUR - front-end tipik olarak (muhtemelen degisen) adresin addrDesc'ini
+ * onceden doldurup gonderir, ama backend'de otomatik turetme/fallback YOKTUR.
  * addressId (var olan adres) ile newAddress (yeni adres olusturma) alanlarindan
  * tam olarak biri doldurulmali - CreateBillingAccountRequest ile ayni desen.
  */
@@ -18,9 +20,9 @@ import jakarta.validation.constraints.Size;
 		+ "addressId VEYA newAddress'ten TAM OLARAK BIRI doldurulmali - ikisi birden ya da hicbiri 400 doner.")
 public record UpdateBillingAccountRequest(
 
-		@Schema(description = "Hesap adi", example = "Ev Faturasi")
+		@Schema(description = "Hesap adi", example = "Home")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
-		@Size(max = 50, message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Size(max = 50, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
 		String accountName,
 
 		@Schema(description = "Hesap aciklamasi", example = "Aylik elektrik/su faturasi icin")

@@ -69,7 +69,7 @@ public class CustomerServiceImpl implements CustomerService {
 		Customer customer = customerFinder.getActiveCustomerOrThrow(custId);
 		List<CustomerAccount> accounts = customerAccountRepository
 				.findByCustomer_CustIdAndAcctStIdNotDeleted(custId, lookupResolver.resolveDeletedAccountStatusId());
-		return customerMapper.toResponse(customer, accounts);
+		return customerMapper.toResponse(customer, accounts, lookupResolver.resolveActiveAccountStatusId());
 	}
 
 	@Override
@@ -80,6 +80,7 @@ public class CustomerServiceImpl implements CustomerService {
 		List<CustomerAccount> accounts = customerAccountRepository
 				.findByCustomer_CustIdAndAcctStIdNotDeleted(custId, lookupResolver.resolveDeletedAccountStatusId());
 		billingAccountService.ensureNoActiveBillingAccount(accounts);
+		billingAccountService.ensureNoBillingAccountWithLinkedProducts(accounts);
 
 		customer.setActive(false);
 		customerRepository.save(customer);
