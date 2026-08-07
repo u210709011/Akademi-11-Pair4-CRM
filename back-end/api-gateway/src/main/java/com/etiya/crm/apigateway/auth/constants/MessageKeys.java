@@ -11,6 +11,11 @@ public final class MessageKeys {
 	public static final String ACCOUNT_LOCKED = "error.auth.account-locked";
 	public static final String VALIDATION_FAILED = "error.validation.failed";
 
+	// FR-001: login alanlari icin format dogrulama mesajlari
+	public static final String FIELD_MAX_LENGTH = "validation.field.max-length";
+	public static final String NO_LEADING_TRAILING_WHITESPACE = "validation.field.no-leading-trailing-whitespace";
+	public static final String INVALID_CLIENT_ID = "validation.client-id.invalid";
+
 	private MessageKeys() {
 	}
 }

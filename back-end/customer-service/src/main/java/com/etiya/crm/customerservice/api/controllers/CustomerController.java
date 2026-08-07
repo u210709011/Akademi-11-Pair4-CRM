@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,12 +27,15 @@ import com.etiya.crm.customerservice.business.dtos.requests.OnboardCustomerReque
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.IdentityVerificationResponse;
+import com.etiya.crm.customerservice.constants.MessageKeys;
 import com.etiya.crm.customerservice.constants.Roles;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -40,11 +44,17 @@ import lombok.RequiredArgsConstructor;
  * editleme uc noktalari kendi controller'larina tasindi - bkz.
  * CustomerIndividualController, CustomerAddressController,
  * CustomerContactController, CustomerAccountController.
+ *
+ * @Validated (sinif seviyesinde): FR-002'deki arama filtre alanlari @RequestBody degil ayri ayri
+ * @RequestParam oldugu icin (bkz. search()), Bean Validation'in bunlari kontrol edebilmesi icin
+ * bu annotation gerekli - method-parameter validation'i tetikler (ConstraintViolationException,
+ * bkz. GlobalExceptionHandler).
  */
 @Tag(name = "Customers", description = "Musteri onboarding, arama ve yasam dongusu yonetimi")
 @RestController
 @RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
+@Validated
 @PreAuthorize("hasRole('" + Roles.CRM_AGENT + "')")
 public class CustomerController {
 
@@ -90,16 +100,21 @@ public class CustomerController {
 	@GetMapping("/search")
 	public ResponseEntity<Page<CustomerSearchResponse>> search(
 			@Parameter(description = "Ad (kismi/prefix eslesme)", example = "Ahmet")
+			@Size(max = 50, message = "{" + MessageKeys.SEARCH_FIRST_NAME_INVALID + "}")
 			@RequestParam(required = false) String firstName,
 			@Parameter(description = "Soyad (kismi/prefix eslesme)", example = "Yilmaz")
+			@Size(max = 50, message = "{" + MessageKeys.SEARCH_LAST_NAME_INVALID + "}")
 			@RequestParam(required = false) String lastName,
 			@Parameter(description = "T.C. Kimlik No (tam eslesme)", example = "10000000146")
+			@Pattern(regexp = "^[0-9]{11}$", message = "{" + MessageKeys.SEARCH_NATIONAL_ID_INVALID + "}")
 			@RequestParam(required = false) String tcNo,
-			@Parameter(description = "Hesap no (tam eslesme), format: ACC-{custId}", example = "ACC-1")
+			@Parameter(description = "Hesap no (tam eslesme), sadece rakam.", example = "1")
+			@Pattern(regexp = "^[0-9]+$", message = "{" + MessageKeys.SEARCH_ACCOUNT_NUMBER_INVALID + "}")
 			@RequestParam(required = false) String acctNo,
 			@Parameter(description = "Musteri no (tam eslesme), CUST-{custId} onekindeki sayisal kisim.", example = "1")
 			@RequestParam(required = false) Long custId,
 			@Parameter(description = "GSM no (tam eslesme), basinda ulke kodu/sifir olmadan rakamlar.", example = "5551234567")
+			@Pattern(regexp = "^5[0-9]{9}$", message = "{" + MessageKeys.SEARCH_GSM_INVALID + "}")
 			@RequestParam(required = false) String gsm,
 			@Parameter(description = "Sayfa numarasi (0'dan baslar)", example = "0")
 			@RequestParam(defaultValue = "0") int page,
