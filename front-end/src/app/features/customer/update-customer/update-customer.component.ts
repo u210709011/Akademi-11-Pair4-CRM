@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { IndividualInfo, CustomerService } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
+import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../core/lookup';
 import { DatePickerHeaderComponent } from '../../../shared/components/date-picker-header/date-picker-header.component';
 
 type LetterFieldName = 'firstName' | 'middleName' | 'lastName' | 'fatherName' | 'motherName';
@@ -53,6 +54,9 @@ export class UpdateCustomerComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly customerService = inject(CustomerService);
+  private readonly lookupService = inject(LookupService);
+
+  protected readonly genders = signal<GnlType[]>([]);
 
   protected readonly custId = Number(this.route.snapshot.paramMap.get('custId'));
 
@@ -95,6 +99,8 @@ export class UpdateCustomerComponent {
   });
 
   constructor() {
+    this.lookupService.getTypesByGroup(LOOKUP_GROUPS.GENDER).subscribe(genders => this.genders.set(genders));
+
     this.customerService.getIndividual(this.custId).subscribe({
       next: response => {
         this.customerName.set(`${response.firstName} ${response.lastName}`);
@@ -131,6 +137,11 @@ export class UpdateCustomerComponent {
         this.nationalIdError.set(true);
       }
     });
+  }
+
+  // bkz. demographic-tab.component.ts'teki ayni yorum - id degil shrtCode'a gore secilir.
+  protected genderLabel(shrtCode: string): string {
+    return shrtCode === 'MALE' ? this.i18n.t('create.genderMale') : this.i18n.t('create.genderFemale');
   }
 
   private sanitizeLetterField(field: LetterFieldName): void {
