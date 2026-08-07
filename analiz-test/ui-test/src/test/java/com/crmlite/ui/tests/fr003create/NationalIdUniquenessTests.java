@@ -1,5 +1,4 @@
 package com.crmlite.ui.tests.fr003create;
-
 import com.crmlite.ui.data.api.TestDataFactory;
 import com.crmlite.ui.data.builder.CustomerBuilder;
 import com.crmlite.ui.data.model.CreatedCustomer;
@@ -14,7 +13,6 @@ import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import io.qameta.allure.TmsLink;
 import org.testng.annotations.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**

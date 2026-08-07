@@ -1,5 +1,4 @@
 package com.crmlite.ui.tests.fr001login;
-
 import com.crmlite.ui.core.utils.BrowserStorageUtil;
 import com.crmlite.ui.data.ExpectedMessages;
 import com.crmlite.ui.pages.auth.LoginPage;
@@ -15,7 +14,6 @@ import io.qameta.allure.Story;
 import io.qameta.allure.TmsLink;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
