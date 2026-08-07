@@ -247,7 +247,7 @@
                                                                     <td>{{ product.campaignName }}</td>
                                                                     <td>{{ product.campaignId }}</td>
                                                                     <td>
-                                                                        <button type="button" class="icon-button" [attr.aria-label]="i18n.t('detail.viewProduct')">
+                                                                        <button type="button" class="icon-button" [attr.aria-label]="i18n.t('detail.viewProduct')" (click)="openProductDetail(account, product)">
                                                                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                                                                 <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
                                                                                 <circle cx="12" cy="12" r="3" />
@@ -960,6 +960,92 @@
             <div class="modal-actions">
                 <button type="button" class="cancel-button" (click)="closeCannotDeleteAccountDialog()">{{ i18n.t('detail.closeBtn') }}</button>
                 <button type="button" class="save-button" (click)="closeCannotDeleteAccountDialog()">{{ i18n.t('detail.okBtn') }}</button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@if (selectedProductDetail(); as detail) {
+    <div class="modal-backdrop" (click)="closeProductDetail()">
+        <div class="modal-card product-detail-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+                <h3 class="modal-title">{{ i18n.t('detail.productOfferDetailsTitle') }}</h3>
+                <button type="button" class="modal-close" (click)="closeProductDetail()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+            </div>
+
+            <div class="modal-form">
+                <div class="modal-field-row">
+                    <div class="address-preview-row">
+                        <span class="address-preview-label">{{ i18n.t('detail.productOfferNameLabel') }}:</span>
+                        <span class="address-preview-value">{{ detail.productName }}</span>
+                    </div>
+                    <div class="address-preview-row">
+                        <span class="address-preview-label">{{ i18n.t('detail.productOfferIdLabel') }}:</span>
+                        <span class="address-preview-value">{{ detail.productOfferId }}</span>
+                    </div>
+                    <div class="address-preview-row">
+                        <span class="address-preview-label">{{ i18n.t('detail.productSpecIdLabel') }}:</span>
+                        <span class="address-preview-value">{{ detail.productSpecId }}</span>
+                    </div>
+                    <div class="address-preview-row">
+                        <span class="address-preview-label">{{ i18n.t('detail.serviceStartDateLabel') }}:</span>
+                        <span class="address-preview-value">{{ detail.serviceStartDate }}</span>
+                    </div>
+                </div>
+
+                <hr class="modal-divider">
+
+                <div class="modal-field-row">
+                    <div class="address-preview-card">
+                        <span class="address-card-city">{{ i18n.t('detail.productCharacteristicsTitle') }}</span>
+                        @for (item of detail.characteristics; track item.label) {
+                            <div class="address-preview-row">
+                                <span class="address-preview-label">{{ item.label }}:</span>
+                                <span class="address-preview-value">{{ item.value }}</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="address-card address-preview-card">
+                        <span class="address-card-city">
+                            <svg class="address-pin-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 22s7-7.5 7-12A7 7 0 0 0 5 10c0 4.5 7 12 7 12Z" />
+                                <circle cx="12" cy="10" r="2.5" />
+                            </svg>
+                            {{ i18n.t('detail.serviceAddress') }}:
+                        </span>
+                        @if (detail.address; as address) {
+                            <div class="address-preview-row">
+                                <span class="address-preview-label">{{ i18n.t('detail.addressNameLabel') }}</span>
+                                <span class="address-preview-value">{{ address.addrDesc }}</span>
+                            </div>
+                            <div class="address-preview-row">
+                                <span class="address-preview-label">{{ i18n.t('create.city') }}</span>
+                                <span class="address-preview-value">{{ cityName(address.cityId) }}</span>
+                            </div>
+                            <div class="address-preview-row">
+                                <span class="address-preview-label">{{ i18n.t('detail.streetNameLabel') }}</span>
+                                <span class="address-preview-value">{{ address.streetName }}</span>
+                            </div>
+                            <div class="address-preview-row">
+                                <span class="address-preview-label">{{ i18n.t('detail.houseFlatNumberLabel') }}</span>
+                                <span class="address-preview-value">{{ address.houseName }}</span>
+                            </div>
+                            <div class="address-preview-row">
+                                <span class="address-preview-label">{{ i18n.t('detail.addressDescriptionLabel') }}</span>
+                                <span class="address-preview-value">{{ address.addrDesc }}</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="cancel-button" (click)="closeProductDetail()">{{ i18n.t('detail.closeBtn') }}</button>
             </div>
 
         </div>
