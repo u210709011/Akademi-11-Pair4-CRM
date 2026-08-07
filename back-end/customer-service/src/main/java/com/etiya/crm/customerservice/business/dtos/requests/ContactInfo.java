@@ -27,11 +27,11 @@ public record ContactInfo(
 		@Pattern(regexp = "^5[0-9]{9}$", message = "{" + MessageKeys.PHONE_INVALID + "}")
 		String mobilePhone,
 
-		@Schema(description = "Ev telefonu - opsiyonel, 10-11 haneli rakam", example = "3121234567", pattern = "^[0-9]{10,11}$")
-		@Pattern(regexp = "^[0-9]{10,11}$", message = "{" + MessageKeys.PHONE_INVALID + "}")
+		@Schema(description = "Ev telefonu - opsiyonel, 10 haneli rakam, 2 ile baslamali", example = "2121234567", pattern = "^2[0-9]{9}$")
+		@Pattern(regexp = "^2[0-9]{9}$", message = "{" + MessageKeys.PHONE_INVALID + "}")
 		String homePhone,
 
 		@Schema(description = "Faks - opsiyonel, 10-11 haneli rakam", example = "null", pattern = "^[0-9]{10,11}$")
-		@Pattern(regexp = "^[0-9]{10,11}$", message = "{" + MessageKeys.PHONE_INVALID + "}")
+		@Pattern(regexp = "^[0-9]{10,11}$", message = "{" + MessageKeys.FAX_INVALID + "}")
 		String fax) {
 }

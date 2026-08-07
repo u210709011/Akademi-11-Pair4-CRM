@@ -22,7 +22,10 @@ public class AddressBusinessRules {
 
 	/**
 	 * ACC-014..017: UI'da adres icin "primary" secimi yok; listedeki ilk adres
-	 * server-side primary sayilir, digerleri primary=false gider.
+	 * server-side primary sayilir, digerleri primary=false gider. cityId dogrulamasi artik
+	 * burada YAPILMAZ - AddressInfo.cityId'deki @ExistsInLookupGroup, bu metod cagrilmadan
+	 * ONCE, @Valid @RequestBody OnboardCustomerRequest binding'inde zaten calisir (bkz.
+	 * business/validation/ExistsInLookupGroup).
 	 */
 	public List<AddressCommand> toAddressCommandsWithPrimaryRule(List<AddressInfo> addresses) {
 		List<AddressCommand> commands = new ArrayList<>(addresses.size());

@@ -46,6 +46,9 @@ public final class GnlTpCodes {
 	// GnlTpGroups.PARTY altinda (genel/varsayilan siniflandirma)
 	public static final String GENERAL = "GNL";
 
+	public static final String MANDATORY = "MANDATORY";
+	public static final String OPTIONAL = "OPTIONAL";
+
 	private GnlTpCodes() {
 	}
 }

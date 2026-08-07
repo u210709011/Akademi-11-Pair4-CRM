@@ -20,8 +20,8 @@ public class UpdateProductSpecRequest {
     @Size(max = 100, message = "Aciklama en fazla 100 karakter olabilir.")
     private String descr;
 
-    @NotNull(message = "Durum zorunludur.")
-    private Long statusId;
+    @NotBlank(message = "Durum kodu zorunludur.")
+    private String statusCode;
 
     @NotNull(message = "Gelistirme bilgisi zorunludur.")
     private Boolean dev;

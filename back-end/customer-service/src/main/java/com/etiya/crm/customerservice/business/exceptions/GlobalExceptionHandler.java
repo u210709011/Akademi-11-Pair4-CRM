@@ -11,11 +11,13 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.constants.MessageKeys;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -66,8 +68,14 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 		return build(HttpStatus.BAD_REQUEST, ex, request);
 	}
 
-	@ExceptionHandler(BillingAccountAddressRequiredException.class)
-	public ResponseEntity<ErrorResponse> handleBillingAccountAddressRequired(BillingAccountAddressRequiredException ex,
+	@ExceptionHandler(SearchFilterRequiredException.class)
+	public ResponseEntity<ErrorResponse> handleSearchFilterRequired(SearchFilterRequiredException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, ex, request);
+	}
+
+	@ExceptionHandler({ BillingAccountAddressRequiredException.class, BillingAccountAddressConflictException.class })
+	public ResponseEntity<ErrorResponse> handleBillingAccountAddressRequired(BusinessException ex,
 			HttpServletRequest request) {
 		return build(HttpStatus.BAD_REQUEST, ex, request);
 	}
@@ -80,7 +88,8 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
 	@ExceptionHandler({ PrimaryAddressCannotBeDeletedException.class, AddressLinkedToAccountException.class,
 			BillingAccountActiveCannotBeDeletedException.class, CustomerHasActiveBillingAccountException.class,
-			DefaultAccountCannotBeDeletedException.class })
+			DefaultAccountCannotBeDeletedException.class, BillingAccountHasActiveProductsException.class,
+			AccountNumberCollisionException.class })
 	public ResponseEntity<ErrorResponse> handleGuardViolation(BusinessException ex, HttpServletRequest request) {
 		return build(HttpStatus.CONFLICT, ex, request);
 	}
@@ -107,6 +116,39 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 				.body(ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(),
 						message, request.getRequestURI()));
+	}
+
+	/**
+	 * FR-002: CustomerController.search() alanlarindaki @Size/@Pattern @RequestParam
+	 * uzerinde oldugu icin (govde degil), ihlaller MethodArgumentNotValidException degil
+	 * ConstraintViolationException olarak gelir - @Validated sinif seviyesinde bunu tetikler.
+	 */
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex,
+			HttpServletRequest request) {
+		String message = ex.getConstraintViolations().stream()
+				.findFirst()
+				.map(violation -> violation.getMessage())
+				.orElseGet(() -> resolve(MessageKeys.INVALID_REQUEST_PARAMETER));
+		return build(HttpStatus.BAD_REQUEST, message, request);
+	}
+
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, resolve(MessageKeys.PARAMETER_TYPE_MISMATCH, ex.getName()), request);
+	}
+
+	/**
+	 * B-10: PageRequest.of(page, size) (CustomerAccountController.getAccounts,
+	 * CustomerController.search) negatif sayfa/sifir boyut icin IllegalArgumentException
+	 * firlatir - onceden hicbir handler'i olmadigi icin genel Exception dalina duşup 500'e
+	 * siziyordu. IllegalArgumentException baska yerlerden de gelebilir ama bu API katmaninda
+	 * anlami hep ayni: caller gecersiz bir deger gonderdi, bu da 500 degil 400'dur.
+	 */
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, resolve(MessageKeys.INVALID_REQUEST_PARAMETER), request);
 	}
 
 	@ExceptionHandler(Exception.class)

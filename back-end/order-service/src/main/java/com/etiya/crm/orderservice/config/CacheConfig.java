@@ -1,0 +1,27 @@
+package com.etiya.crm.orderservice.config;
+
+import java.time.Duration;
+
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import com.etiya.crm.orderservice.constants.CacheNames;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
+/** lookup-service çağrılarını yerel bellekte 30 dk cache'ler. */
+@Configuration
+@EnableCaching
+public class CacheConfig {
+
+	@Bean
+	public CacheManager cacheManager() {
+		CaffeineCacheManager cacheManager = new CaffeineCacheManager(CacheNames.LOOKUPS);
+		cacheManager.setCaffeine(Caffeine.newBuilder()
+				.expireAfterWrite(Duration.ofMinutes(30))
+				.maximumSize(500));
+		return cacheManager;
+	}
+}

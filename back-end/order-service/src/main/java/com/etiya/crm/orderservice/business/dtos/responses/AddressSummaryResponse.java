@@ -5,6 +5,7 @@ public record AddressSummaryResponse(
 
     Long addressId,
     Long cityId,
+    String cityName,
     String streetName,
     String buildingName,
     String addressDesc

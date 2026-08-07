@@ -2,6 +2,8 @@ package com.etiya.crm.orderservice.entities.concretes;
 
 import com.etiya.crm.orderservice.entities.abstracts.BaseEntity;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -71,4 +73,8 @@ public class CustOrdItem extends BaseEntity {
 
 	@Column(name = "cmpg_name")
 	private String cmpgName;
+
+	/** Item eklenirken product-service'ten cekilen fiyatin snapshot'i (bkz. V5 migration). */
+	@Column(name = "price")
+	private BigDecimal price;
 }

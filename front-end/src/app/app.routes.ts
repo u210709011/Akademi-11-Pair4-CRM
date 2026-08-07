@@ -11,6 +11,7 @@ import { DetailCustomerComponent } from './features/customer/detail-customer/det
 import { UpdateCustomerComponent } from './features/customer/update-customer/update-customer.component';
 import { ApprovalsComponent } from './features/approvals/approvals.component';
 import { B2bComponent } from './features/b2b/b2b.component';
+import { NewSaleComponent } from './features/customer/new-sale/new-sale.component';
 
 export const routes: Routes = [
   {
@@ -48,6 +49,10 @@ export const routes: Routes = [
       {
         path: 'detail-customer/:custId/update',
         component: UpdateCustomerComponent
+      },
+      {
+        path: 'new-sale/:custId/:custAcctId',
+        component: NewSaleComponent
       },
       {
         path: 'approvals',

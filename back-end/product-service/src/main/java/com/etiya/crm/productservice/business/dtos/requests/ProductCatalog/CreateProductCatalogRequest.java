@@ -1,7 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.ProductCatalog;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,8 +21,8 @@ public class CreateProductCatalogRequest {
     @Size(max = 100, message = "Aciklama en fazla 100 karakter olabilir.")
     private String descr;
 
-    @NotNull(message = "Durum zorunludur.")
-    private Long statusId;
+    @NotBlank(message = "Durum kodu zorunludur.")
+    private String statusCode;
 
     private String shortCode;
 

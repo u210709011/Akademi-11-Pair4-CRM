@@ -1,0 +1,384 @@
+# Full CRM stack: infra pods + every Spring Boot service + the Angular front-end,
+# all built and started together with a single `podman compose up -d --build`.
+#
+# Active profile is switchable via the SPRING_PROFILE shell/env var (defaults to
+# "prod" - see start.bat). dev/test profiles default to localhost for every
+# infra address (they were written for native, non-container use), which would
+# break container-to-container calls - so every container-network hostname
+# (postgres, kafka:29092, redis, keycloak:8180, discovery-server:8761) is passed
+# explicitly here for every service, regardless of which profile is picked. That
+# way switching SPRING_PROFILE only changes genuinely profile-specific behavior
+# (log level, Eureka self-preservation, jpa.show-sql, etc.), never connectivity.
+
+name: crm-stack
+
+services:
+  postgres:
+    image: docker.io/library/postgres:16
+    container_name: crm-postgres
+    environment:
+      POSTGRES_USER: crm
+      POSTGRES_PASSWORD: crm
+      POSTGRES_DB: postgres
+    command: >-
+      postgres -c wal_level=logical
+               -c max_wal_senders=10
+               -c max_replication_slots=10
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: docker.io/apache/kafka:4.0.0
+    container_name: crm-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:29092"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:latest
+    container_name: crm-kafka-ui
+    environment:
+      KAFKA_CLUSTERS_0_NAME: crm
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    ports:
+      - "8090:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  debezium:
+    image: quay.io/debezium/connect:3.1
+    container_name: crm-debezium
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092
+      GROUP_ID: crm-connect
+      CONFIG_STORAGE_TOPIC: connect_configs
+      OFFSET_STORAGE_TOPIC: connect_offsets
+      STATUS_STORAGE_TOPIC: connect_statuses
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+    ports:
+      - "8083:8083"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8083/connectors"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  debezium-connectors:
+    image: docker.io/curlimages/curl:8.11.1
+    container_name: crm-debezium-connectors
+    depends_on:
+      debezium:
+        condition: service_healthy
+    volumes:
+      - ./debezium:/debezium:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        for f in /debezium/*-connector.json; do
+          echo "Registering $$(basename "$$f") ..."
+          curl -s -X POST -H "Content-Type: application/json" \
+            -d "@$$f" \
+            http://debezium:8083/connectors \
+            -w "\nHTTP %{http_code}\n"
+        done
+    restart: "no"
+
+  redis:
+    image: docker.io/library/redis:7
+    container_name: crm-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-commander:
+    image: docker.io/rediscommander/redis-commander:latest
+    container_name: crm-redis-commander
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    container_name: crm-keycloak
+    command: start-dev --http-port=8180 --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8180"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8180"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  config-server:
+    build:
+      context: ../back-end
+      dockerfile: config-server/Dockerfile
+    container_name: crm-config-server
+    ports:
+      - "8888:8888"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8888'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  discovery-server:
+    build:
+      context: ../back-end
+      dockerfile: discovery-server/Dockerfile
+    container_name: crm-discovery-server
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
+    ports:
+      - "8761:8761"
+    depends_on:
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8761'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  api-gateway:
+    build:
+      context: ../back-end
+      dockerfile: api-gateway/Dockerfile
+    container_name: crm-api-gateway
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
+      EUREKA_URL: http://discovery-server:8761/eureka
+      EUREKA_DASHBOARD_URL: http://discovery-server:8761
+      KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
+      KEYCLOAK_CLIENT_ID: crm-client
+      KEYCLOAK_CLIENT_SECRET: crm-client-secret
+      CORS_ALLOWED_ORIGINS: http://localhost:4200
+    ports:
+      - "8080:8080"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  customer-service:
+    build:
+      context: ../back-end
+      dockerfile: customer-service/Dockerfile
+    container_name: crm-customer-service
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
+      DB_URL: jdbc:postgresql://postgres:5432/customer_db
+      DB_USERNAME: crm
+      DB_PASSWORD: crm
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
+      EUREKA_URL: http://discovery-server:8761/eureka
+      KEYCLOAK_CLIENT_SECRET: customer-service-m2m-secret
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  party-service:
+    build:
+      context: ../back-end
+      dockerfile: party-service/Dockerfile
+    container_name: crm-party-service
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
+      DB_URL: jdbc:postgresql://postgres:5432/party_db
+      DB_USERNAME: crm
+      DB_PASSWORD: crm
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
+      EUREKA_URL: http://discovery-server:8761/eureka
+      KEYCLOAK_CLIENT_SECRET: party-service-m2m-secret
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  contact-info-service:
+    build:
+      context: ../back-end
+      dockerfile: contact-info-service/Dockerfile
+    container_name: crm-contact-info-service
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
+      DB_URL: jdbc:postgresql://postgres:5432/contact_info_db
+      DB_USERNAME: crm
+      DB_PASSWORD: crm
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
+      EUREKA_URL: http://discovery-server:8761/eureka
+      KEYCLOAK_CLIENT_SECRET: contact-info-service-m2m-secret
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  order-service:
+    build:
+      context: ../back-end
+      dockerfile: order-service/Dockerfile
+    container_name: crm-order-service
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
+      DB_URL: jdbc:postgresql://postgres:5432/order_db
+      DB_USERNAME: crm
+      DB_PASSWORD: crm
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
+      EUREKA_URL: http://discovery-server:8761/eureka
+      KEYCLOAK_CLIENT_SECRET: order-service-m2m-secret
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  lookup-service:
+    build:
+      context: ../back-end
+      dockerfile: lookup-service/Dockerfile
+    container_name: crm-lookup-service
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
+      DB_URL: jdbc:postgresql://postgres:5432/lookup_db
+      DB_USERNAME: crm
+      DB_PASSWORD: crm
+      KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
+      EUREKA_URL: http://discovery-server:8761/eureka
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  product-service:
+    build:
+      context: ../back-end
+      dockerfile: product-service/Dockerfile
+    container_name: crm-product-service
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
+      DB_URL: jdbc:postgresql://postgres:5432/product_db
+      DB_USERNAME: crm
+      DB_PASSWORD: crm
+      KEYCLOAK_ISSUER_URI: http://keycloak:8180/realms/crm
+      EUREKA_URL: http://discovery-server:8761/eureka
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  front-end:
+    build:
+      context: ../front-end
+    container_name: crm-front-end
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+
+volumes:
+  postgres-data:
+  kafka-data:

@@ -45,6 +45,12 @@ public interface CustomerAccountRepository extends JpaRepository<CustomerAccount
 	boolean existsByAddressIdAndAcctStIdNotDeleted(@Param("addressId") Long addressId,
 			@Param("deletedStatusId") Long deletedStatusId);
 
+	/** existsByAddressIdAndAcctStIdNotDeleted'in genisletilmis hali: sayim + hangi hesaplar oldugu. */
+	@Query("select a from CustomerAccount a where a.addressId = :addressId "
+			+ "and (a.acctStId is null or a.acctStId <> :deletedStatusId)")
+	List<CustomerAccount> findByAddressIdAndAcctStIdNotDeleted(@Param("addressId") Long addressId,
+			@Param("deletedStatusId") Long deletedStatusId);
+
 	/** Soft-delete artik active=false DEGIL, acct_st_id=DEL yazar (bkz. CustomerAccount.acctStId). */
 	@Modifying
 	@Query("update CustomerAccount a set a.acctStId = :deletedStatusId where a.customer.custId = :custId")

@@ -34,6 +34,11 @@ public class CustomerLookupResolverImpl implements CustomerLookupResolver {
 	}
 
 	@Override
+	public Long resolvePassiveAccountStatusId() {
+		return lookupCacheService.resolveStatusId(GnlStGroups.CUSTOMER_ACCOUNT, GnlStCodes.PASSIVE);
+	}
+
+	@Override
 	public Long resolveDeletedAccountStatusId() {
 		return lookupCacheService.resolveStatusId(GnlStGroups.CUSTOMER_ACCOUNT, GnlStCodes.DELETED);
 	}
@@ -51,5 +56,10 @@ public class CustomerLookupResolverImpl implements CustomerLookupResolver {
 	@Override
 	public Long resolveIndividualCustomerTypeId() {
 		return lookupCacheService.resolveTypeId(GnlTpGroups.CUSTOMER_TYPE, GnlTpCodes.INDIVIDUAL_CUSTOMER);
+	}
+
+	@Override
+	public Long resolveCustomerRoleTypeId() {
+		return lookupCacheService.resolveTypeId(GnlTpGroups.PARTY_ROLE_TYPE, GnlTpCodes.CUSTOMER_ROLE);
 	}
 }

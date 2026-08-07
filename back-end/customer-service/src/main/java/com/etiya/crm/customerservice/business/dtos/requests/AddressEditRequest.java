@@ -1,10 +1,13 @@
 package com.etiya.crm.customerservice.business.dtos.requests;
 
+import com.etiya.crm.customerservice.business.validation.ExistsInLookupGroup;
 import com.etiya.crm.customerservice.constants.MessageKeys;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpGroups;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 /**
  * Adres ekleme/guncelleme istegi. AddressInfo'dan (onboarding) farki:
@@ -17,10 +20,12 @@ public record AddressEditRequest(
 
 		@Schema(description = "lookup-service CITY grubundaki deger id'si (seed'de tek deger: 201=Ankara).", example = "201")
 		@NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@ExistsInLookupGroup(group = GnlTpGroups.CITY, message = "{" + MessageKeys.CITY_INVALID + "}")
 		Long cityId,
 
 		@Schema(description = "Cadde/sokak", example = "Cumhuriyet Mah.")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Size(max = 200, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
 		String streetName,
 
 		@Schema(description = "Bina/kat/daire no", example = "No:5 D:2")

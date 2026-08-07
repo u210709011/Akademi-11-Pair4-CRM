@@ -2,13 +2,16 @@ package com.etiya.crm.customerservice.business.dtos.requests;
 
 import java.time.LocalDate;
 
+import com.etiya.crm.customerservice.business.validation.ExistsInLookupGroup;
 import com.etiya.crm.customerservice.constants.MessageKeys;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpGroups;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 /** party-service'e (IND) gidecek kisi bilgisi. ACC-002/003/005/006/007. */
 @Schema(description = "Onboarding sirasinda girilen kisi (individual) bilgisi.")
@@ -16,15 +19,18 @@ public record IndividualInfo(
 
 		@Schema(description = "Ad", example = "Ahmet")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Size(max = 50, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
 		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String firstName,
 
 		@Schema(description = "Ikinci ad (opsiyonel)", example = "Can")
+		@Size(max = 50, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
 		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String middleName,
 
 		@Schema(description = "Soyad", example = "Yilmaz")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@Size(max = 50, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
 		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String lastName,
 
@@ -36,13 +42,16 @@ public record IndividualInfo(
 
 		@Schema(description = "lookup-service GENDER grubundaki deger id'si (1=MALE, 2=FEMALE).", example = "1")
 		@NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+		@ExistsInLookupGroup(group = GnlTpGroups.GENDER, message = "{" + MessageKeys.GENDER_INVALID + "}")
 		Long genderId,
 
 		@Schema(description = "Anne adi (opsiyonel)", example = "Ayse")
+		@Size(max = 50, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
 		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String motherName,
 
 		@Schema(description = "Baba adi (opsiyonel)", example = "Mehmet")
+		@Size(max = 50, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
 		@Pattern(regexp = "^[a-zA-ZçÇğĞıİöÖşŞüÜ\\s]*$", message = "{" + MessageKeys.NAME_INVALID + "}")
 		String fatherName,
 
