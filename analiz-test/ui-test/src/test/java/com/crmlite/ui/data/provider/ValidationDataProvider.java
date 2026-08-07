@@ -5,6 +5,7 @@ import com.crmlite.ui.data.model.ValidationCase;
 import org.testng.annotations.DataProvider;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * FR-001…FR-005 validasyon matrislerini JSON fixture'lardan besleyen DataProvider'lar.
@@ -66,6 +67,19 @@ public final class ValidationDataProvider {
         return toDataProvider(CONTACT_MEDIUM);
     }
 
+    /**
+     * FR-006 — yalnizca <b>hata mesaji beklenen</b> satirlar.
+     *
+     * <p>Mesaj metnini dogrulayan test icin ayri tutulur. Onceden tum matris verilip pozitif
+     * satirlar {@code SkipException} ile eleniyordu; bu, raporda 5 testin "atlandi" gorunmesine
+     * ve her okuyanin sebebini arastirmasina yol aciyordu. Pozitif satirlar zaten
+     * {@code saveButtonStateMatchesFieldValidity} tarafindan kontrol ediliyor.
+     */
+    @DataProvider(name = "contactMediumErrorMessages")
+    public static Object[][] contactMediumErrorMessages() {
+        return toDataProvider(CONTACT_MEDIUM, ValidationCase::expectsError);
+    }
+
     /** Bir fixture dosyasini dogrudan okumak icin (dogrulama testleri). */
     public static List<ValidationCase> read(String classpathResource) {
         return JsonReader.readList(classpathResource, ValidationCase.class);
@@ -76,7 +90,13 @@ public final class ValidationDataProvider {
     }
 
     private static Object[][] toDataProvider(String classpathResource) {
-        List<ValidationCase> cases = JsonReader.readList(classpathResource, ValidationCase.class);
+        return toDataProvider(classpathResource, testCase -> true);
+    }
+
+    private static Object[][] toDataProvider(String classpathResource, Predicate<ValidationCase> filter) {
+        List<ValidationCase> cases = JsonReader.readList(classpathResource, ValidationCase.class).stream()
+                .filter(filter)
+                .toList();
         Object[][] rows = new Object[cases.size()][1];
         for (int i = 0; i < cases.size(); i++) {
             rows[i][0] = cases.get(i);
