@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -44,4 +46,7 @@ public class Product extends BaseEntity {
 
     @Column(name = "st_id", nullable = false)
     private Long statusId;
+
+    @Column(name = "sdate")
+    private LocalDate serviceStartDate;
 }

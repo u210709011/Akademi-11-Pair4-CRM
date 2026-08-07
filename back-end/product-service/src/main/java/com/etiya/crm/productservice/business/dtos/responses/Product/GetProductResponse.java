@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -20,4 +22,5 @@ public class GetProductResponse {
     private Long campaignId;             // ilişki → ID (opsiyonel, null olabilir)
     private String campaignName;
     private Long statusId;
+    private LocalDate serviceStartDate;
 }
