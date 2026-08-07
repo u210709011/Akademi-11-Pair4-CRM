@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Logback'in kendi durum mesajlari konsolu kirletmesin -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+    <!--
+      MDC'deki testName sayesinde paralel kosuda satirlar karismaz;
+      her log satiri hangi teste ait oldugunu tasir.
+    -->
+    <property name="PATTERN"
+              value="%d{HH:mm:ss.SSS} %-5level [%X{testName:-cerceve}] %logger{28} - %msg%n"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>target/logs/automation.log</file>
+        <!--
+          NOT: %i (indeks) kullanildiginda TimeBasedRollingPolicy DEGIL,
+          SizeAndTimeBasedRollingPolicy gerekir; aksi halde appender hic baslamaz
+          ve log dosyasi sessizce hic olusmaz.
+        -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>target/logs/automation.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>200MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Cerceve ve testler: is adimlari INFO, locator detaylari DEBUG -->
+    <logger name="com.crmlite.ui" level="INFO"/>
+
+    <!-- Selenium ve HTTP istemcisi cok gurultulu; yalnizca uyari ve ustu -->
+    <logger name="org.openqa.selenium" level="WARN"/>
+    <logger name="org.asynchttpclient" level="WARN"/>
+    <logger name="io.netty" level="WARN"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>
