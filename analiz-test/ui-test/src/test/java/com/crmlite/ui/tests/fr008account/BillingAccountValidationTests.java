@@ -65,12 +65,17 @@ public class BillingAccountValidationTests extends AuthenticatedTest {
     @Story("ACC-009 — Account Name zorunlu")
     @TmsLink("FR-008-ACC-009")
     @Severity(SeverityLevel.CRITICAL)
+    @Description("Adres secimi Account Name'i OTOMATIK DOLDURUR (commit 220375e: secilen adresin "
+            + "addrDesc'i isme yazilir, kullanici elle yazmadiysa). Bu yuzden alan, adres "
+            + "secildikten sonra bilincli olarak temizlenir — aksi halde 'isim bos' durumu "
+            + "hic olusmaz ve test dogrulamak istedigi kurali hic sinamaz.")
     public void createIsDisabledWithoutAccountName() {
         CreatedCustomer customer = TestDataFactory.customerWithAddresses(1);
         CustomerDetailPage detail = openCustomerDetail(customer.custId()).openAccountsTab();
 
         BillingAccountModalComponent modal = detail.openCreateAccountModal();
         modal.enterAccountDescription("Aciklama").selectFirstExistingAddress();
+        modal.clearAccountName();
 
         assertThat(modal.isCreateDisabled())
                 .as("ACC-009 — Account Name bosken Create pasif").isTrue();
