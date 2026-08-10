@@ -5,6 +5,7 @@ import com.crmlite.ui.pages.components.AddressCardComponent;
 import com.crmlite.ui.pages.components.AddressModalComponent;
 import com.crmlite.ui.pages.components.BillingAccountModalComponent;
 import com.crmlite.ui.pages.components.ProductDetailModalComponent;
+import com.crmlite.ui.pages.newsale.OfferSelectionPage;
 import com.crmlite.ui.pages.components.ConfirmDialogComponent;
 import com.crmlite.ui.pages.components.ContactModalComponent;
 import com.crmlite.ui.pages.components.NavbarComponent;
@@ -79,6 +80,7 @@ public class CustomerDetailPage extends BasePage {
     private static final By PRODUCTS_TABLE = By.cssSelector("table.products-table");
     private static final By PRODUCT_HEADERS = By.cssSelector("table.products-table thead th");
     private static final By NO_PRODUCTS_MESSAGE = By.cssSelector(".account-no-products");
+    private static final By START_NEW_SALE_BUTTON = By.cssSelector(".start-new-sale-button");
     private static final By ACCOUNTS_PAGINATION = By.cssSelector(".accounts-table-wrapper .pagination");
     private static final By ACCOUNTS_PAGINATION_RANGE =
             By.cssSelector(".accounts-table-wrapper .pagination .pagination-range");
@@ -612,6 +614,23 @@ public class CustomerDetailPage extends BasePage {
     public CustomerDetailPage waitUntilAccountCountIsLessThan(int previousCount) {
         wait.until(ExpectedConditions.numberOfElementsToBeLessThan(ACCOUNT_ROWS, previousCount));
         return this;
+    }
+
+    /**
+     * FR-012 ACC-001: genisletilmis hesap satirindaki "Start New Sale" butonu.
+     *
+     * <p>Buton yalnizca satir genisletildiginde gorunur — once
+     * {@link #toggleAccountRow(int)} cagrilmalidir.
+     */
+    public OfferSelectionPage startNewSale() {
+        click(START_NEW_SALE_BUTTON);
+        OfferSelectionPage page = new OfferSelectionPage(driver);
+        page.waitUntilLoaded();
+        return page;
+    }
+
+    public boolean hasStartNewSaleButton() {
+        return isDisplayed(START_NEW_SALE_BUTTON);
     }
 
     // --- FR-009 ACC-009: sayfalama ---
