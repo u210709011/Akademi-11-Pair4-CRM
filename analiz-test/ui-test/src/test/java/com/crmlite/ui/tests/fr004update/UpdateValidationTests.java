@@ -109,8 +109,10 @@ public class UpdateValidationTests extends AuthenticatedTest {
         update.blurField(UpdateCustomerPage.Field.NATIONAL_ID);
 
         assertThat(update.isSaveDisabled()).as("10 haneli NAT ID reddedilir").isTrue();
+        // FR-004'un KENDI validasyon tablosu kullanilir, FR-003'unki degil: dokumanda iki
+        // tablo ayni alan icin farkli metin veriyor (bkz. ExpectedMessages aciklamasi).
         assertThat(update.fieldError(UpdateCustomerPage.Field.NATIONAL_ID))
-                .isEqualTo(ExpectedMessages.get("create.nationalIdError"));
+                .isEqualTo(ExpectedMessages.get("update.nationalIdError"));
     }
 
     @Test(groups = {"fr004"},

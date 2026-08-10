@@ -31,7 +31,9 @@ public class CreateCustomerPage extends BasePage {
     private static final By NEXT_BUTTON = By.cssSelector(".wizard-actions .next-button");
     private static final By CANCEL_BUTTON = By.cssSelector(".wizard-actions .cancel-button");
 
-    private static final By VERIFYING_INDICATOR = By.cssSelector(".verifying-indicator");
+    // 10.08.2026: spinner sinifi .verifying-indicator -> .btn-spinner-wrap olarak degisti
+    // (commit 6cce9c1). Bkz. AppConditions.identityVerificationFinished().
+    private static final By VERIFYING_INDICATOR = By.cssSelector(".btn-spinner-wrap");
     private static final By ERROR_BANNER = By.cssSelector(".identity-error-banner");
 
     /** Sihirbaz adimlari; sekme butonlari bu sirayla render edilir. */

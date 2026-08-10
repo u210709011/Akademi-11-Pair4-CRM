@@ -90,7 +90,11 @@ public final class AddressBuilder {
     }
 
     public AddressInfo build() {
-        Integer city = cityOverridden ? cityId : LookupApi.cityAnkara();
+        // Integer.valueOf ZORUNLU: cityAnkara() int dondugu icin ucuncul operator sayisal
+        // terfi uygular ve iki dali da int'e cevirir - bu da withoutCity()'nin biraktigi
+        // null cityId'yi unbox edip NullPointerException firlatir. Sarmalayinca operatorun
+        // tipi Integer olarak kalir ve null gecebilir.
+        Integer city = cityOverridden ? cityId : Integer.valueOf(LookupApi.cityAnkara());
         return new AddressInfo(city, streetName, buildingName, addressDesc, primary);
     }
 }

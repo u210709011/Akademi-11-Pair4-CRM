@@ -159,19 +159,25 @@ public class LoginTests extends BaseTest {
     }
 
     @Test(groups = {"fr001"},
-            description = "UI-FR001-10 | Kullanici adindaki bas/son bosluklar kirpilir")
+            description = "UI-FR001-10 | Kullanici adi bas/son bosluk ile kabul edilmez")
     @Story("Validasyon — Bas/son bosluk")
     @TmsLink("FR-001-VAL-TRIM")
     @Severity(SeverityLevel.MINOR)
-    @Description("Dokuman 'bosluk ile baslamamali veya bitmemelidir' diyor. Uygulama bunu "
-            + "hata mesaji yerine OTOMATIK KIRPMA ile karsiliyor (login.component.ts trimUsername); "
-            + "test bu davranisi belgeler.")
-    public void usernameIsTrimmedOnBlur() {
-        SearchCustomerPage searchPage =
-                loginPage.loginAs("  " + config.username() + "  ", config.password());
+    @Description("Dokuman: 'Bosluk karakteri ile baslamamali veya bitmemelidir' kurali ve "
+            + "'Bastaki veya sondaki bosluklara izin verilmez.' mesaji. Uygulama bu kurali "
+            + "NO_LEADING_TRAILING_SPACE_PATTERN ile uyguluyor ve form gecersiz kaliyor.\n"
+            + "TARIHCE: uygulama onceden mesaj yerine otomatik kirpma yapiyordu ve test o "
+            + "davranisi belgeliyordu; 6cce9c1 ile dokumana uygun hale getirildi.")
+    public void usernameWithSurroundingSpacesIsRejected() {
+        loginPage.enterUsername("  " + config.username() + "  ");
+        // Password alanina gecmek username'i "touched" yapar; aksi halde mesaj render edilmez.
+        loginPage.enterPassword(config.password());
 
-        assertThat(searchPage.isAt())
-                .as("bosluklar kirpildigi icin giris basarili olur").isTrue();
+        assertThat(loginPage.usernameFieldError())
+                .as("dokuman — bastaki/sondaki bosluk hata mesaji")
+                .isEqualTo(ExpectedMessages.get("login.noLeadingTrailingSpace"));
+        assertThat(loginPage.isSubmitDisabled())
+                .as("form gecersizken Login butonu pasif kalir").isTrue();
     }
 
     @Test(groups = {"fr001"},
