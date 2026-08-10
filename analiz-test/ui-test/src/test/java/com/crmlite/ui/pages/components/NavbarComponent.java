@@ -42,6 +42,31 @@ public class NavbarComponent extends BaseComponent {
         return getText(LANGUAGE_BUTTON);
     }
 
+    // --- FR-018 Dil Destegi ---
+
+    /** ACC-001: ust menude dil secenegi bulunmalidir. */
+    public boolean hasLanguageOption() {
+        return isDisplayed(LANGUAGE_BUTTON);
+    }
+
+    /** Buyuk harfe normalize edilmis dil kodu — karsilastirmalar bunun uzerinden yapilir. */
+    public String currentLanguage() {
+        return currentLanguageCode().trim().toUpperCase();
+    }
+
+    /**
+     * Dili degistirir ve buton etiketinin degismesini bekler.
+     *
+     * <p>Uygulamada acilir menu YOKTUR: tek buton EN ve TR arasinda dogrudan gecis yapar
+     * (bilesendeki metot adi {@code toggleLangMenu} olsa da davranis budur).
+     */
+    public NavbarComponent toggleLanguage() {
+        String before = currentLanguage();
+        click(LANGUAGE_BUTTON);
+        wait.until(driver -> !currentLanguage().equals(before));
+        return this;
+    }
+
     public NavbarComponent openProfileMenu() {
         if (!isDisplayed(PROFILE_MENU)) {
             click(PROFILE_BUTTON);

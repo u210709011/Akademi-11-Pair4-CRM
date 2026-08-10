@@ -11,17 +11,18 @@
   Bu testler kendi FR suite'lerinde (orn. fr008.xml) kosulmaya devam eder - kapsam
   disina cikarilmis degil, yalnizca gecer/kalir kapisindan ayrilmislardir.
 
-  parallel="classes" bilincli secildi: paralellik sinif duzeyinde kalirsa her
-  sinif kendi test verisiyle calisir ve veri yarisi (race) olusmaz. WebDriver
-  ThreadLocal'da tutuldugu icin her is parcacigi kendi tarayicisini kullanir.
+  parallel="false" — SERI kosum. 10.08.2026'da paralel (parallel="classes",
+  thread-count="3") iki kez denendi ve her ikisinde de kararsizlik uretti:
+  WebDriver oturumu is parcaciklarindan dusuyor ("Bu thread icin WebDriver yok"),
+  yuk altinda tiklamalar zaman asimina ugruyor ve HER KOSUMDA FARKLI testler
+  kirmizi oluyordu. Bu, gercek urun hatalarini gurultuye gomdugu icin suite
+  seri kosuma alindi: daha uzun surer ama sonucu guvenilir ve tekrarlanabilir.
 
-  !! DOGRULANMADI: Suite'ler bugune kadar hep tek tek (fr001..fr005, parallel=false)
-  calistirildi; paralel kosum henuz ucdan uca dogrulanmadi. CI'a alinmadan once
-  bir kez calistirilip iki nokta gozlenmelidir:
-    1) 3 es zamanli Chrome + backend yuku altinda renderer timeout artiyor mu,
+  Paralellige donulecekse once thread-count="2" denenmeli ve su iki nokta
+  gozlenmelidir:
+    1) es zamanli Chrome + backend yuku altinda renderer timeout artiyor mu,
     2) NationalIdUniquenessTests gibi tekillik senaryolari birbirinin verisini
        goruyor mu (TestRunId + sequence bunu onlemeli, ama kanit yok).
-  Sorun cikarsa once thread-count=2, sonra parallel="false" ile denenmelidir.
 
   FR-001 dahildir: kullanicinin talimatiyla uzerinde calisilmiyor ve tamamlanmis
   kabul ediliyor. Riskli iki senaryo zaten disarida: AccountLockTests karantinada
@@ -29,7 +30,7 @@
 -->
 <!-- configfailurepolicy=continue: tek bir @BeforeMethod hatasi, sinifin geri kalan
      testlerinin config metotlarinin da atlanmasina (ciglama) yol acmamalidir. -->
-<suite name="CRM Lite UI - Regression" verbose="1" parallel="classes" configfailurepolicy="continue" thread-count="3">
+<suite name="CRM Lite UI - Regression" verbose="1" parallel="false" configfailurepolicy="continue">
 
     <listeners>
         <listener class-name="com.crmlite.ui.core.listeners.SuiteListener"/>
