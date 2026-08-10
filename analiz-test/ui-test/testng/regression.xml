@@ -2,8 +2,14 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 
 <!--
-  Regression suite — FR-001..FR-005'in tamami.
+  Regression suite — FR-001..FR-012'nin tamami.
   Calistirma: ./mvnw test -Dsuite=regression
+
+  "documented-gap" grubu suite duzeyinde DISLANIR. O gruptaki testler dokumana gore
+  yazilmis ve uygulamada karsiligi olmadigi icin bilerek kirmizi birakilmistir; burada
+  kosarsa regresyon hicbir zaman yesile donmez ve gercek regresyonlari gorunmez kilar.
+  Bu testler kendi FR suite'lerinde (orn. fr008.xml) kosulmaya devam eder - kapsam
+  disina cikarilmis degil, yalnizca gecer/kalir kapisindan ayrilmislardir.
 
   parallel="classes" bilincli secildi: paralellik sinif duzeyinde kalirsa her
   sinif kendi test verisiyle calisir ve veri yarisi (race) olusmaz. WebDriver
@@ -30,6 +36,12 @@
         <listener class-name="com.crmlite.ui.core.listeners.TestListener"/>
         <listener class-name="com.crmlite.ui.core.listeners.RetryAnnotationTransformer"/>
     </listeners>
+
+    <groups>
+        <run>
+            <exclude name="documented-gap"/>
+        </run>
+    </groups>
 
     <test name="Cerceve Self-Check">
         <classes>
@@ -100,13 +112,42 @@
       BillingAccountCancelTests bilincli olarak disarida: ACC-006/ACC-010 uyari adimlari
       uygulamada yok ve modal tasmasi (FR-008-BUG-MODAL-OVERFLOW) gercek bir urun hatasi.
       BillingAccountValidationTests dahildir; icindeki tek kirmizi
-      (createIsDisabledWithoutAccountDescription) "documented-gap" grubunda oldugu icin
-      CI'da grup dislanarak haric tutulabilir.
+      (createIsDisabledWithoutAccountDescription, FR-008-GAP-ACC009) yukaridaki
+      documented-gap dislamasiyla otomatik olarak elenir.
     -->
     <test name="FR-008 Fatura Hesabi Olusturma">
         <classes>
             <class name="com.crmlite.ui.tests.fr008account.CreateBillingAccountTests"/>
             <class name="com.crmlite.ui.tests.fr008account.BillingAccountValidationTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-009 Fatura Hesabi ve Bagli Urun Goruntuleme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr009accountproduct.AccountProductViewTests"/>
+            <class name="com.crmlite.ui.tests.fr009accountproduct.AccountPaginationAndGapTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-010 Fatura Hesabi Guncelleme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr010accountupdate.UpdateBillingAccountTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-011 Fatura Hesabi Silme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr011accountdelete.DeleteBillingAccountTests"/>
+        </classes>
+    </test>
+
+    <!--
+      FR-012 ON KOSUL: product-service ve order-service ayakta olmalidir - Offer Selection
+      ekrani katalog/kampanya verisini bu servislerden ceker.
+    -->
+    <test name="FR-012 Yeni Satis Surecini Baslatma">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr012newsale.StartNewSaleTests"/>
         </classes>
     </test>
 
