@@ -16,6 +16,7 @@ import {
 import { I18nService } from '../../../core/i18n';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../core/lookup';
 import { OrderService } from '../../../core/order';
+import { ProductService } from '../../../core/product';
 import {
   AccountProduct,
   CITY_NAMES,
@@ -27,7 +28,11 @@ import {
   mapToCustomerContact,
   mapToCustomerDetail
 } from './detail-customer.mapper';
-import { getMockProductDetail, ProductCharacteristic } from './mock/product-detail-mock.data';
+
+export interface ProductCharacteristic {
+  label: string;
+  value: string;
+}
 
 interface AddressFormModel {
   city: string;
@@ -119,6 +124,7 @@ export class DetailCustomerComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly customerService = inject(CustomerService);
   private readonly orderService = inject(OrderService);
+  private readonly productService = inject(ProductService);
   private readonly lookupService = inject(LookupService);
 
   protected readonly isLoading = signal(true);
@@ -584,16 +590,49 @@ export class DetailCustomerComponent {
   }
 
   protected openProductDetail(account: CustomerAccount, product: AccountProduct): void {
-    const mock = getMockProductDetail(product.productId);
-    this.selectedProductDetail.set({
-      productName: product.productName,
-      productOfferId: `OFR-${product.productId}`,
-      productSpecId: mock.productSpecId,
-      serviceStartDate: mock.serviceStartDate,
-      characteristics: mock.characteristics,
-      address: this.addresses().find(candidate => candidate.id === account.addressId) ?? null
+    const productId = Number(product.productId);
+    const address = this.addresses().find(candidate => candidate.id === account.addressId) ?? null;
+
+    forkJoin({
+      product: this.productService.getById(productId),
+      characteristics: this.productService.getCharacteristicsByProductId(productId)
+    }).subscribe({
+      next: ({ product: provisionedProduct, characteristics }) => {
+        this.selectedProductDetail.set({
+          productName: product.productName,
+          productOfferId: `OFR-${product.productId}`,
+          productSpecId: `SPEC-${provisionedProduct.productSpecId}`,
+          serviceStartDate: this.formatServiceStartDate(provisionedProduct.serviceStartDate),
+          characteristics: characteristics.map(charVal => ({
+            label: charVal.characteristicName,
+            value: charVal.value ?? charVal.characteristicValueName ?? UNKNOWN
+          })),
+          address
+        });
+        this.productDetailOpen.set(true);
+      },
+      error: () => {
+        this.selectedProductDetail.set({
+          productName: product.productName,
+          productOfferId: `OFR-${product.productId}`,
+          productSpecId: UNKNOWN,
+          serviceStartDate: UNKNOWN,
+          characteristics: [],
+          address
+        });
+        this.productDetailOpen.set(true);
+      }
     });
-    this.productDetailOpen.set(true);
+  }
+
+  // backend LocalDate'i ISO ("YYYY-MM-DD") dondurur - uygulamanin geri kalaniyla tutarli olmasi
+  // icin DD/MM/YYYY'e ceviriyoruz (bkz. create.birthDate placeholder'i).
+  private formatServiceStartDate(isoDate: string | null): string {
+    if (!isoDate) {
+      return UNKNOWN;
+    }
+    const [year, month, day] = isoDate.split('-');
+    return `${day}/${month}/${year}`;
   }
 
   protected closeProductDetail(): void {

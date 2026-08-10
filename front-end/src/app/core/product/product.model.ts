@@ -73,3 +73,32 @@ export interface ProductOfferingCharUse {
   mandatory: boolean;
   active: boolean;
 }
+
+// GET /api/v1/products/{productId} - siparis tamamlandiginda (finishOrder -> provisionProducts)
+// gercekten provizyon edilmis urun ornegi. Product Offer Details modali icin (bkz. detail-customer).
+export interface Product {
+  productId: number;
+  parentProductId: number | null;
+  productOfferingId: number;
+  productOfferingName: string;
+  productSpecId: number;
+  name: string;
+  descr: string;
+  campaignId: number | null;
+  campaignName: string | null;
+  statusId: number;
+  serviceStartDate: string | null;
+}
+
+// GET /api/v1/product-characteristic-values/by-product/{productId} - siparis Configuration
+// adiminda secilmis, provizyon sirasinda urune islenmis karakteristik degerleri.
+export interface ProductCharacteristicValue {
+  productCharacteristicValueId: number;
+  characteristicName: string;
+  productId: number;
+  characteristicId: number;
+  characteristicValueId: number | null;
+  characteristicValueName: string | null;
+  value: string | null;
+  statusId: number;
+}

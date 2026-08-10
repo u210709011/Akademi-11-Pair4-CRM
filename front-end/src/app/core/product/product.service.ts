@@ -5,8 +5,10 @@ import { environment } from '../../../environments/environment';
 import {
   Campaign,
   CampaignOffering,
+  Product,
   ProductCatalog,
   ProductCatalogOffering,
+  ProductCharacteristicValue,
   ProductOffering,
   ProductOfferingCharUse,
   ProductOfferingRelation
@@ -48,6 +50,17 @@ export class ProductService {
   getCharUsesByOffering(productOfferingId: number): Observable<ProductOfferingCharUse[]> {
     return this.http.get<ProductOfferingCharUse[]>(
       `${environment.apiGatewayUrl}/api/v1/product-offering-char-uses/by-offering/${productOfferingId}`
+    );
+  }
+
+  // Product Offer Details modali (bkz. detail-customer) - provizyon edilmis gercek urun ornegi.
+  getById(productId: number): Observable<Product> {
+    return this.http.get<Product>(`${environment.apiGatewayUrl}/api/v1/products/${productId}`);
+  }
+
+  getCharacteristicsByProductId(productId: number): Observable<ProductCharacteristicValue[]> {
+    return this.http.get<ProductCharacteristicValue[]>(
+      `${environment.apiGatewayUrl}/api/v1/product-characteristic-values/by-product/${productId}`
     );
   }
 }
