@@ -376,8 +376,6 @@
                                                     <button
                                                         type="button"
                                                         class="menu-item-danger"
-                                                        [disabled]="address.primary || linkedAccountCount(address.id) > 0"
-                                                        [attr.title]="address.primary ? i18n.t('detail.primaryAddressCannotDelete') : (linkedAccountCount(address.id) > 0 ? i18n.t('detail.addressLinkedCannotDelete') : null)"
                                                         (click)="openDeleteAddressConfirm(address)"
                                                     >
                                                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -621,7 +619,7 @@
                         </svg>
                     </div>
                     @if (contactForm.email().invalid() && contactForm.email().touched()) {
-                        <span class="field-error">{{ contactModel().email ? i18n.t('create.emailFormatError') : i18n.t('create.fieldRequired') }}</span>
+                        <span class="field-error">{{ contactModel().email ? i18n.t('detail.emailFormatError') : i18n.t('create.fieldRequired') }}</span>
                     }
                 </div>
 

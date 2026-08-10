@@ -914,7 +914,9 @@
 // hem contact save hem de billing account create bunu paylasir (bkz. showToast() component.ts).
 .success-toast {
   position: fixed;
-  top: 24px;
+  // navbar 76px yuksekliginde (bkz. navbar.component.scss) - toast onun ustune bindirmeden
+  // "degisen alan"in (main-content) sag ust kosesine oturur.
+  top: calc(76px + 24px);
   right: 24px;
   z-index: 60;
   display: flex;

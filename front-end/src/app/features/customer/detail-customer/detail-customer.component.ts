@@ -246,6 +246,7 @@ export class DetailCustomerComponent {
   // accountFormValid computed'undan gelir (bkz. (e) dilimi) - "tam olarak biri" kurali capraz alan.
   protected readonly accountForm = form(this.accountModel, path => {
     required(path.accountName);
+    maxLength(path.accountName, 50);
     required(path.accountDesc);
   });
 
@@ -300,6 +301,13 @@ export class DetailCustomerComponent {
   // customer-service tek giris noktasi - /individual'i party-service'e, /contact'i contact-info-service'e
   // kendi icinde proxy'liyor, o yuzden ucu de dogrudan custId ile paralel cekilebiliyor.
   constructor() {
+    // ACC-016: create-customer basarili olusturma sonrasi buraya ?created=1 ile yonlendirir -
+    // basari mesaji burada gosterilir (create ekraninda gostermenin bir anlami yok, hemen ayriliyor).
+    if (this.route.snapshot.queryParamMap.get('created') === '1') {
+      this.showToast(this.i18n.t('detail.customerCreatedSuccess'));
+      this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+    }
+
     forkJoin({
       customerDetail: this.customerService.getById(this.custId),
       individual: this.customerService.getIndividual(this.custId),
@@ -775,12 +783,14 @@ export class DetailCustomerComponent {
       next: () => {
         this.isSavingAddress.set(false);
         this.isAddressModalOpen.set(false);
+        this.showToast(this.i18n.t(editingId ? 'detail.updateAddressSuccess' : 'detail.addAddressSuccess'));
         this.refreshAddresses();
       },
       error: (httpError: HttpErrorResponse) => {
         this.isSavingAddress.set(false);
         this.addressSaveError.set(
-          httpError.status === 409 ? this.i18n.t('detail.maxAddressesReached') : this.i18n.t('detail.addressSaveError')
+          (httpError.error as { message?: string } | null)?.message ??
+            (httpError.status === 409 ? this.i18n.t('detail.maxAddressesReached') : this.i18n.t('detail.addressSaveError'))
         );
       }
     });

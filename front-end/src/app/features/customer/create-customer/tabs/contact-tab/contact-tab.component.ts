@@ -10,6 +10,8 @@ const PHONE_FIELDS: PhoneFieldName[] = ['homePhone', 'mobilePhone', 'fax'];
 const PHONE_MAX_DIGITS: Record<PhoneFieldName, number> = { homePhone: 10, mobilePhone: 10, fax: 11 };
 const HOME_PHONE_PATTERN = /^2\d{9}$/;
 const MOBILE_PHONE_PATTERN = /^5\d{9}$/;
+// UC-EACRML-003 validasyon tablosu ornegi: 02121234567 (basinda 0, toplam 11 hane).
+const FAX_PATTERN = /^0\d{10}$/;
 const DIGITS_ONLY_ERROR_TIMEOUT_MS = 2000;
 
 @Component({
@@ -41,6 +43,7 @@ export class ContactTabComponent {
     maxLength(path.fax, 11);
     pattern(path.homePhone, HOME_PHONE_PATTERN, { when: ({ value }) => value() !== '' });
     pattern(path.mobilePhone, MOBILE_PHONE_PATTERN);
+    pattern(path.fax, FAX_PATTERN, { when: ({ value }) => value() !== '' });
   });
 
   constructor() {

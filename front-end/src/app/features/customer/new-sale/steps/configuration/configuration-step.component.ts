@@ -208,7 +208,8 @@ export class ConfigurationStepComponent {
       error: (httpError: HttpErrorResponse) => {
         this.isSavingAddress.set(false);
         this.addressSaveError.set(
-          httpError.status === 409 ? this.i18n.t('detail.maxAddressesReached') : this.i18n.t('detail.addressSaveError')
+          (httpError.error as { message?: string } | null)?.message ??
+            (httpError.status === 409 ? this.i18n.t('detail.maxAddressesReached') : this.i18n.t('detail.addressSaveError'))
         );
       }
     });
