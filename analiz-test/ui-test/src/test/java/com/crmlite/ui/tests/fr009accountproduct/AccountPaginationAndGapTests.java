@@ -10,7 +10,6 @@ import com.crmlite.ui.tests.AuthenticatedTest;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -20,10 +19,12 @@ import org.testng.annotations.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * FR-009 ACC-009 (sayfalama) ve dokuman-uygulama farklari.
+ * FR-009 ACC-009 (sayfalama) ve ACC-001'in bos durum davranisi.
  *
- * <p>ACC-001'in ikinci yarisi ("hesap yoksa mesaj gosterilmeli") uygulamada karsiliksizdir;
- * ilgili test dokumana gore yazildi ve {@code documented-gap} grubunda <b>kirmizi kalir</b>.
+ * <p>ACC-001'in ikinci yarisi ("hesap yoksa mesaj gosterilmeli") once uygulamada yoktu ve
+ * ilgili test {@code documented-gap} olarak kirmizi birakilmisti; 10.08.2026'da eklendi.
+ * Bos durumda <b>tablo hic render edilmez</b> — bu yuzden sayfa acilisinda tablo degil
+ * panel beklenir (bkz. {@code CustomerDetailPage.openAccountsTab}).
  */
 @Epic("FR-009 Fatura Hesabi ve Bagli Urun Goruntuleme")
 @Feature("UC-EACRML-009")
@@ -71,16 +72,14 @@ public class AccountPaginationAndGapTests extends AuthenticatedTest {
                 .contains(String.valueOf(PAGE_SIZE + 2));
     }
 
-    @Test(groups = {"fr009", "documented-gap"},
+    @Test(groups = {"fr009", "regression"},
             description = "UI-FR009-13 | Fatura hesabi yokken bilgilendirme mesaji gosterilir")
     @Story("ACC-001 — Hesap bulunmamasi")
     @TmsLink("FR-009-ACC-001")
-    @Issue("FR-009-GAP-ACC001")
     @Severity(SeverityLevel.NORMAL)
-    @Description("BILINEN UYUMSUZLUK — kirmizi kalmasi beklenir. Dokuman ACC-001 hesap yoksa "
-            + "tablo yerine 'There are no billing accounts yet.' gosterilmesini sart kosar. "
-            + "Uygulamada boyle bir metin yok: tablo bos govdeyle render ediliyor "
-            + "(sablonda ne @if ne @empty bloku var).")
+    @Description("Dokuman ACC-001 hesap yoksa tablo yerine 'There are no billing accounts yet.' "
+            + "gosterilmesini sart kosar. Onceden uygulamada boyle bir metin yoktu ve bu test "
+            + "documented-gap olarak kirmizi birakilmisti; 10.08.2026'da eklendi ve yesile dondu.")
     public void emptyStateMessageIsShownWhenNoBillingAccounts() {
         CreatedCustomer customer = TestDataFactory.simpleCustomer();
         CustomerDetailPage detail = openCustomerDetail(customer.custId()).openAccountsTab();

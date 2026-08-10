@@ -52,8 +52,14 @@ public class CustomerDetailPage extends BasePage {
     private static final By ADDRESS_EMPTY_STATE = By.cssSelector(".address-empty-state");
 
     // Accounts sekmesi
-    private static final By ACCOUNT_ROWS = By.cssSelector("table.accounts-table tbody tr");
+    // Dogrudan cocuk (>) sart: satir genisletildiginde icine URUN TABLOSU render ediliyor ve
+    // torun secici onun satirlarini da sayardi. :not(.account-detail-row) ise genisletilmis
+    // satirin kendisini disarida birakir - o bir hesap degil, acilan panelin kabidir.
+    private static final By ACCOUNT_ROWS =
+            By.cssSelector("table.accounts-table > tbody > tr:not(.account-detail-row)");
     private static final By ACCOUNTS_TABLE = By.cssSelector("table.accounts-table");
+    // Hesap yoksa tablo hic render edilmez, yerine bu metin gosterilir (FR-009 ACC-001).
+    private static final By ACCOUNTS_PANEL = By.cssSelector(".accounts-table-wrapper");
     private static final By ACCOUNT_HEADERS = By.cssSelector("table.accounts-table thead th");
     // Accounts sekmesindeki "+ Create New Account" butonu; adres sekmesindeki ekleme
     // butonuyla ayni sinifi paylasir, sekme bazinda ayrisir.
@@ -440,9 +446,16 @@ public class CustomerDetailPage extends BasePage {
      * <p>Hazir olma kosulu tablonun kendisidir; onboarding her musteriye varsayilan bir hesap
      * actigi icin tablo hicbir zaman bos degildir.
      */
+    /**
+     * Accounts sekmesini acar.
+     *
+     * <p>Tablonun degil <b>panelin</b> gorunmesi beklenir: musterinin hic fatura hesabi yoksa
+     * tablo render edilmez, yerine "There are no billing accounts yet." metni gosterilir
+     * (FR-009 ACC-001). Tabloyu beklemek bu durumda sonsuza kadar takilirdi.
+     */
     public CustomerDetailPage openAccountsTab() {
         selectTab(Tab.ACCOUNTS);
-        wait.until(ExpectedConditions.visibilityOfElementLocated(ACCOUNTS_TABLE));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(ACCOUNTS_PANEL));
         return this;
     }
 
