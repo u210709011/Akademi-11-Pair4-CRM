@@ -74,7 +74,7 @@ public abstract class AbstractDownstreamExceptionHandler {
 	@ExceptionHandler(CallNotPermittedException.class)
 	public ResponseEntity<ErrorResponse> handleCircuitBreakerOpen(CallNotPermittedException ex,
 			HttpServletRequest request) {
-		return buildCircuitBreakerOpenResponse(request);
+		return buildCircuitBreakerOpenResponse(ex, request);
 	}
 
 	/**

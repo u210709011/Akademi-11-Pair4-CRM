@@ -32,11 +32,7 @@ public class BillingAccountBusinessRules {
 		}
 	}
 
-	/**
-	 * ACC-004: pasif hesaba bagli aktif urun varsa fatura hesabi silinemez. order-service
-	 * entegrasyonu gelene kadar caller (BillingAccountServiceImpl) NoOpBillingAccountProductGuard
-	 * uzerinden hep false gecer - bkz. BillingAccountProductGuard.
-	 */
+	/** ACC-004: pasif hesaba bagli aktif urun varsa fatura hesabi silinemez - bkz. BillingAccountProductGuard. */
 	public void ensureNoLinkedProducts(boolean hasLinkedProducts) {
 		if (hasLinkedProducts) {
 			throw new BillingAccountHasActiveProductsException();

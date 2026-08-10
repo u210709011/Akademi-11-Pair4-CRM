@@ -16,7 +16,11 @@ import {
 import { I18nService } from '../../../core/i18n';
 import { OrderService } from '../../../core/order';
 import {
+<<<<<<< Updated upstream
   CITY_NAMES,
+=======
+  AccountProduct,
+>>>>>>> Stashed changes
   CustomerAccount,
   CustomerContact,
   CustomerDetail,
@@ -150,6 +154,9 @@ export class DetailCustomerComponent {
   protected readonly isContactModalOpen = signal(false);
   protected readonly isSavingContact = signal(false);
   protected readonly contactSaveError = signal<string | null>(null);
+  // FR-006 ACC-006 / FR-008 ACC-010: Cancel'da kaydedilmemis degisiklik varsa (form dirty)
+  // modal dogrudan kapanmadan once onay istenir - bkz. closeContactModal/closeCreateAccountModal.
+  protected readonly isContactCancelConfirmOpen = signal(false);
   // sag ust, mockup'taki gercek toast tasarimi - hem contact save hem de billing account
   // create basari mesajlari bunu kullanir (bkz. showToast).
   protected readonly toastMessage = signal<string | null>(null);
@@ -162,6 +169,7 @@ export class DetailCustomerComponent {
   protected readonly isCreateAccountModalOpen = signal(false);
   protected readonly isSavingAccount = signal(false);
   protected readonly createAccountError = signal<string | null>(null);
+  protected readonly isAccountCancelConfirmOpen = signal(false);
   // false: mevcut adres dropdown'i; true: inline "+ Add New Address" formu.
   protected readonly isAddingNewAddressForAccount = signal(false);
   // kullanici Account Name'i elle degistirdiyse true olur - auto-fill sadece false iken calisir (bkz. constructor'daki effect).
@@ -204,6 +212,7 @@ export class DetailCustomerComponent {
   // accountFormValid computed'undan gelir (bkz. (e) dilimi) - "tam olarak biri" kurali capraz alan.
   protected readonly accountForm = form(this.accountModel, path => {
     required(path.accountName);
+    required(path.accountDesc);
   });
 
   // "+ Add New Address" ile acilan inline form - addressForm'un validasyon kurallarinin birebir
@@ -219,7 +228,7 @@ export class DetailCustomerComponent {
   });
 
   // addressId/newAddress'ten tam olarak biri kuralini capraz-alan olarak burada uyguluyoruz -
-  // accountForm sadece accountName'i (schema-only alan) dogrular.
+  // accountForm accountName + accountDesc (schema-only alanlar) dogrular.
   protected readonly accountFormValid = computed(() => {
     if (this.accountForm().invalid()) {
       return false;
@@ -428,7 +437,20 @@ export class DetailCustomerComponent {
   }
 
   protected closeCreateAccountModal(): void {
+    if (this.accountForm().dirty() || this.newAccountAddressForm().dirty()) {
+      this.isAccountCancelConfirmOpen.set(true);
+      return;
+    }
     this.isCreateAccountModalOpen.set(false);
+  }
+
+  protected discardAccountChanges(): void {
+    this.isAccountCancelConfirmOpen.set(false);
+    this.isCreateAccountModalOpen.set(false);
+  }
+
+  protected keepEditingAccount(): void {
+    this.isAccountCancelConfirmOpen.set(false);
   }
 
   protected markAccountNameTouched(): void {
@@ -682,7 +704,20 @@ export class DetailCustomerComponent {
   }
 
   protected closeContactModal(): void {
+    if (this.contactForm().dirty()) {
+      this.isContactCancelConfirmOpen.set(true);
+      return;
+    }
     this.isContactModalOpen.set(false);
+  }
+
+  protected discardContactChanges(): void {
+    this.isContactCancelConfirmOpen.set(false);
+    this.isContactModalOpen.set(false);
+  }
+
+  protected keepEditingContact(): void {
+    this.isContactCancelConfirmOpen.set(false);
   }
 
   protected saveContact(): void {

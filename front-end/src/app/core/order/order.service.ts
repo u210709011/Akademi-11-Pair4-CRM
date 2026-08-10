@@ -17,7 +17,7 @@ export class OrderService {
   // Products/campaigns currently linked to a billing account, sourced from fulfilled order line items.
   getByCustAcctId(custAcctId: number): Observable<CustOrdItemResponse[]> {
     const params = new HttpParams().set('custAcctId', custAcctId);
-    return this.http.get<CustOrdItemResponse[]>(`${environment.apiGatewayUrl}/api/v1/orders`, { params });
+    return this.http.get<CustOrdItemResponse[]>(`${environment.apiGatewayUrl}/api/v1/orders/by-account`, { params });
   }
 
   // FR-017: Offer Selection'da Next - Product Configuration'a gecmeden once sepeti dogrular.
