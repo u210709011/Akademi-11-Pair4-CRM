@@ -3,6 +3,7 @@ package com.crmlite.ui.tests.fr006contact;
 import com.crmlite.ui.data.ExpectedMessages;
 import com.crmlite.ui.data.api.TestDataFactory;
 import com.crmlite.ui.data.model.CreatedCustomer;
+import com.crmlite.ui.pages.components.ConfirmDialogComponent;
 import com.crmlite.ui.pages.components.ContactModalComponent;
 import com.crmlite.ui.pages.customer.CustomerDetailPage;
 import com.crmlite.ui.tests.AuthenticatedTest;
@@ -138,7 +139,9 @@ public class ContactMediumTests extends AuthenticatedTest {
     @Story("ACC-006 — Cancel ile vazgecme")
     @TmsLink("FR-006-ACC-006")
     @Severity(SeverityLevel.NORMAL)
-    @Description("Cancel sonrasi degisiklik kaydedilmemeli ve Contact Medium ekranina donulmelidir.")
+    @Description("Cancel sonrasi degisiklik kaydedilmemeli ve Contact Medium ekranina donulmelidir. "
+            + "ACC-006'nin onay adimi eklendikten sonra (bkz. ContactCancelConfirmationTests) Cancel "
+            + "artik dogrudan degil, onay diyalogu uzerinden kapanir.")
     public void cancelDiscardsChanges() {
         CreatedCustomer customer = TestDataFactory.simpleCustomer();
         CustomerDetailPage detail = openCustomerDetail(customer.custId()).openContactTab();
@@ -147,7 +150,9 @@ public class ContactMediumTests extends AuthenticatedTest {
 
         ContactModalComponent modal = detail.openEditContactModal();
         modal.enterEmail("vazgecilen@example.com");
-        modal.cancel();
+
+        ConfirmDialogComponent confirmation = modal.cancelExpectingConfirmation();
+        confirmation.confirm();
         modal.waitUntilClosed();
 
         assertThat(detail.contactValue(CustomerDetailPage.ContactField.EMAIL))

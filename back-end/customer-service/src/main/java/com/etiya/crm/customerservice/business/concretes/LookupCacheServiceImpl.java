@@ -1,11 +1,14 @@
 package com.etiya.crm.customerservice.business.concretes;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.clients.controllers.LookupClient;
 import com.etiya.crm.customerservice.constants.CacheNames;
+import com.etiya.crm.customerservice.constants.LogMessages;
 
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class LookupCacheServiceImpl implements LookupCacheService {
+
+	private static final Logger log = LoggerFactory.getLogger(LookupCacheServiceImpl.class);
 
 	private final LookupClient lookupClient;
 
@@ -58,7 +63,9 @@ public class LookupCacheServiceImpl implements LookupCacheService {
 			// id yok (404) ya da downstream baska bir sekilde basarisiz oldu (feign.circuitbreaker.enabled=true
 			// oldugunda ham FeignException degil NoFallbackAvailableException gelir, bkz.
 			// AbstractDownstreamExceptionHandler'daki B-03 notu) - hangisi olursa olsun cityId
-			// dogrulanamadi demektir, "gecersiz" sayilir.
+			// dogrulanamadi demektir, "gecersiz" sayilir. Yine de "yok" (404) ile "lookup-service
+			// erisilemez" birbirinden ayirt edilebilsin diye logluyoruz.
+			log.warn(LogMessages.LOOKUP_EXISTS_IN_GROUP_FAILED, id, entCodeName, ex.toString());
 			return false;
 		}
 	}
