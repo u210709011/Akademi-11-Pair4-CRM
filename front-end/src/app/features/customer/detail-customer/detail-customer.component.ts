@@ -14,13 +14,10 @@ import {
   IndividualResponse
 } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
+import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../core/lookup';
 import { OrderService } from '../../../core/order';
 import {
-<<<<<<< Updated upstream
-  CITY_NAMES,
-=======
   AccountProduct,
->>>>>>> Stashed changes
   CustomerAccount,
   CustomerContact,
   CustomerDetail,
@@ -29,6 +26,7 @@ import {
   mapToCustomerContact,
   mapToCustomerDetail
 } from './detail-customer.mapper';
+import { getMockProductDetail, ProductCharacteristic } from './mock/product-detail-mock.data';
 
 interface AddressFormModel {
   city: string;
@@ -56,6 +54,18 @@ const CONTACT_PHONE_MAX_DIGITS: Record<ContactPhoneFieldName, number> = { mobile
 const MOBILE_PHONE_PATTERN = /^5[0-9]{9}$/;
 const HOME_OR_FAX_PHONE_PATTERN = /^[0-9]{10,11}$/;
 const DIGITS_ONLY_ERROR_TIMEOUT_MS = 2000;
+
+// "Product Offer Details" modali icin gercek (AccountProduct + hesabin adresi) ve mock
+// (product-service hazir olunca kaldirilacak spec/karakteristik alanlari) verinin birlestirilmis
+// gorunumu (bkz. openProductDetail).
+interface ProductOfferDetailView {
+  productName: string;
+  productOfferId: string;
+  productSpecId: string;
+  serviceStartDate: string;
+  characteristics: ProductCharacteristic[];
+  address: AddressResponse | null;
+}
 
 interface CreateAccountFormModel {
   accountName: string;
@@ -108,9 +118,24 @@ export class DetailCustomerComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly customerService = inject(CustomerService);
   private readonly orderService = inject(OrderService);
+  private readonly lookupService = inject(LookupService);
 
   protected readonly isLoading = signal(true);
   protected readonly loadError = signal(false);
+
+  protected readonly cities = signal<GnlType[]>([]);
+  private readonly cityNames = computed<Record<number, string>>(() =>
+    Object.fromEntries(this.cities().map(city => [city.gnlTpId, city.name]))
+  );
+
+  protected readonly genders = signal<GnlType[]>([]);
+
+  protected readonly accountTypes = signal<GnlType[]>([]);
+  // fatura hesabi tipi (BILL_ACCT) - accountTypes yuklenmeden -1 doner ki henuz hicbir hesap
+  // yanlislikla "fatura hesabi" sayilmasin (bkz. mapToCustomerAccounts/mapToCustomerDetail).
+  private readonly billingAccountTypeId = computed(
+    () => this.accountTypes().find(type => type.shrtCode === 'BILL_ACCT')?.gnlTpId ?? -1
+  );
 
   protected readonly customer = signal<CustomerDetail>(EMPTY_CUSTOMER_DETAIL);
   protected readonly accounts = signal<CustomerAccount[]>([]);
@@ -165,6 +190,9 @@ export class DetailCustomerComponent {
   // harf/gecersiz karakter yazilmaya calisildiginda ilgili alanin altinda gecici uyari gostermek icin (bkz. contact-tab.component.ts, onboarding).
   protected readonly digitsOnlyErrorField = signal<ContactPhoneFieldName | null>(null);
   private digitsOnlyErrorTimeoutId?: ReturnType<typeof setTimeout>;
+
+  protected readonly productDetailOpen = signal(false);
+  protected readonly selectedProductDetail = signal<ProductOfferDetailView | null>(null);
 
   protected readonly isCreateAccountModalOpen = signal(false);
   protected readonly isSavingAccount = signal(false);
@@ -270,14 +298,22 @@ export class DetailCustomerComponent {
       customerDetail: this.customerService.getById(this.custId),
       individual: this.customerService.getIndividual(this.custId),
       contact: this.customerService.getContact(this.custId),
-      addresses: this.customerService.getAddresses(this.custId)
+      addresses: this.customerService.getAddresses(this.custId),
+      cities: this.lookupService.getTypesByGroup(LOOKUP_GROUPS.CITY),
+      genders: this.lookupService.getTypesByGroup(LOOKUP_GROUPS.GENDER),
+      accountTypes: this.lookupService.getTypesByGroup(LOOKUP_GROUPS.ACCOUNT_TYPE)
     }).subscribe({
-      next: ({ customerDetail, individual, contact, addresses }) => {
+      next: ({ customerDetail, individual, contact, addresses, cities, genders, accountTypes }) => {
         this.customerDetailResponse = customerDetail;
         this.individualResponse = individual;
         this.contactResponse = contact;
-        this.customer.set(mapToCustomerDetail(customerDetail, individual, addresses));
-        this.accounts.set(mapToCustomerAccounts(customerDetail));
+        this.cities.set(cities);
+        this.genders.set(genders);
+        this.accountTypes.set(accountTypes);
+        this.customer.set(
+          mapToCustomerDetail(customerDetail, individual, addresses, this.cityNames(), this.billingAccountTypeId())
+        );
+        this.accounts.set(mapToCustomerAccounts(customerDetail, this.billingAccountTypeId()));
         this.contact.set(mapToCustomerContact(contact));
         this.addresses.set(addresses);
         this.isLoading.set(false);
@@ -377,11 +413,12 @@ export class DetailCustomerComponent {
   }
 
   protected genderLabel(genderId: number): string {
-    return genderId === 1 ? this.i18n.t('create.genderMale') : this.i18n.t('create.genderFemale');
+    const shrtCode = this.genders().find(gender => gender.gnlTpId === genderId)?.shrtCode;
+    return shrtCode === 'MALE' ? this.i18n.t('create.genderMale') : this.i18n.t('create.genderFemale');
   }
 
   protected cityName(cityId: number): string {
-    return CITY_NAMES[cityId] ?? UNKNOWN;
+    return this.cityNames()[cityId] ?? UNKNOWN;
   }
 
   protected toggleAddressMenu(addressId: number, event: Event): void {
@@ -561,6 +598,24 @@ export class DetailCustomerComponent {
 
   protected closeCannotDeleteAccountDialog(): void {
     this.cannotDeleteAccountMessage.set(null);
+  }
+
+  protected openProductDetail(account: CustomerAccount, product: AccountProduct): void {
+    const mock = getMockProductDetail(product.productId);
+    this.selectedProductDetail.set({
+      productName: product.productName,
+      productOfferId: `OFR-${product.productId}`,
+      productSpecId: mock.productSpecId,
+      serviceStartDate: mock.serviceStartDate,
+      characteristics: mock.characteristics,
+      address: this.addresses().find(candidate => candidate.id === account.addressId) ?? null
+    });
+    this.productDetailOpen.set(true);
+  }
+
+  protected closeProductDetail(): void {
+    this.productDetailOpen.set(false);
+    this.selectedProductDetail.set(null);
   }
 
   protected serviceAddressLine(addressId: number | null): string {
@@ -803,23 +858,41 @@ export class DetailCustomerComponent {
     }).subscribe(({ customerDetail, addresses }) => {
       this.customerDetailResponse = customerDetail;
       this.addresses.set(addresses);
-      this.accounts.set(mapToCustomerAccounts(customerDetail));
-      this.customer.set(mapToCustomerDetail(customerDetail, this.individualResponse, addresses));
+      this.accounts.set(mapToCustomerAccounts(customerDetail, this.billingAccountTypeId()));
+      this.customer.set(
+        mapToCustomerDetail(customerDetail, this.individualResponse, addresses, this.cityNames(), this.billingAccountTypeId())
+      );
     });
   }
 
   private refreshAddresses(): void {
     this.customerService.getAddresses(this.custId).subscribe(addresses => {
       this.addresses.set(addresses);
-      this.customer.set(mapToCustomerDetail(this.customerDetailResponse, this.individualResponse, addresses));
+      this.customer.set(
+        mapToCustomerDetail(
+          this.customerDetailResponse,
+          this.individualResponse,
+          addresses,
+          this.cityNames(),
+          this.billingAccountTypeId()
+        )
+      );
     });
   }
 
   private refreshAccounts(): void {
     this.customerService.getById(this.custId).subscribe(customerDetail => {
       this.customerDetailResponse = customerDetail;
-      this.accounts.set(mapToCustomerAccounts(customerDetail));
-      this.customer.set(mapToCustomerDetail(customerDetail, this.individualResponse, this.addresses()));
+      this.accounts.set(mapToCustomerAccounts(customerDetail, this.billingAccountTypeId()));
+      this.customer.set(
+        mapToCustomerDetail(
+          customerDetail,
+          this.individualResponse,
+          this.addresses(),
+          this.cityNames(),
+          this.billingAccountTypeId()
+        )
+      );
     });
   }
 

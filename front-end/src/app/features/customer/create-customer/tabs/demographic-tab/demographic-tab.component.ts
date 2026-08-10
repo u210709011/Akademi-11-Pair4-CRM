@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { IndividualInfo } from '../../../../../core/customer';
 import { I18nService } from '../../../../../core/i18n';
+import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
 import { DatePickerHeaderComponent } from '../../../../../shared/components/date-picker-header/date-picker-header.component';
 import { CreateCustomerFormStateService } from '../../create-customer.component';
 
@@ -22,6 +23,9 @@ const LETTER_FIELDS: LetterFieldName[] = ['firstName', 'middleName', 'lastName',
 export class DemographicTabComponent {
   protected readonly i18n = inject(I18nService);
   protected readonly formState = inject(CreateCustomerFormStateService);
+  private readonly lookupService = inject(LookupService);
+
+  protected readonly genders = signal<GnlType[]>([]);
 
   protected readonly nationalIdError = signal(false);
   protected readonly today = new Date();
@@ -52,6 +56,8 @@ export class DemographicTabComponent {
   });
 
   constructor() {
+    this.lookupService.getTypesByGroup(LOOKUP_GROUPS.GENDER).subscribe(genders => this.genders.set(genders));
+
     // form gecerliligi/degeri degistikce sihirbazin ortak state'ine (CreateCustomerFormStateService) yansitilir
     effect(() => {
       const valid = this.demographicForm().valid();
@@ -94,6 +100,13 @@ export class DemographicTabComponent {
       fatherName: value.fatherName || null,
       nationalId: value.nationalId
     };
+  }
+
+  // isim/id yerine shrtCode'a gore secilir - lookup-service'teki numerik id'ler cevrede farkli
+  // olabilir (bkz. CITY'deki ayni sorun), shrtCode ise resolve/{entCodeName}/{shrtCode} ile ayni
+  // sekilde sabit/is-anlamli bir kod.
+  protected genderLabel(shrtCode: string): string {
+    return shrtCode === 'MALE' ? this.i18n.t('create.genderMale') : this.i18n.t('create.genderFemale');
   }
 
   protected setLetterFieldError(field: LetterFieldName, hasError: boolean): void {

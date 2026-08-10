@@ -81,8 +81,9 @@
         <label for="gender">{{ i18n.t('create.gender') }} <span class="required">*</span></label>
         <select id="gender" [formField]="demographicForm.gender">
             <option value="" disabled selected>{{ i18n.t('create.selectPlaceholder') }}</option>
-            <option value="1">{{ i18n.t('create.genderMale') }}</option>
-            <option value="2">{{ i18n.t('create.genderFemale') }}</option>
+            @for (gender of genders(); track gender.gnlTpId) {
+                <option [value]="gender.gnlTpId">{{ genderLabel(gender.shrtCode) }}</option>
+            }
         </select>
         @if (demographicForm.gender().invalid() && demographicForm.gender().touched()) {
             <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>

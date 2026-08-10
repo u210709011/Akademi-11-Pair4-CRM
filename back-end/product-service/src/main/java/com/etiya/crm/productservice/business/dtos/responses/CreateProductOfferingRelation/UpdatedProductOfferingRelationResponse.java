@@ -14,6 +14,7 @@ public class UpdatedProductOfferingRelationResponse {
     private Long productOfferingId1;
     private Long productOfferingId2;
     private Long relationTypeId;
+    private Boolean mandatory;
     private Integer qty;
     private Boolean active;
 }

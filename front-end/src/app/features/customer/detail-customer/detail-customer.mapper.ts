@@ -7,13 +7,6 @@ import { CustOrdItemResponse } from '../../../core/order';
 
 const UNKNOWN = '—';
 
-// lookup-service CITY grubunda seed'de tek deger var: 201=Ankara.
-export const CITY_NAMES: Record<number, string> = { 201: 'Ankara' };
-
-// lookup-service gnl_tp (ent_code_name=ACCOUNT_TYPE): 223=Musteri Hesap (CUST_ACCT), 224=Fatura Hesap (BILL_ACCT).
-// Billing Accounts tab'i sadece gercek fatura hesaplarini (224) gosterir.
-const BILLING_ACCOUNT_TYPE_ID = 224;
-
 export interface CustomerDetail {
   customerId: string;
   fullName: string;
@@ -71,10 +64,12 @@ export interface CustomerContact {
 export function mapToCustomerDetail(
   customerDetail: CustomerDetailResponse,
   individual: IndividualResponse,
-  addresses: AddressResponse[]
+  addresses: AddressResponse[],
+  cityNames: Record<number, string>,
+  billingAccountTypeId: number
 ): CustomerDetail {
   const primaryAddress = addresses.find(address => address.primary) ?? addresses[0];
-  const billingAccountsCount = customerDetail.accounts.filter(account => account.accountTpId === BILLING_ACCOUNT_TYPE_ID).length;
+  const billingAccountsCount = customerDetail.accounts.filter(account => account.accountTpId === billingAccountTypeId).length;
 
   return {
     // custNo backend'den zaten sifirla soldan doldurulmus gelir (bkz. CustomerMapper.formatCustNo) -
@@ -85,7 +80,7 @@ export function mapToCustomerDetail(
     accountsCount: billingAccountsCount,
     addressCount: addresses.length,
     maxAddresses: 5,
-    primaryCity: primaryAddress ? CITY_NAMES[primaryAddress.cityId] ?? UNKNOWN : UNKNOWN,
+    primaryCity: primaryAddress ? cityNames[primaryAddress.cityId] ?? UNKNOWN : UNKNOWN,
     firstName: individual.firstName,
     middleName: individual.middleName ?? UNKNOWN,
     lastName: individual.lastName,
@@ -97,9 +92,9 @@ export function mapToCustomerDetail(
   };
 }
 
-export function mapToCustomerAccounts(customerDetail: CustomerDetailResponse): CustomerAccount[] {
+export function mapToCustomerAccounts(customerDetail: CustomerDetailResponse, billingAccountTypeId: number): CustomerAccount[] {
   return customerDetail.accounts
-    .filter(account => account.accountTpId === BILLING_ACCOUNT_TYPE_ID)
+    .filter(account => account.accountTpId === billingAccountTypeId)
     .map(account => ({
       id: account.custAcctId,
       // account.accountNo backend'den zaten sifirla soldan doldurulmus, oneksiz gelir (bkz.

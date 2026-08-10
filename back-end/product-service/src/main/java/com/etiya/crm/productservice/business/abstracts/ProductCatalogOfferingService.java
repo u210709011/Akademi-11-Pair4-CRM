@@ -14,5 +14,6 @@ public interface ProductCatalogOfferingService {
     UpdatedProductCatalogOfferingResponse update(Long productCatalogOfferingId, UpdateProductCatalogOfferingRequest request);
     GetProductCatalogOfferingResponse getById(Long productCatalogOfferingId);
     List<GetAllProductCatalogOfferingResponse> getAll();
+    List<GetAllProductCatalogOfferingResponse> getByCatalogId(Long productCatalogId);
     void delete(Long productCatalogOfferingId);
 }

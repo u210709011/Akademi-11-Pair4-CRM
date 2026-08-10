@@ -16,4 +16,8 @@ public interface CustOrdCharValRepository extends JpaRepository<CustOrdCharVal, 
     // buildSummary'de siparisin butun item'larinin karakteristiklerini tek sorguda cekip
     // item bazinda gruplamak icin.
     List<CustOrdCharVal> findByCustOrdItem_CustOrd_CustOrdId(Long custOrdId);
+
+    // finishOrder'da provizyon edilen tek bir item'in karakteristiklerini product-service'e
+    // islemek icin.
+    List<CustOrdCharVal> findByCustOrdItem_CustOrdItemId(Long custOrdItemId);
 }

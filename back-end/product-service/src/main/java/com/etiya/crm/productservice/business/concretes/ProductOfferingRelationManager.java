@@ -15,6 +15,7 @@ import com.etiya.crm.productservice.dataAccess.abstracts.ProductOfferingReposito
 import com.etiya.crm.productservice.entities.concretes.ProductOffering;
 import com.etiya.crm.productservice.entities.concretes.ProductOfferingRelation;
 import com.etiya.crm.productservice.mapper.ProductOfferingRelationMapper;
+import com.etiya.crm.shared.contracts.gnltp.GnlTpCodes;
 import com.etiya.crm.shared.contracts.gnltp.GnlTpGroups;
 import org.springframework.stereotype.Service;
 
@@ -52,7 +53,9 @@ public class ProductOfferingRelationManager implements ProductOfferingRelationSe
                 lookupCacheService.resolveTypeIdByCode(GnlTpGroups.PROD_OFR_REL, request.getRelationTypeCode()));
 
         ProductOfferingRelation saved = productOfferingRelationRepository.save(entity);
-        return productOfferingRelationMapper.toCreatedResponse(saved);
+        CreatedProductOfferingRelationResponse response = productOfferingRelationMapper.toCreatedResponse(saved);
+        response.setMandatory(GnlTpCodes.MANDATORY.equals(request.getRelationTypeCode()));
+        return response;
     }
 
     @Override
@@ -72,20 +75,46 @@ public class ProductOfferingRelationManager implements ProductOfferingRelationSe
                 lookupCacheService.resolveTypeIdByCode(GnlTpGroups.PROD_OFR_REL, request.getRelationTypeCode()));
 
         ProductOfferingRelation saved = productOfferingRelationRepository.save(entity);
-        return productOfferingRelationMapper.toUpdatedResponse(saved);
+        UpdatedProductOfferingRelationResponse response = productOfferingRelationMapper.toUpdatedResponse(saved);
+        response.setMandatory(GnlTpCodes.MANDATORY.equals(request.getRelationTypeCode()));
+        return response;
     }
 
     @Override
     public GetProductOfferingRelationResponse getById(Long productOfferingRelationId) {
         ProductOfferingRelation entity = productOfferingRelationRepository.findById(productOfferingRelationId)
                 .orElseThrow(() -> new ProductOfferingRelationNotFoundException(productOfferingRelationId));
-        return productOfferingRelationMapper.toGetResponse(entity);
+        GetProductOfferingRelationResponse response = productOfferingRelationMapper.toGetResponse(entity);
+        Long mandatoryTypeId = lookupCacheService.resolveTypeIdByCode(GnlTpGroups.PROD_OFR_REL, GnlTpCodes.MANDATORY);
+        response.setMandatory(mandatoryTypeId.equals(entity.getRelationTypeId()));
+        return response;
     }
 
     @Override
     public List<GetAllProductOfferingRelationResponse> getAll() {
         List<ProductOfferingRelation> entities = productOfferingRelationRepository.findAll();
-        return productOfferingRelationMapper.toGetAllResponseList(entities);
+        List<GetAllProductOfferingRelationResponse> responses = productOfferingRelationMapper.toGetAllResponseList(entities);
+        applyMandatoryFlag(entities, responses);
+        return responses;
+    }
+
+    @Override
+    public List<GetAllProductOfferingRelationResponse> getByProductOfferingId(Long productOfferingId) {
+        productOfferingRepository.findById(productOfferingId)
+                .orElseThrow(() -> new ProductOfferingNotFoundException(productOfferingId));
+
+        List<ProductOfferingRelation> entities =
+                productOfferingRelationRepository.findByProductOffering1_ProductOfferingIdAndActiveTrue(productOfferingId);
+        List<GetAllProductOfferingRelationResponse> responses = productOfferingRelationMapper.toGetAllResponseList(entities);
+        applyMandatoryFlag(entities, responses);
+        return responses;
+    }
+
+    private void applyMandatoryFlag(List<ProductOfferingRelation> entities, List<GetAllProductOfferingRelationResponse> responses) {
+        Long mandatoryTypeId = lookupCacheService.resolveTypeIdByCode(GnlTpGroups.PROD_OFR_REL, GnlTpCodes.MANDATORY);
+        for (int i = 0; i < entities.size(); i++) {
+            responses.get(i).setMandatory(mandatoryTypeId.equals(entities.get(i).getRelationTypeId()));
+        }
     }
 
     @Override

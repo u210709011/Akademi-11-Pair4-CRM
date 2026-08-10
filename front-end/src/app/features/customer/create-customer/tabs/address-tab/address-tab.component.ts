@@ -2,12 +2,10 @@ import { Component, HostListener, computed, effect, inject, signal, ChangeDetect
 import { form, FormField, maxLength, required } from '@angular/forms/signals';
 import { AddressInfo } from '../../../../../core/customer';
 import { I18nService } from '../../../../../core/i18n';
+import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
 import { AddressFormModel, CreateCustomerFormStateService } from '../../create-customer.component';
 
 const EMPTY_ADDRESS: AddressFormModel = { city: '', street: '', houseNumber: '', description: '' };
-
-// lookup-service CITY grubunda seed'de tek deger var: 201=Ankara.
-const CITY_NAMES: Record<string, string> = { '201': 'Ankara' };
 
 @Component({
   selector: 'app-address-tab',
@@ -19,6 +17,9 @@ const CITY_NAMES: Record<string, string> = { '201': 'Ankara' };
 export class AddressTabComponent {
   protected readonly i18n = inject(I18nService);
   private readonly formState = inject(CreateCustomerFormStateService);
+  private readonly lookupService = inject(LookupService);
+
+  protected readonly cities = signal<GnlType[]>([]);
 
   protected readonly maxAddresses = 5;
   // eklenen adresler sekmeler arasi gecince kaybolmamasi icin CreateCustomerFormStateService'te tutulur
@@ -40,6 +41,8 @@ export class AddressTabComponent {
   protected readonly addressLimitReached = computed(() => this.addresses().length >= this.maxAddresses);
 
   constructor() {
+    this.lookupService.getTypesByGroup(LOOKUP_GROUPS.CITY).subscribe(cities => this.cities.set(cities));
+
     // ACC-011: en az bir adres eklenmeden sonraki adima gecilemez - sihirbazin ortak state'ine yansitilir.
     effect(() => {
       const addresses = this.addresses();
@@ -49,7 +52,7 @@ export class AddressTabComponent {
   }
 
   protected cityName(cityId: string): string {
-    return CITY_NAMES[cityId] ?? '—';
+    return this.cities().find(city => String(city.gnlTpId) === cityId)?.name ?? '—';
   }
 
   protected toggleAddressMenu(index: number, event: Event): void {

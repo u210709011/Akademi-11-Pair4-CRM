@@ -89,8 +89,8 @@ public abstract class AbstractDownstreamExceptionHandler {
 		if (knownCause instanceof FeignException feignException) {
 			return buildFeignExceptionResponse(feignException, request);
 		}
-		if (knownCause instanceof CallNotPermittedException) {
-			return buildCircuitBreakerOpenResponse(request);
+		if (knownCause instanceof CallNotPermittedException circuitBreakerException) {
+			return buildCircuitBreakerOpenResponse(circuitBreakerException, request);
 		}
 		log.error(LogMessages.NO_FALLBACK_UNEXPECTED_CAUSE, String.valueOf(ex.getCause()), ex);
 		HttpStatus status = HttpStatus.BAD_GATEWAY;
@@ -118,12 +118,17 @@ public abstract class AbstractDownstreamExceptionHandler {
 		if (status == null) {
 			status = HttpStatus.BAD_GATEWAY;
 		}
+		String requestDescription = ex.request() == null ? "unknown"
+				: ex.request().httpMethod() + " " + ex.request().url();
+		log.warn(LogMessages.DOWNSTREAM_CALL_FAILED_LOG, requestDescription, ex.status(), ex.getMessage());
 		String message = extractDownstreamMessage(ex).orElseGet(this::downstreamCallFailedMessage);
 		return ResponseEntity.status(status)
 				.body(ErrorResponse.of(status.value(), status.getReasonPhrase(), message, request.getRequestURI()));
 	}
 
-	private ResponseEntity<ErrorResponse> buildCircuitBreakerOpenResponse(HttpServletRequest request) {
+	private ResponseEntity<ErrorResponse> buildCircuitBreakerOpenResponse(CallNotPermittedException ex,
+			HttpServletRequest request) {
+		log.warn(LogMessages.DOWNSTREAM_CIRCUIT_OPEN_LOG, ex.getCausingCircuitBreakerName());
 		HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
 		return ResponseEntity.status(status).body(ErrorResponse.of(status.value(), status.getReasonPhrase(),
 				downstreamUnavailableMessage(), request.getRequestURI()));

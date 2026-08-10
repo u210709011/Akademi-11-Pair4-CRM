@@ -54,9 +54,15 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
             CharacteristicNotFoundException.class,
             CharacteristicValueNotFoundException.class,
             ProductOfferingRelationNotFoundException.class,
+            CampaignOfferingNotFoundException.class,
             LookupValueNotFoundException.class })
     public ResponseEntity<ErrorResponse> handleNotFound(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, ex, request);
+    }
+
+    @ExceptionHandler(ProductOfferingCharUseDuplicateException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(BusinessException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, ex, request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

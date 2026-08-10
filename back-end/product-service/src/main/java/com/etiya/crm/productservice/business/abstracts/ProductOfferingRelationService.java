@@ -19,5 +19,7 @@ public interface ProductOfferingRelationService {
 
     List<GetAllProductOfferingRelationResponse> getAll();
 
+    List<GetAllProductOfferingRelationResponse> getByProductOfferingId(Long productOfferingId);
+
     void delete(Long productOfferingRelationId);
 }

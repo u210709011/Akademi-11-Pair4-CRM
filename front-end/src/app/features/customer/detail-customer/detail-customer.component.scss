@@ -1267,3 +1267,9 @@
 .address-preview-card .service-address-note {
   margin-left: 0;
 }
+
+// Product Offer Details modali - varsayilan .modal-card 480px genislikte iki sutunlu
+// (Characteristics/Service Address) govdeyi sikistiriyordu, mockup'taki gibi rahat sigsin diye genisletir.
+.product-detail-card {
+  max-width: 760px;
+}

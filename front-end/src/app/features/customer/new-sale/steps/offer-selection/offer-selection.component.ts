@@ -3,16 +3,16 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { I18nService } from '../../../../../core/i18n';
-import { Campaign, CampaignOffering, ProductCatalog, ProductCatalogOffering, ProductOffering, ProductService } from '../../../../../core/product';
-import { BasketLine, NewSaleFormStateService } from '../../new-sale.component';
-import { NEW_SALE_MOCK_MODE } from '../../mock/new-sale-mock.config';
 import {
-  MOCK_CAMPAIGN_OFFERINGS,
-  MOCK_CAMPAIGNS,
-  MOCK_CATALOG_OFFERINGS,
-  MOCK_CATALOGS,
-  MOCK_OFFERINGS
-} from '../../mock/new-sale-mock.data';
+  Campaign,
+  CampaignOffering,
+  ProductCatalog,
+  ProductCatalogOffering,
+  ProductOffering,
+  ProductOfferingRelation,
+  ProductService
+} from '../../../../../core/product';
+import { BasketLine, NewSaleFormStateService } from '../../new-sale.component';
 
 type OfferTab = 'catalog' | 'campaigns';
 
@@ -87,24 +87,13 @@ export class OfferSelectionComponent {
   protected readonly autoAddedLines = computed(() => this.formState.basket().filter(line => line.isAutoAdded));
 
   constructor() {
-    // GECICI MOCK MODU - backend product-service (gateway route + seed data) hazir olana kadar.
-    // Kaldirmak icin: bu if bloguyla mock/ klasorunu silin, alttaki forkJoin cagrisi tek basina kalsin.
-    if (NEW_SALE_MOCK_MODE) {
-      this.catalogs.set(MOCK_CATALOGS);
-      this.campaigns.set(MOCK_CAMPAIGNS);
-      this.offerings.set(MOCK_OFFERINGS);
-      this.catalogOfferings.set(MOCK_CATALOG_OFFERINGS);
-      this.campaignOfferings.set(MOCK_CAMPAIGN_OFFERINGS);
-      this.isLoadingCatalogData.set(false);
-      return;
-    }
-
     forkJoin({
       catalogs: this.productService.getCatalogs(),
       campaigns: this.productService.getCampaigns(),
       offerings: this.productService.getOfferings(),
       catalogOfferings: this.productService.getCatalogOfferings(),
-      campaignOfferings: this.productService.getCampaignOfferings()
+      campaignOfferings: this.productService.getCampaignOfferings(),
+      relations: this.productService.getOfferingRelations()
     }).subscribe({
       next: result => {
         this.catalogs.set(result.catalogs);
@@ -112,6 +101,7 @@ export class OfferSelectionComponent {
         this.offerings.set(result.offerings);
         this.catalogOfferings.set(result.catalogOfferings);
         this.campaignOfferings.set(result.campaignOfferings);
+        this.formState.requiredOfferingsMap.set(this.buildRequiredOfferingsMap(result.relations, result.offerings));
         this.isLoadingCatalogData.set(false);
       },
       error: () => {
@@ -119,6 +109,30 @@ export class OfferSelectionComponent {
         this.loadError.set(true);
       }
     });
+  }
+
+  // Zorunlu (mandatory=true, active) iliskileri, hedef offering'in ad/fiyatiyla zenginlestirip
+  // formState.addToBasket'in kullanacagi prodOfrId -> zorunlu offering listesine cevirir.
+  private buildRequiredOfferingsMap(
+    relations: ProductOfferingRelation[],
+    offerings: ProductOffering[]
+  ): Record<number, { productOfferingId: number; name: string; price: number }[]> {
+    const map: Record<number, { productOfferingId: number; name: string; price: number }[]> = {};
+    for (const relation of relations) {
+      if (!relation.mandatory || !relation.active) {
+        continue;
+      }
+      const target = offerings.find(o => o.productOfferingId === relation.productOfferingId2);
+      if (!target) {
+        continue;
+      }
+      (map[relation.productOfferingId1] ??= []).push({
+        productOfferingId: target.productOfferingId,
+        name: target.name,
+        price: target.totalPrice
+      });
+    }
+    return map;
   }
 
   protected selectTab(tab: OfferTab): void {

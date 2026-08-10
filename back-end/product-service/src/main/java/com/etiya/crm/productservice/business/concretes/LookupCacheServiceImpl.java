@@ -78,5 +78,23 @@ public class LookupCacheServiceImpl implements LookupCacheService {
         return response.charValId();
     }
 
+    @Override
+    @Cacheable(value = "lookups", key = "'CHARNAME:' + #characteristicId")
+    public String getCharacteristicName(Long characteristicId) {
+        GnlCharResponse response = lookupClient.getCharacteristicById(characteristicId);
+        if (response == null) {
+            throw new CharacteristicNotFoundException(characteristicId);
+        }
+        return response.name();
+    }
 
+    @Override
+    @Cacheable(value = "lookups", key = "'CHARVALNAME:' + #characteristicValueId")
+    public String getCharacteristicValueName(Long characteristicValueId) {
+        GnlCharValResponse response = lookupClient.getCharacteristicValueById(characteristicValueId);
+        if (response == null) {
+            throw new CharacteristicValueNotFoundException(characteristicValueId);
+        }
+        return response.val();
+    }
 }
