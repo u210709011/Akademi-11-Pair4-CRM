@@ -51,25 +51,29 @@ public class DeleteBillingAccountTests extends AuthenticatedTest {
                 .as("ACC-001 — silme icin onay diyalogu gosterilir").isTrue();
     }
 
-    @Test(groups = {"fr011", "documented-gap"},
+    @Test(groups = {"fr011", "regression"},
             description = "UI-FR011-02 | Onay diyalogunda dokumandaki metin gosterilir")
     @Story("ACC-001 — Onay metni")
     @TmsLink("FR-011-ACC-001")
-    @Issue("FR-011-GAP-ACC001-TEXT")
     @Severity(SeverityLevel.MINOR)
-    @Description("BILINEN UYUMSUZLUK — kirmizi kalmasi beklenir. Dokuman "
-            + "\"Are you sure to delete this billing account?\" metnini sart kosar; uygulama "
-            + "hesap adini ve geri alinamazlik uyarisini iceren daha uzun bir metin gosteriyor. "
-            + "Kural ayni, farkli olan yalnizca metin.")
+    @Description("Metin, silinecek hesabin adini ve islemin geri alinamazligini icerir. "
+            + "Onceden dokuman kisa bir metin ({@code \"Are you sure to delete this billing "
+            + "account?\"}) sart kosuyordu ve bu test documented-gap olarak kirmizi birakilmisti; "
+            + "10.08.2026'da dokuman uygulamaya hizalandi. Hesap adi calisma zamaninda "
+            + "degistigi icin beklenen metin on kosuldaki adla bicimlenir.")
     public void confirmDialogShowsDocumentedText() {
-        CreatedCustomer customer = TestDataFactory.customerWithBillingAccount();
-        CustomerDetailPage detail = openCustomerDetail(customer.custId()).openAccountsTab();
+        CreatedCustomer customer = TestDataFactory.simpleCustomer();
+        long addressId = AddressApi.primaryAddress(customer.custId()).id();
+        String accountName = "Onay Metni Hesabi";
+        BillingAccountApi.create(customer.custId(), addressId, accountName);
 
+        CustomerDetailPage detail = openCustomerDetail(customer.custId()).openAccountsTab();
         ConfirmDialogComponent dialog = detail.deleteAccount(0);
 
         assertThat(dialog.message())
                 .as("ACC-001 — dokumandaki onay metni")
-                .isEqualTo(ExpectedMessages.get("detail.deleteAccountConfirm"));
+                .isEqualTo(String.format(
+                        ExpectedMessages.get("detail.deleteAccountConfirm"), accountName));
     }
 
     @Test(groups = {"smoke", "fr011"},
