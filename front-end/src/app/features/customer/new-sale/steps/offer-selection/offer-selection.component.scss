@@ -93,6 +93,12 @@
       box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15);
     }
   }
+
+  .field-error {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--error);
+  }
 }
 
 .select-wrapper {
@@ -603,6 +609,68 @@ td.offer-price-cell {
     color: #9ca3af;
     cursor: not-allowed;
   }
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.pagination-range {
+  font-size: 13px;
+  color: var(--text-placeholder);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagination-arrow,
+.pagination-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #f9fafb;
+  }
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+}
+
+.pagination-arrow svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pagination-page.active {
+  color: #fff;
+  background: var(--etiya-orange);
+  border-color: var(--etiya-orange);
 }
 
 .app-toast {

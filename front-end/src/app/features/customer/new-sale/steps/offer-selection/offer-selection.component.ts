@@ -16,6 +16,13 @@ import { BasketLine, NewSaleFormStateService } from '../../new-sale.component';
 
 type OfferTab = 'catalog' | 'campaigns';
 
+// FR-013 ACC-014/Alt Senaryo 5: ilk sayfada en fazla 5 kayit, kalani sayfalama ile.
+const RESULTS_PAGE_SIZE = 5;
+// FR-013 validasyon tablosu: Prod Offer ID / Campaign ID yalnizca rakam, en fazla 20 hane;
+// Prod Offer Name / Campaign Name en fazla 50 karakter.
+const ID_FIELD_MAX_LENGTH = 20;
+const NAME_FIELD_MAX_LENGTH = 50;
+
 interface CatalogResultRow {
   productOfferingId: number;
   name: string;
@@ -69,11 +76,54 @@ export class OfferSelectionComponent {
     campaignName: ''
   });
 
+  protected readonly catalogFieldErrors = signal({ offerId: false, offerName: false });
+  protected readonly campaignFieldErrors = signal({ campaignRef: false, campaignName: false });
+
+  // FR-013 ACC-005/009/Alt Senaryo 1: en az bir kriter doldurulmadan Search aktif olmamali;
+  // doldurulmus alanlardan biri gecersizse de (ör. rakam-disi ID) aktif olmamali.
+  protected readonly isCatalogSearchDisabled = computed(() => {
+    const value = this.catalogFormValue();
+    const hasCriteria = !!(value.catalogId || value.offerId || value.offerName);
+    return !hasCriteria || Object.values(this.catalogFieldErrors()).some(hasError => hasError);
+  });
+
+  protected readonly isCampaignSearchDisabled = computed(() => {
+    const value = this.campaignFormValue();
+    const hasCriteria = !!(value.campaignId || value.campaignRef || value.campaignName);
+    return !hasCriteria || Object.values(this.campaignFieldErrors()).some(hasError => hasError);
+  });
+
+  // Reactive Forms sinyal degil - degisiklikleri computed'lara yansitmak icin valueChanges'i sinyale cevirir.
+  private readonly catalogFormValue = signal(this.catalogForm.getRawValue());
+  private readonly campaignFormValue = signal(this.campaignForm.getRawValue());
+
   protected readonly hasSearchedCatalog = signal(false);
   protected readonly hasSearchedCampaign = signal(false);
   protected readonly catalogResults = signal<CatalogResultRow[]>([]);
   protected readonly campaignResults = signal<CampaignResultRow[]>([]);
   protected readonly expandedCampaignId = signal<number | null>(null);
+
+  protected readonly catalogPage = signal(0);
+  protected readonly pagedCatalogResults = computed(() =>
+    this.catalogResults().slice(this.catalogPage() * RESULTS_PAGE_SIZE, this.catalogPage() * RESULTS_PAGE_SIZE + RESULTS_PAGE_SIZE)
+  );
+  protected readonly catalogTotalPages = computed(() => Math.max(1, Math.ceil(this.catalogResults().length / RESULTS_PAGE_SIZE)));
+  protected readonly catalogPageNumbers = computed(() => Array.from({ length: this.catalogTotalPages() }, (_, i) => i));
+  protected readonly catalogRangeLabel = computed(() => this.rangeLabel(this.catalogResults().length, this.catalogPage()));
+
+  protected readonly campaignPage = signal(0);
+  protected readonly pagedCampaignResults = computed(() =>
+    this.campaignResults().slice(this.campaignPage() * RESULTS_PAGE_SIZE, this.campaignPage() * RESULTS_PAGE_SIZE + RESULTS_PAGE_SIZE)
+  );
+  protected readonly campaignTotalPages = computed(() => Math.max(1, Math.ceil(this.campaignResults().length / RESULTS_PAGE_SIZE)));
+  protected readonly campaignPageNumbers = computed(() => Array.from({ length: this.campaignTotalPages() }, (_, i) => i));
+  protected readonly campaignRangeLabel = computed(() => this.rangeLabel(this.campaignResults().length, this.campaignPage()));
+
+  private rangeLabel(total: number, page: number): string {
+    const start = total === 0 ? 0 : page * RESULTS_PAGE_SIZE + 1;
+    const end = Math.min(total, (page + 1) * RESULTS_PAGE_SIZE);
+    return `${start}-${end} of ${total}`;
+  }
 
   protected readonly toastMessage = signal<string | null>(null);
   protected readonly toastType = signal<'success' | 'error'>('success');
@@ -87,6 +137,9 @@ export class OfferSelectionComponent {
   protected readonly autoAddedLines = computed(() => this.formState.basket().filter(line => line.isAutoAdded));
 
   constructor() {
+    this.catalogForm.valueChanges.subscribe(() => this.catalogFormValue.set(this.catalogForm.getRawValue()));
+    this.campaignForm.valueChanges.subscribe(() => this.campaignFormValue.set(this.campaignForm.getRawValue()));
+
     forkJoin({
       catalogs: this.productService.getCatalogs(),
       campaigns: this.productService.getCampaigns(),
@@ -160,9 +213,60 @@ export class OfferSelectionComponent {
     }
   }
 
+  protected sanitizeOfferId(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digitsOnly = input.value.replace(/\D/g, '').slice(0, ID_FIELD_MAX_LENGTH);
+    this.setCatalogFieldError('offerId', input.value !== digitsOnly);
+    this.catalogForm.controls.offerId.setValue(digitsOnly);
+  }
+
+  protected sanitizeOfferName(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const truncated = input.value.slice(0, NAME_FIELD_MAX_LENGTH);
+    this.setCatalogFieldError('offerName', input.value !== truncated);
+    this.catalogForm.controls.offerName.setValue(truncated);
+  }
+
+  protected sanitizeCampaignRef(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digitsOnly = input.value.replace(/\D/g, '').slice(0, ID_FIELD_MAX_LENGTH);
+    this.setCampaignFieldError('campaignRef', input.value !== digitsOnly);
+    this.campaignForm.controls.campaignRef.setValue(digitsOnly);
+  }
+
+  protected sanitizeCampaignName(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const truncated = input.value.slice(0, NAME_FIELD_MAX_LENGTH);
+    this.setCampaignFieldError('campaignName', input.value !== truncated);
+    this.campaignForm.controls.campaignName.setValue(truncated);
+  }
+
+  private setCatalogFieldError(field: 'offerId' | 'offerName', hasError: boolean): void {
+    this.catalogFieldErrors.update(errors => ({ ...errors, [field]: hasError }));
+  }
+
+  private setCampaignFieldError(field: 'campaignRef' | 'campaignName', hasError: boolean): void {
+    this.campaignFieldErrors.update(errors => ({ ...errors, [field]: hasError }));
+  }
+
+  protected goToCatalogPage(page: number): void {
+    if (page < 0 || page >= this.catalogTotalPages()) {
+      return;
+    }
+    this.catalogPage.set(page);
+  }
+
+  protected goToCampaignPage(page: number): void {
+    if (page < 0 || page >= this.campaignTotalPages()) {
+      return;
+    }
+    this.campaignPage.set(page);
+  }
+
   protected searchCatalog(): void {
     const { catalogId, offerId, offerName } = this.catalogForm.getRawValue();
     this.hasSearchedCatalog.set(true);
+    this.catalogPage.set(0);
 
     const offeringIdsInCatalog = catalogId
       ? new Set(
@@ -189,6 +293,7 @@ export class OfferSelectionComponent {
   protected searchCampaigns(): void {
     const { campaignId, campaignRef, campaignName } = this.campaignForm.getRawValue();
     this.hasSearchedCampaign.set(true);
+    this.campaignPage.set(0);
 
     const offeringPriceById = new Map(this.offerings().map(o => [o.productOfferingId, o.totalPrice]));
 
