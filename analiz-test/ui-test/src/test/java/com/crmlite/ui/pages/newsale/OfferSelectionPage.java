@@ -233,8 +233,10 @@ public class OfferSelectionPage extends BasePage {
     }
 
     // Katalog sekmesi alanlari
+    // Beklemeli kontrol: sekme paneli @if ile kosullu render edildigi icin sekme
+    // degistikten hemen sonra alanlar henuz DOM'da olmayabilir.
     public boolean hasCatalogCategorySelect() {
-        return isDisplayed(CATALOG_CATEGORY);
+        return isDisplayedAfterWait(CATALOG_CATEGORY);
     }
 
     public OfferSelectionPage enterOfferId(String value) {
@@ -257,7 +259,7 @@ public class OfferSelectionPage extends BasePage {
 
     // Kampanya sekmesi alanlari
     public boolean hasCampaignCategorySelect() {
-        return isDisplayed(CAMPAIGN_CATEGORY);
+        return isDisplayedAfterWait(CAMPAIGN_CATEGORY);
     }
 
     public OfferSelectionPage enterCampaignRef(String value) {
@@ -467,6 +469,21 @@ public class OfferSelectionPage extends BasePage {
         return isDisplayedAfterWait(TOAST_MESSAGE);
     }
 
+    /**
+     * Toast metni verilenden FARKLI olana kadar bekler ve yeni metni dondurur.
+     *
+     * <p>Sepete ekleme basarili oldugunda da toast cikar. Ikinci bir islemin sonucunu
+     * hemen okumak, ekranda hala duran ONCEKI toast'i okumak demektir - catisma testi
+     * tam olarak bu yuzden yanlis mesajla kirmiziya dusuyordu.
+     */
+    public String toastMessageOtherThan(String previous) {
+        wait.until(driver -> {
+            List<WebElement> toasts = driver.findElements(TOAST_MESSAGE);
+            return !toasts.isEmpty() && !toasts.get(0).getText().trim().equals(previous);
+        });
+        return toastMessage();
+    }
+
     // --- FR-014: Cancel akisi (ACC-016) ---
 
     public OfferSelectionPage clickCancel() {
@@ -505,6 +522,21 @@ public class OfferSelectionPage extends BasePage {
     /** Sepette urun varken Next'e basar; sihirbaz Configuration adimina gecer. */
     public OfferSelectionPage clickNext() {
         click(NEXT_BUTTON);
+        return this;
+    }
+
+    /**
+     * Aktif adim etiketi beklenene esitlenene kadar bekler.
+     *
+     * <p>Adim gecisi ASENKRONDUR (sepet dogrulamasi sunucuya gider ve buton spinner
+     * gosterir). Next'e bastiktan hemen sonra etiketi okumak, henuz degismemis ONCEKI
+     * adimi okumak demektir.
+     */
+    public OfferSelectionPage waitForActiveStep(String expectedLabel) {
+        wait.until(driver -> {
+            List<WebElement> labels = driver.findElements(ACTIVE_STEP_LABEL);
+            return !labels.isEmpty() && labels.get(0).getText().trim().equals(expectedLabel);
+        });
         return this;
     }
 }

@@ -11,10 +11,9 @@
   DOKUMAN NOTU: bu FR'nin kabul kriterleri dokumanda UC-EACRML-014 basliginin
   altinda yer alir; bloklar ait olduklari basliktan once gelir.
 
-  Iki test veri kurulumuna bagli olarak ATLANABILIR (SkipException):
-    - ACC-009: servis adresi otomatik secili geliyorsa "adres yok" durumu uretilemez.
-    - ACC-010: zorunlu karakteristik alanlar doldurulamiyorsa Next pasif kalir ki
-      bu zaten ACC-009 geregi DOGRU davranistir.
+  ATLAMA YOK: on kosullar assert edilir. Onceden iki test SkipException ile atlaniyordu;
+  atlanan test hicbir sey dogrulamadigi halde basarisiz da gorunmedigi icin kok neden
+  (zorunlu karakteristiklerin doldurulmamasi) ilk kosumda fark edilmedi.
 -->
 <suite name="CRM Lite UI - FR-015" verbose="1" parallel="false" configfailurepolicy="continue">
 

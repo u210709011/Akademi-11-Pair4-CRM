@@ -108,8 +108,11 @@ public class CatalogCampaignSearchTests extends AuthenticatedTest {
     public void catalogTableShowsDocumentedColumns() {
         OfferSelectionPage offers = openOfferSelection();
 
+        // Buyuk/kucuk harf duyarsiz: basliklar CSS ile (text-transform: uppercase) buyuk
+        // harfe cevriliyor, getText() ekranda GORUNENI dondurur. Icerik dogru, sunum farkli.
         assertThat(offers.resultColumnHeaders())
                 .as("ACC-006 — Prod Offer ID / Prod Offer Name / Price / Actions")
+                .usingElementComparator(String.CASE_INSENSITIVE_ORDER)
                 .containsExactly(
                         ExpectedMessages.get("newSale.prodOfferId"),
                         ExpectedMessages.get("newSale.prodOfferName"),
@@ -157,8 +160,10 @@ public class CatalogCampaignSearchTests extends AuthenticatedTest {
         OfferSelectionPage offers = openOfferSelection();
         offers.selectTab(OfferSelectionPage.Tab.CAMPAIGNS);
 
+        // Basliklar CSS ile buyuk harfe cevriliyor; bkz. catalogTableShowsDocumentedColumns.
         assertThat(offers.resultColumnHeaders())
                 .as("ACC-010 — Campaign ID / Name / Bundled Offers / Price / Actions")
+                .usingElementComparator(String.CASE_INSENSITIVE_ORDER)
                 .containsExactly(
                         ExpectedMessages.get("newSale.campaignId"),
                         ExpectedMessages.get("newSale.campaignName"),

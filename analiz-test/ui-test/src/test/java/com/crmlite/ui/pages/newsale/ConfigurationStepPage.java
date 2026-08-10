@@ -2,8 +2,10 @@ package com.crmlite.ui.pages.newsale;
 
 import com.crmlite.ui.pages.BasePage;
 import org.openqa.selenium.By;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.Select;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,9 @@ import java.util.List;
  * bu bir hata degildir, seed verisinde her urunun karakteristigi yoktur.
  */
 public class ConfigurationStepPage extends BasePage {
+
+    /** Sonsuz donguye karsi ust sinir; sepette en fazla birkac urun ve alan olur. */
+    private static final int MAX_FIELD_FILLS = 60;
 
     private static final By ROOT = By.cssSelector(".config-content-wrap");
 
@@ -95,6 +100,65 @@ public class ConfigurationStepPage extends BasePage {
     /** Karakteristigi olmayan urunler icin gosterilen bilgilendirme notu sayisi. */
     public int pendingNoteCount() {
         return findAll(PENDING_NOTES).size();
+    }
+
+    /**
+     * Tum karakteristik alanlarini doldurur.
+     *
+     * <p>Next butonu {@code isConfigurationComplete} ile korunur: servis adresi SECILMIS ve
+     * zorunlu karakteristiklerin TAMAMI doldurulmus olmalidir. Bu metot olmadan Review
+     * adimina hic gecilemez - FR-016/FR-017 testleri bu yuzden topluca atlaniyordu.
+     *
+     * <p>Select alanlarinda ilk BOS OLMAYAN secenek secilir (ilk secenek yer tutucudur);
+     * metin alanlarina sabit bir deger yazilir.
+     */
+    public ConfigurationStepPage fillAllConfigurationFields() {
+        // Alanlar TEK TEK ve her seferinde YENIDEN SORGULANARAK doldurulur. Bir urunun
+        // zorunlu alanlari tamamlandiginda kart blur'da otomatik KAPANIR
+        // (checkAutoCollapse) ve alanlari DOM'dan silinir; onceden toplanmis bir liste
+        // uzerinde donmek StaleElementReferenceException uretir.
+        int guard = 0;
+        while (guard++ < MAX_FIELD_FILLS && fillFirstEmptyField()) {
+            // devam
+        }
+        return this;
+    }
+
+    /** Ilk bos alani doldurur; dolduracak alan kalmadiysa {@code false} doner. */
+    private boolean fillFirstEmptyField() {
+        try {
+            for (WebElement field : findAll(CONFIG_FIELDS)) {
+                List<WebElement> selects = field.findElements(By.tagName("select"));
+                if (!selects.isEmpty()) {
+                    Select select = new Select(selects.get(0));
+                    String current = select.getFirstSelectedOption().getDomProperty("value");
+                    if (current != null && !current.isBlank()) {
+                        continue;
+                    }
+                    for (WebElement option : select.getOptions()) {
+                        String value = option.getDomProperty("value");
+                        if (value != null && !value.isBlank()) {
+                            select.selectByValue(value);
+                            return true;
+                        }
+                    }
+                    continue;
+                }
+                List<WebElement> inputs = field.findElements(By.tagName("input"));
+                if (!inputs.isEmpty()) {
+                    WebElement input = inputs.get(0);
+                    String value = input.getDomProperty("value");
+                    if (value == null || value.isBlank()) {
+                        input.sendKeys("Test");
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (StaleElementReferenceException e) {
+            // Kart tam bu sirada kapandi; bir sonraki turda guncel liste ile devam edilir.
+            return true;
+        }
     }
 
     // --- ACC-003, ACC-007: servis adresi ---

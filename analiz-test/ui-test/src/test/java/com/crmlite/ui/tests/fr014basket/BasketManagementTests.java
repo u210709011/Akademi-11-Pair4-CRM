@@ -234,6 +234,8 @@ public class BasketManagementTests extends AuthenticatedTest {
         OfferSelectionPage offers = openCatalogResults();
         offers.addToBasket(0);
         offers.clickNext();
+        // Gecis asenkron: sepet dogrulamasi sunucuya gider, bu sirada buton spinner gosterir.
+        offers.waitForActiveStep(ExpectedMessages.get("newSale.stepConfiguration"));
 
         assertThat(offers.activeStepLabel())
                 .as("ACC-018 — Product Configuration adimi acilir")
@@ -305,12 +307,13 @@ public class BasketManagementTests extends AuthenticatedTest {
 
         offers.addToBasket(0);
         int linesAfterFirst = offers.basketLineCount();
+        // Ilk ekleme de bir basari toast'i gosterir; ikinci islemin sonucunu okumadan once
+        // metnin DEGISMESI beklenir, aksi halde eski toast okunur.
+        String firstToast = offers.toastMessage();
 
         offers.clickAddButton(1);
 
-        assertThat(offers.hasToast())
-                .as("ACC-012 — catisma bildirimi gosterilir").isTrue();
-        assertThat(offers.toastMessage())
+        assertThat(offers.toastMessageOtherThan(firstToast))
                 .as("ACC-012 — catisma mesaji")
                 .isEqualTo(ExpectedMessages.get("newSale.categoryConflictError"));
         assertThat(offers.basketLineCount())

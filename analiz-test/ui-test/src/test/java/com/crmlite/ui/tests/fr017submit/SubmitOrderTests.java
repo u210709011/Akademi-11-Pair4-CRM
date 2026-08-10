@@ -16,7 +16,6 @@ import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import io.qameta.allure.TmsLink;
-import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -151,14 +150,15 @@ public class SubmitOrderTests extends AuthenticatedTest {
             config.openChangeAddressModal();
             config.selectAddressOption(0);
         }
+        // Next, isConfigurationComplete ile korunur: servis adresi TEK BASINA yetmez,
+        // zorunlu karakteristiklerin de doldurulmus olmasi gerekir.
+        config.fillAllConfigurationFields();
 
-        if (wizard.isNextDisabled()) {
-            throw new SkipException(
-                    "Review adimina gecilemedi: Configuration'da Next pasif kaldi. Sepetteki "
-                            + "urunun zorunlu karakteristik alanlari bu veri kurulumunda "
-                            + "doldurulamiyor (FR-015 ACC-009 geregi beklenen davranis).");
-        }
+        // On kosul ASSERT edilir, atlanmaz: bkz. OrderSummaryTests'teki ayni not.
+        assertThat(wizard.isNextEnabled())
+                .as("on kosul: konfigurasyon tamamlandiginda Next aktiflesmelidir").isTrue();
         wizard.clickNext();
+        wizard.waitForActiveStep(ExpectedMessages.get("newSale.stepReview"));
 
         ReviewStepPage review = new ReviewStepPage(driver());
         review.waitUntilLoaded();

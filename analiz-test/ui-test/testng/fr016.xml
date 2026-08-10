@@ -5,7 +5,7 @@
   FR-016 Siparis Ozeti Goruntuleme.
   Calistirma: ./mvnw test -Dsuite=fr016
 
-  Kriterler UC-EACRML-015 basliginin altindadir. Review adimina ulasmak sepette urun + servis adresi + zorunlu karakteristikler gerektirir; saglanamazsa testler ATLANIR.
+  Kriterler UC-EACRML-015 basliginin altindadir. Review adimina ulasmak sepette urun + servis adresi + zorunlu karakteristikler gerektirir; bu on kosul assert edilir, atlanmaz.
 -->
 <suite name="CRM Lite UI - FR016" verbose="1" parallel="false" configfailurepolicy="continue">
 

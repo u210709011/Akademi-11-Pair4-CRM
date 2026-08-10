@@ -15,7 +15,6 @@ import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import io.qameta.allure.TmsLink;
-import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,8 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * alir; bloklar ait olduklari basliktan once gelir.
  *
  * <p>Review ekranina ulasmak icin sepette urun, secilmis servis adresi ve doldurulmus
- * zorunlu karakteristik alanlar gerekir. Bu on kosul saglanamazsa test ATLANIR - yesil
- * gostermek icin dogrulama gevsetilmez.
+ * zorunlu karakteristik alanlar gerekir. Bu on kosul ASSERT edilir, ATLANMAZ: saglanamamasi
+ * gercek bir sorunun isaretidir ve gorunmesi gerekir.
  */
 @Epic("FR-016 Siparis Ozeti Goruntuleme")
 @Feature("UC-EACRML-016")
@@ -114,7 +113,7 @@ public class OrderSummaryTests extends AuthenticatedTest {
     /**
      * Sepete urun ekler, servis adresi secer ve Review adimina gecer.
      *
-     * <p>On kosul saglanamazsa {@link SkipException} atilir; sebep mesajda acikca yazilir.
+     * <p>On kosul ASSERT edilir, atlanmaz: saglanamamasi gercek bir sorundur.
      */
     private ReviewStepPage openReview() {
         CreatedCustomer customer = TestDataFactory.customerWithBillingAccount();
@@ -133,14 +132,18 @@ public class OrderSummaryTests extends AuthenticatedTest {
             config.openChangeAddressModal();
             config.selectAddressOption(0);
         }
+        // Next, isConfigurationComplete ile korunur: servis adresi TEK BASINA yetmez,
+        // zorunlu karakteristiklerin de doldurulmus olmasi gerekir.
+        config.fillAllConfigurationFields();
 
-        if (wizard.isNextDisabled()) {
-            throw new SkipException(
-                    "Review adimina gecilemedi: Configuration'da Next pasif kaldi. Sepetteki "
-                            + "urunun zorunlu karakteristik alanlari bu veri kurulumunda "
-                            + "doldurulamiyor (FR-015 ACC-009 geregi beklenen davranis).");
-        }
+        // On kosul ASSERT edilir, atlanmaz: burada pasif kalan bir Next gercek bir sorundur
+        // (ya konfigurasyon eksik kalmistir ya da uygulamada bir hata vardir) ve gorunmesi
+        // gerekir. Onceden burada SkipException vardi ve FR-016/FR-017'nin TAMAMI sessizce
+        // atlanip hicbir dogrulama yapmiyordu.
+        assertThat(wizard.isNextEnabled())
+                .as("on kosul: konfigurasyon tamamlandiginda Next aktiflesmelidir").isTrue();
         wizard.clickNext();
+        wizard.waitForActiveStep(ExpectedMessages.get("newSale.stepReview"));
 
         ReviewStepPage review = new ReviewStepPage(driver());
         review.waitUntilLoaded();

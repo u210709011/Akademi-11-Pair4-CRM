@@ -10,6 +10,7 @@ import com.crmlite.ui.tests.AuthenticatedTest;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -45,14 +46,19 @@ public class ProductConfigurationTests extends AuthenticatedTest {
                 .as("ACC-001 — Product Configuration ekrani acilir").isTrue();
     }
 
-    @Test(groups = {"fr015", "regression"},
+    @Test(groups = {"fr015", "documented-gap"},
             description = "UI-FR015-02 | Sepetteki her urun icin ayri konfigurasyon bolumu gosterilir")
     @Story("ACC-002 — Urun basina bolum")
     @TmsLink("FR-015-ACC-002")
+    @Issue("FR-015-GAP-ACC002")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Karakteristigi olmayan urunlerde alan izgarasi yerine bilgilendirme notu "
-            + "gosterilir; bu bir hata degildir. Test, KART SAYISININ sepetteki urun sayisiyla "
-            + "ortusmesini dogrular.")
+    @Description("BILINEN UYUMSUZLUK — kirmizi kalmasi beklenir. Dokuman \"SEPETTEKI HER URUN "
+            + "icin ayri bir konfigurasyon bolumu\" sart kosar. Uygulama kartlari yalnizca "
+            + "KULLANICININ SECTIGI satirlar icin uretir (configurableLines = selectedLines); "
+            + "zorunlu iliskiyle otomatik eklenen urunler (modem, router) konfigurasyon disinda "
+            + "kalir. Ornek: 1 kullanici urunu + 2 otomatik urun = 3 sepet satiri, 1 kart.\n"
+            + "Karakteristigi olmayan urunlerde alan izgarasi yerine bilgilendirme notu "
+            + "gosterilmesi ise bir hata DEGILDIR, seed verisinin dogal sonucudur.")
     public void eachBasketProductHasItsOwnConfigurationSection() {
         CreatedCustomer customer = TestDataFactory.customerWithBillingAccount();
         CustomerDetailPage detail = openCustomerDetail(customer.custId()).openAccountsTab();
@@ -225,27 +231,34 @@ public class ProductConfigurationTests extends AuthenticatedTest {
     }
 
     @Test(groups = {"fr015", "regression"},
-            description = "UI-FR015-10 | Servis adresi secilmeden Next aktif olmaz")
+            description = "UI-FR015-10 | Konfigurasyon tamamlanmadan Next aktif olmaz")
     @Story("ACC-009 — Eksik bilgide Next pasif")
     @TmsLink("FR-015-ACC-009")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Dokuman: tum karakteristik alanlar VE servis adresi girilmeden Next aktif "
-            + "olmamalidir. Test, adres secilmemis durumu dogrular.")
-    public void nextIsDisabledUntilServiceAddressIsChosen() {
+            + "olmamalidir.\n"
+            + "Kuralin ADRES yarisi UI'dan uretilemiyor - uygulama servis adresini otomatik "
+            + "secili getiriyor, dolayisiyla \"adres yok\" durumuna hic dusulmuyor. Bu yuzden "
+            + "test KARAKTERISTIK yarisini dogrular: zorunlu alanlar bosken Next pasif kalmali, "
+            + "dolduruldugunda aktiflesmelidir. Zorunlu alani olmayan bir urun secildiginde "
+            + "kural bos yere saglanacagi icin yalnizca 'dolduruldu -> aktif' yonu assert edilir.")
+    public void nextIsDisabledUntilConfigurationIsComplete() {
         ConfigurationStepPage config = openConfiguration();
+        OfferSelectionPage wizard = new OfferSelectionPage(driver());
 
-        if (config.hasSelectedAddress()) {
-            throw new org.testng.SkipException(
-                    "Servis adresi otomatik secili geldi; ACC-009'un 'adres yok' durumu bu "
-                            + "veri kurulumuyla uretilemiyor.");
+        if (config.configFieldCount() > 0) {
+            assertThat(wizard.isNextDisabled())
+                    .as("ACC-009 — zorunlu karakteristikler bosken Next pasif").isTrue();
         }
 
-        assertThat(config.noAddressText())
-                .isEqualTo(ExpectedMessages.get("newSale.noAddressSelected"));
+        config.fillAllConfigurationFields();
+        if (!config.hasSelectedAddress()) {
+            config.openChangeAddressModal();
+            config.selectAddressOption(0);
+        }
 
-        OfferSelectionPage wizard = new OfferSelectionPage(driver());
-        assertThat(wizard.isNextDisabled())
-                .as("ACC-009 — servis adresi yokken Next pasif").isTrue();
+        assertThat(wizard.isNextEnabled())
+                .as("ACC-009 — konfigurasyon tamamlaninca Next aktiflesir").isTrue();
     }
 
     @Test(groups = {"fr015", "regression"},
@@ -257,15 +270,14 @@ public class ProductConfigurationTests extends AuthenticatedTest {
         ConfigurationStepPage config = openConfiguration();
         config.openChangeAddressModal();
         config.selectAddressOption(0);
+        config.fillAllConfigurationFields();
 
         OfferSelectionPage wizard = new OfferSelectionPage(driver());
-        if (wizard.isNextDisabled()) {
-            throw new org.testng.SkipException(
-                    "Next pasif kaldi: sepetteki urunlerin zorunlu karakteristik alanlari bu "
-                            + "veri kurulumunda doldurulamadi (ACC-009 geregi beklenen davranis).");
-        }
+        assertThat(wizard.isNextEnabled())
+                .as("on kosul: konfigurasyon tamamlandiginda Next aktiflesmelidir").isTrue();
 
         wizard.clickNext();
+        wizard.waitForActiveStep(ExpectedMessages.get("newSale.stepReview"));
 
         assertThat(wizard.activeStepLabel())
                 .as("ACC-010 — Review & Submit adimi acilir")
