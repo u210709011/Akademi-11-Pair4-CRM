@@ -175,7 +175,14 @@
         <div class="update-actions">
             <button type="button" class="previous-button" (click)="previous()">{{ i18n.t('update.previousBtn') }}</button>
             <button type="button" class="save-button" [disabled]="updateForm().invalid() || isSaving()" (click)="save()">
-                {{ isSaving() ? i18n.t('create.submitting') : i18n.t('create.saveBtn') }}
+                @if (isSaving()) {
+                    <span class="btn-spinner-wrap">
+                        <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                        {{ i18n.t('create.submitting') }}
+                    </span>
+                } @else {
+                    {{ i18n.t('create.saveBtn') }}
+                }
             </button>
         </div>
     </div>

@@ -3,10 +3,20 @@
 export interface CustOrdItemResponse {
   custOrdItemId: number;
   prodId: number;
+  prodNo: string;
   prodName: string;
   cmpgId: number | null;
+  cmpgNo: string | null;
   cmpgName: string | null;
   custAcctId: number;
+}
+
+// GET /api/v1/orders/active-offers?custAcctId= response item - FR-014 ACC-011/BR-05: hesabin
+// zaten aktif (PROCESSING/FINISHED bir siparisten) sahip oldugu teklif.
+export interface ActiveOfferResponse {
+  prodOfrId: number;
+  custOrdItemId: number;
+  prodId: number;
 }
 
 // New Sale wizard - Offer Selection basket item, sent inside ValidateBasketRequest/CreateOrderRequest.
@@ -85,6 +95,7 @@ export interface AddressSummaryResponse {
 // POST/PUT /api/v1/orders(/{custOrdId}/...) response - Review & Confirm ekraninin ana veri kaynagi.
 export interface OrderSummaryResponse {
   custOrdId: number;
+  bsnInterId: number;
   ordStId: number;
   items: OrderItemSummaryResponse[];
   serviceAddress: AddressSummaryResponse | null;

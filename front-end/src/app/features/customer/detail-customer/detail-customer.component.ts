@@ -625,7 +625,7 @@ export class DetailCustomerComponent {
       next: ({ product: provisionedProduct, characteristics }) => {
         this.selectedProductDetail.set({
           productName: product.productName,
-          productOfferId: `OFR-${product.productId}`,
+          productOfferId: `OFR-${provisionedProduct.productNo}`,
           productSpecId: `SPEC-${provisionedProduct.productSpecId}`,
           serviceStartDate: this.formatServiceStartDate(provisionedProduct.serviceStartDate),
           characteristics: characteristics.map(charVal => ({
@@ -639,7 +639,7 @@ export class DetailCustomerComponent {
       error: () => {
         this.selectedProductDetail.set({
           productName: product.productName,
-          productOfferId: `OFR-${product.productId}`,
+          productOfferId: `OFR-${product.productNo}`,
           productSpecId: UNKNOWN,
           serviceStartDate: UNKNOWN,
           characteristics: [],

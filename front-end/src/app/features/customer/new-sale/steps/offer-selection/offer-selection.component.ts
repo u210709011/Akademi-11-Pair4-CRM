@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { I18nService } from '../../../../../core/i18n';
+import { OrderService } from '../../../../../core/order';
 import {
   Campaign,
   CampaignOffering,
@@ -25,16 +26,28 @@ const NAME_FIELD_MAX_LENGTH = 50;
 
 interface CatalogResultRow {
   productOfferingId: number;
+  productOfferingNo: string;
   name: string;
   descr: string;
   price: number;
 }
 
+interface CampaignOfferingRow {
+  productOfferingId: number;
+  productOfferingNo: string;
+  name: string;
+  originalPrice: number;
+  price: number;
+  discountPct: number;
+}
+
 interface CampaignResultRow {
   campaignId: number;
+  campaignNo: string;
   campaignCode: string;
   name: string;
-  offerings: { productOfferingId: number; name: string; price: number }[];
+  offerings: CampaignOfferingRow[];
+  totalOriginalPrice: number;
   totalPrice: number;
 }
 
@@ -51,6 +64,7 @@ export class OfferSelectionComponent {
   protected readonly i18n = inject(I18nService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly productService = inject(ProductService);
+  private readonly orderService = inject(OrderService);
   protected readonly formState = inject(NewSaleFormStateService);
 
   protected readonly activeTab = signal<OfferTab>('catalog');
@@ -64,6 +78,14 @@ export class OfferSelectionComponent {
   protected readonly isLoadingCatalogData = signal(true);
   protected readonly loadError = signal(false);
 
+  // FR-014 ACC-011/BR-05: bu hesabin zaten aktif sahip oldugu tekliflerin prodOfrId'leri -
+  // "Already Active" rozeti icin.
+  private readonly activeOfferingIds = signal<ReadonlySet<number>>(new Set());
+
+  // FR-014 ACC-012/BR-04: bir offering'in cakisan (exclusive=true, active) oldugu diger
+  // offering'lerin id'leri - sepete eklerken cakisma kontrolu icin.
+  private readonly excludedOfferingIdsMap = signal<Record<number, ReadonlySet<number>>>({});
+
   protected readonly catalogForm = this.formBuilder.nonNullable.group({
     catalogId: '',
     offerId: '',
@@ -71,7 +93,7 @@ export class OfferSelectionComponent {
   });
 
   protected readonly campaignForm = this.formBuilder.nonNullable.group({
-    campaignId: '',
+    catalogId: '',
     campaignRef: '',
     campaignName: ''
   });
@@ -89,7 +111,7 @@ export class OfferSelectionComponent {
 
   protected readonly isCampaignSearchDisabled = computed(() => {
     const value = this.campaignFormValue();
-    const hasCriteria = !!(value.campaignId || value.campaignRef || value.campaignName);
+    const hasCriteria = !!(value.catalogId || value.campaignRef || value.campaignName);
     return !hasCriteria || Object.values(this.campaignFieldErrors()).some(hasError => hasError);
   });
 
@@ -133,7 +155,6 @@ export class OfferSelectionComponent {
   protected readonly basketTotal = computed(() =>
     this.formState.basket().reduce((sum, line) => sum + line.price, 0)
   );
-  protected readonly selectedLines = computed(() => this.formState.basket().filter(line => !line.isAutoAdded));
   protected readonly autoAddedLines = computed(() => this.formState.basket().filter(line => line.isAutoAdded));
 
   constructor() {
@@ -155,12 +176,17 @@ export class OfferSelectionComponent {
         this.catalogOfferings.set(result.catalogOfferings);
         this.campaignOfferings.set(result.campaignOfferings);
         this.formState.requiredOfferingsMap.set(this.buildRequiredOfferingsMap(result.relations, result.offerings));
+        this.excludedOfferingIdsMap.set(this.buildExcludedOfferingsMap(result.relations));
         this.isLoadingCatalogData.set(false);
       },
       error: () => {
         this.isLoadingCatalogData.set(false);
         this.loadError.set(true);
       }
+    });
+
+    this.orderService.getActiveOffers(this.formState.custAcctId()).subscribe(activeOffers => {
+      this.activeOfferingIds.set(new Set(activeOffers.map(offer => offer.prodOfrId)));
     });
   }
 
@@ -169,8 +195,8 @@ export class OfferSelectionComponent {
   private buildRequiredOfferingsMap(
     relations: ProductOfferingRelation[],
     offerings: ProductOffering[]
-  ): Record<number, { productOfferingId: number; name: string; price: number }[]> {
-    const map: Record<number, { productOfferingId: number; name: string; price: number }[]> = {};
+  ): Record<number, { productOfferingId: number; productOfferingNo: string; name: string; price: number }[]> {
+    const map: Record<number, { productOfferingId: number; productOfferingNo: string; name: string; price: number }[]> = {};
     for (const relation of relations) {
       if (!relation.mandatory || !relation.active) {
         continue;
@@ -181,11 +207,34 @@ export class OfferSelectionComponent {
       }
       (map[relation.productOfferingId1] ??= []).push({
         productOfferingId: target.productOfferingId,
+        productOfferingNo: target.productOfferingNo,
         name: target.name,
         price: target.totalPrice
       });
     }
     return map;
+  }
+
+  // Cakisan (exclusive=true, active) iliskileri iki yonlu bir id -> id set haritasina cevirir.
+  private buildExcludedOfferingsMap(relations: ProductOfferingRelation[]): Record<number, ReadonlySet<number>> {
+    const map: Record<number, Set<number>> = {};
+    for (const relation of relations) {
+      if (!relation.exclusive || !relation.active) {
+        continue;
+      }
+      (map[relation.productOfferingId1] ??= new Set()).add(relation.productOfferingId2);
+      (map[relation.productOfferingId2] ??= new Set()).add(relation.productOfferingId1);
+    }
+    return map;
+  }
+
+  // Sepette, verilen offering ile cakisan (EXCL) bir satir var mi doner.
+  private conflictingBasketLine(productOfferingId: number): BasketLine | undefined {
+    const excludedIds = this.excludedOfferingIdsMap()[productOfferingId];
+    if (!excludedIds) {
+      return undefined;
+    }
+    return this.formState.basket().find(line => excludedIds.has(line.prodOfrId));
   }
 
   protected selectTab(tab: OfferTab): void {
@@ -196,10 +245,6 @@ export class OfferSelectionComponent {
     return this.catalogs();
   }
 
-  protected get campaignOptions(): Campaign[] {
-    return this.campaigns();
-  }
-
   // Bir katalog secildiginde, o kataloga ait teklifler otomatik olarak listelenir.
   protected onCatalogSelected(): void {
     if (this.catalogForm.controls.catalogId.value) {
@@ -208,7 +253,7 @@ export class OfferSelectionComponent {
   }
 
   protected onCampaignCategorySelected(): void {
-    if (this.campaignForm.controls.campaignId.value) {
+    if (this.campaignForm.controls.catalogId.value) {
       this.searchCampaigns();
     }
   }
@@ -282,6 +327,7 @@ export class OfferSelectionComponent {
       .filter(offer => !offerName || offer.name.toLowerCase().includes(offerName.trim().toLowerCase()))
       .map(offer => ({
         productOfferingId: offer.productOfferingId,
+        productOfferingNo: offer.productOfferingNo,
         name: offer.name,
         descr: offer.descr,
         price: offer.totalPrice
@@ -291,31 +337,53 @@ export class OfferSelectionComponent {
   }
 
   protected searchCampaigns(): void {
-    const { campaignId, campaignRef, campaignName } = this.campaignForm.getRawValue();
+    const { catalogId, campaignRef, campaignName } = this.campaignForm.getRawValue();
     this.hasSearchedCampaign.set(true);
     this.campaignPage.set(0);
 
     const offeringPriceById = new Map(this.offerings().map(o => [o.productOfferingId, o.totalPrice]));
+    const offeringNoById = new Map(this.offerings().map(o => [o.productOfferingId, o.productOfferingNo]));
+
+    // Kategori (Internet/Mobile/TV) secildiyse, o kataloga ait teklif id'lerinden EN AZ birini
+    // iceren kampanyalar eslesir - "bu tur teklifi iceren kampanyalar" arama mantigi.
+    const offeringIdsInCatalog = catalogId
+      ? new Set(
+          this.catalogOfferings()
+            .filter(co => co.productCatalogId === Number(catalogId))
+            .map(co => co.productOfferingId)
+        )
+      : null;
 
     const filteredCampaigns = this.campaigns()
-      .filter(campaign => !campaignId || campaign.campaignId === Number(campaignId))
+      .filter(
+        campaign =>
+          !offeringIdsInCatalog ||
+          this.campaignOfferings().some(
+            co => co.campaignId === campaign.campaignId && offeringIdsInCatalog.has(co.productOfferingId)
+          )
+      )
       .filter(campaign => !campaignRef || String(campaign.campaignId).includes(campaignRef.trim()))
       .filter(campaign => !campaignName || campaign.name.toLowerCase().includes(campaignName.trim().toLowerCase()));
 
     const results: CampaignResultRow[] = filteredCampaigns.map(campaign => {
-      const offerings = this.campaignOfferings()
+      const offerings: CampaignOfferingRow[] = this.campaignOfferings()
         .filter(co => co.campaignId === campaign.campaignId)
         .map(co => ({
           productOfferingId: co.productOfferingId,
+          productOfferingNo: offeringNoById.get(co.productOfferingId) ?? '',
           name: co.productOfferingName,
-          price: offeringPriceById.get(co.productOfferingId) ?? 0
+          originalPrice: offeringPriceById.get(co.productOfferingId) ?? 0,
+          price: co.discountedPrice,
+          discountPct: co.discountPct
         }));
 
       return {
         campaignId: campaign.campaignId,
+        campaignNo: campaign.campaignNo,
         campaignCode: campaign.campaignCode,
         name: campaign.name,
         offerings,
+        totalOriginalPrice: offerings.reduce((sum, o) => sum + o.originalPrice, 0),
         totalPrice: offerings.reduce((sum, o) => sum + o.price, 0)
       };
     });
@@ -331,11 +399,37 @@ export class OfferSelectionComponent {
     return campaign.offerings.every(offering => this.isInBasket(offering.productOfferingId));
   }
 
+  // Aktif tekliflerin ait oldugu katalog kategorileri (Internet/Mobile/TV) - musteride o
+  // kategoriden zaten aktif bir urun varsa, farkli bir teklif olsa bile eklenememeli.
+  private readonly activeCatalogNames = computed(() => {
+    const names = new Set<string>();
+    for (const prodOfrId of this.activeOfferingIds()) {
+      const catalogName = this.catalogNameForOffering(prodOfrId);
+      if (catalogName) {
+        names.add(catalogName);
+      }
+    }
+    return names;
+  });
+
+  protected isOfferingAlreadyActive(productOfferingId: number): boolean {
+    if (this.activeOfferingIds().has(productOfferingId)) {
+      return true;
+    }
+    const catalogName = this.catalogNameForOffering(productOfferingId);
+    return catalogName !== null && this.activeCatalogNames().has(catalogName);
+  }
+
+  protected isCampaignAlreadyActive(campaign: CampaignResultRow): boolean {
+    return campaign.offerings.some(offering => this.isOfferingAlreadyActive(offering.productOfferingId));
+  }
+
   protected toggleCampaignExpanded(campaignId: number): void {
     this.expandedCampaignId.update(current => (current === campaignId ? null : campaignId));
   }
 
-  // Bir katalogdan (Mobile/Internet/TV) ayni anda sadece bir urun sepette olabilir.
+  // Basket/Configuration/Review'da katalog ikonu gostermek icin (bkz. BasketLine.catalogName) -
+  // cakisma kontrolu artik conflictingBasketLine/excludedOfferingIdsMap ile (EXCL iliskisi) yapiliyor.
   private catalogNameForOffering(productOfferingId: number): string | null {
     const catalogOffering = this.catalogOfferings().find(co => co.productOfferingId === productOfferingId);
     if (!catalogOffering) {
@@ -345,23 +439,18 @@ export class OfferSelectionComponent {
   }
 
   protected addOfferToBasket(offer: CatalogResultRow): void {
-    const catalogName = this.catalogNameForOffering(offer.productOfferingId);
-
-    const conflictingLine = catalogName
-      ? this.selectedLines().find(
-          line => line.catalogName === catalogName && line.prodOfrId !== offer.productOfferingId
-        )
-      : undefined;
-
-    if (conflictingLine) {
+    if (this.conflictingBasketLine(offer.productOfferingId)) {
       this.showToast(this.i18n.t('newSale.categoryConflictError'), 'error');
       return;
     }
 
+    const catalogName = this.catalogNameForOffering(offer.productOfferingId);
     const line: BasketLine = {
       prodOfrId: offer.productOfferingId,
+      prodOfrNo: offer.productOfferingNo,
       offerName: offer.name,
       price: offer.price,
+      originalPrice: null,
       cmpgId: null,
       cmpgName: null,
       catalogName,
@@ -373,12 +462,20 @@ export class OfferSelectionComponent {
   }
 
   protected addCampaignToBasket(campaign: CampaignResultRow): void {
+    const hasConflict = campaign.offerings.some(offering => this.conflictingBasketLine(offering.productOfferingId));
+    if (hasConflict) {
+      this.showToast(this.i18n.t('newSale.categoryConflictError'), 'error');
+      return;
+    }
+
     let addedRequiredCount = 0;
     for (const offering of campaign.offerings) {
       const line: BasketLine = {
         prodOfrId: offering.productOfferingId,
+        prodOfrNo: offering.productOfferingNo,
         offerName: offering.name,
         price: offering.price,
+        originalPrice: offering.originalPrice,
         cmpgId: campaign.campaignId,
         cmpgName: campaign.name,
         catalogName: null,
@@ -402,6 +499,10 @@ export class OfferSelectionComponent {
 
   protected removeFromBasket(prodOfrId: number): void {
     this.formState.removeFromBasket(prodOfrId);
+  }
+
+  protected removeCampaignFromBasket(cmpgId: number): void {
+    this.formState.removeCampaignFromBasket(cmpgId);
   }
 
   protected clearBasket(): void {

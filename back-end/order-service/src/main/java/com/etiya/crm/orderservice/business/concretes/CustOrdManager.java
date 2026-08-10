@@ -35,6 +35,7 @@ import com.etiya.crm.orderservice.clients.responses.CampaignOfferingResponse;
 import com.etiya.crm.orderservice.clients.responses.CampaignResponse;
 import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductCatalogOfferingResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingResponse;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterRepository;
@@ -101,6 +102,7 @@ public class CustOrdManager implements CustOrdService {
         List<CustomerAccountResponse> accounts = customerClient.getAccounts(request.custId(), 1000).content();
         basketValidationRules.ensureAccountBelongsToCustomer(request.custAcctId(), accounts);
         basketValidationRules.ensureNoDuplicateItems(request.items());
+        basketValidationRules.ensureNoConflictingItems(request.items(), productClient.getOfferingRelations());
         request.items().forEach(item -> ensureOfferNotAlreadyActive(request.custAcctId(), item.prodOfrId()));
     }
 
@@ -118,6 +120,7 @@ public class CustOrdManager implements CustOrdService {
         List<CustomerAccountResponse> accounts = customerClient.getAccounts(request.custId(), 1000).content();
         basketValidationRules.ensureAccountBelongsToCustomer(request.custAcctId(), accounts);
         basketValidationRules.ensureNoDuplicateItems(request.items());
+        basketValidationRules.ensureNoConflictingItems(request.items(), productClient.getOfferingRelations());
         request.items().forEach(item -> ensureOfferNotAlreadyActive(request.custAcctId(), item.prodOfrId()));
 
         BsnInterSpec spec = bsnInterSpecRepository.findByShrtCode(LookupCodes.BSN_INTER_SPEC_NEW_SALE)
@@ -173,6 +176,7 @@ public class CustOrdManager implements CustOrdService {
                 .orElseThrow(() -> new OrderNotFoundException(custOrdId));
         ensureEditable(custOrd);
         basketValidationRules.ensureItemNotAlreadyInBasket(request, custOrd.getItems());
+        basketValidationRules.ensureItemNotConflicting(request, custOrd.getItems(), productClient.getOfferingRelations());
 
         Long custAcctId = custOrd.getItems().get(0).getCustAcctId();
         ensureOfferNotAlreadyActive(custAcctId, request.prodOfrId());
@@ -382,11 +386,26 @@ public class CustOrdManager implements CustOrdService {
                 .findByCustAcctIdAndCustOrd_OrdStIdIn(custAcctId, List.of(processingStatusId, finishedStatusId));
     }
 
-    /** FR-014 IK-05: hesapta zaten aktif (PROCESSING/FINISHED) olan bir teklif tekrar sepete eklenemez. */
+    /**
+     * FR-014 IK-05: hesapta zaten aktif (PROCESSING/FINISHED) olan bir teklif tekrar sepete
+     * eklenemez - aynisi degilse de, ayni katalog kategorisinden (Internet/Mobile/TV) FARKLI bir
+     * teklif zaten aktifse yenisi de eklenemez (ör. musteride TV urunu varken ikinci bir TV urunu).
+     */
     private void ensureOfferNotAlreadyActive(Long custAcctId, Long prodOfrId) {
-        boolean alreadyActive = findActiveItems(custAcctId).stream()
-                .anyMatch(item -> prodOfrId.equals(item.getProdOfrId()));
-        if (alreadyActive) {
+        List<CustOrdItem> activeItems = findActiveItems(custAcctId);
+        boolean exactMatch = activeItems.stream().anyMatch(item -> prodOfrId.equals(item.getProdOfrId()));
+        if (exactMatch) {
+            throw new OfferAlreadyActiveException(custAcctId, prodOfrId);
+        }
+
+        Map<Long, Long> catalogIdByOfferingId = productClient.getCatalogOfferings().stream()
+                .collect(Collectors.toMap(ProductCatalogOfferingResponse::productOfferingId,
+                        ProductCatalogOfferingResponse::productCatalogId, (first, second) -> first));
+
+        Long candidateCatalogId = catalogIdByOfferingId.get(prodOfrId);
+        boolean sameCategoryActive = candidateCatalogId != null && activeItems.stream()
+                .anyMatch(item -> candidateCatalogId.equals(catalogIdByOfferingId.get(item.getProdOfrId())));
+        if (sameCategoryActive) {
             throw new OfferAlreadyActiveException(custAcctId, prodOfrId);
         }
     }
@@ -485,7 +504,7 @@ public class CustOrdManager implements CustOrdService {
                 ? buildAddressSummary(contactAddressClient.getById(custOrd.getAddressId()))
                 : null;
 
-        return new OrderSummaryResponse(custOrd.getCustOrdId(), custOrd.getOrdStId(),
+        return new OrderSummaryResponse(custOrd.getCustOrdId(), custOrd.getBsnInter().getBsnInterId(), custOrd.getOrdStId(),
                 itemResponses, addressSummary, calculateTotalAmount(custOrd));
     }
 

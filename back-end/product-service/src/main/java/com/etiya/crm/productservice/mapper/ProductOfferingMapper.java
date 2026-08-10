@@ -6,6 +6,7 @@ import com.etiya.crm.productservice.business.dtos.responses.ProductOffering.Crea
 import com.etiya.crm.productservice.business.dtos.responses.ProductOffering.GetAllProductOfferingResponse;
 import com.etiya.crm.productservice.business.dtos.responses.ProductOffering.GetProductOfferingResponse;
 import com.etiya.crm.productservice.business.dtos.responses.ProductOffering.UpdatedProductOfferingResponse;
+import com.etiya.crm.productservice.constants.ProductServiceDefaults;
 import com.etiya.crm.productservice.entities.concretes.ProductOffering;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -39,6 +40,7 @@ public interface ProductOfferingMapper {
      * parentOffering null olabilir; MapStruct null-safe davranir, parentOfferingId null kalir.
      */
 
+    @Mapping(target = "productOfferingNo", expression = "java(formatNo(productOffering.getProductOfferingId()))")
     @Mapping(target = "productSpecId", source = "productSpec.productSpecId")
     @Mapping(target = "parentOfferingId", source = "parentOffering.productOfferingId")
     CreatedProductOfferingResponse toCreatedResponse(ProductOffering productOffering);
@@ -56,19 +58,26 @@ public interface ProductOfferingMapper {
     @Mapping(target = "uuser", ignore = true)
     void updateEntityFromRequest(UpdateProductOfferingRequest request, @MappingTarget ProductOffering productOffering);
 
+    @Mapping(target = "productOfferingNo", expression = "java(formatNo(productOffering.getProductOfferingId()))")
     @Mapping(target = "productSpecId", source = "productSpec.productSpecId")
     @Mapping(target = "parentOfferingId", source = "parentOffering.productOfferingId")
     UpdatedProductOfferingResponse toUpdatedResponse(ProductOffering productOffering);
 
     // ---------- GET ----------
 
+    @Mapping(target = "productOfferingNo", expression = "java(formatNo(productOffering.getProductOfferingId()))")
     @Mapping(target = "productSpecId", source = "productSpec.productSpecId")
     @Mapping(target = "parentOfferingId", source = "parentOffering.productOfferingId")
     GetProductOfferingResponse toGetResponse(ProductOffering productOffering);
 
+    @Mapping(target = "productOfferingNo", expression = "java(formatNo(productOffering.getProductOfferingId()))")
     @Mapping(target = "productSpecId", source = "productSpec.productSpecId")
     @Mapping(target = "parentOfferingId", source = "parentOffering.productOfferingId")
     GetAllProductOfferingResponse toGetAllResponse(ProductOffering productOffering);
 
     List<GetAllProductOfferingResponse> toGetAllResponseList(List<ProductOffering> productOfferings);
+
+    default String formatNo(Long productOfferingId) {
+        return productOfferingId == null ? null : ProductServiceDefaults.formatNo(productOfferingId);
+    }
 }

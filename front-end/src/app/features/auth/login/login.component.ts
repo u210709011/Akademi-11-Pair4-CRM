@@ -32,6 +32,7 @@ export class LoginComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly showPassword = signal(false);
+  protected readonly isLoggingIn = signal(false);
 
   protected readonly loginErrors = signal<Record<LoginErrorKey, boolean>>({
     wrongCredentials: false,
@@ -104,7 +105,9 @@ export class LoginComponent {
 
     const { username, password } = this.loginModel();
 
+    this.isLoggingIn.set(true);
     this.authService.login(username.trim(), password).subscribe(result => {
+      this.isLoggingIn.set(false);
       if (result === 'success') {
         this.setLoginError('wrongCredentials', false);
         this.setLoginError('accountLocked', false);

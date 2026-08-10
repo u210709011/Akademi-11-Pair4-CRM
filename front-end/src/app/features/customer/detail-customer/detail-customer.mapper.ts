@@ -27,9 +27,13 @@ export interface CustomerDetail {
 
 export interface AccountProduct {
   productId: string;
+  // Backend'de sifirla soldan 6 haneye doldurulmus (CUST_ACCT.ACCT_NO ile ayni kural) - PRD-
+  // prefix'i sadece gosterimde eklenir; iliski/routing icin hala productId (gercek PK) kullanilir.
+  productNo: string;
   productName: string;
   campaignName: string;
   campaignId: string;
+  campaignNo: string;
 }
 
 export interface CustomerAccount {
@@ -48,9 +52,11 @@ export interface CustomerAccount {
 export function mapToAccountProducts(items: CustOrdItemResponse[]): AccountProduct[] {
   return items.map(item => ({
     productId: String(item.prodId),
+    productNo: item.prodNo,
     productName: item.prodName,
     campaignName: item.cmpgName ?? UNKNOWN,
-    campaignId: item.cmpgId !== null ? String(item.cmpgId) : UNKNOWN
+    campaignId: item.cmpgId !== null ? String(item.cmpgId) : UNKNOWN,
+    campaignNo: item.cmpgNo ?? UNKNOWN
   }));
 }
 

@@ -7,6 +7,7 @@ import com.etiya.crm.productservice.business.dtos.responses.Campaign.GetAllCampa
 import com.etiya.crm.productservice.business.dtos.responses.Campaign.GetCampaignResponse;
 import com.etiya.crm.productservice.business.dtos.responses.Campaign.UpdatedCampaignResponse;
 import com.etiya.crm.productservice.business.dtos.responses.ProductCatalog.GetAllProductCatalogResponse;
+import com.etiya.crm.productservice.constants.ProductServiceDefaults;
 import com.etiya.crm.productservice.entities.concretes.Campaign;
 import com.etiya.crm.productservice.entities.concretes.ProductCatalog;
 import org.mapstruct.Mapper;
@@ -27,6 +28,7 @@ public interface CampaignMapper {
     @Mapping(target = "uuser", ignore = true)
     Campaign toEntity(CreateCampaignRequest request);
 
+    @Mapping(target = "campaignNo", expression = "java(formatNo(campaign.getCampaignId()))")
     CreatedCampaignResponse toCreatedResponse(Campaign campaign);
 
     // ---------- UPDATE ----------
@@ -43,12 +45,22 @@ public interface CampaignMapper {
     @Mapping(target = "uuser", ignore = true)
     void updateEntityFromRequest(UpdateCampaignRequest request, @MappingTarget Campaign campaign);
 
+    @Mapping(target = "campaignNo", expression = "java(formatNo(campaign.getCampaignId()))")
     UpdatedCampaignResponse toUpdatedResponse(Campaign campaign);
 
     // ---------- GET ----------
 
+    @Mapping(target = "campaignNo", expression = "java(formatNo(campaign.getCampaignId()))")
     GetCampaignResponse toGetResponse(Campaign campaign);
+
+    @Mapping(target = "campaignNo", expression = "java(formatNo(campaign.getCampaignId()))")
+    GetAllCampaignResponse toGetAllResponse(Campaign campaign);
 
     /** Liste donusumu: MapStruct tekil metodu bulup her eleman icin calistirir. */
     List<GetAllCampaignResponse> toGetAllResponseList(List<Campaign> campaigns);
+
+    /** customer-service AccountDefaults.formatAccountNo ile ayni kural (bkz. ProductServiceDefaults). */
+    default String formatNo(Long campaignId) {
+        return campaignId == null ? null : ProductServiceDefaults.formatNo(campaignId);
+    }
 }
