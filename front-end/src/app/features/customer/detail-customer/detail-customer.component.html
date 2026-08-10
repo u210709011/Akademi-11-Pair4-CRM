@@ -643,7 +643,7 @@
                         @if (digitsOnlyErrorField() === 'mobilePhone') {
                             <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
                         } @else if (contactForm.mobilePhone().invalid() && contactForm.mobilePhone().touched()) {
-                            <span class="field-error">{{ contactModel().mobilePhone ? i18n.t('create.mobilePhoneFormatError') : i18n.t('create.fieldRequired') }}</span>
+                            <span class="field-error">{{ contactModel().mobilePhone ? i18n.t('detail.mobilePhoneFormatError') : i18n.t('create.fieldRequired') }}</span>
                         }
                     </div>
 
@@ -695,6 +695,37 @@
             <div class="modal-actions">
                 <button type="button" class="cancel-button" (click)="closeContactModal()">{{ i18n.t('create.cancelBtn') }}</button>
                 <button type="button" class="save-button" [disabled]="contactForm().invalid() || isSavingContact()" (click)="saveContact()">{{ i18n.t('create.saveBtn') }}</button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@if (isContactCancelConfirmOpen()) {
+    <div class="modal-backdrop" (click)="keepEditingContact()">
+        <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+                <h3 class="modal-title">{{ i18n.t('detail.discardChangesTitle') }}</h3>
+                <button type="button" class="modal-close" (click)="keepEditingContact()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+            </div>
+
+            <div class="delete-confirm-body">
+                <span class="delete-confirm-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 9v4" />
+                        <path d="M12 17h.01" />
+                        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                    </svg>
+                </span>
+                <p class="delete-confirm-message">{{ i18n.t('detail.discardChangesMessage') }}</p>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="cancel-button" (click)="keepEditingContact()">{{ i18n.t('detail.discardChangesCancelBtn') }}</button>
+                <button type="button" class="delete-confirm-button" (click)="discardContactChanges()">{{ i18n.t('detail.discardChangesConfirmBtn') }}</button>
             </div>
 
         </div>
@@ -781,8 +812,11 @@
                     </div>
 
                     <div class="modal-field">
-                        <label for="account-desc">{{ i18n.t('detail.accountDesc') }}</label>
+                        <label for="account-desc">{{ i18n.t('detail.accountDesc') }} <span class="required">*</span></label>
                         <input id="account-desc" type="text" [formField]="accountForm.accountDesc" [placeholder]="i18n.t('detail.accountDescPlaceholder')">
+                        @if (accountForm.accountDesc().invalid() && accountForm.accountDesc().touched()) {
+                            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        }
                     </div>
 
                     <hr class="modal-divider">
@@ -803,8 +837,11 @@
                     </div>
 
                     <div class="modal-field">
-                        <label for="account-desc">{{ i18n.t('detail.accountDesc') }}</label>
+                        <label for="account-desc">{{ i18n.t('detail.accountDesc') }} <span class="required">*</span></label>
                         <input id="account-desc" type="text" [formField]="accountForm.accountDesc" [placeholder]="i18n.t('detail.accountDescPlaceholder')">
+                        @if (accountForm.accountDesc().invalid() && accountForm.accountDesc().touched()) {
+                            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        }
                     </div>
                 }
 
@@ -813,6 +850,37 @@
             <div class="modal-actions">
                 <button type="button" class="cancel-button" (click)="closeCreateAccountModal()">{{ i18n.t('create.cancelBtn') }}</button>
                 <button type="button" class="save-button" [disabled]="!accountFormValid() || isSavingAccount()" (click)="saveAccount()">{{ editingAccount() ? i18n.t('create.saveBtn') : i18n.t('create.createBtn') }}</button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@if (isAccountCancelConfirmOpen()) {
+    <div class="modal-backdrop" (click)="keepEditingAccount()">
+        <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+                <h3 class="modal-title">{{ i18n.t('detail.discardChangesTitle') }}</h3>
+                <button type="button" class="modal-close" (click)="keepEditingAccount()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+            </div>
+
+            <div class="delete-confirm-body">
+                <span class="delete-confirm-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 9v4" />
+                        <path d="M12 17h.01" />
+                        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                    </svg>
+                </span>
+                <p class="delete-confirm-message">{{ i18n.t('detail.discardChangesMessage') }}</p>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="cancel-button" (click)="keepEditingAccount()">{{ i18n.t('detail.discardChangesCancelBtn') }}</button>
+                <button type="button" class="delete-confirm-button" (click)="discardAccountChanges()">{{ i18n.t('detail.discardChangesConfirmBtn') }}</button>
             </div>
 
         </div>
