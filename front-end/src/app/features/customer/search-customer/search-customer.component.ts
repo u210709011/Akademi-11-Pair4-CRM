@@ -5,6 +5,8 @@ import { CustomerSearchCriteria, CustomerSearchResult, CustomerService } from '.
 import { I18nService } from '../../../core/i18n';
 
 type DigitFieldName = 'natIdNumber' | 'customerId' | 'accountNumber' | 'gsmNumber' | 'orderNumber';
+type NameFieldName = 'firstName' | 'lastName';
+type ValidatedFieldName = DigitFieldName | NameFieldName;
 
 type SortColumn = 'custId' | 'firstName' | 'middleName' | 'lastName' | 'tcNo' | 'role';
 type SortDirection = 'asc' | 'desc';
@@ -49,12 +51,14 @@ export class SearchCustomerComponent {
   protected readonly sortColumn = signal<SortColumn | null>(null);
   protected readonly sortDirection = signal<SortDirection>('asc');
 
-  protected readonly fieldErrors = signal<Record<DigitFieldName, boolean>>({
+  protected readonly fieldErrors = signal<Record<ValidatedFieldName, boolean>>({
     natIdNumber: false,
     customerId: false,
     accountNumber: false,
     gsmNumber: false,
-    orderNumber: false
+    orderNumber: false,
+    firstName: false,
+    lastName: false
   });
   // Search butonu, herhangi bir alanda gecerli bir hata gosterilirken de aktif olmamali
   // (ör. NAT ID 11 haneden az girilip alandan cikildiginda).
@@ -157,7 +161,7 @@ export class SearchCustomerComponent {
     this.runSearch();
   }
 
-  protected setFieldError(field: DigitFieldName, hasError: boolean): void {
+  protected setFieldError(field: ValidatedFieldName, hasError: boolean): void {
     this.fieldErrors.update(errors => ({ ...errors, [field]: hasError }));
   }
 
@@ -198,9 +202,16 @@ export class SearchCustomerComponent {
     this.setFieldError('gsmNumber', raw.length > 0 && raw.length !== 10);
   }
 
-  protected sanitizeLetters(event: Event, controlName: 'firstName' | 'lastName'): void {
+  protected sanitizeLetters(event: Event, controlName: NameFieldName): void {
     const input = event.target as HTMLInputElement;
-    const lettersOnly = input.value.replace(/[^a-zA-ZçÇğĞıİöÖşŞüÜ\s]/g, '');
+    const lettersOnly = input.value.replace(/[^a-zA-ZçÇğĞıİöÖşŞüÜ\s]/g, '').slice(0, 50);
+    this.setFieldError(controlName, input.value !== lettersOnly);
     this.searchForm.controls[controlName].setValue(lettersOnly);
+  }
+
+  // First/Last Name: "Text, max 50" - yalnizca uzunluk kurali var, harf-disi karakterler zaten
+  // yazarken sanitizeLetters ile siliniyor. NAT ID/GSM ile ayni desen: blur'da kalan hata temizlenir.
+  protected onNameBlur(controlName: NameFieldName): void {
+    this.setFieldError(controlName, false);
   }
 }

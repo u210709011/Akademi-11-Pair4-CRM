@@ -113,10 +113,15 @@
                     <input
                         id="firstName"
                         type="text"
+                        maxlength="50"
                         formControlName="firstName"
                         placeholder="First Name"
                         (input)="sanitizeLetters($event, 'firstName')"
+                        (blur)="onNameBlur('firstName')"
                     >
+                    @if (fieldErrors().firstName) {
+                        <span class="field-error">{{ i18n.t('search.firstNameError') }}</span>
+                    }
                 </div>
 
                 <div class="filter-field">
@@ -124,10 +129,15 @@
                     <input
                         id="lastName"
                         type="text"
+                        maxlength="50"
                         formControlName="lastName"
                         placeholder="Last Name"
                         (input)="sanitizeLetters($event, 'lastName')"
+                        (blur)="onNameBlur('lastName')"
                     >
+                    @if (fieldErrors().lastName) {
+                        <span class="field-error">{{ i18n.t('search.lastNameError') }}</span>
+                    }
                 </div>
 
                 <div class="filter-field">
