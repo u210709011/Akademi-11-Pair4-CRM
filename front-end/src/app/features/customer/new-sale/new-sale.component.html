@@ -50,23 +50,111 @@
         <ng-container [ngComponentOutlet]="activeStepComponent()" />
     </div>
 
-    @if (formState.basketError()) {
-        <div class="basket-error-banner">{{ formState.basketError() }}</div>
+    @if (formState.basketError(); as error) {
+        <div class="basket-error-toast">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 9v4" />
+                <path d="M12 17h.01" />
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+            </svg>
+            <span>{{ error }}</span>
+        </div>
     }
-    @if (formState.submitError()) {
-        <div class="basket-error-banner">{{ formState.submitError() }}</div>
+    @if (formState.submitError(); as error) {
+        <div class="basket-error-toast">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 9v4" />
+                <path d="M12 17h.01" />
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+            </svg>
+            <span>{{ error }}</span>
+        </div>
     }
 
     <div class="wizard-actions">
         <div class="wizard-buttons-group">
             @if (activeStepIndex() === 0) {
-                <button type="button" class="cancel-button" (click)="cancel()">{{ i18n.t('newSale.cancelBtn') }}</button>
+                <button type="button" class="cancel-button" (click)="openCancelConfirm()">{{ i18n.t('newSale.cancelBtn') }}</button>
             } @else {
                 <button type="button" class="cancel-button" (click)="previous()">{{ i18n.t('newSale.previousBtn') }}</button>
             }
 
-            <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="next()">{{ nextButtonLabel() }}</button>
+            <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="next()">
+                @if (isNextLoading()) {
+                    <span class="btn-spinner-wrap">
+                        <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                        {{ nextButtonLabel() }}
+                    </span>
+                } @else {
+                    {{ nextButtonLabel() }}
+                }
+            </button>
         </div>
     </div>
+
+    @if (isCancelConfirmOpen()) {
+        <div class="modal-backdrop" (click)="closeCancelConfirm()">
+            <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
+
+                <div class="modal-header">
+                    <h3 class="modal-title">{{ i18n.t('newSale.cancelConfirmTitle') }}</h3>
+                    <button type="button" class="modal-close" (click)="closeCancelConfirm()">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                    </button>
+                </div>
+
+                <div class="delete-confirm-body">
+                    <span class="delete-confirm-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                            <path d="M12 9v4" />
+                            <path d="M12 17h.01" />
+                        </svg>
+                    </span>
+                    <p class="delete-confirm-message">{{ i18n.t('newSale.cancelConfirmMessage') }}</p>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="cancel-button" (click)="closeCancelConfirm()">{{ i18n.t('newSale.cancelConfirmKeepBtn') }}</button>
+                    <button type="button" class="delete-confirm-button" (click)="confirmCancel()">{{ i18n.t('newSale.cancelConfirmConfirmBtn') }}</button>
+                </div>
+
+            </div>
+        </div>
+    }
+
+    @if (isOrderSubmittedModalOpen()) {
+        <div class="modal-backdrop">
+            <div class="modal-card order-success-card">
+
+                <span class="order-success-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                </span>
+
+                <h3 class="order-success-title">{{ i18n.t('newSale.orderSuccessTitle') }}</h3>
+                <p class="order-success-subtitle">{{ i18n.t('newSale.orderSuccessMessage') }}</p>
+
+                <div class="order-success-details">
+                    <div class="order-success-detail-row">
+                        <span class="order-success-detail-label">{{ i18n.t('newSale.orderId') }}:</span>
+                        <span class="order-success-detail-value">ORD-{{ formState.custOrdId() }}</span>
+                    </div>
+                    <div class="order-success-detail-row">
+                        <span class="order-success-detail-label">{{ i18n.t('newSale.businessInteractionId') }}:</span>
+                        <span class="order-success-detail-value">BI-{{ formState.bsnInterId() }}</span>
+                    </div>
+                </div>
+
+                <div class="order-success-actions">
+                    <button type="button" class="cancel-button" (click)="goToBillingAccount()">{{ i18n.t('newSale.goToBillingAccount') }}</button>
+                    <button type="button" class="save-button" (click)="startNewOrderForSameAccount()">{{ i18n.t('newSale.addNewProductBtn') }}</button>
+                </div>
+
+            </div>
+        </div>
+    }
 
 </div>

@@ -113,10 +113,15 @@
                     <input
                         id="firstName"
                         type="text"
+                        maxlength="50"
                         formControlName="firstName"
                         placeholder="First Name"
                         (input)="sanitizeLetters($event, 'firstName')"
+                        (blur)="onNameBlur('firstName')"
                     >
+                    @if (fieldErrors().firstName) {
+                        <span class="field-error">{{ i18n.t('search.firstNameError') }}</span>
+                    }
                 </div>
 
                 <div class="filter-field">
@@ -124,10 +129,15 @@
                     <input
                         id="lastName"
                         type="text"
+                        maxlength="50"
                         formControlName="lastName"
                         placeholder="Last Name"
                         (input)="sanitizeLetters($event, 'lastName')"
+                        (blur)="onNameBlur('lastName')"
                     >
+                    @if (fieldErrors().lastName) {
+                        <span class="field-error">{{ i18n.t('search.lastNameError') }}</span>
+                    }
                 </div>
 
                 <div class="filter-field">
@@ -156,7 +166,16 @@
                     class="search-button"
                     [disabled]="!hasFilledFilter() || isSearching() || hasFieldErrors()"
                     (click)="search()"
-                >{{ i18n.t('search.searchBtn') }}</button>
+                >
+                    @if (isSearching()) {
+                        <span class="btn-spinner-wrap">
+                            <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                            {{ i18n.t('search.searchBtn') }}
+                        </span>
+                    } @else {
+                        {{ i18n.t('search.searchBtn') }}
+                    }
+                </button>
             </div>
         </section>
 

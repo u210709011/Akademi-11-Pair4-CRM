@@ -39,4 +39,22 @@ export class AuthService {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
   }
+
+  // UC-EACRML-001 Alt Senaryo 5: oturumu sonlandirir. Local session backend cagrisindan
+  // BAGIMSIZ olarak hemen temizlenir - kullanici agin/backend'in durumundan etkilenmeden
+  // her zaman cikis yapabilmeli. Refresh token backend'e (Keycloak) gecersiz kilinmasi icin
+  // best-effort gonderilir; token yoksa ya da cagri basarisiz olursa sessizce yutulur.
+  logout(): Observable<void> {
+    const refreshToken = localStorage.getItem('refreshToken');
+    this.clearSession();
+
+    if (!refreshToken) {
+      return of(undefined);
+    }
+
+    return this.http.post<void>(`${environment.authApiUrl}/logout`, { refreshToken }).pipe(
+      map(() => undefined),
+      catchError(() => of(undefined))
+    );
+  }
 }

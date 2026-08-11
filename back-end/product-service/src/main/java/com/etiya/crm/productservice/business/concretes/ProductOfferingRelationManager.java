@@ -55,6 +55,7 @@ public class ProductOfferingRelationManager implements ProductOfferingRelationSe
         ProductOfferingRelation saved = productOfferingRelationRepository.save(entity);
         CreatedProductOfferingRelationResponse response = productOfferingRelationMapper.toCreatedResponse(saved);
         response.setMandatory(GnlTpCodes.MANDATORY.equals(request.getRelationTypeCode()));
+        response.setExclusive(GnlTpCodes.EXCL.equals(request.getRelationTypeCode()));
         return response;
     }
 
@@ -77,6 +78,7 @@ public class ProductOfferingRelationManager implements ProductOfferingRelationSe
         ProductOfferingRelation saved = productOfferingRelationRepository.save(entity);
         UpdatedProductOfferingRelationResponse response = productOfferingRelationMapper.toUpdatedResponse(saved);
         response.setMandatory(GnlTpCodes.MANDATORY.equals(request.getRelationTypeCode()));
+        response.setExclusive(GnlTpCodes.EXCL.equals(request.getRelationTypeCode()));
         return response;
     }
 
@@ -86,7 +88,9 @@ public class ProductOfferingRelationManager implements ProductOfferingRelationSe
                 .orElseThrow(() -> new ProductOfferingRelationNotFoundException(productOfferingRelationId));
         GetProductOfferingRelationResponse response = productOfferingRelationMapper.toGetResponse(entity);
         Long mandatoryTypeId = lookupCacheService.resolveTypeIdByCode(GnlTpGroups.PROD_OFR_REL, GnlTpCodes.MANDATORY);
+        Long exclusiveTypeId = lookupCacheService.resolveTypeIdByCode(GnlTpGroups.PROD_OFR_REL, GnlTpCodes.EXCL);
         response.setMandatory(mandatoryTypeId.equals(entity.getRelationTypeId()));
+        response.setExclusive(exclusiveTypeId.equals(entity.getRelationTypeId()));
         return response;
     }
 
@@ -112,8 +116,10 @@ public class ProductOfferingRelationManager implements ProductOfferingRelationSe
 
     private void applyMandatoryFlag(List<ProductOfferingRelation> entities, List<GetAllProductOfferingRelationResponse> responses) {
         Long mandatoryTypeId = lookupCacheService.resolveTypeIdByCode(GnlTpGroups.PROD_OFR_REL, GnlTpCodes.MANDATORY);
+        Long exclusiveTypeId = lookupCacheService.resolveTypeIdByCode(GnlTpGroups.PROD_OFR_REL, GnlTpCodes.EXCL);
         for (int i = 0; i < entities.size(); i++) {
             responses.get(i).setMandatory(mandatoryTypeId.equals(entities.get(i).getRelationTypeId()));
+            responses.get(i).setExclusive(exclusiveTypeId.equals(entities.get(i).getRelationTypeId()));
         }
     }
 

@@ -86,8 +86,7 @@ public class CustomerAccountController {
 
 	@Operation(summary = "Billing account sil (soft-delete)",
 			description = "Aktif hesap silinemez (409, 'This billing account is active and cannot be "
-					+ "deleted.'). Urun guard'i (pasif hesaba bagli urun) order-service'i bekliyor, henuz "
-					+ "uygulanmadi - TODO. IDOR: baska musterinin hesabi 404 doner.")
+					+ "deleted.'). Pasif hesaba bagli aktif urun varsa da silinemez (409, ACC-004 - order-service'e sorulur). IDOR: baska musterinin hesabi 404 doner.")
 	@DeleteMapping("/{custId}/accounts/{accountId}")
 	public ResponseEntity<Void> deleteBillingAccount(@PathVariable Long custId,
 			@Parameter(description = "Silinecek hesabin id'si") @PathVariable Long accountId) {

@@ -13,6 +13,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class UpdatedProductResponse {
     private Long productId;              // PK
+    private String productNo;
     private Long parentProductId;        // ilişki → ID (opsiyonel, null olabilir)
     private Long productOfferingId;      // ilişki → ID
     private Long productSpecId;          // ilişki → ID

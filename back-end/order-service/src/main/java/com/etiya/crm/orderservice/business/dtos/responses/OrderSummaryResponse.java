@@ -7,6 +7,7 @@ import java.util.List;
 public record OrderSummaryResponse(
 
     Long custOrdId,
+    Long bsnInterId,
     Long ordStId,
     List<OrderItemSummaryResponse> items,
     AddressSummaryResponse serviceAddress,

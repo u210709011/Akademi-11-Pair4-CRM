@@ -58,6 +58,12 @@
   color: var(--etiya-orange);
 }
 
+.field-error {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(252, 165, 165);
+}
+
 .error-wrapper {
   display: flex;
   align-items: center;

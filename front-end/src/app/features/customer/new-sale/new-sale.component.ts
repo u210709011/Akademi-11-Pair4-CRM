@@ -22,8 +22,14 @@ interface StepDefinition {
 // Basket satiri - Offer Selection'da toplanir, Configuration'da charVals dolar, Review'da gosterilir.
 export interface BasketLine {
   prodOfrId: number;
+  // Backend'de sifirla soldan 6 haneye doldurulmus (bkz. ProductServiceDefaults.formatNo) -
+  // Configuration/Review'da OFR- prefix'iyle gosterilir, iliski/routing icin prodOfrId kullanilir.
+  prodOfrNo: string;
   offerName: string;
   price: number;
+  // Kampanya indirimi uygulanmadan onceki fiyat - sadece cmpgId'li satirlarda dolu, Review'da
+  // "Discounts" satirini hesaplamak icin. Kampanyasiz satirlarda/otomatik eklenenlerde null.
+  originalPrice: number | null;
   cmpgId: number | null;
   cmpgName: string | null;
   // Sadece Catalog tab'inden eklenirse biliniyor (secili katalog) - Campaign tab'inden eklenirse null.
@@ -35,8 +41,19 @@ export interface BasketLine {
 
 interface RequiredOffering {
   productOfferingId: number;
+  productOfferingNo: string;
   name: string;
   price: number;
+}
+
+// Bir kampanya ile eklenen offering'ler ayri urunler gibi degil, tek bir kampanya biriminin
+// icinde (nested) gosterilir - Basket/Configuration/Review'in ucu de aynı gruplamayi kullanir.
+// cmpgId === null olan satirlar kendi baslarina birer grup (tek elemanli).
+export interface BasketGroup {
+  cmpgId: number | null;
+  cmpgName: string | null;
+  lines: BasketLine[];
+  totalPrice: number;
 }
 
 // Adim component'leri NgComponentOutlet ile degistigi icin state kendi icinde degil, bu serviste tutulur.
@@ -54,7 +71,36 @@ export class NewSaleFormStateService {
   }
 
   readonly basket = signal<BasketLine[]>([]);
+
+  // Zorunlu urun olarak otomatik eklenenler haric, musterinin bilfiil sectigi satirlar.
+  readonly selectedLines = computed(() => this.basket().filter(line => !line.isAutoAdded));
+
+  // selectedLines'i kampanyaya gore gruplar - Basket paneli/Configuration/Review'in ucu de
+  // ayni gruplamayi paylasir (bkz. BasketGroup yorumu).
+  readonly selectedGroups = computed<BasketGroup[]>(() => {
+    const groups: BasketGroup[] = [];
+    const groupIndexByCmpgId = new Map<number, number>();
+    for (const line of this.selectedLines()) {
+      if (line.cmpgId === null) {
+        groups.push({ cmpgId: null, cmpgName: null, lines: [line], totalPrice: line.price });
+        continue;
+      }
+      const existingIndex = groupIndexByCmpgId.get(line.cmpgId);
+      if (existingIndex === undefined) {
+        groupIndexByCmpgId.set(line.cmpgId, groups.length);
+        groups.push({ cmpgId: line.cmpgId, cmpgName: line.cmpgName, lines: [line], totalPrice: line.price });
+      } else {
+        const group = groups[existingIndex];
+        group.lines.push(line);
+        group.totalPrice += line.price;
+      }
+    }
+    return groups;
+  });
+
   readonly custOrdId = signal<number | null>(null);
+  // FR-017: Submit sonrasi basari modalinda "Business Interaction Number" gostermek icin.
+  readonly bsnInterId = signal<number | null>(null);
   readonly orderItems = signal<OrderItemSummaryResponse[]>([]);
   readonly totalAmount = signal(0);
 
@@ -71,6 +117,8 @@ export class NewSaleFormStateService {
 
   // Configuration adiminda Service Address karti icin - custId sahibinin adres listesi ve secili adres.
   readonly custId = signal(0);
+  // Offer Selection'da "Already Active" kontrolu (ACC-011/BR-05) icin - hangi hesaba satis yapiliyor.
+  readonly custAcctId = signal(0);
   readonly addresses = signal<AddressResponse[]>([]);
   readonly selectedAddressId = signal<number | null>(null);
 
@@ -78,6 +126,10 @@ export class NewSaleFormStateService {
   // arasinda paylasilmasi gerektigi icin burada tutulur.
   readonly customerName = signal('');
   readonly billingAccountNo = signal('');
+  // Configuration'da servis adresi degistiginde fatura hesabinin gercek adresini de guncellemek
+  // icin (updateBillingAccount accountName/accountDesc'i de istiyor, adresle birlikte gonderilir).
+  readonly billingAccountName = signal<string | null>(null);
+  readonly billingAccountDesc = signal<string | null>(null);
   readonly isSubmittingOrder = signal(false);
   readonly submitError = signal<string | null>(null);
 
@@ -90,12 +142,22 @@ export class NewSaleFormStateService {
   // prodOfrId -> charId(string) -> secilen deger (select icin charValId'nin string hali, text icin ham metin).
   readonly charValues = signal<Record<number, Record<string, string>>>({});
 
+  // FR-015 ACC-009: sepetteki tum konfigure edilebilir urunlerin zorunlu karakteristikleri
+  // dolduruldu MU ve bir servis adresi secildi mi - Configuration adiminda Next'i acmak icin.
+  readonly isConfigurationComplete = computed(() => {
+    const configurableLines = this.basket().filter(line => !line.isAutoAdded);
+    return configurableLines.every(line => this.isConfigured(line.prodOfrId)) && this.selectedAddressId() !== null;
+  });
+
   isConfigured(prodOfrId: number): boolean {
     const charUses = this.charUsesByOffering()[prodOfrId];
-    if (!charUses || charUses.length === 0) {
-      return false;
+    if (!charUses) {
+      return false; // sema henuz yuklenmedi
     }
     const mandatory = charUses.filter(cu => cu.mandatory && cu.active);
+    if (mandatory.length === 0) {
+      return true; // zorunlu karakteristigi yok - doldurulacak bir sey yok, zaten "configured"
+    }
     const values = this.charValues()[prodOfrId] ?? {};
     return mandatory.every(cu => (values[String(cu.characteristicId)] ?? '').trim().length > 0);
   }
@@ -117,8 +179,10 @@ export class NewSaleFormStateService {
         ...items,
         {
           prodOfrId: required.productOfferingId,
+          prodOfrNo: required.productOfferingNo,
           offerName: required.name,
           price: required.price,
+          originalPrice: null,
           cmpgId: null,
           cmpgName: null,
           catalogName: line.catalogName,
@@ -132,11 +196,22 @@ export class NewSaleFormStateService {
   }
 
   removeFromBasket(prodOfrId: number): void {
+    this.removeLines(new Set([prodOfrId]));
+  }
+
+  // Bir kampanyanin TUM teklifleri (kampanya sepette tek bir birim gibi davranir) - trash icon
+  // kampanya grubunun basinda, tek tek offering'ler icin degil.
+  removeCampaignFromBasket(cmpgId: number): void {
+    const idsToRemove = new Set(this.basket().filter(item => item.cmpgId === cmpgId).map(item => item.prodOfrId));
+    this.removeLines(idsToRemove);
+  }
+
+  private removeLines(prodOfrIds: ReadonlySet<number>): void {
     this.basket.update(items => {
-      const remaining = items.filter(item => item.prodOfrId !== prodOfrId);
-      // Kaldirilan urun tetikledigi zorunlu urunu, baska hicbir kalan urun hala gerektirmiyorsa kaldir.
+      const remaining = items.filter(item => !prodOfrIds.has(item.prodOfrId));
+      // Kaldirilan urunlerin tetikledigi zorunlu urunu, baska hicbir kalan urun hala gerektirmiyorsa kaldir.
       return remaining.filter(item => {
-        if (!item.isAutoAdded || item.triggeredBy !== prodOfrId) {
+        if (!item.isAutoAdded || item.triggeredBy === null || !prodOfrIds.has(item.triggeredBy)) {
           return true;
         }
         return remaining.some(other =>
@@ -149,6 +224,21 @@ export class NewSaleFormStateService {
 
   clearBasket(): void {
     this.basket.set([]);
+  }
+
+  // FR-017: basari modalinda "Add New Product" - ayni fatura hesabi icin sifirdan bir siparise
+  // baslamak icin sepet/siparis/konfigurasyon state'ini temizler (adres/musteri bilgisi kalir).
+  resetForNewOrder(): void {
+    this.basket.set([]);
+    this.custOrdId.set(null);
+    this.bsnInterId.set(null);
+    this.orderItems.set([]);
+    this.totalAmount.set(0);
+    this.charValues.set({});
+    this.isValidatingBasket.set(false);
+    this.basketError.set(null);
+    this.isSubmittingOrder.set(false);
+    this.submitError.set(null);
   }
 
   toBasketItemRequests(): BasketItemRequest[] {
@@ -220,6 +310,12 @@ export class NewSaleComponent {
 
   private readonly isSavingConfiguration = signal(false);
 
+  // ACC-016: Cancel butonuna basildiginda dogrudan cikmadan once onay istenir.
+  protected readonly isCancelConfirmOpen = signal(false);
+
+  // FR-017 ACC-004: Submit basarili oldugunda yonlendirmeden once basari modali gosterilir.
+  protected readonly isOrderSubmittedModalOpen = signal(false);
+
   protected readonly isNextDisabled = computed(() => {
     if (this.formState.isValidatingBasket() || this.formState.isSubmittingOrder() || this.isSavingConfiguration()) {
       return true;
@@ -227,8 +323,16 @@ export class NewSaleComponent {
     if (this.activeStep() === 'offer') {
       return this.formState.basket().length === 0;
     }
+    if (this.activeStep() === 'configuration') {
+      return !this.formState.isConfigurationComplete();
+    }
     return false;
   });
+
+  // Next butonunun spinner gostermesi gereken durumlar - isNextDisabled'daki ilk kosulla ayni.
+  protected readonly isNextLoading = computed(
+    () => this.formState.isValidatingBasket() || this.formState.isSubmittingOrder() || this.isSavingConfiguration()
+  );
 
   protected readonly nextButtonLabel = computed(() =>
     this.activeStep() === 'review' ? this.i18n.t('newSale.submitBtn') : this.i18n.t('newSale.nextBtn')
@@ -236,10 +340,13 @@ export class NewSaleComponent {
 
   constructor() {
     this.formState.custId.set(this.custId);
+    this.formState.custAcctId.set(this.custAcctId);
 
     this.customerService.getById(this.custId).subscribe(detail => {
       const account = detail.accounts.find(acc => acc.custAcctId === this.custAcctId);
       this.formState.billingAccountNo.set(account?.accountNo ?? '');
+      this.formState.billingAccountName.set(account?.accountName ?? null);
+      this.formState.billingAccountDesc.set(account?.accountDesc ?? null);
       this.formState.selectedAddressId.set(account?.addressId ?? null);
     });
 
@@ -284,6 +391,18 @@ export class NewSaleComponent {
     this.advanceStep();
   }
 
+  protected goToBillingAccount(): void {
+    this.isOrderSubmittedModalOpen.set(false);
+    this.router.navigate(['/detail-customer', this.custId]);
+  }
+
+  protected startNewOrderForSameAccount(): void {
+    this.isOrderSubmittedModalOpen.set(false);
+    this.formState.resetForNewOrder();
+    this.unlockedIndex.set(0);
+    this.activeStep.set('offer');
+  }
+
   protected previous(): void {
     const currentIndex = this.activeStepIndex();
     const previousStep = this.steps[currentIndex - 1];
@@ -304,6 +423,7 @@ export class NewSaleComponent {
           next: response => {
             this.formState.isValidatingBasket.set(false);
             this.formState.custOrdId.set(response.custOrdId);
+            this.formState.bsnInterId.set(response.bsnInterId);
             this.formState.orderItems.set(response.items);
             this.formState.totalAmount.set(response.totalAmount);
             this.advanceStep();
@@ -353,9 +473,10 @@ export class NewSaleComponent {
     this.formState.submitError.set(null);
 
     this.orderService.finishOrder(custOrdId).subscribe({
-      next: () => {
+      next: response => {
         this.formState.isSubmittingOrder.set(false);
-        this.router.navigate(['/detail-customer', this.custId]);
+        this.formState.bsnInterId.set(response.bsnInterId);
+        this.isOrderSubmittedModalOpen.set(true);
       },
       error: (httpError: HttpErrorResponse) => {
         this.formState.isSubmittingOrder.set(false);
@@ -377,7 +498,16 @@ export class NewSaleComponent {
     }
   }
 
-  protected cancel(): void {
+  protected openCancelConfirm(): void {
+    this.isCancelConfirmOpen.set(true);
+  }
+
+  protected closeCancelConfirm(): void {
+    this.isCancelConfirmOpen.set(false);
+  }
+
+  protected confirmCancel(): void {
+    this.isCancelConfirmOpen.set(false);
     this.router.navigate(['/detail-customer', this.custId]);
   }
 }

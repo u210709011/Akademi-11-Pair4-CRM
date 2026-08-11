@@ -147,8 +147,7 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 
 		rules.ensureBillingAccountNotActive(account, lookupResolver.resolveActiveAccountStatusId());
 
-		// ACC-004: order-service entegrasyonu gelene kadar productGuard (NoOpBillingAccountProductGuard)
-		// hep false doner - bkz. BillingAccountProductGuard.
+		// ACC-004: bkz. OrderServiceBillingAccountProductGuard.
 		rules.ensureNoLinkedProducts(productGuard.hasLinkedProducts(account.getCustAcctId()));
 
 		account.setAcctStId(lookupResolver.resolveDeletedAccountStatusId());

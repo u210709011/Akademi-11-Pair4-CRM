@@ -6,8 +6,10 @@ public record CustOrdItemResponse(
 
     Long custOrdItemId,
     Long prodId,
+    String prodNo,
     String prodName,
     Long cmpgId,
+    String cmpgNo,
     String cmpgName,
     Long custAcctId
 ) {

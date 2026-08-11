@@ -1,0 +1,30 @@
+[
+  {
+    "case": "Her iki alan da bos",
+    "username": "",
+    "password": "",
+    "submitEnabled": false,
+    "acc": "FR-001 ACC-002"
+  },
+  {
+    "case": "Yalnizca kullanici adi dolu",
+    "username": "salesperson",
+    "password": "",
+    "submitEnabled": false,
+    "acc": "FR-001 ACC-002"
+  },
+  {
+    "case": "Yalnizca sifre dolu",
+    "username": "",
+    "password": "password",
+    "submitEnabled": false,
+    "acc": "FR-001 ACC-002"
+  },
+  {
+    "case": "Her iki alan da dolu",
+    "username": "salesperson",
+    "password": "password",
+    "submitEnabled": true,
+    "acc": "FR-001 ACC-002"
+  }
+]

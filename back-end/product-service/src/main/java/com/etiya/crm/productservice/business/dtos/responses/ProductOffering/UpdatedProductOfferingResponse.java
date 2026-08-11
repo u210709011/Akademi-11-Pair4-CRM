@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 public class UpdatedProductOfferingResponse {
 
     private Long productOfferingId;
+    private String productOfferingNo;
     private Long productSpecId;
     private String name;
     private String descr;

@@ -115,6 +115,28 @@
   }
 }
 
+// Kampanya ile eklenen offering'lerin satirlarinin ustunde, hangi kampanyaya ait olduklarini
+// gosteren ayirici baslik satiri (bkz. isFirstInCampaignGroup).
+.review-campaign-group-row td {
+  padding: 8px 4px 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-bottom: none;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    vertical-align: -2px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
 .offer-id-cell {
   font-weight: 600;
   color: var(--etiya-orange);
@@ -259,6 +281,16 @@
     font-weight: 700;
     color: #1f2937;
   }
+}
+
+.review-discount-row span:last-child {
+  color: var(--success);
+}
+
+.review-price-row + .review-total-row {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .review-total-row {

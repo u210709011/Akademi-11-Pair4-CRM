@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Urun hatasi (gereksinim ihlali)",
+    "matchedStatuses": ["failed"],
+    "messageRegex": ".*Expecting.*|.*AssertionError.*|.*assert.*"
+  },
+  {
+    "name": "Ortam / veri sorunu (atlandi)",
+    "matchedStatuses": ["skipped"],
+    "messageRegex": ".*ayakta degil.*|.*TestDataSetupException.*|.*erisilebilir olmalidir.*"
+  },
+  {
+    "name": "Altyapi - bekleme asimi",
+    "matchedStatuses": ["broken"],
+    "messageRegex": ".*TimeoutException.*|.*beklenen surede yuklenmedi.*"
+  },
+  {
+    "name": "Altyapi - element etkilesimi",
+    "matchedStatuses": ["broken"],
+    "messageRegex": ".*StaleElementReference.*|.*ElementClickIntercepted.*|.*islemi basarisiz.*"
+  },
+  {
+    "name": "Konfigurasyon hatasi",
+    "matchedStatuses": ["broken"],
+    "messageRegex": ".*FrameworkException.*|.*tanimli degil.*"
+  }
+]

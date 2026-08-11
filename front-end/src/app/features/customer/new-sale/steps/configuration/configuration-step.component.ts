@@ -76,7 +76,15 @@ export class ConfigurationStepComponent {
   );
 
   // Zorunlu urun olarak otomatik eklenenler (ör. Wi-Fi Router) icin ayri config karti gosterilmiyor.
-  protected readonly configurableLines = computed(() => this.formState.basket().filter(line => !line.isAutoAdded));
+  protected readonly configurableLines = computed(() => this.formState.selectedLines());
+
+  // Kampanya ile eklenen offering'lerin config kartlarinin ustune bir kere baslik gostermek
+  // icin - satirlar sepette ardisik geldigi icin index bazli "grup degisti mi" kontrolu yeterli.
+  protected isFirstInCampaignGroup(index: number): boolean {
+    const lines = this.configurableLines();
+    const line = lines[index];
+    return line.cmpgId !== null && (index === 0 || lines[index - 1].cmpgId !== line.cmpgId);
+  }
 
   protected readonly collapsedProductIds = signal<Set<number>>(new Set());
 
@@ -141,6 +149,13 @@ export class ConfigurationStepComponent {
   protected readonly isSavingAddress = signal(false);
   protected readonly addressSaveError = signal<string | null>(null);
 
+  // FR-015 ACC-005: Add Address ekraninda Cancel/kapat, veriyi kaybetmeden once uyari gosterir.
+  protected readonly isDiscardAddressConfirmOpen = signal(false);
+
+  // FR-015 ACC-006: adres kaydedildiginde gosterilen basari mesaji (bkz. detail-customer showToast).
+  protected readonly toastMessage = signal<string | null>(null);
+  private toastTimeoutId?: ReturnType<typeof setTimeout>;
+
   protected readonly addressModel = signal<AddressFormModel>({ ...EMPTY_ADDRESS_FORM });
   protected readonly addressForm = form(this.addressModel, path => {
     required(path.city);
@@ -168,6 +183,20 @@ export class ConfigurationStepComponent {
   protected selectAddress(addressId: number): void {
     this.formState.selectedAddressId.set(addressId);
     this.isChangeAddressModalOpen.set(false);
+    this.persistAddressToBillingAccount(addressId);
+  }
+
+  // Bu ekranda secilen/eklenen servis adresi, siparisin baglandigi fatura hesabinin GERCEK
+  // adresini de guncellemeli (ör. adresi A olan hesaba B adresiyle urun eklenirse, hesabin
+  // adresi artik B olur) - sadece siparise degil, CUST_ACCT'a da yazilir.
+  private persistAddressToBillingAccount(addressId: number): void {
+    this.customerService
+      .updateBillingAccount(this.formState.custId(), this.formState.custAcctId(), {
+        accountName: this.formState.billingAccountName() ?? '',
+        accountDesc: this.formState.billingAccountDesc(),
+        addressId
+      })
+      .subscribe();
   }
 
   protected openAddAddressModal(): void {
@@ -179,6 +208,30 @@ export class ConfigurationStepComponent {
 
   protected closeAddAddressModal(): void {
     this.isAddAddressModalOpen.set(false);
+  }
+
+  protected promptDiscardAddress(): void {
+    this.isDiscardAddressConfirmOpen.set(true);
+  }
+
+  protected keepEditingAddress(): void {
+    this.isDiscardAddressConfirmOpen.set(false);
+  }
+
+  protected discardAddress(): void {
+    this.isDiscardAddressConfirmOpen.set(false);
+    this.closeAddAddressModal();
+  }
+
+  private showToast(message: string): void {
+    clearTimeout(this.toastTimeoutId);
+    this.toastMessage.set(message);
+    this.toastTimeoutId = setTimeout(() => this.toastMessage.set(null), 3000);
+  }
+
+  protected dismissToast(): void {
+    clearTimeout(this.toastTimeoutId);
+    this.toastMessage.set(null);
   }
 
   protected saveNewAddress(): void {
@@ -204,11 +257,14 @@ export class ConfigurationStepComponent {
         this.isAddAddressModalOpen.set(false);
         this.formState.addresses.update(addresses => [...addresses, address]);
         this.formState.selectedAddressId.set(address.id);
+        this.persistAddressToBillingAccount(address.id);
+        this.showToast(this.i18n.t('detail.addAddressSuccess'));
       },
       error: (httpError: HttpErrorResponse) => {
         this.isSavingAddress.set(false);
         this.addressSaveError.set(
-          httpError.status === 409 ? this.i18n.t('detail.maxAddressesReached') : this.i18n.t('detail.addressSaveError')
+          (httpError.error as { message?: string } | null)?.message ??
+            (httpError.status === 409 ? this.i18n.t('detail.maxAddressesReached') : this.i18n.t('detail.addressSaveError'))
         );
       }
     });

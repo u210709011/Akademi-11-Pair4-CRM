@@ -1,0 +1,180 @@
+# Gecelik tam regresyon — FR-001…FR-005
+#
+# Uctan uca kosu tum sistemi gerektirir: Docker altyapisi (Postgres, Kafka, Keycloak,
+# Redis, Debezium) + config/discovery/gateway + domain servisleri + Angular.
+# Bu yuzden PR'da degil, gecelik calisir (bkz. ui-test-pr.yml).
+#
+# BASLATMA SIRASI ONEMLIDIR ve README'de belgelenen tuzaklari icerir:
+#   1) shared-* modulleri once install edilmeli, yoksa 6 servis "Could not find artifact" verir
+#   2) config-server (8888) hazir olmadan domain servisleri acilista olur
+#   3) Keycloak 8180 portunda (8081 degil)
+
+name: UI Test — Nightly Regression
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # her gun 01:00 UTC
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Calistirilacak suite'
+        type: choice
+        default: regression
+        options: [regression, smoke, fr002, fr003, fr004, fr005]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  regression:
+    name: Tam regresyon
+    runs-on: ubuntu-latest
+    # Gozlenen sureler: stack ~10 dk + 59 senaryo ~25 dk. Ust sinir genis birakildi,
+    # ancak SINIRSIZ DEGIL: Chrome cokerse surefire testler arasinda asili kalabiliyor.
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK 21 kurulumu
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Node kurulumu
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: front-end/package-lock.json
+
+      - name: Altyapiyi baslat
+        working-directory: back-end/infra
+        run: |
+          docker compose up -d
+          # Kafka healthcheck'i JVM acilisini 5 sn'de yakalayamayip yanlis negatif
+          # verebiliyor; o durumda debezium/kafka-ui (depends_on: service_healthy)
+          # hic baslamaz. --no-deps ile bagimlilik kapisini atlayarak garanti altina al.
+          docker compose up -d --no-deps debezium kafka-ui || true
+
+      - name: Paylasilan modulleri kur
+        working-directory: back-end
+        run: ./customer-service/mvnw -B -f pom.xml install -DskipTests
+
+      - name: Servisleri baslat
+        working-directory: back-end
+        run: |
+          set -e
+          start() {
+            nohup java -jar "$1"/target/"$1"-*.jar > "/tmp/$1.log" 2>&1 &
+            echo "baslatildi: $1"
+          }
+          await() {
+            for i in $(seq 1 60); do
+              if curl -sf "$1" > /dev/null; then echo "hazir: $1"; return 0; fi
+              sleep 5
+            done
+            echo "::error::Hazir olmadi: $1"; return 1
+          }
+
+          # config-server ONCE ve tek basina: hazir olmadan acilan servisler
+          # konfigurasyonu cekemeyip acilista olur.
+          start config-server
+          await http://localhost:8888/actuator/health
+
+          start discovery-server
+          await http://localhost:8761/actuator/health
+
+          for s in customer-service party-service contact-info-service \
+                   lookup-service order-service product-service api-gateway; do
+            start "$s"
+          done
+          await http://localhost:8080/actuator/health
+
+      - name: Front-end'i baslat
+        working-directory: front-end
+        run: |
+          npm ci
+          nohup npm start > /tmp/frontend.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:4200 > /dev/null; then echo "front-end hazir"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::Front-end 4200'de acilmadi"; exit 1
+
+      - name: Uctan uca zinciri dogrula
+        run: |
+          # Testleri 25 dk kosturup ortamin bozuk oldugunu ogrenmektense, once
+          # login -> gateway -> customer-service zincirini dogrula.
+          token=$(curl -sf -X POST http://localhost:8080/api/v1/auth/login \
+            -H 'Content-Type: application/json' \
+            -d '{"username":"salesperson","password":"password"}' \
+            | sed -n 's/.*"accessToken":"\([^"]*\)".*/\1/p')
+          if [ -z "$token" ]; then echo "::error::API login basarisiz"; exit 1; fi
+          curl -sf -H "Authorization: Bearer $token" \
+            "http://localhost:8080/api/v1/customers/search?page=0&size=10" > /dev/null
+          echo "zincir dogrulandi"
+
+      - name: Testleri calistir
+        working-directory: analiz-test/ui-test
+        run: ./mvnw -B test -Dsuite=${{ inputs.suite || 'regression' }} -Dheadless=true
+        # Testler kirmizi olsa bile rapor ve deliller yayinlanmali.
+        continue-on-error: true
+        id: tests
+
+      - name: Allure raporu olustur
+        if: always()
+        working-directory: analiz-test/ui-test
+        run: |
+          # Trend grafikleri icin onceki kosunun gecmisi rapora tasinir.
+          if [ -d gh-pages-history ]; then cp -r gh-pages-history target/allure-results/history || true; fi
+          npx --yes allure-commandline generate target/allure-results -o target/allure-report --clean
+
+      - name: Delilleri yukle (ekran goruntusu, log)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-delilleri
+          path: |
+            analiz-test/ui-test/target/screenshots/
+            analiz-test/ui-test/target/logs/
+            analiz-test/ui-test/target/surefire-reports/
+          retention-days: 14
+
+      - name: Servis loglarini yukle
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: servis-loglari
+          path: /tmp/*.log
+          retention-days: 7
+
+      - name: Allure raporunu Pages'e yayinla
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: analiz-test/ui-test/target/allure-report
+
+      # Rapor yayinlandiktan SONRA basarisizligi yansit: aksi halde kirmizi bir kosuda
+      # rapor hic yayinlanmaz ve hatanin sebebine bakilamaz.
+      - name: Test sonucunu yansit
+        if: steps.tests.outcome == 'failure'
+        run: |
+          echo "::error::Regresyon basarisiz — Allure raporuna ve test-delilleri artifact'ina bakin"
+          exit 1
+
+  publish:
+    name: Raporu yayinla
+    needs: regression
+    if: always()
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

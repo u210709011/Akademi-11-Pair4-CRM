@@ -161,6 +161,9 @@
                 </div>
 
                 <div class="accounts-table-wrapper">
+                    @if (accounts().length === 0) {
+                        <p class="account-no-products">{{ i18n.t('detail.noBillingAccounts') }}</p>
+                    } @else {
                     <table class="accounts-table">
                         <thead>
                             <tr>
@@ -242,10 +245,10 @@
                                                         <tbody>
                                                             @for (product of account.products; track product.productId) {
                                                                 <tr>
-                                                                    <td class="account-number-cell">{{ product.productId }}</td>
+                                                                    <td class="account-number-cell">PRD-{{ product.productNo }}</td>
                                                                     <td>{{ product.productName }}</td>
                                                                     <td>{{ product.campaignName }}</td>
-                                                                    <td>{{ product.campaignId }}</td>
+                                                                    <td>{{ product.campaignId === '—' ? '—' : 'CMP-' + product.campaignNo }}</td>
                                                                     <td>
                                                                         <button type="button" class="icon-button" [attr.aria-label]="i18n.t('detail.viewProduct')" (click)="openProductDetail(account, product)">
                                                                             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -268,6 +271,7 @@
                             }
                         </tbody>
                     </table>
+                    }
 
                     @if (accountsTotalPages() > 1) {
                         <div class="pagination">
@@ -372,8 +376,6 @@
                                                     <button
                                                         type="button"
                                                         class="menu-item-danger"
-                                                        [disabled]="address.primary || linkedAccountCount(address.id) > 0"
-                                                        [attr.title]="address.primary ? i18n.t('detail.primaryAddressCannotDelete') : (linkedAccountCount(address.id) > 0 ? i18n.t('detail.addressLinkedCannotDelete') : null)"
                                                         (click)="openDeleteAddressConfirm(address)"
                                                     >
                                                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -542,7 +544,16 @@
 
             <div class="modal-actions">
                 <button type="button" class="cancel-button" (click)="closeAddressModal()">{{ i18n.t('create.cancelBtn') }}</button>
-                <button type="button" class="save-button" [disabled]="addressForm().invalid() || isSavingAddress()" (click)="saveAddress()">{{ i18n.t('create.saveBtn') }}</button>
+                <button type="button" class="save-button" [disabled]="addressForm().invalid() || isSavingAddress()" (click)="saveAddress()">
+                    @if (isSavingAddress()) {
+                        <span class="btn-spinner-wrap">
+                            <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                            {{ i18n.t('create.saveBtn') }}
+                        </span>
+                    } @else {
+                        {{ i18n.t('create.saveBtn') }}
+                    }
+                </button>
             </div>
 
         </div>
@@ -582,7 +593,14 @@
             <div class="modal-actions">
                 <button type="button" class="cancel-button" (click)="closeDeleteConfirm()">{{ i18n.t('detail.deleteCancelBtn') }}</button>
                 <button type="button" class="delete-confirm-button" [disabled]="isDeletingCustomer()" (click)="confirmDeleteCustomer()">
-                    {{ isDeletingCustomer() ? i18n.t('detail.deleting') : i18n.t('detail.deleteConfirmBtn') }}
+                    @if (isDeletingCustomer()) {
+                        <span class="btn-spinner-wrap">
+                            <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                            {{ i18n.t('detail.deleting') }}
+                        </span>
+                    } @else {
+                        {{ i18n.t('detail.deleteConfirmBtn') }}
+                    }
                 </button>
             </div>
 
@@ -617,7 +635,7 @@
                         </svg>
                     </div>
                     @if (contactForm.email().invalid() && contactForm.email().touched()) {
-                        <span class="field-error">{{ contactModel().email ? i18n.t('create.emailFormatError') : i18n.t('create.fieldRequired') }}</span>
+                        <span class="field-error">{{ contactModel().email ? i18n.t('detail.emailFormatError') : i18n.t('create.fieldRequired') }}</span>
                     }
                 </div>
 
@@ -639,7 +657,7 @@
                         @if (digitsOnlyErrorField() === 'mobilePhone') {
                             <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
                         } @else if (contactForm.mobilePhone().invalid() && contactForm.mobilePhone().touched()) {
-                            <span class="field-error">{{ contactModel().mobilePhone ? i18n.t('create.mobilePhoneFormatError') : i18n.t('create.fieldRequired') }}</span>
+                            <span class="field-error">{{ contactModel().mobilePhone ? i18n.t('detail.mobilePhoneFormatError') : i18n.t('create.fieldRequired') }}</span>
                         }
                     </div>
 
@@ -690,7 +708,47 @@
 
             <div class="modal-actions">
                 <button type="button" class="cancel-button" (click)="closeContactModal()">{{ i18n.t('create.cancelBtn') }}</button>
-                <button type="button" class="save-button" [disabled]="contactForm().invalid() || isSavingContact()" (click)="saveContact()">{{ i18n.t('create.saveBtn') }}</button>
+                <button type="button" class="save-button" [disabled]="contactForm().invalid() || isSavingContact()" (click)="saveContact()">
+                    @if (isSavingContact()) {
+                        <span class="btn-spinner-wrap">
+                            <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                            {{ i18n.t('create.saveBtn') }}
+                        </span>
+                    } @else {
+                        {{ i18n.t('create.saveBtn') }}
+                    }
+                </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@if (isContactCancelConfirmOpen()) {
+    <div class="modal-backdrop" (click)="keepEditingContact()">
+        <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+                <h3 class="modal-title">{{ i18n.t('detail.discardChangesTitle') }}</h3>
+                <button type="button" class="modal-close" (click)="keepEditingContact()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+            </div>
+
+            <div class="delete-confirm-body">
+                <span class="delete-confirm-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 9v4" />
+                        <path d="M12 17h.01" />
+                        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                    </svg>
+                </span>
+                <p class="delete-confirm-message">{{ i18n.t('detail.discardChangesMessage') }}</p>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="cancel-button" (click)="keepEditingContact()">{{ i18n.t('detail.discardChangesCancelBtn') }}</button>
+                <button type="button" class="delete-confirm-button" (click)="discardContactChanges()">{{ i18n.t('detail.discardChangesConfirmBtn') }}</button>
             </div>
 
         </div>
@@ -730,7 +788,14 @@
             <div class="modal-actions">
                 <button type="button" class="cancel-button" (click)="closeDeleteAddressConfirm()">{{ i18n.t('detail.deleteCancelBtn') }}</button>
                 <button type="button" class="delete-confirm-button" [disabled]="isDeletingAddress()" (click)="confirmDeleteAddress()">
-                    {{ isDeletingAddress() ? i18n.t('detail.deleting') : i18n.t('detail.deleteConfirmBtn') }}
+                    @if (isDeletingAddress()) {
+                        <span class="btn-spinner-wrap">
+                            <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                            {{ i18n.t('detail.deleting') }}
+                        </span>
+                    } @else {
+                        {{ i18n.t('detail.deleteConfirmBtn') }}
+                    }
                 </button>
             </div>
 
@@ -777,8 +842,11 @@
                     </div>
 
                     <div class="modal-field">
-                        <label for="account-desc">{{ i18n.t('detail.accountDesc') }}</label>
+                        <label for="account-desc">{{ i18n.t('detail.accountDesc') }} <span class="required">*</span></label>
                         <input id="account-desc" type="text" [formField]="accountForm.accountDesc" [placeholder]="i18n.t('detail.accountDescPlaceholder')">
+                        @if (accountForm.accountDesc().invalid() && accountForm.accountDesc().touched()) {
+                            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        }
                     </div>
 
                     <hr class="modal-divider">
@@ -799,8 +867,11 @@
                     </div>
 
                     <div class="modal-field">
-                        <label for="account-desc">{{ i18n.t('detail.accountDesc') }}</label>
+                        <label for="account-desc">{{ i18n.t('detail.accountDesc') }} <span class="required">*</span></label>
                         <input id="account-desc" type="text" [formField]="accountForm.accountDesc" [placeholder]="i18n.t('detail.accountDescPlaceholder')">
+                        @if (accountForm.accountDesc().invalid() && accountForm.accountDesc().touched()) {
+                            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        }
                     </div>
                 }
 
@@ -808,7 +879,47 @@
 
             <div class="modal-actions">
                 <button type="button" class="cancel-button" (click)="closeCreateAccountModal()">{{ i18n.t('create.cancelBtn') }}</button>
-                <button type="button" class="save-button" [disabled]="!accountFormValid() || isSavingAccount()" (click)="saveAccount()">{{ editingAccount() ? i18n.t('create.saveBtn') : i18n.t('create.createBtn') }}</button>
+                <button type="button" class="save-button" [disabled]="!accountFormValid() || isSavingAccount()" (click)="saveAccount()">
+                    @if (isSavingAccount()) {
+                        <span class="btn-spinner-wrap">
+                            <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                            {{ editingAccount() ? i18n.t('create.saveBtn') : i18n.t('create.createBtn') }}
+                        </span>
+                    } @else {
+                        {{ editingAccount() ? i18n.t('create.saveBtn') : i18n.t('create.createBtn') }}
+                    }
+                </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@if (isAccountCancelConfirmOpen()) {
+    <div class="modal-backdrop" (click)="keepEditingAccount()">
+        <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+                <h3 class="modal-title">{{ i18n.t('detail.discardChangesTitle') }}</h3>
+                <button type="button" class="modal-close" (click)="keepEditingAccount()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                </button>
+            </div>
+
+            <div class="delete-confirm-body">
+                <span class="delete-confirm-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 9v4" />
+                        <path d="M12 17h.01" />
+                        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                    </svg>
+                </span>
+                <p class="delete-confirm-message">{{ i18n.t('detail.discardChangesMessage') }}</p>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="cancel-button" (click)="keepEditingAccount()">{{ i18n.t('detail.discardChangesCancelBtn') }}</button>
+                <button type="button" class="delete-confirm-button" (click)="discardAccountChanges()">{{ i18n.t('detail.discardChangesConfirmBtn') }}</button>
             </div>
 
         </div>
@@ -931,7 +1042,14 @@
             <div class="modal-actions">
                 <button type="button" class="cancel-button" (click)="closeDeleteAccountConfirm()">{{ i18n.t('detail.deleteCancelBtn') }}</button>
                 <button type="button" class="delete-confirm-button" [disabled]="isDeletingAccount()" (click)="confirmDeleteAccount()">
-                    {{ isDeletingAccount() ? i18n.t('detail.deleting') : i18n.t('detail.deleteConfirmBtn') }}
+                    @if (isDeletingAccount()) {
+                        <span class="btn-spinner-wrap">
+                            <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                            {{ i18n.t('detail.deleting') }}
+                        </span>
+                    } @else {
+                        {{ i18n.t('detail.deleteConfirmBtn') }}
+                    }
                 </button>
             </div>
 

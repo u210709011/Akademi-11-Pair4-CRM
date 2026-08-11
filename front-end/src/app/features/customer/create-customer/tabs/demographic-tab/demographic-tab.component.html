@@ -73,7 +73,7 @@
             ></mat-datepicker>
         </mat-form-field>
         @if (demographicForm.birthDate().invalid() && demographicForm.birthDate().touched()) {
-            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+            <span class="field-error">{{ demographicModel().birthDate ? i18n.t('create.birthDateError') : i18n.t('create.fieldRequired') }}</span>
         }
     </div>
 
