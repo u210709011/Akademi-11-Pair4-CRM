@@ -6,12 +6,9 @@ import org.openqa.selenium.WebDriver;
 /**
  * Ust menu: dil secici, profil menusu ve Logout.
  *
- * <p><b>UYARI — FR-001 ACC-012/013 (Logout) UI'da uygulanmamistir.</b>
- * Hem {@code navbar .profile-option.logout} hem {@code sidebar .nav-item.logout}
- * butonlarinda {@code (click)} baglayicisi yok ve {@code AuthService} icinde
- * {@code logout()} metodu bulunmuyor (yalnizca cagrilmayan bir {@code clearSession()} var).
- * Locator'lar, ozellik gelistirildiginde hazir olsun diye simdiden tanimlandi;
- * {@link #logout()} bugun tiklar ama oturum sonlanmaz.
+ * <p>11.08.2026: FR-001 ACC-012/013 (Logout) uygulandi. {@code AuthService.logout()}
+ * oturumu temizleyip {@code /logout} cagrisi yapiyor, navbar ve sidebar butonlarinda
+ * {@code (click)} baglayicisi var. {@link #logout()} artik gercekten oturumu sonlandirir.
  */
 public class NavbarComponent extends BaseComponent {
 
@@ -79,13 +76,7 @@ public class NavbarComponent extends BaseComponent {
         return isDisplayedAfterWait(LOGOUT_BUTTON);
     }
 
-    /**
-     * Logout butonuna tiklar.
-     *
-     * <p>Bugun bu tiklama <b>oturumu sonlandirmaz</b> — butonun click handler'i yok
-     * (yukaridaki sinif notuna bakiniz). FR-001 ACC-012/013 testleri bu nedenle
-     * gecmeyecektir; bu bir otomasyon hatasi degil, uygulamadaki eksikliktir.
-     */
+    /** Profil menusunu acar ve Logout'a tiklar; oturum sonlanir. */
     public void logout() {
         openProfileMenu();
         click(LOGOUT_BUTTON);
