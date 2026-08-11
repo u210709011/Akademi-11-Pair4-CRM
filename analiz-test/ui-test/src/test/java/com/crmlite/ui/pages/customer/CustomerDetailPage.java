@@ -469,6 +469,23 @@ public class CustomerDetailPage extends BasePage {
         return modal;
     }
 
+    /**
+     * Hesap sayisi beklenen degere ulasana kadar bekler ve o degeri dondurur.
+     *
+     * <p>Hesap olusturma modali BASARIDA kapanir, tablo tazelemesi ise kapanmanin
+     * ARDINDAN asenkron baslar (bkz. detail-customer.component.ts: modal kapatilir,
+     * sonra refreshAccountsAndAddresses cagrilir). Modal kapandi diye hemen saymak
+     * eski listeyi okumak demektir; test hesap olusmus olmasina ragmen kirmizi duser.
+     */
+    public int waitForAccountCount(int expected) {
+        try {
+            wait.until(driver -> driver.findElements(ACCOUNT_ROWS).size() == expected);
+        } catch (org.openqa.selenium.TimeoutException e) {
+            // Beklenen sayiya ulasilmadi; cagiran assert gercek degeri raporlasin.
+        }
+        return accountCount();
+    }
+
     /** ACC-014: tablodaki hesap satiri sayisi (anlik, beklemez). */
     public int accountCount() {
         return findAll(ACCOUNT_ROWS).size();
