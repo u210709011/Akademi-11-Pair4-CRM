@@ -39,8 +39,6 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Test kaynaklarini derle
-        run: ./mvnw -B clean test-compile
 
       # Suite XML'lerindeki sinif adlari elle yazildigi icin, bir sinif yeniden
       # adlandirildiginda derleme GECER ama suite sessizce bos kalir. Bu adim
