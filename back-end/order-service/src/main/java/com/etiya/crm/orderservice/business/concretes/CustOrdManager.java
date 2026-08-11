@@ -358,10 +358,21 @@ public class CustOrdManager implements CustOrdService {
         return buildSummary(custOrd);
     }
 
+    // Musteri detay ekranindaki fatura hesabi urun tablosu icin - KASITLI olarak findActiveItems
+    // ile AYNI (PROCESSING/FINISHED) durum filtresini kullanir. Onceden filtresiz findByCustAcctId
+    // kullaniliyordu: Offer Selection'da createOrder WAIT durumunda bir siparis acar (bkz.
+    // createOrder javadoc'u), kullanici Finish'e basmadan sihirbazdan geri donup FARKLI bir
+    // sepetle tekrar Next'e basarsa (validateBasketThenCreateOrder her seferinde YENIDEN
+    // createOrder cagirir), ilk siparis WAIT durumunda sahipsiz kalir - hicbir zaman
+    // FINISHED'e ulasmadigi icin item'larinin prodId/prodName'i de hic set edilmez (bkz.
+    // provisionProducts, sadece finishOrder icinde calisir), ama cmpgId/cmpgName createOrder
+    // aninda zaten yazilir. Filtresiz sorgu bu terk edilmis WAIT siparisinin item'larini da
+    // donduruyordu - urun tablosunda id/adi bos ama kampanya adi/id'si dolu "hayalet" satirlar
+    // olarak goruluyordu.
     @Override
     @Transactional(readOnly = true)
     public List<CustOrdItemResponse> getItemsByCustAcctId(Long custAcctId) {
-        return custOrdItemRepository.findByCustAcctId(custAcctId).stream()
+        return findActiveItems(custAcctId).stream()
                 .map(custOrderItemMapper::toItemResponse)
                 .collect(Collectors.toList());
     }

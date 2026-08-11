@@ -478,7 +478,7 @@ export class OfferSelectionComponent {
         originalPrice: offering.originalPrice,
         cmpgId: campaign.campaignId,
         cmpgName: campaign.name,
-        catalogName: null,
+        catalogName: this.catalogNameForOffering(offering.productOfferingId),
         isAutoAdded: false,
         triggeredBy: null
       };

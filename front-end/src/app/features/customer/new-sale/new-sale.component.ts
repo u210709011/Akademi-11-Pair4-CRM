@@ -32,7 +32,8 @@ export interface BasketLine {
   originalPrice: number | null;
   cmpgId: number | null;
   cmpgName: string | null;
-  // Sadece Catalog tab'inden eklenirse biliniyor (secili katalog) - Campaign tab'inden eklenirse null.
+  // Offering'in ait oldugu katalog kategorisi (Internet/Mobile/TV) - hem Catalog hem Campaign
+  // tab'inden eklenen satirlar icin catalogOfferings iliskisinden cozulur; iliski yoksa null.
   catalogName: string | null;
   // product-offering-relations'tan (mandatory=true) otomatik eklenen zorunlu urunler icin.
   isAutoAdded: boolean;
@@ -313,6 +314,9 @@ export class NewSaleComponent {
   // ACC-016: Cancel butonuna basildiginda dogrudan cikmadan once onay istenir.
   protected readonly isCancelConfirmOpen = signal(false);
 
+  // FR-017-ACC-002: Submit butonuna basildiginda siparisi dogrudan gondermeden once onay istenir.
+  protected readonly isSubmitConfirmOpen = signal(false);
+
   // FR-017 ACC-004: Submit basarili oldugunda yonlendirmeden once basari modali gosterilir.
   protected readonly isOrderSubmittedModalOpen = signal(false);
 
@@ -385,7 +389,7 @@ export class NewSaleComponent {
       return;
     }
     if (this.activeStep() === 'review') {
-      this.submitOrder();
+      this.openSubmitConfirm();
       return;
     }
     this.advanceStep();
@@ -406,9 +410,34 @@ export class NewSaleComponent {
   protected previous(): void {
     const currentIndex = this.activeStepIndex();
     const previousStep = this.steps[currentIndex - 1];
-    if (previousStep) {
-      this.activeStep.set(previousStep.key);
+    if (!previousStep) {
+      return;
     }
+    // Configuration'dan Offer Selection'a geri donuluyorsa, o ana kadar acilmis olan WAIT
+    // siparisini iptal eder - yoksa kullanici sepeti degistirip Next'e tekrar bastiginda
+    // validateBasketThenCreateOrder() eskisini hic kapatmadan IKINCI bir siparis daha aciyordu,
+    // ilki sahipsiz (orphan) WAIT durumunda DB'de kaliyordu (bkz. getItemsByCustAcctId'deki
+    // PROCESSING/FINISHED filtresi - artik hesap urun tablosunda gorunmuyorlar ama DB'de birikirlerdi).
+    if (this.activeStep() === 'configuration' && previousStep.key === 'offer') {
+      this.cancelExistingOrderIfAny();
+    }
+    this.activeStep.set(previousStep.key);
+  }
+
+  // custOrdId varsa WAIT->REJECTED'e cevirip form state'teki siparis izini temizler - hem
+  // Cancel Sale'de hem Configuration->Offer Selection geri donusunde kullanilir. En iyi-gayret:
+  // cagri basarisiz olsa bile (ör. siparis zaten baska bir nedenle editable degil) kullaniciyi
+  // beklemeye/hataya dusurmez, akis devam eder.
+  private cancelExistingOrderIfAny(): void {
+    const custOrdId = this.formState.custOrdId();
+    if (custOrdId === null) {
+      return;
+    }
+    this.formState.custOrdId.set(null);
+    this.formState.bsnInterId.set(null);
+    this.formState.orderItems.set([]);
+    this.formState.totalAmount.set(0);
+    this.orderService.cancelOrder(custOrdId).subscribe({ error: () => {} });
   }
 
   private validateBasketThenCreateOrder(): void {
@@ -508,6 +537,20 @@ export class NewSaleComponent {
 
   protected confirmCancel(): void {
     this.isCancelConfirmOpen.set(false);
+    this.cancelExistingOrderIfAny();
     this.router.navigate(['/detail-customer', this.custId]);
+  }
+
+  protected openSubmitConfirm(): void {
+    this.isSubmitConfirmOpen.set(true);
+  }
+
+  protected closeSubmitConfirm(): void {
+    this.isSubmitConfirmOpen.set(false);
+  }
+
+  protected confirmSubmit(): void {
+    this.isSubmitConfirmOpen.set(false);
+    this.submitOrder();
   }
 }

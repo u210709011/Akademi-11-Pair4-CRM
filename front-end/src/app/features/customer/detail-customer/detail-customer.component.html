@@ -376,6 +376,8 @@
                                                     <button
                                                         type="button"
                                                         class="menu-item-danger"
+                                                        [disabled]="address.primary"
+                                                        [title]="address.primary ? i18n.t('detail.deleteAddressPrimaryHint') : null"
                                                         (click)="openDeleteAddressConfirm(address)"
                                                     >
                                                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -387,6 +389,9 @@
                                                         </svg>
                                                         {{ i18n.t('detail.deleteAddress') }}
                                                     </button>
+                                                    @if (address.primary) {
+                                                        <p class="menu-item-hint">{{ i18n.t('detail.deleteAddressPrimaryHint') }}</p>
+                                                    }
                                                 </div>
                                             }
                                         </div>

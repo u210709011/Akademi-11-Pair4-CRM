@@ -20,6 +20,7 @@ public class LookupCacheServiceImpl implements LookupCacheService {
 	private static final Logger log = LoggerFactory.getLogger(LookupCacheServiceImpl.class);
 
 	private final LookupClient lookupClient;
+	private final LookupTypeByIdCache typeByIdCache;
 
 	@Override
 	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
@@ -49,15 +50,25 @@ public class LookupCacheServiceImpl implements LookupCacheService {
 		return lookupClient.getTypeById(id).name();
 	}
 
+	// KASITLI olarak burasi @Cacheable DEGIL (onceden oyleydi) - getTypeById cagrisini burada,
+	// bu metodun try/catch'inin ICINDE, DOGRUDAN @Cacheable yapmak, exception yakalanip false
+	// donuldugunde o "false" sonucunun da 30 dakikaligina cache'lenmesine yol aciyordu (ör.
+	// gender=MALE id'si, ilk dogrulama denemesi lookup-service'in gecici bir aksakligina denk
+	// geldiyse, id gercekte var/aktif olsa BILE 30 dakika boyunca "Invalid gender" donduruyordu -
+	// Female'in ayni anda calismasi sirf onun cache'e daha once basariyla girmis olmasindandi).
+	// Cache'lenen kismi (LookupTypeByIdCache.getTypeById) bu yuzden AYRI bir bean'e tasindi -
+	// @Cacheable, Spring'in proxy tabanli AOP'siyle calisir ve self-invocation'i (bu sinifin
+	// kendi metodunu kendi govdesinden cagirmasi) yakalayamaz; ayri bir bean uzerinden cagirmak
+	// gercek bir proxy cagrisi olmasini garantiler. Simdi sadece basariyla donen sonuc
+	// cache'leniyor; exception her cagrida taze denenir, boylece lookup-service toparlaninca
+	// bir sonraki istek hemen duzelir.
 	@Override
-	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
-			key = "'exists_' + #entCodeName + '_' + #id")
 	public boolean existsInGroup(Long id, String entCodeName) {
 		if (id == null) {
 			return false;
 		}
 		try {
-			var type = lookupClient.getTypeById(id);
+			var type = typeByIdCache.getTypeById(id);
 			return type.active() && entCodeName.equals(type.entCodeName());
 		} catch (RuntimeException ex) {
 			// id yok (404) ya da downstream baska bir sekilde basarisiz oldu (feign.circuitbreaker.enabled=true

@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
 import { AddressEditRequest, AddressResponse, CustomerService } from '../../../../../core/customer';
 import { I18nService } from '../../../../../core/i18n';
@@ -115,13 +115,34 @@ export class ConfigurationStepComponent {
     }));
   }
 
-  // Mockup: tum zorunlu alanlar doldurulunca kart otomatik daralir (collapse).
-  // Text alanlarda (input) yerine (blur) ile cagrilir - yoksa son zorunlu alana
-  // yazilan ilk karakterde henuz yazma bitmeden kart kapanirdi.
-  protected checkAutoCollapse(prodOfrId: number): void {
-    if (this.formState.isConfigured(prodOfrId)) {
-      this.collapsedProductIds.update(current => new Set(current).add(prodOfrId));
+  // Tum alanlar (zorunlu VE opsiyonel) dolu VE karta baglanan bir yerin DISINA tiklanirsa
+  // kart otomatik daralir (collapse). Onceden (change)/(blur) ile alan bazinda tetikleniyordu -
+  // bu, ayni kart icinde bir alandan digerine (ör. Tab ile) gecerken bile "focus'tan cikti"
+  // sayilip erken kapanmaya yol aciyordu. Simdi sadece gercekten karta baska bir seye
+  // tiklanmasi (document click-outside) tetikliyor - kart icindeki herhangi bir alana
+  // odaklanmisken kapanmaz.
+  @HostListener('document:click', ['$event'])
+  protected onDocumentClick(event: MouseEvent): void {
+    const target = event.target as Node;
+    for (const line of this.configurableLines()) {
+      const prodOfrId = line.prodOfrId;
+      if (this.isCollapsed(prodOfrId) || !this.allFieldsFilled(prodOfrId)) {
+        continue;
+      }
+      const cardEl = document.getElementById('config-card-' + prodOfrId);
+      if (cardEl && !cardEl.contains(target)) {
+        this.collapsedProductIds.update(current => new Set(current).add(prodOfrId));
+      }
     }
+  }
+
+  private allFieldsFilled(prodOfrId: number): boolean {
+    const fields = this.fieldsFor(prodOfrId);
+    if (fields.length === 0) {
+      return true;
+    }
+    const values = this.formState.charValues()[prodOfrId] ?? {};
+    return fields.every(field => (values[field.key] ?? '').trim().length > 0);
   }
 
   protected isConfigured(line: BasketLine): boolean {
@@ -189,14 +210,25 @@ export class ConfigurationStepComponent {
   // Bu ekranda secilen/eklenen servis adresi, siparisin baglandigi fatura hesabinin GERCEK
   // adresini de guncellemeli (ör. adresi A olan hesaba B adresiyle urun eklenirse, hesabin
   // adresi artik B olur) - sadece siparise degil, CUST_ACCT'a da yazilir.
+  // Guncel accountName/accountDesc her zaman burada taze cekilir - formState.billingAccountName
+  // NewSaleComponent constructor'inda async doluyor ve route'a tekrar girildiginde sifirlanip
+  // yeniden yukleniyor; o istek bitmeden buraya gelinirse eski kodda hesap adi '' ile eziliyordu.
   private persistAddressToBillingAccount(addressId: number): void {
-    this.customerService
-      .updateBillingAccount(this.formState.custId(), this.formState.custAcctId(), {
-        accountName: this.formState.billingAccountName() ?? '',
-        accountDesc: this.formState.billingAccountDesc(),
-        addressId
-      })
-      .subscribe();
+    this.customerService.getById(this.formState.custId()).subscribe(detail => {
+      const account = detail.accounts.find(acc => acc.custAcctId === this.formState.custAcctId());
+      const accountName = account?.accountName ?? '';
+      const accountDesc = account?.accountDesc ?? null;
+      this.formState.billingAccountName.set(accountName);
+      this.formState.billingAccountDesc.set(accountDesc);
+
+      this.customerService
+        .updateBillingAccount(this.formState.custId(), this.formState.custAcctId(), {
+          accountName,
+          accountDesc,
+          addressId
+        })
+        .subscribe();
+    });
   }
 
   protected openAddAddressModal(): void {

@@ -705,6 +705,9 @@ export class DetailCustomerComponent {
   }
 
   protected openDeleteAddressConfirm(address: AddressResponse): void {
+    if (address.primary) {
+      return;
+    }
     this.openAddressMenuId.set(null);
     this.deleteAddressError.set(null);
     this.addressToDelete.set(address);

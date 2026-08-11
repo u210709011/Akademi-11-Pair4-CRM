@@ -20,7 +20,7 @@
             <span>{{ line.cmpgName }}</span>
         </div>
     }
-    <div class="config-product-card" [class.config-product-card-done]="isConfigured(line)">
+    <div [id]="'config-card-' + line.prodOfrId" class="config-product-card" [class.config-product-card-done]="isConfigured(line)">
         <div class="config-product-header">
             <span class="config-product-icon">
                 @switch (line.catalogName) {
@@ -71,12 +71,11 @@
                                 <div class="select-wrapper">
                                     <select
                                         [id]="line.prodOfrId + '-' + field.key"
-                                        [value]="fieldValue(line.prodOfrId, field.key)"
-                                        (change)="setFieldValue(line.prodOfrId, field.key, $any($event.target).value); checkAutoCollapse(line.prodOfrId)"
+                                        (change)="setFieldValue(line.prodOfrId, field.key, $any($event.target).value)"
                                     >
-                                        <option value="">{{ i18n.t('create.selectPlaceholder') }}</option>
+                                        <option value="" [selected]="fieldValue(line.prodOfrId, field.key) === ''">{{ i18n.t('create.selectPlaceholder') }}</option>
                                         @for (option of field.options; track option.value) {
-                                            <option [value]="option.value">{{ option.label }}</option>
+                                            <option [value]="option.value" [selected]="option.value === fieldValue(line.prodOfrId, field.key)">{{ option.label }}</option>
                                         }
                                     </select>
                                     <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
@@ -88,7 +87,6 @@
                                     [value]="fieldValue(line.prodOfrId, field.key)"
                                     [placeholder]="field.placeholder ?? ''"
                                     (input)="setFieldValue(line.prodOfrId, field.key, $any($event.target).value)"
-                                    (blur)="checkAutoCollapse(line.prodOfrId)"
                                 >
                             }
                         </div>
