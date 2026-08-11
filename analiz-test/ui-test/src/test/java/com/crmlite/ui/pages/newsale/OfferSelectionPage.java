@@ -156,8 +156,17 @@ public class OfferSelectionPage extends BasePage {
         return getText(ACTIVE_TAB);
     }
 
+    /**
+     * Sekmeye gecer ve sekmenin AKTIF olmasini bekler.
+     *
+     * <p>Beklemeden donmek, cagiranin bir onceki sekmenin etiketini okumasina yol acar;
+     * tam regresyonda yuk altinda bu yarisa girilip testler rastgele kirmizi oluyordu.
+     */
     public OfferSelectionPage selectTab(Tab tab) {
         click(By.cssSelector(String.format(".offer-tabs .offer-tab:nth-of-type(%d)", tab.index() + 1)));
+        By activeTab = By.cssSelector(String.format(
+                ".offer-tabs .offer-tab:nth-of-type(%d).active", tab.index() + 1));
+        wait.until(driver -> !driver.findElements(activeTab).isEmpty());
         return this;
     }
 

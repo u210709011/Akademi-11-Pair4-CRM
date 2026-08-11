@@ -629,8 +629,12 @@ public class CustomerDetailPage extends BasePage {
         return page;
     }
 
+    /**
+     * Beklemeli kontrol: buton, hesap satiri GENISLETILDIGINDE acilan panelin icinde
+     * render edilir. Anlik kontrol, panel henuz cizilmeden false donebilir.
+     */
     public boolean hasStartNewSaleButton() {
-        return isDisplayed(START_NEW_SALE_BUTTON);
+        return isDisplayedAfterWait(START_NEW_SALE_BUTTON);
     }
 
     // --- FR-009 ACC-009: sayfalama ---
