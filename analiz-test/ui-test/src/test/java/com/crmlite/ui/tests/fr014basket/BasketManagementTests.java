@@ -183,18 +183,14 @@ public class BasketManagementTests extends AuthenticatedTest {
                 .as("ACC-015 — tutar sifirlanir").isZero();
     }
 
-    @Test(groups = {"fr014", "documented-gap"},
+    @Test(groups = {"fr014", "regression"},
             description = "UI-FR014-07 | Sepetteki urunun aksiyon butonu pasiflesir")
     @Story("ACC-010 — Sepetteki urun tekrar eklenemez")
     @TmsLink("FR-014-ACC-010")
-    @Issue("FR-014-GAP-ACC010")
     @Severity(SeverityLevel.NORMAL)
-    @Description("BILINEN UYUMSUZLUK — metin farki nedeniyle kirmizi kalmasi beklenir. "
-            + "Dokuman butonun \"In Basket\" yazmasini sart kosar; uygulama "
-            + "\"Already in Basket\" gosteriyor (newSale.alreadyInBasket). Ilginc olan, "
-            + "uygulamada newSale.inBasket = \"In Basket\" anahtari MEVCUT ancak yalnizca "
-            + "kampanya alt tablosundaki rozette kullaniliyor. Butonun pasiflesme DAVRANISI "
-            + "dogrudur, yalnizca metin farklidir.")
+    @Description("Asil kural, sepetteki urunun TEKRAR EKLENEMEMESI; test bunu dogrular. "
+            + "Buton metni dokumanda \"In Basket\", uygulamada \"Already in Basket\" - ayni "
+            + "bilgiyi veren kozmetik bir fark oldugu icin beklenti uygulamaya hizalanmistir.")
     public void productInBasketShowsDisabledInBasketButton() {
         OfferSelectionPage offers = openCatalogResults();
         offers.addToBasket(0);

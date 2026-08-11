@@ -301,6 +301,32 @@ public class OfferSelectionPage extends BasePage {
         return isDisplayedAfterWait(EMPTY_ROW);
     }
 
+    /**
+     * Aramayi sonuc gelene kadar tekrarlar.
+     *
+     * <p>Katalog/kampanya listeleri sekme acildiginda ASENKRON yuklenir ve arama bellekteki
+     * liste uzerinde calisir; hemen aranirsa liste henuz bos oldugu icin "kayit bulunamadi"
+     * doner. Bu bir urun hatasi degil, veri yuklenme yarisidir.
+     */
+    public OfferSelectionPage searchUntilResults() {
+        for (int attempt = 0; attempt < 6; attempt++) {
+            search().waitForResults();
+            if (resultRowCount() > 0) {
+                return this;
+            }
+            sleepBriefly();
+        }
+        return this;
+    }
+
+    private void sleepBriefly() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
     /** Sonuclarin yuklenmesini bekler; bos sonuc da gecerli bir sonuctur. */
     public OfferSelectionPage waitForResults() {
         wait.until(driver -> !driver.findElements(RESULT_ROWS).isEmpty()

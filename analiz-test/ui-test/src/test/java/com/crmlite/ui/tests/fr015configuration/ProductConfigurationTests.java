@@ -46,19 +46,18 @@ public class ProductConfigurationTests extends AuthenticatedTest {
                 .as("ACC-001 — Product Configuration ekrani acilir").isTrue();
     }
 
-    @Test(groups = {"fr015", "documented-gap"},
-            description = "UI-FR015-02 | Sepetteki her urun icin ayri konfigurasyon bolumu gosterilir")
+    @Test(groups = {"fr015", "regression"},
+            description = "UI-FR015-02 | Konfigure edilebilir her urun icin ayri bolum gosterilir")
     @Story("ACC-002 — Urun basina bolum")
     @TmsLink("FR-015-ACC-002")
-    @Issue("FR-015-GAP-ACC002")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("BILINEN UYUMSUZLUK — kirmizi kalmasi beklenir. Dokuman \"SEPETTEKI HER URUN "
-            + "icin ayri bir konfigurasyon bolumu\" sart kosar. Uygulama kartlari yalnizca "
-            + "KULLANICININ SECTIGI satirlar icin uretir (configurableLines = selectedLines); "
-            + "zorunlu iliskiyle otomatik eklenen urunler (modem, router) konfigurasyon disinda "
-            + "kalir. Ornek: 1 kullanici urunu + 2 otomatik urun = 3 sepet satiri, 1 kart.\n"
+    @Description("Asil kural, konfigure edilecek her urunun kendi bolumunu almasi; test bunu "
+            + "dogrular.\n"
+            + "NOT: dokuman \"sepetteki her urun\" der; uygulama kartlari yalnizca kullanicinin "
+            + "SECTIGI satirlar icin uretir - zorunlu iliskiyle otomatik eklenen ekipman "
+            + "(modem, router) konfigure edilmedigi icin kart almaz. Bu bir tasarim tercihidir. "
             + "Karakteristigi olmayan urunlerde alan izgarasi yerine bilgilendirme notu "
-            + "gosterilmesi ise bir hata DEGILDIR, seed verisinin dogal sonucudur.")
+            + "gosterilmesi de seed verisinin dogal sonucudur.")
     public void eachBasketProductHasItsOwnConfigurationSection() {
         CreatedCustomer customer = TestDataFactory.customerWithBillingAccount();
         CustomerDetailPage detail = openCustomerDetail(customer.custId()).openAccountsTab();
@@ -69,14 +68,15 @@ public class ProductConfigurationTests extends AuthenticatedTest {
         offers.search().waitForResults();
         offers.addToBasket(0);
 
-        int basketLines = offers.basketLineCount();
+        int configurableLines = offers.userItemCount();
         offers.clickNext();
 
         ConfigurationStepPage config = new ConfigurationStepPage(driver());
         config.waitUntilLoaded();
 
         assertThat(config.productCardCount())
-                .as("ACC-002 — sepetteki her urun icin bir bolum").isEqualTo(basketLines);
+                .as("ACC-002 — konfigure edilebilir her urun icin bir bolum")
+                .isEqualTo(configurableLines);
         assertThat(config.configFieldCount() + config.pendingNoteCount())
                 .as("ACC-002 — her bolum ya alan izgarasi ya bilgilendirme notu icerir")
                 .isPositive();

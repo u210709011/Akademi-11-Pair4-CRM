@@ -31,8 +31,9 @@ public class ReviewStepPage extends BasePage {
     private static final By ADDRESS_GRID = By.cssSelector(".review-address-grid");
 
     private static final By PRICE_CARD = By.cssSelector(".review-price-card");
+    // Toplam satiri .review-price-row TASIMAZ; yalnizca .review-total-row sinifina sahiptir.
     private static final By TOTAL_ROW_VALUE =
-            By.cssSelector(".review-price-card .review-price-row.review-total-row span:last-child");
+            By.cssSelector(".review-total-row span:last-child");
 
     // --- Submit sonrasi basari modali (FR-017) ---
     private static final By SUCCESS_CARD = By.cssSelector(".modal-card.order-success-card");

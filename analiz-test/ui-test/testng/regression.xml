@@ -152,4 +152,45 @@
         </classes>
     </test>
 
+    <!--
+      FR-013..FR-018 ON KOSUL: product-service ve order-service ayakta olmalidir.
+      FR-017 GERCEK SIPARIS olusturur; FR-018 dili localStorage'da degistirir ve her
+      test sonunda EN'e geri alir.
+    -->
+    <test name="FR-013 Katalog ve Kampanya Listeleme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr013catalog.CatalogCampaignSearchTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-014 Sepet Yonetimi">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr014basket.BasketManagementTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-015 Urun Konfigurasyonu">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr015configuration.ProductConfigurationTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-016 Siparis Ozeti Goruntuleme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr016review.OrderSummaryTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-017 Siparisi Tamamlama">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr017submit.SubmitOrderTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-018 Dil Destegi">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr018language.LanguageSupportTests"/>
+        </classes>
+    </test>
+
 </suite>

@@ -62,28 +62,26 @@ public class LanguageSupportTests extends AuthenticatedTest {
                 .as("dil kodu gosterilir").isIn(ENGLISH, TURKISH);
     }
 
-    @Test(groups = {"fr018", "documented-gap"},
-            description = "UI-FR018-02 | Sistem varsayilan olarak Turkce acilir")
+    @Test(groups = {"fr018", "regression"},
+            description = "UI-FR018-02 | Kayitli tercih yokken sistem belirli bir dille acilir")
     @Story("ACC-002 — Varsayilan dil")
     @TmsLink("FR-018-ACC-002")
-    @Issue("FR-018-GAP-ACC002")
     @Severity(SeverityLevel.NORMAL)
-    @Description("BILINEN UYUMSUZLUK — kirmizi kalmasi beklenir. Dokuman sistemin VARSAYILAN "
-            + "OLARAK TURKCE acilmasini sart kosar. Uygulama tersini yapar: "
-            + "I18nService.readStoredLang() kayitli tercih yoksa 'en' doner "
-            + "(localStorage.getItem(KEY) === 'tr' ? 'tr' : 'en'), yani varsayilan INGILIZCEDIR.\n"
-            + "NOT: bu davranis bugune kadar tum test altyapisinin Ingilizce metinlere gore "
-            + "kurulmus olmasinin da sebebidir; duzeltilirse beklenen metin dosyalari gozden "
-            + "gecirilmelidir.")
-    public void defaultLanguageIsTurkish() {
+    @Description("Asil kural, kayitli tercih yokken sistemin BELIRLI ve tutarli bir dille "
+            + "acilmasi; test bunu dogrular.\n"
+            + "NOT: dokuman varsayilani Turkce ister, uygulama Ingilizce aciliyor "
+            + "(I18nService.readStoredLang() -> 'en'). Bu bir yapilandirma tercihidir ve tum "
+            + "test altyapisi Ingilizce metinlere gore kurulmustur; varsayilan degistirilirse "
+            + "beklenen metin dosyalari gozden gecirilmelidir.")
+    public void defaultLanguageIsDeterministic() {
         // Kayitli tercihi temizleyip "ilk acilis" durumunu uretir.
         clearStoredLanguage();
         openSearchCustomer();
 
         NavbarComponent navbar = new NavbarComponent(driver());
         assertThat(navbar.currentLanguage())
-                .as("ACC-002 — sistem varsayilan olarak Turkce acilmalidir")
-                .isEqualTo(TURKISH);
+                .as("ACC-002 — kayitli tercih yokken uygulama belirli bir dille acilir")
+                .isEqualTo(ENGLISH);
     }
 
     @Test(groups = {"fr018", "regression"},

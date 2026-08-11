@@ -183,7 +183,9 @@ public class CatalogCampaignSearchTests extends AuthenticatedTest {
         OfferSelectionPage offers = openOfferSelection();
         offers.selectTab(OfferSelectionPage.Tab.CAMPAIGNS);
         offers.enterCampaignName(COMMON_NAME_FRAGMENT);
-        offers.search().waitForResults();
+        // Kampanya listesi sekme acilirken asenkron yuklenir; arama bellekteki liste
+        // uzerinde calistigi icin yuklenene kadar tekrarlanir.
+        offers.searchUntilResults();
 
         assertThat(offers.resultRowCount()).as("on kosul: kampanya listelendi").isPositive();
         assertThat(offers.hasBundledOffersToggle())
