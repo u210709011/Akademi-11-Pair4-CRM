@@ -359,8 +359,20 @@ public class OfferSelectionPage extends BasePage {
         return isDisplayedAfterWait(BUNDLED_ROW);
     }
 
+    /**
+     * Genisletilmis satirin KAPANMASINI bekler.
+     *
+     * <p>Anlik kontrol yeterli degil: satir tiklamadan hemen sonra DOM'dan silinmiyor,
+     * Angular bir sonraki degisiklik turunda kaldiriyor. Beklemeden bakildiginda satir
+     * hala goruluyor ve test "kapanmadi" diye yanlis kirmiziya dusuyordu.
+     */
     public boolean isBundledOffersCollapsed() {
-        return findAll(BUNDLED_ROW).isEmpty();
+        try {
+            wait.until(driver -> driver.findElements(BUNDLED_ROW).isEmpty());
+            return true;
+        } catch (org.openqa.selenium.TimeoutException e) {
+            return false;
+        }
     }
 
     /** Genisletilmis satirin ic tablosundaki bagli urun sayisi. */
