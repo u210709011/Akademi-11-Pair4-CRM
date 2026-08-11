@@ -25,6 +25,14 @@ public final class MessageKeys {
     public static final String CAMPAIGN_OFFERING_NOT_FOUND = "error.campaign-offering.not-found";
     public static final String PRODUCT_OFFERING_CHAR_USE_NOT_FOUND = "error.product-offering-char-use.not-found";
     public static final String PRODUCT_OFFERING_CHAR_USE_DUPLICATE = "error.product-offering-char-use.duplicate";
+
+    // bean validation (@NotNull/@NotBlank/@Size/@Min/@Max message="{...}") icin - alan bazli
+    public static final String FIELD_REQUIRED = "validation.field.required";
+    public static final String FIELD_MAX_LENGTH = "validation.field.max-length";
+    public static final String FIELD_NON_NEGATIVE = "validation.field.non-negative";
+    public static final String PERCENTAGE_MAX = "validation.percentage.max";
+    public static final String FIELD_POSITIVE = "validation.field.positive";
+
     private MessageKeys() {
     }
 }

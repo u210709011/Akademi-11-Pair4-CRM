@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.ProductOffering;
 
+import com.etiya.crm.productservice.constants.MessageKeys;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -17,23 +18,23 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class UpdateProductOfferingRequest {
 
-    @NotNull(message = "Product Spec Id alanı boş bırakılamaz")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Long productSpecId;
 
-    @NotBlank(message = "İsim alanı boş bırakılamaz")
-    @Size(max = 100, message = "İsim alanı en fazla 100 karakter içerebilir")
+    @NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+    @Size(max = 100, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
     private String name;
 
-    @NotBlank(message = "Açıklama alanı boş bırakılamaz")
-    @Size(max = 100, message = "Açıklama alanı en fazla 100 karakter içerebilir")
+    @NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+    @Size(max = 100, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
     private String descr;
 
     private Long parentOfferingId;
 
-    @NotBlank(message = "Durum kodu zorunludur")
+    @NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private String statusCode;
 
-    @NotNull(message = "Fiyat alanı boş bırakılamaz")
-    @Positive(message = "Fiyat negatif olamaz")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+    @Positive(message = "{" + MessageKeys.FIELD_NON_NEGATIVE + "}")
     private BigDecimal totalPrice;
 }

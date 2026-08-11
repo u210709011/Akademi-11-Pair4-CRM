@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.ProductSpec;
 
+import com.etiya.crm.productservice.constants.MessageKeys;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -12,18 +13,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateProductSpecRequest {
 
-    @NotBlank(message = "Ad zorunludur.")
-    @Size(max = 100, message = "Ad en fazla 100 karakter olabilir.")
+    @NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+    @Size(max = 100, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
     private String name;
 
-    @NotBlank(message = "Aciklama zorunludur.")
-    @Size(max = 100, message = "Aciklama en fazla 100 karakter olabilir.")
+    @NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+    @Size(max = 100, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
     private String descr;
 
-    @NotBlank(message = "Durum kodu zorunludur.")
+    @NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private String statusCode;
 
-    @NotNull(message = "Gelistirme bilgisi zorunludur.")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Boolean dev;
 
 }

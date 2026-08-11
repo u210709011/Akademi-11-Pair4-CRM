@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdatedProductOfferingRelationResponse {
+public class GetProductOfferingRelationResponse {
     private Long productOfferingRelationId;
     private Long productOfferingId1;
     private Long productOfferingId2;

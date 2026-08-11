@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.ProductOfferingCharUse;
 
+import com.etiya.crm.productservice.constants.MessageKeys;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,15 +13,15 @@ import lombok.Setter;
 @AllArgsConstructor
 public class CreateProductOfferingCharUseRequest {
 
-    @NotNull(message = "Ürün teklifi id alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Long productOfferingId;
 
-    @NotNull(message = "Karakteristik id alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Long characteristicId;
 
-    @NotNull(message = "Zorunluluk bilgisi zorunludur")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Boolean mandatory;
 
-    @NotNull(message = "Aktiflik alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Boolean active;
 }

@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.CampaignOffering;
 
+import com.etiya.crm.productservice.constants.MessageKeys;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -17,24 +18,24 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class CreateCampaignOfferingRequest {
 
-    @NotNull(message = "Kampanya id alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Long campaignId;
 
-    @NotNull(message = "Product Offer id alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Long productOfferingId;
 
     private Integer priority;
 
-    @NotNull(message = "İndirim yüzdesi zorunludur")
-    @DecimalMin(value = "0", message = "İndirim yüzdesi negatif olamaz")
-    @DecimalMax(value = "100", message = "İndirim yüzdesi 100'ü geçemez")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
+    @DecimalMin(value = "0", message = "{" + MessageKeys.FIELD_NON_NEGATIVE + "}")
+    @DecimalMax(value = "100", message = "{" + MessageKeys.PERCENTAGE_MAX + "}")
     private BigDecimal discountPct;
 
-    @NotNull(message = "Start Date alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private LocalDate startDate;
 
     private LocalDate endDate;
 
-    @NotNull(message = "active alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Boolean active;
 }

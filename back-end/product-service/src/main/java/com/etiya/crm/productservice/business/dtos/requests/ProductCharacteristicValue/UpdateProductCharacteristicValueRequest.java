@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.ProductCharacteristicValue;
 
+import com.etiya.crm.productservice.constants.MessageKeys;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,10 +13,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UpdateProductCharacteristicValueRequest {
 
-    @NotNull(message = "Product alanı boş bırakılamaz")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Long productId;
 
-    @NotNull(message = "Karakteristik alanı boş bırakılamaz")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Long characteristicId; //lookup
 
     private Long characteristicValueId; // lookup

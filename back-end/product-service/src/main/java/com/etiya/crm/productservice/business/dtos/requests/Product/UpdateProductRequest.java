@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.Product;
 
+import com.etiya.crm.productservice.constants.MessageKeys;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -14,10 +15,10 @@ import lombok.Setter;
 public class UpdateProductRequest {
     private Long parentProductId;
 
-    @NotNull(message = "Ürün Teklif alanı boş bırakılamaz")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Long productOfferingId;
 
-    @NotNull(message = "Ürün Tanım alanı boş bırakılamaz")
+    @NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private Long productSpecId;
 
     private String name;
@@ -26,6 +27,6 @@ public class UpdateProductRequest {
 
     private Long campaignId;
 
-    @NotBlank(message = "Durum kodu zorunludur.")
+    @NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
     private String statusCode;
 }
