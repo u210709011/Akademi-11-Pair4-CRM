@@ -276,7 +276,7 @@ public class BasketManagementTests extends AuthenticatedTest {
 
         OfferSelectionPage offers = detail.startNewSale();
         offers.enterOfferName(data.productName());
-        offers.search().waitForResults();
+        offers.searchUntilResults();
 
         assertThat(offers.resultRowCount()).as("on kosul: aktif urun katalogda bulundu").isPositive();
         assertThat(offers.isAddButtonEnabled(0))
@@ -328,7 +328,7 @@ public class BasketManagementTests extends AuthenticatedTest {
 
         OfferSelectionPage offers = detail.startNewSale();
         offers.enterOfferName(nameFragment);
-        offers.search().waitForResults();
+        offers.searchUntilResults();
         return offers;
     }
 }

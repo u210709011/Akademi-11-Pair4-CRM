@@ -94,7 +94,7 @@ public class CatalogCampaignSearchTests extends AuthenticatedTest {
     public void catalogSearchListsMatchingOffers() {
         OfferSelectionPage offers = openOfferSelection()
                 .enterOfferName(COMMON_NAME_FRAGMENT);
-        offers.search().waitForResults();
+        offers.searchUntilResults();
 
         assertThat(offers.resultRowCount())
                 .as("ACC-004 — kritere uyan urunler listelenir").isPositive();
@@ -230,7 +230,7 @@ public class CatalogCampaignSearchTests extends AuthenticatedTest {
     public void resultsArePaginatedWithFivePerPage() {
         OfferSelectionPage offers = openOfferSelection()
                 .enterOfferName(COMMON_NAME_FRAGMENT);
-        offers.search().waitForResults();
+        offers.searchUntilResults();
 
         assertThat(offers.resultRowCount())
                 .as("ACC-014 — ilk sayfada en fazla 5 kayit").isLessThanOrEqualTo(5);
@@ -251,7 +251,7 @@ public class CatalogCampaignSearchTests extends AuthenticatedTest {
     public void searchCriteriaSurviveTabSwitch() {
         OfferSelectionPage offers = openOfferSelection()
                 .enterOfferName(COMMON_NAME_FRAGMENT);
-        offers.search().waitForResults();
+        offers.searchUntilResults();
 
         int rowsBefore = offers.resultRowCount();
 

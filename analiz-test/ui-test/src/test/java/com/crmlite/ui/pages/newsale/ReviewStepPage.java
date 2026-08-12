@@ -152,6 +152,12 @@ public class ReviewStepPage extends BasePage {
         return getText(By.cssSelector(".modal-card .delete-confirm-message"));
     }
 
+    /** ACC-002: onay diyalogundaki "Yes, Submit Order" butonuna basar. */
+    public ReviewStepPage confirmSubmit() {
+        click(By.cssSelector(".modal-actions .delete-confirm-button"));
+        return this;
+    }
+
     /** Submit sonrasi acilan basari modali. */
     public boolean hasSuccessModal() {
         return isDisplayedAfterWait(SUCCESS_CARD);

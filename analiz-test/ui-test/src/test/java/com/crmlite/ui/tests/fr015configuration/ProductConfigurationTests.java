@@ -65,7 +65,7 @@ public class ProductConfigurationTests extends AuthenticatedTest {
 
         OfferSelectionPage offers = detail.startNewSale();
         offers.enterOfferName(COMMON_NAME_FRAGMENT);
-        offers.search().waitForResults();
+        offers.searchUntilResults();
         offers.addToBasket(0);
 
         int configurableLines = offers.userItemCount();
@@ -208,7 +208,7 @@ public class ProductConfigurationTests extends AuthenticatedTest {
 
         OfferSelectionPage offers = detail.startNewSale();
         offers.enterOfferName(COMMON_NAME_FRAGMENT);
-        offers.search().waitForResults();
+        offers.searchUntilResults();
         offers.addToBasket(0);
 
         int linesBefore = offers.basketLineCount();
@@ -292,7 +292,7 @@ public class ProductConfigurationTests extends AuthenticatedTest {
 
         OfferSelectionPage offers = detail.startNewSale();
         offers.enterOfferName(COMMON_NAME_FRAGMENT);
-        offers.search().waitForResults();
+        offers.searchUntilResults();
         offers.addToBasket(0);
         offers.clickNext();
 

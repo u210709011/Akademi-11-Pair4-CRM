@@ -122,7 +122,7 @@ public class OrderSummaryTests extends AuthenticatedTest {
 
         OfferSelectionPage wizard = detail.startNewSale();
         wizard.enterOfferName(COMMON_NAME_FRAGMENT);
-        wizard.search().waitForResults();
+        wizard.searchUntilResults();
         wizard.addToBasket(0);
         wizard.clickNext();
 

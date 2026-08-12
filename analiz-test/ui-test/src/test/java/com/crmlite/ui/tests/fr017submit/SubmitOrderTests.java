@@ -1,5 +1,4 @@
 package com.crmlite.ui.tests.fr017submit;
-
 import com.crmlite.ui.data.ExpectedMessages;
 import com.crmlite.ui.data.api.TestDataFactory;
 import com.crmlite.ui.data.model.CreatedCustomer;
@@ -54,17 +53,13 @@ public class SubmitOrderTests extends AuthenticatedTest {
                 .as("Review ekrani artik gosterilmez").isFalse();
     }
 
-    @Test(groups = {"fr017", "documented-gap"},
+    @Test(groups = {"fr017", "regression"},
             description = "UI-FR017-02 | Submit onay mesaji gosterir")
     @Story("ACC-002 — Submit onayi")
     @TmsLink("FR-017-ACC-002")
-    @Issue("FR-017-GAP-ACC002")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("BILINEN UYUMSUZLUK — kirmizi kalmasi beklenir. Dokuman Submit'e "
-            + "tiklandiginda \"Are you sure you want to submit this order?\" onayi sart kosar. "
-            + "Uygulamada BOYLE BIR ONAY YOK: bu metin kod tabaninin hicbir yerinde gecmiyor "
-            + "ve submit dogrudan calisiyor. Sepetten sonraki tek geri donulemez adim oldugu "
-            + "icin onayin bulunmamasi kullanici acisindan risklidir.")
+    @Description("12.08.2026: onay diyalogu uygulandi (commit 779b22e) ve test acildi. "
+            + "Sepetten sonraki tek geri donulemez adim burasi oldugu icin onay kritik.")
     public void submitAsksForConfirmation() {
         ReviewStepPage review = openReview();
         OfferSelectionPage wizard = new OfferSelectionPage(driver());
@@ -95,6 +90,8 @@ public class SubmitOrderTests extends AuthenticatedTest {
         OfferSelectionPage wizard = new OfferSelectionPage(driver());
 
         wizard.clickNext();
+        // Submit artik once onay ister (ACC-002); siparis ancak onaylandiktan sonra gider.
+        review.confirmSubmit();
 
         assertThat(review.hasSuccessModal())
                 .as("ACC-003 — siparis iletilir").isTrue();
@@ -120,6 +117,7 @@ public class SubmitOrderTests extends AuthenticatedTest {
         OfferSelectionPage wizard = new OfferSelectionPage(driver());
 
         wizard.clickNext();
+        review.confirmSubmit();
         assertThat(review.hasSuccessModal()).as("on kosul: siparis iletildi").isTrue();
 
         review.goToBillingAccount();
@@ -140,7 +138,7 @@ public class SubmitOrderTests extends AuthenticatedTest {
 
         OfferSelectionPage wizard = detail.startNewSale();
         wizard.enterOfferName(COMMON_NAME_FRAGMENT);
-        wizard.search().waitForResults();
+        wizard.searchUntilResults();
         wizard.addToBasket(0);
         wizard.clickNext();
 
