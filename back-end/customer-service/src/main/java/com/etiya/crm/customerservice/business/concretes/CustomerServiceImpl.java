@@ -14,6 +14,7 @@ import com.etiya.crm.customerservice.business.abstracts.BillingAccountService;
 import com.etiya.crm.customerservice.business.abstracts.CustomerFinder;
 import com.etiya.crm.customerservice.business.abstracts.CustomerLookupResolver;
 import com.etiya.crm.customerservice.business.abstracts.CustomerService;
+import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.business.dtos.requests.CustomerSearchRequest;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
@@ -25,6 +26,7 @@ import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchSpecific
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchViewRepository;
 import com.etiya.crm.customerservice.entities.concretes.Customer;
 import com.etiya.crm.customerservice.entities.concretes.CustomerAccount;
+import com.etiya.crm.customerservice.entities.concretes.CustomerSearchView;
 import com.etiya.crm.customerservice.mapper.CustomerMapper;
 import com.etiya.crm.shared.events.KafkaTopics;
 import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
@@ -54,6 +56,7 @@ public class CustomerServiceImpl implements CustomerService {
 	private final CustomerFinder customerFinder;
 	private final BillingAccountService billingAccountService;
 	private final CustomerBusinessRules rules;
+	private final LookupCacheService lookupCacheService;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -62,7 +65,27 @@ public class CustomerServiceImpl implements CustomerService {
 		return customerSearchViewRepository
 				.findAll(CustomerSearchSpecifications.search(request.firstName(), request.lastName(),
 						request.tcNo(), request.acctNo(), request.custId(), request.gsm()), pageable)
-				.map(customerMapper::toResponse);
+				.map(this::toTranslatedSearchResponse);
+	}
+
+	/**
+	 * customer_search_view.role, yazilma aninda dondurulmus (donmus) bir string'tir - Kafka
+	 * listener'in/onboarding'in o anki dili neyse o kalir, hicbir zaman aramayi yapan kullanicinin
+	 * dilini yansitmaz. partyRoleTypeId varsa, istekteki dile gore (Accept-Language ->
+	 * LookupCacheServiceImpl'in locale-aware cache key'i) burada YENIDEN cozulur.
+	 */
+	private CustomerSearchResponse toTranslatedSearchResponse(CustomerSearchView searchView) {
+		CustomerSearchResponse response = customerMapper.toResponse(searchView);
+		if (searchView.getPartyRoleTypeId() == null) {
+			return response;
+		}
+		String translatedRole = lookupCacheService.resolveTypeValue(searchView.getPartyRoleTypeId());
+		if (translatedRole.equals(response.role())) {
+			return response;
+		}
+		return new CustomerSearchResponse(response.custId(), response.firstName(), response.middleName(),
+				response.lastName(), response.tcNo(), response.acctNo(), translatedRole, response.gsm(),
+				response.status());
 	}
 
 	@Override

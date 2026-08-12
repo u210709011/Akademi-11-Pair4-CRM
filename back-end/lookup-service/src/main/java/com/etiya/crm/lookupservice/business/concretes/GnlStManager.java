@@ -5,6 +5,7 @@ import com.etiya.crm.shared.contracts.gnlst.CreateGnlStRequest;
 import com.etiya.crm.shared.contracts.gnlst.UpdateGnlStRequest;
 import com.etiya.crm.shared.contracts.gnlst.GnlStResponse;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
+import com.etiya.crm.lookupservice.constants.EntityNames;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlStRepository;
 import com.etiya.crm.lookupservice.entities.concretes.GnlSt;
 import com.etiya.crm.lookupservice.mapper.GnlStMapper;
@@ -40,7 +41,7 @@ public class GnlStManager implements GnlStService {
     @Override
     public GnlStResponse getByEntCodeNameAndShrtCode(String entCodeName, String shrtCode) {
         GnlSt gnlSt = gnlStRepository.findByEntCodeNameAndShrtCode(entCodeName, shrtCode)
-                .orElseThrow(() -> new EntityNotFoundException("GnlSt", entCodeName + "/" + shrtCode));
+                .orElseThrow(() -> new EntityNotFoundException(EntityNames.GNL_ST, entCodeName + "/" + shrtCode));
         return gnlStMapper.toResponse(gnlSt);
     }
 
@@ -73,6 +74,6 @@ public class GnlStManager implements GnlStService {
     }
 
     private GnlSt getEntity(Long id) {
-        return gnlStRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("GnlSt", id));
+        return gnlStRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(EntityNames.GNL_ST, id));
     }
 }

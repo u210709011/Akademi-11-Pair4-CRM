@@ -2,6 +2,7 @@ package com.etiya.crm.productservice.business.concretes;
 
 import com.etiya.crm.productservice.business.abstracts.CampaignService;
 import com.etiya.crm.productservice.business.abstracts.LookupCacheService;
+import com.etiya.crm.productservice.business.abstracts.TranslationService;
 import com.etiya.crm.productservice.business.dtos.requests.Campaign.CreateCampaignRequest;
 import com.etiya.crm.productservice.business.dtos.requests.Campaign.UpdateCampaignRequest;
 import com.etiya.crm.productservice.business.dtos.responses.Campaign.CreatedCampaignResponse;
@@ -21,14 +22,18 @@ import java.util.List;
 @Service
 public class CampaignManager implements CampaignService {
 
+    private static final String ENTITY_NAME = "CMPG";
+
     private final CampaignRepository campaignRepository;
     private final CampaignMapper campaignMapper;
     private final LookupCacheService lookupCacheService;
+    private final TranslationService translationService;
 
-    public CampaignManager(CampaignRepository campaignRepository, CampaignMapper campaignMapper, LookupCacheService lookupCacheService) {
+    public CampaignManager(CampaignRepository campaignRepository, CampaignMapper campaignMapper, LookupCacheService lookupCacheService, TranslationService translationService) {
         this.campaignRepository = campaignRepository;
         this.campaignMapper = campaignMapper;
         this.lookupCacheService = lookupCacheService;
+        this.translationService = translationService;
     }
 
 
@@ -57,13 +62,28 @@ public class CampaignManager implements CampaignService {
     public GetCampaignResponse getById(Long campaignId) {
         Campaign campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new CampaignNotFoundException(campaignId));
-        return campaignMapper.toGetResponse(campaign);
+        GetCampaignResponse response = campaignMapper.toGetResponse(campaign);
+        applyTranslation(response);
+        return response;
     }
 
     @Override
     public List<GetAllCampaignResponse> getAll() {
         List<Campaign> campaigns = campaignRepository.findAll();
-        return campaignMapper.toGetAllResponseList(campaigns);
+        List<GetAllCampaignResponse> responses = campaignMapper.toGetAllResponseList(campaigns);
+        responses.forEach(this::applyTranslation);
+        return responses;
+    }
+
+    /** name/descr taban degerleri Ingilizce'dir - bkz. lookup-service GnlTpManager (ayni desen). */
+    private void applyTranslation(GetCampaignResponse response) {
+        response.setName(translationService.translate(ENTITY_NAME, response.getCampaignId(), "NAME", response.getName()));
+        response.setDescr(translationService.translate(ENTITY_NAME, response.getCampaignId(), "DESCR", response.getDescr()));
+    }
+
+    private void applyTranslation(GetAllCampaignResponse response) {
+        response.setName(translationService.translate(ENTITY_NAME, response.getCampaignId(), "NAME", response.getName()));
+        response.setDescr(translationService.translate(ENTITY_NAME, response.getCampaignId(), "DESCR", response.getDescr()));
     }
 
     @Override

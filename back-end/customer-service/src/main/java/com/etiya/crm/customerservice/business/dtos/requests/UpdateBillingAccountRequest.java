@@ -29,8 +29,7 @@ public record UpdateBillingAccountRequest(
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		String accountDesc,
 
-		@Schema(description = "Musterinin VAR OLAN bir adresinin id'si (bkz. GET .../addresses). newAddress ile birlikte gonderilmez.",
-				example = "null")
+		@Schema(description = "Musterinin var olan bir adresinin id'si. newAddress ile birlikte gonderilmez.")
 		Long addressId,
 
 		@Schema(description = "Hesapla birlikte YENI bir adres olusturulacaksa doldurulur. addressId ile birlikte gonderilmez.")

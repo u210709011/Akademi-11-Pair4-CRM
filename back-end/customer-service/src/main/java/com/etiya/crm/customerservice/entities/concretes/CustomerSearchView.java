@@ -39,6 +39,9 @@ public class CustomerSearchView {
 	/** party-service'in karari (PartyRole.partyRoleTypeId'nin gosterim degeri); sadece PartyEventListener yazar. */
 	private String role;
 
+	/** role'un cozuldugu ham lookup id'si - arama sirasinda istekteki dile gore yeniden cevrilebilmesi icin. */
+	private Long partyRoleTypeId;
+
 	/** contact-info-service'in karari (CUSTOMER + MOBILE_PHONE); sadece ContactMediumEventListener yazar. */
 	private String gsm;
 

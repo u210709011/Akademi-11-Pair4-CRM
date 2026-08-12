@@ -1,10 +1,12 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
 import com.etiya.crm.lookupservice.business.abstracts.GnlTpService;
+import com.etiya.crm.lookupservice.business.abstracts.TranslationService;
 import com.etiya.crm.shared.contracts.gnltp.CreateGnlTpRequest;
 import com.etiya.crm.shared.contracts.gnltp.UpdateGnlTpRequest;
 import com.etiya.crm.shared.contracts.gnltp.GnlTpResponse;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
+import com.etiya.crm.lookupservice.constants.EntityNames;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlTpRepository;
 import com.etiya.crm.lookupservice.entities.concretes.GnlTp;
 import com.etiya.crm.lookupservice.mapper.GnlTpMapper;
@@ -19,29 +21,48 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class GnlTpManager implements GnlTpService {
 
+    private static final String ENTITY_NAME = "GNL_TP";
+
     private final GnlTpRepository gnlTpRepository;
     private final GnlTpMapper gnlTpMapper;
+    private final TranslationService translationService;
 
     @Override
     public List<GnlTpResponse> getAll() {
-        return gnlTpRepository.findAll().stream().map(gnlTpMapper::toResponse).toList();
+        return gnlTpRepository.findAll().stream().map(this::toTranslatedResponse).toList();
     }
 
     @Override
     public List<GnlTpResponse> getAllByEntCodeName(String entCodeName) {
-        return gnlTpRepository.findAllByEntCodeName(entCodeName).stream().map(gnlTpMapper::toResponse).toList();
+        return gnlTpRepository.findAllByEntCodeName(entCodeName).stream().map(this::toTranslatedResponse).toList();
     }
 
     @Override
     public GnlTpResponse getById(Long id) {
-        return gnlTpMapper.toResponse(getEntity(id));
+        return toTranslatedResponse(getEntity(id));
     }
 
     @Override
     public GnlTpResponse getByEntCodeNameAndShrtCode(String entCodeName, String shrtCode) {
         GnlTp gnlTp = gnlTpRepository.findByEntCodeNameAndShrtCode(entCodeName, shrtCode)
-                .orElseThrow(() -> new EntityNotFoundException("GnlTp", entCodeName + "/" + shrtCode));
-        return gnlTpMapper.toResponse(gnlTp);
+                .orElseThrow(() -> new EntityNotFoundException(EntityNames.GNL_TP, entCodeName + "/" + shrtCode));
+        return toTranslatedResponse(gnlTp);
+    }
+
+    /**
+     * name/descr taban degerleri Ingilizce'dir (varsayilan dil) - istekteki dil Ingilizce disi ise
+     * translation tablosundan overlay uygulanir, yoksa taban deger degismeden doner.
+     */
+    private GnlTpResponse toTranslatedResponse(GnlTp gnlTp) {
+        GnlTpResponse response = gnlTpMapper.toResponse(gnlTp);
+        String translatedName = translationService.translate(ENTITY_NAME, gnlTp.getGnlTpId(), "NAME", response.name());
+        String translatedDescr = translationService.translate(ENTITY_NAME, gnlTp.getGnlTpId(), "DESCR", response.descr());
+        if (translatedName.equals(response.name()) && translatedDescr.equals(response.descr())) {
+            return response;
+        }
+        return new GnlTpResponse(response.gnlTpId(), translatedName, translatedDescr, response.shrtCode(),
+                response.entCodeName(), response.entName(), response.active(), response.cdate(), response.cuser(),
+                response.udate(), response.uuser());
     }
 
     @Override
@@ -73,6 +94,6 @@ public class GnlTpManager implements GnlTpService {
     }
 
     private GnlTp getEntity(Long id) {
-        return gnlTpRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("GnlTp", id));
+        return gnlTpRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(EntityNames.GNL_TP, id));
     }
 }

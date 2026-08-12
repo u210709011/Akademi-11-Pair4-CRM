@@ -18,9 +18,8 @@ import jakarta.validation.constraints.Size;
 @Schema(description = "Onboarding sirasinda girilen adres bilgisi (1-5 adet).")
 public record AddressInfo(
 
-		@Schema(description = "lookup-service CITY grubundaki deger id'si - sabit degil, "
-				+ "GET /api/v1/general-types/resolve/CITY/{shrtCode} ile dinamik cozulmelidir "
-				+ "(seed'de tek deger: ANKARA, mevcut ortamda id=5).", example = "5")
+		@Schema(description = "Sehir id'si - GET /api/v1/general-types/resolve/CITY/{shrtCode} ile alinmalidir.",
+				example = "5")
 		@NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		@ExistsInLookupGroup(group = GnlTpGroups.CITY, message = "{" + MessageKeys.CITY_INVALID + "}")
 		Long cityId,
@@ -34,8 +33,7 @@ public record AddressInfo(
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		String buildingName, // House/Flat Number bu alana yazilir (ADDR.BLDG_NAME)
 
-		@Schema(description = "Serbest metin aciklama - zorunlu (contact-info-service.CreateAddressRequest.addrDesc @NotBlank).",
-				example = "Is yeri")
+		@Schema(description = "Serbest metin aciklama - zorunlu", example = "Is yeri")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		String addressDesc) {
 }

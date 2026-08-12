@@ -5,7 +5,8 @@ import com.etiya.crm.shared.contracts.rsrcspec.CreateRsrcSpecRequest;
 import com.etiya.crm.shared.contracts.rsrcspec.UpdateRsrcSpecRequest;
 import com.etiya.crm.shared.contracts.rsrcspec.RsrcSpecResponse;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
-import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlStRepository;
+import com.etiya.crm.lookupservice.business.rules.GnlStExistenceRule;
+import com.etiya.crm.lookupservice.constants.EntityNames;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.RsrcSpecRepository;
 import com.etiya.crm.lookupservice.entities.concretes.RsrcSpec;
 import com.etiya.crm.lookupservice.mapper.RsrcSpecMapper;
@@ -21,7 +22,7 @@ import java.util.List;
 public class RsrcSpecManager implements RsrcSpecService {
 
     private final RsrcSpecRepository rsrcSpecRepository;
-    private final GnlStRepository gnlStRepository;
+    private final GnlStExistenceRule gnlStExistenceRule;
     private final RsrcSpecMapper rsrcSpecMapper;
 
     @Override
@@ -37,7 +38,7 @@ public class RsrcSpecManager implements RsrcSpecService {
     @Override
     @Transactional
     public RsrcSpecResponse add(CreateRsrcSpecRequest request) {
-        checkStatusExists(request.stId());
+        gnlStExistenceRule.ensureExists(request.stId());
         RsrcSpec rsrcSpec = rsrcSpecMapper.toEntity(request);
         return rsrcSpecMapper.toResponse(rsrcSpecRepository.save(rsrcSpec));
     }
@@ -45,7 +46,7 @@ public class RsrcSpecManager implements RsrcSpecService {
     @Override
     @Transactional
     public RsrcSpecResponse update(Long id, UpdateRsrcSpecRequest request) {
-        checkStatusExists(request.stId());
+        gnlStExistenceRule.ensureExists(request.stId());
         RsrcSpec rsrcSpec = getEntity(id);
         rsrcSpec.setName(request.name());
         rsrcSpec.setDescr(request.descr());
@@ -61,12 +62,6 @@ public class RsrcSpecManager implements RsrcSpecService {
     }
 
     private RsrcSpec getEntity(Long id) {
-        return rsrcSpecRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("RsrcSpec", id));
-    }
-
-    private void checkStatusExists(Long stId) {
-        if (!gnlStRepository.existsById(stId)) {
-            throw new EntityNotFoundException("GnlSt", stId);
-        }
+        return rsrcSpecRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(EntityNames.RSRC_SPEC, id));
     }
 }

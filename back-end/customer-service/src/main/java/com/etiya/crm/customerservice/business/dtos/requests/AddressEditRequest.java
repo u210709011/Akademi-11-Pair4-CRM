@@ -18,9 +18,8 @@ import jakarta.validation.constraints.Size;
 		+ "primary=true gonderilirse musterinin diger adreslerinin primary'si otomatik false yapilir (tek primary kurali).")
 public record AddressEditRequest(
 
-		@Schema(description = "lookup-service CITY grubundaki deger id'si - sabit degil, "
-				+ "GET /api/v1/general-types/resolve/CITY/{shrtCode} ile dinamik cozulmelidir "
-				+ "(seed'de tek deger: ANKARA, mevcut ortamda id=5).", example = "5")
+		@Schema(description = "Sehir id'si - GET /api/v1/general-types/resolve/CITY/{shrtCode} ile alinmalidir.",
+				example = "5")
 		@NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		@ExistsInLookupGroup(group = GnlTpGroups.CITY, message = "{" + MessageKeys.CITY_INVALID + "}")
 		Long cityId,
@@ -34,8 +33,7 @@ public record AddressEditRequest(
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		String buildingName,
 
-		@Schema(description = "Serbest metin aciklama - zorunlu (contact-info-service.CreateAddressRequest/UpdateAddressRequest.addrDesc @NotBlank).",
-				example = "Ev adresi")
+		@Schema(description = "Serbest metin aciklama - zorunlu", example = "Ev adresi")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		String addressDesc,
 

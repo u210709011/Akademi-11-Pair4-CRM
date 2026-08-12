@@ -29,6 +29,7 @@ import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchRespo
 import com.etiya.crm.customerservice.business.dtos.responses.IdentityVerificationResponse;
 import com.etiya.crm.customerservice.constants.MessageKeys;
 import com.etiya.crm.customerservice.constants.Roles;
+import com.etiya.crm.customerservice.constants.SwaggerText;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -50,7 +51,7 @@ import lombok.RequiredArgsConstructor;
  * bu annotation gerekli - method-parameter validation'i tetikler (ConstraintViolationException,
  * bkz. GlobalExceptionHandler).
  */
-@Tag(name = "Customers", description = "Musteri onboarding, arama ve yasam dongusu yonetimi")
+@Tag(name = SwaggerText.CUSTOMER_TAG_NAME, description = SwaggerText.CUSTOMER_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
@@ -62,68 +63,53 @@ public class CustomerController {
 	private final CustomerOnboardingService onboardingService;
 
 	// ACC-009..013: adres/kontakt adimlarindan once kimlik dogrulama + tekillik kontrolu.
-	@Operation(summary = "Kimlik dogrulama (KPS) + TC no tekillik kontrolu",
-			description = "DB'ye hicbir sey yazmaz, sadece dogrular. Onboarding formunun ilk adiminda "
-					+ "(adres/contact girilmeden once) cagrilir; ayni dogrulama onboard() icinde de "
-					+ "tekrar calisir (defense in depth). Basarisiz olursa 422 (kimlik dogrulanamadi) "
-					+ "veya 409 (TC no zaten kayitli) doner.")
+	@Operation(summary = SwaggerText.VERIFY_IDENTITY_SUMMARY, description = SwaggerText.VERIFY_IDENTITY_DESCRIPTION)
 	@PostMapping("/onboarding/verify-identity")
 	public ResponseEntity<IdentityVerificationResponse> verifyIdentity(@Valid @RequestBody IndividualInfo individual) {
 		return ResponseEntity.ok(onboardingService.verifyIdentity(individual));
 	}
 
 	// ACC-023: Create butonu, tum onboarding'i (party + customer + contact/address) yapar.
-	@Operation(summary = "Yeni musteri olustur (onboarding)",
-			description = "Tek istekte uc servise yazar: party-service (kisi+rol), customer-service "
-					+ "(musteri + otomatik 223 tipi hesap), contact-info-service (adres+iletisim). "
-					+ "Saga: bir adim basarisiz olursa oncekiler otomatik geri alinir (compensation).")
+	@Operation(summary = SwaggerText.ONBOARD_CUSTOMER_SUMMARY, description = SwaggerText.ONBOARD_CUSTOMER_DESCRIPTION)
 	@PostMapping("/onboarding")
 	public ResponseEntity<CustomerResponse> onboard(@Valid @RequestBody OnboardCustomerRequest request) {
 		CustomerResponse response = onboardingService.onboard(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
-	@Operation(summary = "Musteriyi id ile getir")
+	@Operation(summary = SwaggerText.GET_CUSTOMER_BY_ID_SUMMARY)
 	@GetMapping("/{custId}")
 	public ResponseEntity<CustomerResponse> getById(@PathVariable Long custId) {
 		return ResponseEntity.ok(customerService.getById(custId));
 	}
 
-	@Operation(summary = "Musteri ara",
-			description = "firstName/lastName ikisi birlikte verilirse AND ile tek bir grup olusturur; "
-					+ "bu grup ile tcNo/acctNo/custId birbirine ve isim grubuna her zaman OR ile baglanir "
-					+ "(ör. hem ad-soyad hem tcNo verilirse, ya ada-soyada UYAN ya da o tcNo'ya sahip "
-					+ "musteriler doner). Hicbir parametre verilmezse tum (aktif) musteriler doner. "
-					+ "Soft-delete edilmis musteriler sonuca dahil olmaz. Varsayilan sayfa boyutu "
-					+ "10 (front-end'in sayfa basina gosterdigi kayit sayisiyla ayni) - ilk 10 kayit "
-					+ "dogrudan doner, kalani page/size ile sayfalanir.")
+	@Operation(summary = SwaggerText.SEARCH_CUSTOMER_SUMMARY, description = SwaggerText.SEARCH_CUSTOMER_DESCRIPTION)
 	@GetMapping("/search")
 	public ResponseEntity<Page<CustomerSearchResponse>> search(
-			@Parameter(description = "Ad (kismi/prefix eslesme)", example = "Ahmet")
+			@Parameter(description = SwaggerText.SEARCH_FIRST_NAME_PARAM_DESCRIPTION, example = "Ahmet")
 			@Size(max = 50, message = "{" + MessageKeys.SEARCH_FIRST_NAME_INVALID + "}")
 			@RequestParam(required = false) String firstName,
-			@Parameter(description = "Soyad (kismi/prefix eslesme)", example = "Yilmaz")
+			@Parameter(description = SwaggerText.SEARCH_LAST_NAME_PARAM_DESCRIPTION, example = "Yilmaz")
 			@Size(max = 50, message = "{" + MessageKeys.SEARCH_LAST_NAME_INVALID + "}")
 			@RequestParam(required = false) String lastName,
-			@Parameter(description = "T.C. Kimlik No (tam eslesme)", example = "10000000146")
+			@Parameter(description = SwaggerText.SEARCH_TC_NO_PARAM_DESCRIPTION, example = "10000000146")
 			@Pattern(regexp = "^[0-9]{11}$", message = "{" + MessageKeys.SEARCH_NATIONAL_ID_INVALID + "}")
 			@RequestParam(required = false) String tcNo,
-			@Parameter(description = "Hesap no (tam eslesme), sadece rakam.", example = "1")
+			@Parameter(description = SwaggerText.SEARCH_ACCT_NO_PARAM_DESCRIPTION, example = "1")
 			@Pattern(regexp = "^[0-9]+$", message = "{" + MessageKeys.SEARCH_ACCOUNT_NUMBER_INVALID + "}")
 			@RequestParam(required = false) String acctNo,
-			@Parameter(description = "Musteri no (tam eslesme), CUST-{custId} onekindeki sayisal kisim.", example = "1")
+			@Parameter(description = SwaggerText.SEARCH_CUST_ID_PARAM_DESCRIPTION, example = "1")
 			@RequestParam(required = false) Long custId,
-			@Parameter(description = "GSM no (tam eslesme), basinda ulke kodu/sifir olmadan rakamlar.", example = "5551234567")
+			@Parameter(description = SwaggerText.SEARCH_GSM_PARAM_DESCRIPTION, example = "5551234567")
 			@Pattern(regexp = "^5[0-9]{9}$", message = "{" + MessageKeys.SEARCH_GSM_INVALID + "}")
 			@RequestParam(required = false) String gsm,
-			@Parameter(description = "Sayfa numarasi (0'dan baslar)", example = "0")
+			@Parameter(description = SwaggerText.PAGE_PARAM_DESCRIPTION, example = "0")
 			@RequestParam(defaultValue = "0") int page,
-			@Parameter(description = "Sayfa basina kayit sayisi", example = "10")
+			@Parameter(description = SwaggerText.SIZE_PARAM_DESCRIPTION, example = "10")
 			@RequestParam(defaultValue = "10") int size,
-			@Parameter(description = "Siralama alani - custId/firstName/middleName/lastName/tcNo/role disinda "
-					+ "bir deger verilirse ya da hic verilmezse siralama uygulanmaz.", example = "lastName")
+			@Parameter(description = SwaggerText.SEARCH_SORT_BY_PARAM_DESCRIPTION, example = "lastName")
 			@RequestParam(required = false) String sortBy,
-			@Parameter(description = "Siralama yonu", example = "asc")
+			@Parameter(description = SwaggerText.SEARCH_SORT_DIR_PARAM_DESCRIPTION, example = "asc")
 			@RequestParam(defaultValue = "asc") String sortDir) {
 		CustomerSearchRequest request = new CustomerSearchRequest(firstName, lastName, tcNo, acctNo, custId, gsm);
 		return ResponseEntity.ok(customerService.search(request, buildPageable(page, size, sortBy, sortDir)));
@@ -147,10 +133,8 @@ public class CustomerController {
 		return PageRequest.of(page, size, Sort.by(direction, sortBy));
 	}
 
-	@Operation(summary = "Musteriyi sil (soft-delete)",
-			description = "Fiziksel silme yapilmaz; musteri ve hesaplari pasife alinir, arama "
-					+ "sonuclarindan cikar. party-service'e CustomerDeleted event'i (Kafka, async) "
-					+ "yayinlanir - party tarafi bu event'i dinleyip kendi kaydini pasiflestirir.")
+	@Operation(summary = SwaggerText.SOFT_DELETE_CUSTOMER_SUMMARY,
+			description = SwaggerText.SOFT_DELETE_CUSTOMER_DESCRIPTION)
 	@DeleteMapping("/{custId}")
 	public ResponseEntity<Void> softDelete(@PathVariable Long custId) {
 		customerService.softDelete(custId);

@@ -8,14 +8,9 @@ import com.etiya.crm.productservice.business.dtos.responses.Product.CreatedProdu
 import com.etiya.crm.productservice.business.dtos.responses.Product.GetAllProductResponse;
 import com.etiya.crm.productservice.business.dtos.responses.Product.GetProductResponse;
 import com.etiya.crm.productservice.business.dtos.responses.Product.UpdatedProductResponse;
-import com.etiya.crm.productservice.business.exceptions.CampaignNotFoundException;
 import com.etiya.crm.productservice.business.exceptions.ProductNotFoundException;
-import com.etiya.crm.productservice.business.exceptions.ProductOfferingNotFoundException;
-import com.etiya.crm.productservice.business.exceptions.ProductSpecNotFoundException;
-import com.etiya.crm.productservice.dataAccess.abstracts.CampaignRepository;
-import com.etiya.crm.productservice.dataAccess.abstracts.ProductOfferingRepository;
+import com.etiya.crm.productservice.business.rules.ProductRelationRules;
 import com.etiya.crm.productservice.dataAccess.abstracts.ProductRepository;
-import com.etiya.crm.productservice.dataAccess.abstracts.ProductSpecRepository;
 import com.etiya.crm.productservice.entities.concretes.Campaign;
 import com.etiya.crm.productservice.entities.concretes.Product;
 import com.etiya.crm.productservice.entities.concretes.ProductOffering;
@@ -31,30 +26,22 @@ import java.util.List;
 @Service
 public class ProductManager implements ProductService {
     private final ProductRepository productRepository;
-    private final ProductOfferingRepository productOfferingRepository;
-    private final ProductSpecRepository productSpecRepository;
-    private final CampaignRepository campaignRepository;
+    private final ProductRelationRules productRelationRules;
     private final ProductMapper productMapper;
     private final LookupCacheService lookupCacheService;
 
-    public ProductManager(ProductRepository productRepository, ProductOfferingRepository productOfferingRepository, ProductSpecRepository productSpecRepository, CampaignRepository campaignRepository, ProductMapper productMapper, LookupCacheService lookupCacheService) {
+    public ProductManager(ProductRepository productRepository, ProductRelationRules productRelationRules, ProductMapper productMapper, LookupCacheService lookupCacheService) {
         this.productRepository = productRepository;
-        this.productOfferingRepository = productOfferingRepository;
-        this.productSpecRepository = productSpecRepository;
-        this.campaignRepository = campaignRepository;
+        this.productRelationRules = productRelationRules;
         this.productMapper = productMapper;
         this.lookupCacheService = lookupCacheService;
     }
     @Override
     public CreatedProductResponse create(CreateProductRequest request) {
 
-        ProductOffering productOffering = productOfferingRepository.findById(request.getProductOfferingId())
-                .orElseThrow(() -> new ProductOfferingNotFoundException(request.getProductOfferingId()));
+        ProductOffering productOffering = productRelationRules.getProductOffering(request.getProductOfferingId());
 
-
-        ProductSpec productSpec = productSpecRepository.findById(request.getProductSpecId())
-                .orElseThrow(() -> new ProductSpecNotFoundException(request.getProductSpecId()));
-
+        ProductSpec productSpec = productRelationRules.getProductSpec(request.getProductSpecId());
 
         Product product = productMapper.toEntity(request);
 
@@ -67,15 +54,13 @@ public class ProductManager implements ProductService {
 
         // OPSİYONEL ilişki: parentProduct (varsa bul + set)
         if (request.getParentProductId() != null) {
-            Product parentProduct = productRepository.findById(request.getParentProductId())
-                    .orElseThrow(() -> new ProductNotFoundException(request.getParentProductId()));
+            Product parentProduct = productRelationRules.getParentProduct(request.getParentProductId());
             product.setParentProduct(parentProduct);
         }
 
         // OPSİYONEL ilişki: campaign (varsa bul + set)
         if (request.getCampaignId() != null) {
-            Campaign campaign = campaignRepository.findById(request.getCampaignId())
-                    .orElseThrow(() -> new CampaignNotFoundException(request.getCampaignId()));
+            Campaign campaign = productRelationRules.getCampaign(request.getCampaignId());
             product.setCampaign(campaign);
         }
         Product saved = productRepository.save(product); // id tanımlandı
@@ -90,25 +75,21 @@ public class ProductManager implements ProductService {
         product.setStatusId(
                 lookupCacheService.resolveStatusIdByCode(GnlStGroups.PRODUCT, request.getStatusCode()));
 
-        ProductOffering productOffering = productOfferingRepository.findById(request.getProductOfferingId())
-                .orElseThrow(() -> new ProductOfferingNotFoundException(request.getProductOfferingId()));
+        ProductOffering productOffering = productRelationRules.getProductOffering(request.getProductOfferingId());
         product.setProductOffering(productOffering);
 
-        ProductSpec productSpec = productSpecRepository.findById(request.getProductSpecId())
-                .orElseThrow(() -> new ProductSpecNotFoundException(request.getProductSpecId()));
+        ProductSpec productSpec = productRelationRules.getProductSpec(request.getProductSpecId());
         product.setProductSpec(productSpec);
 
         if (request.getParentProductId() != null) {
-            Product parentProduct = productRepository.findById(request.getParentProductId())
-                    .orElseThrow(() -> new ProductNotFoundException(request.getParentProductId()));
+            Product parentProduct = productRelationRules.getParentProduct(request.getParentProductId());
             product.setParentProduct(parentProduct);
         } else {
             product.setParentProduct(null);
         }
 
         if (request.getCampaignId() != null) {
-            Campaign campaign = campaignRepository.findById(request.getCampaignId())
-                    .orElseThrow(() -> new CampaignNotFoundException(request.getCampaignId()));
+            Campaign campaign = productRelationRules.getCampaign(request.getCampaignId());
             product.setCampaign(campaign);
         } else {
             product.setCampaign(null);

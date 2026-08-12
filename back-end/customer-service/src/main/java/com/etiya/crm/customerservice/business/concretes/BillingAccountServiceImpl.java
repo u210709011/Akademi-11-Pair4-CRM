@@ -123,7 +123,7 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 		rules.ensureAccountIsBillingType(account, lookupResolver.resolveBillingAccountTypeId());
 
 		Long activeStatusId = lookupResolver.resolveActiveAccountStatusId();
-		Long targetStatusId = "ACTIVE".equals(request.status()) ? activeStatusId
+		Long targetStatusId = UpdateBillingAccountStatusRequest.ACTIVE.equals(request.status()) ? activeStatusId
 				: lookupResolver.resolvePassiveAccountStatusId();
 		account.setAcctStId(targetStatusId);
 		account = customerAccountRepository.save(account);

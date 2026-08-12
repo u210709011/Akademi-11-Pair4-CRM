@@ -64,6 +64,7 @@ public class PartyEventHandler {
 		view.setLastName(event.lastName());
 		view.setTcNo(event.nationalId());
 		view.setRole(resolveRole(event.partyRoleTypeId()));
+		view.setPartyRoleTypeId(event.partyRoleTypeId());
 		view.setDeleted(!customer.isActive());
 		customerSearchViewRepository.save(view);
 	}

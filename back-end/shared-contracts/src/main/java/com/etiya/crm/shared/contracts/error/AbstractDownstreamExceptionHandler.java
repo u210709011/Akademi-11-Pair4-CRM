@@ -54,6 +54,9 @@ public abstract class AbstractDownstreamExceptionHandler {
 	/** Cause zincirinde sonsuz donguye karsi savunma - gercek zincirler bundan cok daha kisa. */
 	private static final int MAX_UNWRAP_DEPTH = 10;
 
+	/** ex.request() null geldiginde (Feign istegi kuramadan basarisiz oldugunda) log'da yerini tutar. */
+	private static final String UNKNOWN_REQUEST_DESCRIPTION = "unknown";
+
 	private final ObjectMapper objectMapper;
 
 	protected AbstractDownstreamExceptionHandler(ObjectMapper objectMapper) {
@@ -118,7 +121,7 @@ public abstract class AbstractDownstreamExceptionHandler {
 		if (status == null) {
 			status = HttpStatus.BAD_GATEWAY;
 		}
-		String requestDescription = ex.request() == null ? "unknown"
+		String requestDescription = ex.request() == null ? UNKNOWN_REQUEST_DESCRIPTION
 				: ex.request().httpMethod() + " " + ex.request().url();
 		log.warn(LogMessages.DOWNSTREAM_CALL_FAILED_LOG, requestDescription, ex.status(), ex.getMessage());
 		String message = extractDownstreamMessage(ex).orElseGet(this::downstreamCallFailedMessage);

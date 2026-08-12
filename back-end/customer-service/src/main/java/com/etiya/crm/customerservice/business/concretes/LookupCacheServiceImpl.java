@@ -43,9 +43,14 @@ public class LookupCacheServiceImpl implements LookupCacheService {
 		return lookupClient.getTypeValueByTableName(tableName).fieldName();
 	}
 
+	// Cache key'e istekteki dil dahil edilir - aksi halde Ingilizce bir cagri sonucu Turkce bir
+	// istek icin (ya da tam tersi) yanlislikla cache'ten donerdi. Kafka listener'lar gibi istek
+	// baglami olmayan cagrilarda LocaleContextHolder JVM varsayilanini doner - zararsizdir, cunku
+	// AcceptLanguagePropagationInterceptor o durumda lookup-service'e hicbir header gondermez ve
+	// taban (Ingilizce) deger gelir; sadece ayri (kullanilmayan) bir cache girdisi olusur.
 	@Override
 	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
-			key = "'value_' + #id")
+			key = "'value_' + #id + '_' + T(org.springframework.context.i18n.LocaleContextHolder).getLocale().toLanguageTag()")
 	public String resolveTypeValue(Long id) {
 		return lookupClient.getTypeById(id).name();
 	}

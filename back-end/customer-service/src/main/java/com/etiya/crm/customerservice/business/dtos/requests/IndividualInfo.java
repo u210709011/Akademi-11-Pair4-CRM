@@ -35,7 +35,7 @@ public record IndividualInfo(
 		String lastName,
 
 		@Schema(description = "Dogum tarihi, dd/MM/yyyy formatinda. 01/01/1900 oncesi ya da bugunden sonrasi gecersiz.",
-				example = "15/06/1990", pattern = "dd/MM/yyyy")
+				example = "15/06/1990")
 		@NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
 		LocalDate birthDate,

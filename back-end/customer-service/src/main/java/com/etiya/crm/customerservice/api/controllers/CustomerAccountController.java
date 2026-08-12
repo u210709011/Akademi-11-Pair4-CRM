@@ -23,6 +23,7 @@ import com.etiya.crm.customerservice.business.dtos.requests.UpdateBillingAccount
 import com.etiya.crm.customerservice.business.dtos.responses.AddressBillingAccountsResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerAccountResponse;
 import com.etiya.crm.customerservice.constants.Roles;
+import com.etiya.crm.customerservice.constants.SwaggerText;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,7 +32,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /** Musterinin fatura hesaplari (Customer Account tab / Create Billing Account) uc noktalari. */
-@Tag(name = "Customers", description = "Musteri fatura hesabi yonetimi")
+@Tag(name = SwaggerText.CUSTOMER_TAG_NAME, description = SwaggerText.CUSTOMER_ACCOUNT_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
@@ -40,22 +41,18 @@ public class CustomerAccountController {
 
 	private final BillingAccountService billingAccountService;
 
-	@Operation(summary = "Musterinin hesaplarini listele",
-			description = "Onboarding'de otomatik acilan varsayilan hesap + sonradan eklenen billing "
-					+ "account'lar. ACC-009: varsayilan sayfa boyutu 5, ilk 5 kayit dogrudan doner, kalani "
-					+ "page/size ile sayfalanir.")
+	@Operation(summary = SwaggerText.GET_ACCOUNTS_SUMMARY, description = SwaggerText.GET_ACCOUNTS_DESCRIPTION)
 	@GetMapping("/{custId}/accounts")
 	public ResponseEntity<Page<CustomerAccountResponse>> getAccounts(@PathVariable Long custId,
-			@Parameter(description = "Sayfa numarasi (0'dan baslar)", example = "0")
+			@Parameter(description = SwaggerText.PAGE_PARAM_DESCRIPTION, example = "0")
 			@RequestParam(defaultValue = "0") int page,
-			@Parameter(description = "Sayfa basina kayit sayisi", example = "5")
+			@Parameter(description = SwaggerText.SIZE_PARAM_DESCRIPTION, example = "5")
 			@RequestParam(defaultValue = "5") int size) {
 		return ResponseEntity.ok(billingAccountService.getAccounts(custId, PageRequest.of(page, size)));
 	}
 
-	@Operation(summary = "Musteriye yeni billing account ekle",
-			description = "addressId (var olan adres) veya newAddress (yeni adres) alanlarindan tam "
-					+ "olarak biri doldurulmali - bkz. CreateBillingAccountRequest.")
+	@Operation(summary = SwaggerText.CREATE_BILLING_ACCOUNT_SUMMARY,
+			description = SwaggerText.CREATE_BILLING_ACCOUNT_DESCRIPTION)
 	@PostMapping("/{custId}/accounts")
 	public ResponseEntity<CustomerAccountResponse> createBillingAccount(@PathVariable Long custId,
 			@Valid @RequestBody CreateBillingAccountRequest request) {
@@ -63,48 +60,42 @@ public class CustomerAccountController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
-	@Operation(summary = "Billing account guncelle",
-			description = "Sadece Account Name/Account Description/adres guncellenebilir - accountNo ve "
-					+ "accountTpId DEGISTIRILEMEZ. addressId (var olan adres) veya newAddress (yeni adres) "
-					+ "alanlarindan tam olarak biri doldurulmali. IDOR: baska musterinin hesabi 404 doner.")
+	@Operation(summary = SwaggerText.UPDATE_BILLING_ACCOUNT_SUMMARY,
+			description = SwaggerText.UPDATE_BILLING_ACCOUNT_DESCRIPTION)
 	@PutMapping("/{custId}/accounts/{accountId}")
 	public ResponseEntity<CustomerAccountResponse> updateBillingAccount(@PathVariable Long custId,
-			@Parameter(description = "Guncellenecek hesabin id'si") @PathVariable Long accountId,
+			@Parameter(description = SwaggerText.UPDATE_BILLING_ACCOUNT_ACCOUNT_ID_PARAM_DESCRIPTION) @PathVariable Long accountId,
 			@Valid @RequestBody UpdateBillingAccountRequest request) {
 		return ResponseEntity.ok(billingAccountService.updateBillingAccount(custId, accountId, request));
 	}
 
-	@Operation(summary = "Billing account aktiflik durumunu degistir (ACTIVE<->PASSIVE)",
-			description = "Soft-delete DEGILDIR (bkz. DELETE ucu). Varsayilan (CUST_ACCT tipi) hesabin durumu "
-					+ "degistirilemez, DEL durumundaki hesap icin 404 doner. IDOR: baska musterinin hesabi 404 doner.")
+	@Operation(summary = SwaggerText.UPDATE_BILLING_ACCOUNT_STATUS_SUMMARY,
+			description = SwaggerText.UPDATE_BILLING_ACCOUNT_STATUS_DESCRIPTION)
 	@PatchMapping("/{custId}/accounts/{accountId}/status")
 	public ResponseEntity<CustomerAccountResponse> updateBillingAccountStatus(@PathVariable Long custId,
-			@Parameter(description = "Durumu degistirilecek hesabin id'si") @PathVariable Long accountId,
+			@Parameter(description = SwaggerText.UPDATE_BILLING_ACCOUNT_STATUS_ACCOUNT_ID_PARAM_DESCRIPTION) @PathVariable Long accountId,
 			@Valid @RequestBody UpdateBillingAccountStatusRequest request) {
 		return ResponseEntity.ok(billingAccountService.updateBillingAccountStatus(custId, accountId, request));
 	}
 
-	@Operation(summary = "Billing account sil (soft-delete)",
-			description = "Aktif hesap silinemez (409, 'This billing account is active and cannot be "
-					+ "deleted.'). Pasif hesaba bagli aktif urun varsa da silinemez (409, ACC-004 - order-service'e sorulur). IDOR: baska musterinin hesabi 404 doner.")
+	@Operation(summary = SwaggerText.DELETE_BILLING_ACCOUNT_SUMMARY,
+			description = SwaggerText.DELETE_BILLING_ACCOUNT_DESCRIPTION)
 	@DeleteMapping("/{custId}/accounts/{accountId}")
 	public ResponseEntity<Void> deleteBillingAccount(@PathVariable Long custId,
-			@Parameter(description = "Silinecek hesabin id'si") @PathVariable Long accountId) {
+			@Parameter(description = SwaggerText.DELETE_BILLING_ACCOUNT_ACCOUNT_ID_PARAM_DESCRIPTION) @PathVariable Long accountId) {
 		billingAccountService.deleteBillingAccount(custId, accountId);
 		return ResponseEntity.noContent().build();
 	}
 
-	@Operation(summary = "Bir adresin herhangi bir hesapta kullanilip kullanilmadigini kontrol et",
-			description = "contact-info-service'in bir adresi silmeden once soracagi varlik kontrolu. "
-					+ "custId altinda degil: silme aninda bilinen tek bilgi addressId'dir.")
+	@Operation(summary = SwaggerText.EXISTS_ACCOUNT_BY_ADDRESS_SUMMARY,
+			description = SwaggerText.EXISTS_ACCOUNT_BY_ADDRESS_DESCRIPTION)
 	@GetMapping("/accounts/exists-by-address/{addressId}")
 	public ResponseEntity<Boolean> existsAccountByAddress(@PathVariable Long addressId) {
 		return ResponseEntity.ok(billingAccountService.existsAccountByAddressId(addressId));
 	}
 
-	@Operation(summary = "Bir adrese bagli TUM billing account'lari (sayi + liste) getir",
-			description = "exists-by-address'in genisletilmis hali - contact-info-service'in boolean check'ini "
-					+ "bozmamak icin ayri bir uc. Front'ta gosterilmese bile ic kullanim/ileride admin ekrani icin.")
+	@Operation(summary = SwaggerText.GET_ACCOUNTS_BY_ADDRESS_SUMMARY,
+			description = SwaggerText.GET_ACCOUNTS_BY_ADDRESS_DESCRIPTION)
 	@GetMapping("/accounts/by-address/{addressId}")
 	public ResponseEntity<AddressBillingAccountsResponse> getAccountsByAddress(@PathVariable Long addressId) {
 		return ResponseEntity.ok(billingAccountService.getAccountsByAddressId(addressId));

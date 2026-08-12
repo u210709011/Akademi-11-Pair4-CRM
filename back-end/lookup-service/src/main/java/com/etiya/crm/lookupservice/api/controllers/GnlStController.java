@@ -1,6 +1,7 @@
 package com.etiya.crm.lookupservice.api.controllers;
 
 import com.etiya.crm.lookupservice.business.abstracts.GnlStService;
+import com.etiya.crm.lookupservice.constants.SwaggerText;
 import com.etiya.crm.shared.contracts.gnlst.CreateGnlStRequest;
 import com.etiya.crm.shared.contracts.gnlst.UpdateGnlStRequest;
 import com.etiya.crm.shared.contracts.gnlst.GnlStResponse;
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "General Statuses (GNL_ST)", description = "Genel durum grubu tanimlari CRUD")
+@Tag(name = SwaggerText.GNL_ST_TAG_NAME, description = SwaggerText.GNL_ST_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/general-statuses")
 @RequiredArgsConstructor
@@ -30,9 +31,7 @@ public class GnlStController {
 
     private final GnlStService gnlStService;
 
-    @Operation(summary = "Durum degerlerini listele",
-            description = "entCodeName verilirse sadece o gruba ait degerler doner (orn. CUST_STATUS); "
-                    + "verilmezse TUMU doner.")
+    @Operation(summary = SwaggerText.GNL_ST_GET_ALL_SUMMARY, description = SwaggerText.GNL_ST_GET_ALL_DESCRIPTION)
     @GetMapping
     public ResponseEntity<List<GnlStResponse>> getAll(@RequestParam(required = false) String entCodeName) {
         if (entCodeName != null) {
@@ -41,33 +40,32 @@ public class GnlStController {
         return ResponseEntity.ok(gnlStService.getAll());
     }
 
-    @Operation(summary = "Durum degerini id ile getir")
+    @Operation(summary = SwaggerText.GNL_ST_GET_BY_ID_SUMMARY)
     @GetMapping("/{id}")
     public ResponseEntity<GnlStResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(gnlStService.getById(id));
     }
 
-    @Operation(summary = "Durum degerini grup+kisa kod ile coz",
-            description = "Kod bazli erisim. Ornek: GET /api/v1/general-statuses/resolve/CUST_STATUS/ACTIVE")
+    @Operation(summary = SwaggerText.GNL_ST_RESOLVE_SUMMARY, description = SwaggerText.GNL_ST_RESOLVE_DESCRIPTION)
     @GetMapping("/resolve/{entCodeName}/{shrtCode}")
     public ResponseEntity<GnlStResponse> getByEntCodeNameAndShrtCode(
             @PathVariable String entCodeName, @PathVariable String shrtCode) {
         return ResponseEntity.ok(gnlStService.getByEntCodeNameAndShrtCode(entCodeName, shrtCode));
     }
 
-    @Operation(summary = "Yeni durum grubu ekle")
+    @Operation(summary = SwaggerText.GNL_ST_ADD_SUMMARY)
     @PostMapping
     public ResponseEntity<GnlStResponse> add(@Valid @RequestBody CreateGnlStRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(gnlStService.add(request));
     }
 
-    @Operation(summary = "Durum grubunu guncelle")
+    @Operation(summary = SwaggerText.GNL_ST_UPDATE_SUMMARY)
     @PutMapping("/{id}")
     public ResponseEntity<GnlStResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateGnlStRequest request) {
         return ResponseEntity.ok(gnlStService.update(id, request));
     }
 
-    @Operation(summary = "Durum grubunu sil (soft-delete)")
+    @Operation(summary = SwaggerText.GNL_ST_DELETE_SUMMARY)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         gnlStService.delete(id);

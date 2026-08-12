@@ -1,6 +1,7 @@
 package com.etiya.crm.lookupservice.api.controllers;
 
 import com.etiya.crm.lookupservice.business.abstracts.GnlCharService;
+import com.etiya.crm.lookupservice.constants.SwaggerText;
 import com.etiya.crm.shared.contracts.gnlchar.CreateGnlCharRequest;
 import com.etiya.crm.shared.contracts.gnlchar.UpdateGnlCharRequest;
 import com.etiya.crm.shared.contracts.gnlchar.GnlCharResponse;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Characteristics (GNL_CHAR)", description = "Karakteristik tanimlari CRUD")
+@Tag(name = SwaggerText.GNL_CHAR_TAG_NAME, description = SwaggerText.GNL_CHAR_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/characteristics")
 @RequiredArgsConstructor
@@ -29,31 +30,31 @@ public class GnlCharController {
 
     private final GnlCharService gnlCharService;
 
-    @Operation(summary = "Tum karakteristikleri listele")
+    @Operation(summary = SwaggerText.GNL_CHAR_GET_ALL_SUMMARY)
     @GetMapping
     public ResponseEntity<List<GnlCharResponse>> getAll() {
         return ResponseEntity.ok(gnlCharService.getAll());
     }
 
-    @Operation(summary = "Karakteristigi id ile getir")
+    @Operation(summary = SwaggerText.GNL_CHAR_GET_BY_ID_SUMMARY)
     @GetMapping("/{id}")
     public ResponseEntity<GnlCharResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(gnlCharService.getById(id));
     }
 
-    @Operation(summary = "Yeni karakteristik ekle")
+    @Operation(summary = SwaggerText.GNL_CHAR_ADD_SUMMARY)
     @PostMapping
     public ResponseEntity<GnlCharResponse> add(@Valid @RequestBody CreateGnlCharRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(gnlCharService.add(request));
     }
 
-    @Operation(summary = "Karakteristigi guncelle", description = "shrtCode degistirilemez.")
+    @Operation(summary = SwaggerText.GNL_CHAR_UPDATE_SUMMARY, description = SwaggerText.GNL_CHAR_UPDATE_DESCRIPTION)
     @PutMapping("/{id}")
     public ResponseEntity<GnlCharResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateGnlCharRequest request) {
         return ResponseEntity.ok(gnlCharService.update(id, request));
     }
 
-    @Operation(summary = "Karakteristigi sil (soft-delete)")
+    @Operation(summary = SwaggerText.GNL_CHAR_DELETE_SUMMARY)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         gnlCharService.delete(id);

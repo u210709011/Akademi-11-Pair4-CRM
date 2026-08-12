@@ -89,6 +89,7 @@ class CustOrdManagerTest {
 	private static final Long CUST_ACCT_ID = 10L;
 	private static final Long CUST_ORD_ID = 100L;
 	private static final Long WAIT_STATUS_ID = 51L;
+	private static final Long BSN_INTER_ID = 500L;
 	private static final Long PROCESSING_STATUS_ID = 52L;
 	private static final Long FINISHED_STATUS_ID = 54L;
 
@@ -902,6 +903,11 @@ class CustOrdManagerTest {
 		custOrd.setCustOrdId(CUST_ORD_ID);
 		custOrd.setCustId(CUST_ID);
 		custOrd.setOrdStId(WAIT_STATUS_ID);
+		// createOrder akisinda her siparise bir BsnInter atanir (bkz. CustOrdManager.createOrder);
+		// buildSummary bunu kosulsuz dereference ettigi icin fixture'da da dolu olmasi gerekir.
+		BsnInter bsnInter = new BsnInter();
+		bsnInter.setBsnInterId(BSN_INTER_ID);
+		custOrd.setBsnInter(bsnInter);
 		return custOrd;
 	}
 }

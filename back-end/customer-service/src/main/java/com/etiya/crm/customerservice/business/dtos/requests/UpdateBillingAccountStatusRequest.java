@@ -14,8 +14,15 @@ import jakarta.validation.constraints.Pattern;
 @Schema(description = "Fatura hesabinin aktiflik durumunu degistirir (soft-delete DEGIL).")
 public record UpdateBillingAccountStatusRequest(
 
-		@Schema(description = "Yeni hesap durumu", example = "PASSIVE", allowableValues = { "ACTIVE", "PASSIVE" })
+		@Schema(description = "Yeni hesap durumu", example = "PASSIVE", allowableValues = { ACTIVE, PASSIVE })
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
-		@Pattern(regexp = "ACTIVE|PASSIVE", message = "{" + MessageKeys.BILLING_ACCOUNT_STATUS_INVALID + "}")
+		@Pattern(regexp = ACTIVE + "|" + PASSIVE, message = "{" + MessageKeys.BILLING_ACCOUNT_STATUS_INVALID + "}")
 		String status) {
+
+	/**
+	 * Bu API sozlesmesindeki durum degerleri; lookup-service'in GNL_ST shrt_code'lariyla
+	 * (GnlStCodes.ACTIVE = "ACTV") KARISTIRILMAMALI - farkli bir deger uzayi.
+	 */
+	public static final String ACTIVE = "ACTIVE";
+	public static final String PASSIVE = "PASSIVE";
 }

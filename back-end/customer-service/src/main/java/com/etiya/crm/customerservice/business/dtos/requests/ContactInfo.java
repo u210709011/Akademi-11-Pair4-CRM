@@ -31,7 +31,7 @@ public record ContactInfo(
 		@Pattern(regexp = "^2[0-9]{9}$", message = "{" + MessageKeys.PHONE_INVALID + "}")
 		String homePhone,
 
-		@Schema(description = "Faks - opsiyonel, 10-11 haneli rakam", example = "null", pattern = "^[0-9]{10,11}$")
+		@Schema(description = "Faks - opsiyonel, 10-11 haneli rakam", pattern = "^[0-9]{10,11}$")
 		@Pattern(regexp = "^[0-9]{10,11}$", message = "{" + MessageKeys.FAX_INVALID + "}")
 		String fax) {
 }
