@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CustomerSearchCriteria, CustomerSearchResult, CustomerService } from '../../../core/customer';
@@ -78,6 +78,16 @@ export class SearchCustomerComponent {
     this.searchForm.valueChanges.subscribe(value => {
       const anyFilled = Object.values(value).some(fieldValue => !!fieldValue?.trim());
       this.hasFilledFilter.set(anyFilled);
+    });
+
+    // role gibi backend-driven alanlar dile gore cevrilir (bkz. Accept-Language interceptor) -
+    // ama SPA'da sayfa yenilenmedigi icin dil degistiginde eldeki sonuclar eski dilde kalirdi.
+    // runSearch() untracked cagrilir ki currentPage/sortColumn gibi ic okumalari bu effect'i
+    // fazladan tetiklemesin (o degisiklikler zaten kendi handler'larinda runSearch() cagiriyor);
+    // effect SADECE i18n.lang() degisince tekrar calisir. lastCriteria yoksa runSearch() no-op'tur.
+    effect(() => {
+      this.i18n.lang();
+      untracked(() => this.runSearch());
     });
   }
 

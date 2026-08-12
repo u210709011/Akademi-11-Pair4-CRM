@@ -259,12 +259,22 @@ td.offer-id-cell {
 .offer-name {
   font-weight: 700;
   color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+// Aciklama uzunlugu satirdan satira degistigi icin satirlar farkli yukseklikte gorunuyordu -
+// 2 satirla sinirlanip tasan metin "..." ile kesilir, boylece her satir/kart ayni yukseklikte kalir.
 .offer-descr {
   margin-top: 2px;
+  overflow: hidden;
   font-size: 13px;
+  line-height: 1.4;
   color: var(--text-placeholder);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 td.offer-price-cell {
@@ -718,14 +728,17 @@ td.offer-price-cell {
   border-radius: 8px;
   transition: background 0.2s ease;
 
-  &:hover:not(:disabled) {
-    background: #f9fafb;
-  }
-
   &:disabled {
     color: #9ca3af;
     cursor: not-allowed;
   }
+}
+
+// SADECE ok butonlarinda hover - sayfa numaralarinda kaldirildi, cunku .pagination-page:hover
+// (0,3,0 ozgulluk) .pagination-page.active'i (0,2,0) eziyordu: aktif sayfaya hover'da arka plan
+// beyaza donup turuncu-uzerine-beyaz metin gorunmez oluyordu.
+.pagination-arrow:hover:not(:disabled) {
+  background: #f9fafb;
 }
 
 .pagination-arrow svg {

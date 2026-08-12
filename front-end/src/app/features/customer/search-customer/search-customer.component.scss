@@ -142,11 +142,25 @@
   line-height: 1;
 }
 
+// results-panel'in kalan tum dikey alanini kaplar - pagination bu sayede son satirin hemen
+// altinda degil, panelin altina "dock" edilmis gibi durur (bkz. offer-selection'daki
+// .offer-results-scroll ile ayni desen). Sonuc az ise (ör. 2-3 satir) tablo ustte kalir,
+// pagination yine de panelin en altina yapisir - responsive: panel yuksekligi degistikce
+// (viewport'a gore) bu bosluk otomatik buyuyup kuculur, sabit bir deger degildir.
+.results-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .pagination {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
+  padding-top: 16px;
   margin-top: 16px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .pagination-range {
@@ -177,14 +191,17 @@
   border-radius: 8px;
   transition: background 0.2s ease;
 
-  &:hover:not(:disabled) {
-    background: #f9fafb;
-  }
-
   &:disabled {
     color: #9ca3af;
     cursor: not-allowed;
   }
+}
+
+// SADECE ok butonlarinda hover - sayfa numaralarinda kaldirildi, cunku .pagination-page:hover
+// (0,3,0 ozgulluk) .pagination-page.active'i (0,2,0) eziyordu: aktif sayfaya hover'da arka plan
+// beyaza donup turuncu-uzerine-beyaz metin gorunmez oluyordu.
+.pagination-arrow:hover:not(:disabled) {
+  background: #f9fafb;
 }
 
 .pagination-arrow svg {
@@ -437,14 +454,14 @@
 
   th,
   td {
-    padding: 10px 12px;
-    font-size: 14px;
+    padding: 18px 16px;
+    font-size: 15px;
     text-align: left;
     border-bottom: 1px solid #e5e7eb;
   }
 
   th {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.04em;
     color: #9ca3af;
@@ -467,9 +484,20 @@
   }
 
   .sort-indicator {
+    display: inline-flex;
     margin-left: 4px;
-    font-size: 10px;
     color: #d1d5db;
+    vertical-align: middle;
+
+    svg {
+      width: 13px;
+      height: 13px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
 
     &.active {
       color: var(--etiya-orange);

@@ -50,20 +50,30 @@ export class ConfigurationStepComponent {
 
   protected readonly cities = signal<GnlType[]>([]);
   private readonly characteristicValues = signal<CharacteristicValue[]>([]);
-  private readonly loadedCharUseOfferingIds = new Set<number>();
+  // dil de anahtarin parcasi - bkz. asagidaki yorum, offering basina degil (dil, offering) basina cache'lenir.
+  private readonly loadedCharUseKeys = new Set<string>();
 
   constructor() {
-    this.lookupService.getTypesByGroup(LOOKUP_GROUPS.CITY).subscribe(cities => this.cities.set(cities));
-    this.lookupService.getCharacteristicValues().subscribe(values => this.characteristicValues.set(values));
-
-    // Sepetteki her offering icin karakteristik semasini bir kere ceker (formState.charUsesByOffering'e
-    // yazar ki Review adimi da ayni veriyi tekrar cekmeden kullanabilsin).
+    // city/characteristic degerleri backend-driven ve dile gore cevrilir - i18n.lang() burada
+    // dogrudan okunarak effect'in bagimliligi yapilir, dil degistiginde yeniden cekilir.
+    // lookupService zaten dile gore cache'liyor (bkz. lookup.service.ts), burada ekstra guard gerekmez.
     effect(() => {
+      this.i18n.lang();
+      this.lookupService.getTypesByGroup(LOOKUP_GROUPS.CITY).subscribe(cities => this.cities.set(cities));
+      this.lookupService.getCharacteristicValues().subscribe(values => this.characteristicValues.set(values));
+    });
+
+    // Sepetteki her offering icin karakteristik semasini ceker (formState.charUsesByOffering'e
+    // yazar ki Review adimi da ayni veriyi tekrar cekmeden kullanabilsin). characteristicName de
+    // dile gore cevrildigi icin cache key'i (dil, offering) ciftidir - dil degisince yeniden cekilir.
+    effect(() => {
+      const lang = this.i18n.lang();
       for (const line of this.configurableLines()) {
-        if (this.loadedCharUseOfferingIds.has(line.prodOfrId)) {
+        const key = `${lang}:${line.prodOfrId}`;
+        if (this.loadedCharUseKeys.has(key)) {
           continue;
         }
-        this.loadedCharUseOfferingIds.add(line.prodOfrId);
+        this.loadedCharUseKeys.add(key);
         this.productService.getCharUsesByOffering(line.prodOfrId).subscribe(charUses => {
           this.formState.charUsesByOffering.update(all => ({ ...all, [line.prodOfrId]: charUses }));
         });

@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { I18nService } from '../../../../../core/i18n';
@@ -161,6 +161,22 @@ export class OfferSelectionComponent {
     this.catalogForm.valueChanges.subscribe(() => this.catalogFormValue.set(this.catalogForm.getRawValue()));
     this.campaignForm.valueChanges.subscribe(() => this.campaignFormValue.set(this.campaignForm.getRawValue()));
 
+    // Katalog/kampanya adlari backend-driven ve dile gore cevrilir (bkz. Accept-Language
+    // interceptor) - SPA'da sayfa yenilenmedigi icin dil degistiginde katalog verisi yeniden
+    // cekilir. untracked() ile sarilir ki loadCatalogData() ici (searchCatalog/searchCampaigns'in
+    // okudugu form sinyalleri) bu effect'i fazladan tetiklemesin - SADECE i18n.lang() degisince calisir.
+    effect(() => {
+      this.i18n.lang();
+      untracked(() => this.loadCatalogData());
+    });
+
+    this.orderService.getActiveOffers(this.formState.custAcctId()).subscribe(activeOffers => {
+      this.activeOfferingIds.set(new Set(activeOffers.map(offer => offer.prodOfrId)));
+    });
+  }
+
+  private loadCatalogData(): void {
+    this.isLoadingCatalogData.set(true);
     forkJoin({
       catalogs: this.productService.getCatalogs(),
       campaigns: this.productService.getCampaigns(),
@@ -178,15 +194,19 @@ export class OfferSelectionComponent {
         this.formState.requiredOfferingsMap.set(this.buildRequiredOfferingsMap(result.relations, result.offerings));
         this.excludedOfferingIdsMap.set(this.buildExcludedOfferingsMap(result.relations));
         this.isLoadingCatalogData.set(false);
+        // Dil degisikligiyle yeniden yuklendiyse, ekranda zaten gosterilen arama sonuclarini da
+        // (eski dildeki isim/aciklamalarla donmus olabilir) tazelenmis veriyle yeniden hesapla.
+        if (this.hasSearchedCatalog()) {
+          this.searchCatalog();
+        }
+        if (this.hasSearchedCampaign()) {
+          this.searchCampaigns();
+        }
       },
       error: () => {
         this.isLoadingCatalogData.set(false);
         this.loadError.set(true);
       }
-    });
-
-    this.orderService.getActiveOffers(this.formState.custAcctId()).subscribe(activeOffers => {
-      this.activeOfferingIds.set(new Set(activeOffers.map(offer => offer.prodOfrId)));
     });
   }
 
