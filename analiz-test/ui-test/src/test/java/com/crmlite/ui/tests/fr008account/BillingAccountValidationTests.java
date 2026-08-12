@@ -8,7 +8,6 @@ import com.crmlite.ui.tests.AuthenticatedTest;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -81,13 +80,12 @@ public class BillingAccountValidationTests extends AuthenticatedTest {
                 .as("ACC-009 — Account Name bosken Create pasif").isTrue();
     }
 
-    @Test(groups = {"fr008", "documented-gap"},
+    @Test(groups = {"fr008", "regression"},
             description = "UI-FR008-11 | Account Description girilmeden Create aktiflesmez")
     @Story("ACC-009 — Account Description zorunlu")
     @TmsLink("FR-008-ACC-009")
-    @Issue("FR-008-GAP-ACC009")
     @Severity(SeverityLevel.NORMAL)
-    @Description("BILINEN UYUMSUZLUK — kirmizi kalmasi beklenir. Dokuman ACC-009 ve validasyon "
+    @Description("12.08.2026: ozellik uygulandi, test acildi. Dokuman ACC-009 ve validasyon "
             + "tablosu Account Description'i ZORUNLU sayar; uygulamada alan opsiyoneldir "
             + "(accountForm yalnizca accountName istiyor, alanda * isareti ve hata blogu yok, "
             + "istek govdesinde accountDesc null gonderilebiliyor).")

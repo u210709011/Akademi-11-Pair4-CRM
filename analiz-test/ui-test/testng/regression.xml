@@ -2,14 +2,18 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 
 <!--
-  Regression suite — FR-001..FR-012'nin tamami.
+  Regression suite — FR-001..FR-018'in tamami.
   Calistirma: ./mvnw test -Dsuite=regression
 
-  "documented-gap" grubu suite duzeyinde DISLANIR. O gruptaki testler dokumana gore
-  yazilmis ve uygulamada karsiligi olmadigi icin bilerek kirmizi birakilmistir; burada
-  kosarsa regresyon hicbir zaman yesile donmez ve gercek regresyonlari gorunmez kilar.
-  Bu testler kendi FR suite'lerinde (orn. fr008.xml) kosulmaya devam eder - kapsam
-  disina cikarilmis degil, yalnizca gecer/kalir kapisindan ayrilmislardir.
+  12.08.2026: ACIK BULGU KALMADI. Daha once "documented-gap" ile bilerek kirmizi
+  birakilan ve regresyondan dislanan testlerin tamami, ozellikleri uygulandikca acildi
+  ve regresyona alindi (FR-005/006/007/008/011/017). Grup dislamasi ileride ayni ihtiyac
+  dogarsa diye yerinde birakildi, ancak su an dislanan test YOKTUR.
+
+  Kapsam disinda kalan tek test: AccountLockTests (karantina - gercek hesabi 15 dakika
+  kilitler, quarantine.xml uzerinden -DlockoutTestEnabled=true ile kosulur).
+  OrderApiSelfCheckTest de disaridadir; bir cerceve oz-kontrolu olup gercek siparis
+  olusturdugu icin regresyona dahil edilmemistir.
 
   parallel="false" — SERI kosum. 10.08.2026'da paralel (parallel="classes",
   thread-count="3") iki kez denendi ve her ikisinde de kararsizlik uretti:
@@ -24,9 +28,6 @@
     2) NationalIdUniquenessTests gibi tekillik senaryolari birbirinin verisini
        goruyor mu (TestRunId + sequence bunu onlemeli, ama kanit yok).
 
-  FR-001 dahildir: kullanicinin talimatiyla uzerinde calisilmiyor ve tamamlanmis
-  kabul ediliyor. Riskli iki senaryo zaten disarida: AccountLockTests karantinada
-  (quarantine.xml, -DlockoutTestEnabled=true), logout testleri enabled=false.
 -->
 <!-- configfailurepolicy=continue: tek bir @BeforeMethod hatasi, sinifin geri kalan
      testlerinin config metotlarinin da atlanmasina (ciglama) yol acmamalidir. -->
@@ -92,34 +93,34 @@
     </test>
 
     <!--
-      ContactCancelConfirmationTests bilincli olarak disarida: ACC-006'nin sart kostugu
-      onay mesaji uygulamada yok ve test dokumana gore yazildi. Regresyon suite'inin
-      yesil kalmasi icin yalnizca fr006.xml uzerinden kosulur.
+      12.08.2026: ContactCancelConfirmationTests daha once disaridaydi (ACC-006 onay
+      mesaji uygulamada yoktu). Ozellik uygulandi ve test geciyor, regresyona alindi.
     -->
     <test name="FR-006 Iletisim Bilgileri Yonetimi">
         <classes>
             <class name="com.crmlite.ui.tests.fr006contact.ContactMediumTests"/>
             <class name="com.crmlite.ui.tests.fr006contact.ContactMediumValidationTests"/>
+            <class name="com.crmlite.ui.tests.fr006contact.ContactCancelConfirmationTests"/>
         </classes>
     </test>
 
     <test name="FR-007 Musteri Silme">
         <classes>
             <class name="com.crmlite.ui.tests.fr007delete.DeleteCustomerTests"/>
+            <class name="com.crmlite.ui.tests.fr007delete.DeleteCustomerLinkedProductTests"/>
         </classes>
     </test>
 
     <!--
-      BillingAccountCancelTests bilincli olarak disarida: ACC-006/ACC-010 uyari adimlari
-      uygulamada yok ve modal tasmasi (FR-008-BUG-MODAL-OVERFLOW) gercek bir urun hatasi.
-      BillingAccountValidationTests dahildir; icindeki tek kirmizi
-      (createIsDisabledWithoutAccountDescription, FR-008-GAP-ACC009) yukaridaki
-      documented-gap dislamasiyla otomatik olarak elenir.
+      12.08.2026: BillingAccountCancelTests daha once disaridaydi (ACC-006/ACC-010 uyari
+      adimlari uygulamada yoktu, modal tasmasi da acik bir hataydi). Dordu de geciyor,
+      regresyona alindi.
     -->
     <test name="FR-008 Fatura Hesabi Olusturma">
         <classes>
             <class name="com.crmlite.ui.tests.fr008account.CreateBillingAccountTests"/>
             <class name="com.crmlite.ui.tests.fr008account.BillingAccountValidationTests"/>
+            <class name="com.crmlite.ui.tests.fr008account.BillingAccountCancelTests"/>
         </classes>
     </test>
 

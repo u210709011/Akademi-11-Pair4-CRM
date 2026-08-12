@@ -12,7 +12,6 @@ import com.crmlite.ui.tests.AuthenticatedTest;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -130,13 +129,12 @@ public class DeleteBillingAccountTests extends AuthenticatedTest {
                 .as("ACC-005 — hesap listeden kalkti").isEqualTo(before - 1);
     }
 
-    @Test(groups = {"fr011", "documented-gap"},
+    @Test(groups = {"fr011", "regression"},
             description = "UI-FR011-05 | Pasif olsa da bagli urunu olan hesap silinemez")
     @Story("ACC-004 — Bagli urun engeli")
     @TmsLink("FR-011-ACC-004")
-    @Issue("FR-011-GAP-ACC004")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("BILINEN UYUMSUZLUK — kirmizi kalmasi beklenir. Dokuman ACC-004, pasif olsa "
+    @Description("12.08.2026: ozellik uygulandi, test acildi. Dokuman ACC-004, pasif olsa "
             + "dahi bagli urunu bulunan hesabin silinmesini engeller. Uygulamada bu kontrol "
             + "YOK: guard bagli ancak NoOpBillingAccountProductGuard her zaman false doner "
             + "(BillingAccountServiceImpl'deki yorum ve DELETE ucunun Swagger aciklamasi bunu "

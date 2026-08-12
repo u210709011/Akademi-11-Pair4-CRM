@@ -486,6 +486,22 @@ public class CustomerDetailPage extends BasePage {
         return accountCount();
     }
 
+    /**
+     * Verilen adli hesap tabloda gorunene kadar bekler ve guncel ad listesini dondurur.
+     *
+     * <p>{@link #waitForAccountCount(int)} ile ayni yaris icin: modal basarida kapanir,
+     * tablo tazelemesi kapanmanin ARDINDAN asenkron baslar. Sayi yerine ADI dogrulayan
+     * testler bu surumu kullanir.
+     */
+    public List<String> waitForAccountNamed(String accountName) {
+        try {
+            wait.until(driver -> accountNames().contains(accountName));
+        } catch (org.openqa.selenium.TimeoutException e) {
+            // Gorunmedi; cagiran assert gercek listeyi raporlasin.
+        }
+        return accountNames();
+    }
+
     /** ACC-014: tablodaki hesap satiri sayisi (anlik, beklemez). */
     public int accountCount() {
         return findAll(ACCOUNT_ROWS).size();

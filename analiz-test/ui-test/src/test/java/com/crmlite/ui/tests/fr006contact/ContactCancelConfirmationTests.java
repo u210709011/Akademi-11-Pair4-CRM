@@ -9,7 +9,6 @@ import com.crmlite.ui.tests.AuthenticatedTest;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -44,11 +43,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Feature("UC-EACRML-006")
 public class ContactCancelConfirmationTests extends AuthenticatedTest {
 
-    @Test(groups = {"fr006", "documented-gap"},
+    @Test(groups = {"fr006", "regression"},
             description = "UI-FR006-10 | Cancel'da kaydedilmeden donulecegine dair onay mesaji gosterilir")
     @Story("ACC-006 — Cancel onay mesaji")
     @TmsLink("FR-006-ACC-006")
-    @Issue("FR-006-GAP-ACC006")
     @Severity(SeverityLevel.NORMAL)
     @Description("Dokuman Cancel sonrasi bir onay mesaji sart kosuyor; uygulama modal'i "
             + "dogrudan kapatiyor. Bu test uyumsuzlugu gorunur kilar.")

@@ -10,7 +10,6 @@ import com.crmlite.ui.tests.AuthenticatedTest;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -83,13 +82,12 @@ public class PrimaryAddressTests extends AuthenticatedTest {
                 .as("yalnizca tek birincil adres olabilir").isEqualTo(1);
     }
 
-    @Test(groups = {"fr005", "documented-gap"},
+    @Test(groups = {"fr005", "regression"},
             description = "UI-FR005-09 | Birincil adres silinemez, uyari gosterilir")
     @Story("ACC-009 — Birincil adres silinemez")
     @TmsLink("FR-005-ACC-009")
-    @Issue("FR-005-GAP-ACC009")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("BILINEN UYUMSUZLUK — kirmizi kalmasi beklenir. Dokuman ACC-009 silme "
+    @Description("12.08.2026: ozellik uygulandi, test acildi. Dokuman ACC-009 silme "
             + "secenegininin pasif olmasini ve ipucu metninin sebebi aciklamasini sart kosar. "
             + "Uygulamada birincil adres icin HICBIR koruma yok: menudeki Delete butonunda "
             + "[disabled] baglamasi bulunmuyor, openDeleteAddressConfirm() birincil adresi "

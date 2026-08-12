@@ -206,7 +206,8 @@ public class CreateBillingAccountTests extends AuthenticatedTest {
         modal.create();
         modal.waitUntilClosed();
 
-        assertThat(detail.accountNames())
+        // Beklemeli okuma: tablo, modal kapandiktan SONRA asenkron tazeleniyor.
+        assertThat(detail.waitForAccountNamed(accountName))
                 .as("ACC-012 — hesap billing account tipinde olustu (tabloda listeleniyor)")
                 .contains(accountName);
     }

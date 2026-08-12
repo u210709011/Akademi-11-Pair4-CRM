@@ -123,11 +123,22 @@ public class BillingAccountModalComponent extends BaseComponent {
     }
 
     /** ACC-005: yeni adres alanlarinin ekranda bulunmasi. */
+    /**
+     * ACC-005: yeni adres alanlarinin dordu de gorunur mu.
+     *
+     * <p>Beklemeli kontrol: alanlar {@code toggleAddressMode()} sonrasi kosullu render
+     * edilir, anlik bakildiginda henuz cizilmemis olabilirler.
+     */
     public boolean hasNewAddressFields() {
-        return isDisplayed(Field.NEW_CITY.locator())
-                && isDisplayed(Field.NEW_STREET.locator())
-                && isDisplayed(Field.NEW_HOUSE_NUMBER.locator())
-                && isDisplayed(Field.NEW_DESCRIPTION.locator());
+        try {
+            wait.until(driver -> isDisplayed(Field.NEW_CITY.locator())
+                    && isDisplayed(Field.NEW_STREET.locator())
+                    && isDisplayed(Field.NEW_HOUSE_NUMBER.locator())
+                    && isDisplayed(Field.NEW_DESCRIPTION.locator()));
+            return true;
+        } catch (org.openqa.selenium.TimeoutException e) {
+            return false;
+        }
     }
 
     /** Sehri ekranda gorunen etikete gore secer (secenek degerleri lookup id'sidir, kayabilir). */
