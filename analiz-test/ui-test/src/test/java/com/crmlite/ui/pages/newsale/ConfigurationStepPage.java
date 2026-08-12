@@ -25,6 +25,12 @@ public class ConfigurationStepPage extends BasePage {
     /** Sonsuz donguye karsi ust sinir; sepette en fazla birkac urun ve alan olur. */
     private static final int MAX_FIELD_FILLS = 60;
 
+    /** Konfigurasyonun tamamlanmasi icin verilen gecis sayisi. */
+    private static final int CONFIG_COMPLETION_ATTEMPTS = 4;
+
+    /** Sihirbaz cubugundaki ileri butonu — konfigurasyonun tamamlandiginin gostergesi. */
+    private static final By WIZARD_NEXT_BUTTON = By.cssSelector(".wizard-actions .next-button");
+
     private static final By ROOT = By.cssSelector(".config-content-wrap");
 
     private static final By PRODUCT_CARDS = By.cssSelector(".config-product-card");
@@ -112,16 +118,80 @@ public class ConfigurationStepPage extends BasePage {
      * <p>Select alanlarinda ilk BOS OLMAYAN secenek secilir (ilk secenek yer tutucudur);
      * metin alanlarina sabit bir deger yazilir.
      */
+    /**
+     * Konfigurasyonu Next aktiflesene kadar tamamlar: servis adresini secer, alanlari
+     * doldurur ve gerekirse TEKRARLAR.
+     *
+     * <p>Tek gecis yetmiyor: karakteristik semasi urun basina asenkron yuklenir, dolayisiyla
+     * ilk gecisten sonra yeni alanlar belirebilir. Sema beklemesi tek basina da yeterli
+     * olmadi - fr016 iki turluk kararlilik kontrolunun ikinci turunda yine dustu.
+     *
+     * <p>Bu bir hata gizleme DEGILDIR: konfigurasyon gercekten tamamlanamiyorsa Next pasif
+     * kalir ve cagiran testteki assert acikca patlar. Burada yalnizca kurulumun bitmesine
+     * sans taniniyor.
+     */
+    public ConfigurationStepPage completeConfiguration() {
+        for (int attempt = 0; attempt < CONFIG_COMPLETION_ATTEMPTS; attempt++) {
+            if (!hasSelectedAddress()) {
+                openChangeAddressModal();
+                selectAddressOption(0);
+            }
+            fillAllConfigurationFields();
+
+            if (isEnabled(WIZARD_NEXT_BUTTON)) {
+                return this;
+            }
+            sleepBriefly();
+        }
+        return this;
+    }
+
+    private void sleepBriefly() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
     public ConfigurationStepPage fillAllConfigurationFields() {
         // Alanlar TEK TEK ve her seferinde YENIDEN SORGULANARAK doldurulur. Bir urunun
         // zorunlu alanlari tamamlandiginda kart blur'da otomatik KAPANIR
         // (checkAutoCollapse) ve alanlari DOM'dan silinir; onceden toplanmis bir liste
         // uzerinde donmek StaleElementReferenceException uretir.
+        waitForConfigurationSchema();
+
         int guard = 0;
         while (guard++ < MAX_FIELD_FILLS && fillFirstEmptyField()) {
             // devam
         }
         return this;
+    }
+
+    /**
+     * Her urun kartinin karakteristik SEMASI cozulene kadar bekler.
+     *
+     * <p>Sema urun basina ASENKRON yuklenir. Yuklenmeden once kartta ne alan izgarasi ne
+     * de bilgilendirme notu vardir; doldurucu ortada alan bulamayip sessizce pes eder,
+     * sema sonradan gelince zorunlu alanlar bos kalir ve Next hic aktiflesmez.
+     *
+     * <p>Uygulamanin kendi kurali da bunu soyler: {@code isConfigured()} sema yuklenmemisse
+     * {@code false} doner ("sema henuz yuklenmedi").
+     *
+     * <p>Bir kartin cozulmus sayilmasi icin ya alanlarinin ya da notunun gorunmesi yeterlidir;
+     * karakteristigi olmayan urunler not gosterir ve bu bir hata degildir.
+     */
+    private void waitForConfigurationSchema() {
+        try {
+            wait.until(driver -> {
+                int cards = findAll(PRODUCT_CARDS).size();
+                return cards > 0
+                        && findAll(CONFIG_FIELDS).size() + findAll(PENDING_NOTES).size() >= cards;
+            });
+        } catch (org.openqa.selenium.TimeoutException e) {
+            // Cozulmedi; doldurucu elindekiyle devam eder ve eksik kalan alan
+            // cagiran taraftaki Next assert'inde acikca ortaya cikar.
+        }
     }
 
     /** Ilk bos alani doldurur; dolduracak alan kalmadiysa {@code false} doner. */
@@ -135,10 +205,19 @@ public class ConfigurationStepPage extends BasePage {
                     if (current != null && !current.isBlank()) {
                         continue;
                     }
-                    for (WebElement option : select.getOptions()) {
+                    // Secenekler de asenkron gelebilir; yer tutucu disinda secenek yoksa
+                    // ATLAMAK yerine kisa bir sure beklenir. Atlamak, alani kalici olarak
+                    // bos birakip Next'i hic aktiflestirmemeye yol aciyordu.
+                    WebElement selectElement = selects.get(0);
+                    wait.until(driver -> new Select(selectElement).getOptions().stream()
+                            .anyMatch(o -> {
+                                String v = o.getDomProperty("value");
+                                return v != null && !v.isBlank();
+                            }));
+                    for (WebElement option : new Select(selectElement).getOptions()) {
                         String value = option.getDomProperty("value");
                         if (value != null && !value.isBlank()) {
-                            select.selectByValue(value);
+                            new Select(selectElement).selectByValue(value);
                             return true;
                         }
                     }

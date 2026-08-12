@@ -268,9 +268,8 @@ public class ProductConfigurationTests extends AuthenticatedTest {
     @Severity(SeverityLevel.CRITICAL)
     public void nextOpensReviewAndSubmit() {
         ConfigurationStepPage config = openConfiguration();
-        config.openChangeAddressModal();
-        config.selectAddressOption(0);
-        config.fillAllConfigurationFields();
+        // Sema asenkron yuklendigi icin tek gecis yetmiyor; tamamlanamazsa assert patlar.
+        config.completeConfiguration();
 
         OfferSelectionPage wizard = new OfferSelectionPage(driver());
         assertThat(wizard.waitForNextEnabled())

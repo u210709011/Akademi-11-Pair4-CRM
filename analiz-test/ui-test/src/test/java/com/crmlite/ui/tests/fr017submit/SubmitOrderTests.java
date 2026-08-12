@@ -143,13 +143,9 @@ public class SubmitOrderTests extends AuthenticatedTest {
 
         ConfigurationStepPage config = new ConfigurationStepPage(driver());
         config.waitUntilLoaded();
-        if (!config.hasSelectedAddress()) {
-            config.openChangeAddressModal();
-            config.selectAddressOption(0);
-        }
-        // Next, isConfigurationComplete ile korunur: servis adresi TEK BASINA yetmez,
-        // zorunlu karakteristiklerin de doldurulmus olmasi gerekir.
-        config.fillAllConfigurationFields();
+        // Konfigurasyonu Next aktiflesene kadar tamamlar (sema asenkron yuklendigi icin
+        // tek gecis yetmiyor); tamamlanamazsa asagidaki assert acikca patlar.
+        config.completeConfiguration();
 
         // On kosul ASSERT edilir, atlanmaz: bkz. OrderSummaryTests'teki ayni not.
         assertThat(wizard.waitForNextEnabled())
