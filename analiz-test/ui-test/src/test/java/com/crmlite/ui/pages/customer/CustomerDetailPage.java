@@ -570,6 +570,21 @@ public class CustomerDetailPage extends BasePage {
         return headers;
     }
 
+    /**
+     * Verilen adli urun tabloda gorunene kadar bekler ve guncel ad listesini dondurur.
+     *
+     * <p>Hesap satiri genisletildiginde urun tablosu API'den ASENKRON yuklenir; anlik
+     * okuma tablo dolmadan bos liste dondurur.
+     */
+    public List<String> waitForProductNamed(String productName) {
+        try {
+            wait.until(driver -> productNames().contains(productName));
+        } catch (org.openqa.selenium.TimeoutException e) {
+            // Gorunmedi; cagiran assert gercek listeyi raporlasin.
+        }
+        return productNames();
+    }
+
     /** Urun tablosundaki urun adlari (2. kolon). */
     public List<String> productNames() {
         List<String> names = new ArrayList<>();

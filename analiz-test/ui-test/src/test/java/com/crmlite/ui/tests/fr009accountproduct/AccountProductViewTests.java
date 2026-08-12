@@ -137,7 +137,8 @@ public class AccountProductViewTests extends AuthenticatedTest {
 
         detail.toggleAccountRow(0);
 
-        assertThat(detail.productNames())
+        // Beklemeli okuma: satir genisletildiginde urun tablosu API'den asenkron dolar.
+        assertThat(detail.waitForProductNamed(data.productName()))
                 .as("ACC-004 — siparisle olusan urun tabloda gorunur")
                 .contains(data.productName());
     }
