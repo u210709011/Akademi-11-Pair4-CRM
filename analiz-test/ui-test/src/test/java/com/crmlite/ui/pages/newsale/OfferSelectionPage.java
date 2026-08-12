@@ -566,6 +566,23 @@ public class OfferSelectionPage extends BasePage {
         return isEnabled(NEXT_BUTTON);
     }
 
+    /**
+     * Next aktiflesene kadar bekler.
+     *
+     * <p>Buton yalnizca formun gecerliligine degil, UCUSTAKI ISTEKLERE de bakar
+     * ({@code isNextDisabled} icinde {@code isSavingConfiguration} / {@code
+     * isValidatingBasket} var). Alanlar doldurulduktan hemen sonra kaydetme istegi
+     * surerken buton kisa sure pasif kalir; anlik kontrol bu araliga denk gelebilir.
+     */
+    public boolean waitForNextEnabled() {
+        try {
+            wait.until(driver -> isEnabled(NEXT_BUTTON));
+            return true;
+        } catch (org.openqa.selenium.TimeoutException e) {
+            return false;
+        }
+    }
+
     /** Sepette urun varken Next'e basar; sihirbaz Configuration adimina gecer. */
     public OfferSelectionPage clickNext() {
         click(NEXT_BUTTON);

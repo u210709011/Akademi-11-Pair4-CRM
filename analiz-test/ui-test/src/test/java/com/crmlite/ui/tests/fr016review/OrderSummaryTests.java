@@ -140,7 +140,7 @@ public class OrderSummaryTests extends AuthenticatedTest {
         // (ya konfigurasyon eksik kalmistir ya da uygulamada bir hata vardir) ve gorunmesi
         // gerekir. Onceden burada SkipException vardi ve FR-016/FR-017'nin TAMAMI sessizce
         // atlanip hicbir dogrulama yapmiyordu.
-        assertThat(wizard.isNextEnabled())
+        assertThat(wizard.waitForNextEnabled())
                 .as("on kosul: konfigurasyon tamamlandiginda Next aktiflesmelidir").isTrue();
         wizard.clickNext();
         wizard.waitForActiveStep(ExpectedMessages.get("newSale.stepReview"));

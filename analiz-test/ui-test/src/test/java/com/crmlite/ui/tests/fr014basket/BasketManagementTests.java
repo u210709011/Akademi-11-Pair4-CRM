@@ -215,7 +215,7 @@ public class BasketManagementTests extends AuthenticatedTest {
 
         offers.addToBasket(0);
 
-        assertThat(offers.isNextEnabled())
+        assertThat(offers.waitForNextEnabled())
                 .as("ACC-018 — urun eklenince Next aktiflesir").isTrue();
     }
 

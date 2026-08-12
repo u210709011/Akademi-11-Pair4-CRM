@@ -257,7 +257,7 @@ public class ProductConfigurationTests extends AuthenticatedTest {
             config.selectAddressOption(0);
         }
 
-        assertThat(wizard.isNextEnabled())
+        assertThat(wizard.waitForNextEnabled())
                 .as("ACC-009 — konfigurasyon tamamlaninca Next aktiflesir").isTrue();
     }
 
@@ -273,7 +273,7 @@ public class ProductConfigurationTests extends AuthenticatedTest {
         config.fillAllConfigurationFields();
 
         OfferSelectionPage wizard = new OfferSelectionPage(driver());
-        assertThat(wizard.isNextEnabled())
+        assertThat(wizard.waitForNextEnabled())
                 .as("on kosul: konfigurasyon tamamlandiginda Next aktiflesmelidir").isTrue();
 
         wizard.clickNext();

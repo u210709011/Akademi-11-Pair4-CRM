@@ -10,7 +10,6 @@ import com.crmlite.ui.tests.AuthenticatedTest;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -83,8 +82,8 @@ public class SubmitOrderTests extends AuthenticatedTest {
     @TmsLink("FR-017-ACC-004")
     @Severity(SeverityLevel.BLOCKER)
     @Description("Dokuman onaydan sonra siparisin orta katmana iletilmesini ve basari "
-            + "mesaji gosterilmesini sart kosar. Uygulamada onay adimi bulunmadigi icin "
-            + "(bkz. FR-017-GAP-ACC002) Submit dogrudan siparisi gonderir.")
+            + "mesaji gosterilmesini sart kosar. Submit once onay ister (ACC-002); siparis "
+            + "ancak onaylandiktan sonra gonderilir.")
     public void submitSendsOrderAndShowsSuccessMessage() {
         ReviewStepPage review = openReview();
         OfferSelectionPage wizard = new OfferSelectionPage(driver());
@@ -153,7 +152,7 @@ public class SubmitOrderTests extends AuthenticatedTest {
         config.fillAllConfigurationFields();
 
         // On kosul ASSERT edilir, atlanmaz: bkz. OrderSummaryTests'teki ayni not.
-        assertThat(wizard.isNextEnabled())
+        assertThat(wizard.waitForNextEnabled())
                 .as("on kosul: konfigurasyon tamamlandiginda Next aktiflesmelidir").isTrue();
         wizard.clickNext();
         wizard.waitForActiveStep(ExpectedMessages.get("newSale.stepReview"));
