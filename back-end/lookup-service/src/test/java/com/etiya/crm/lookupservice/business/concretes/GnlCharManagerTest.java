@@ -1,5 +1,6 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
+import com.etiya.crm.lookupservice.business.abstracts.TranslationService;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlCharRepository;
 import com.etiya.crm.lookupservice.entities.concretes.GnlChar;
@@ -24,10 +25,13 @@ class GnlCharManagerTest {
     @Mock
     private GnlCharRepository gnlCharRepository;
 
+    @Mock
+    private TranslationService translationService;
+
     private final GnlCharMapper gnlCharMapper = new GnlCharMapperImpl();
 
     private GnlCharManager manager() {
-        return new GnlCharManager(gnlCharRepository, gnlCharMapper);
+        return new GnlCharManager(gnlCharRepository, gnlCharMapper, translationService);
     }
 
     @Test

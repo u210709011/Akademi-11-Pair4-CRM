@@ -1,6 +1,7 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
 import com.etiya.crm.shared.contracts.gnltp.UpdateGnlTpRequest;
+import com.etiya.crm.lookupservice.business.abstracts.TranslationService;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlTpRepository;
 import com.etiya.crm.lookupservice.entities.concretes.GnlTp;
@@ -16,6 +17,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -25,10 +28,13 @@ class GnlTpManagerTest {
     @Mock
     private GnlTpRepository gnlTpRepository;
 
+    @Mock
+    private TranslationService translationService;
+
     private final GnlTpMapper gnlTpMapper = new GnlTpMapperImpl();
 
     private GnlTpManager manager() {
-        return new GnlTpManager(gnlTpRepository, gnlTpMapper);
+        return new GnlTpManager(gnlTpRepository, gnlTpMapper, translationService);
     }
 
     @Test
@@ -72,7 +78,12 @@ class GnlTpManagerTest {
         gnlTp.setGnlTpId(5L);
         gnlTp.setEntCodeName("CNTC_MEDIUM");
         gnlTp.setShrtCode("GSM");
+        gnlTp.setName("Mobile");
+        gnlTp.setDescr("Mobile phone number");
         when(gnlTpRepository.findByEntCodeNameAndShrtCode("CNTC_MEDIUM", "GSM")).thenReturn(Optional.of(gnlTp));
+        // Ingilizce disi ceviri yoksa TranslationService taban degeri (4. arg) oldugu gibi doner.
+        when(translationService.translate(anyString(), anyLong(), anyString(), anyString()))
+                .thenAnswer(invocation -> invocation.getArgument(3));
 
         var response = manager().getByEntCodeNameAndShrtCode("CNTC_MEDIUM", "GSM");
 
