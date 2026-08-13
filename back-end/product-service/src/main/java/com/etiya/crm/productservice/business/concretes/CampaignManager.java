@@ -11,13 +11,14 @@ import com.etiya.crm.productservice.business.dtos.responses.Campaign.GetCampaign
 import com.etiya.crm.productservice.business.dtos.responses.Campaign.UpdatedCampaignResponse;
 import com.etiya.crm.productservice.business.exceptions.CampaignNotFoundException;
 import com.etiya.crm.productservice.dataAccess.abstracts.CampaignRepository;
+import com.etiya.crm.productservice.dataAccess.abstracts.CampaignSpecifications;
 import com.etiya.crm.productservice.entities.concretes.Campaign;
 import com.etiya.crm.productservice.mapper.CampaignMapper;
 import com.etiya.crm.shared.contracts.gnlst.GnlStCodes;
 import com.etiya.crm.shared.contracts.gnlst.GnlStGroups;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class CampaignManager implements CampaignService {
@@ -68,11 +69,13 @@ public class CampaignManager implements CampaignService {
     }
 
     @Override
-    public List<GetAllCampaignResponse> getAll() {
-        List<Campaign> campaigns = campaignRepository.findAll();
-        List<GetAllCampaignResponse> responses = campaignMapper.toGetAllResponseList(campaigns);
-        responses.forEach(this::applyTranslation);
-        return responses;
+    public Page<GetAllCampaignResponse> getAll(Long campaignId, String name, Pageable pageable) {
+        Page<Campaign> campaigns = campaignRepository.findAll(CampaignSpecifications.search(campaignId, name), pageable);
+        return campaigns.map(campaign -> {
+            GetAllCampaignResponse response = campaignMapper.toGetAllResponse(campaign);
+            applyTranslation(response);
+            return response;
+        });
     }
 
     /** name/descr taban degerleri Ingilizce'dir - bkz. lookup-service GnlTpManager (ayni desen). */

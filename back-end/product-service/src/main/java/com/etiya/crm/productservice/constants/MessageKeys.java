@@ -25,6 +25,11 @@ public final class MessageKeys {
     public static final String CAMPAIGN_OFFERING_NOT_FOUND = "error.campaign-offering.not-found";
     public static final String PRODUCT_OFFERING_CHAR_USE_NOT_FOUND = "error.product-offering-char-use.not-found";
     public static final String PRODUCT_OFFERING_CHAR_USE_DUPLICATE = "error.product-offering-char-use.duplicate";
+    public static final String PARAMETER_TYPE_MISMATCH = "validation.parameter.type-mismatch";
+    public static final String INVALID_REQUEST_PARAMETER = "validation.parameter.invalid";
+    public static final String MISSING_REQUEST_PARAMETER = "validation.parameter.missing";
+    public static final String METHOD_NOT_SUPPORTED = "error.http.method-not-allowed";
+    public static final String ROUTE_NOT_FOUND = "error.http.route-not-found";
     private MessageKeys() {
     }
 }

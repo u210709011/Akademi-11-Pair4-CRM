@@ -11,11 +11,11 @@ import com.etiya.crm.productservice.constants.SwaggerText;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = SwaggerText.PRODUCT_OFFERING_TAG_NAME, description = SwaggerText.PRODUCT_OFFERING_TAG_DESCRIPTION)
 @RestController
@@ -51,8 +51,13 @@ public class ProductOfferingController {
 
     @Operation(summary = SwaggerText.PRODUCT_OFFERING_GET_ALL_SUMMARY)
     @GetMapping
-    public ResponseEntity<List<GetAllProductOfferingResponse>> getAll(){
-        List<GetAllProductOfferingResponse> response = productOfferingService.getAll();
+    public ResponseEntity<Page<GetAllProductOfferingResponse>> getAll(
+            @RequestParam(required = false) Long productOfferingId,
+            @RequestParam(required = false) String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size){
+        Page<GetAllProductOfferingResponse> response = productOfferingService.getAll(productOfferingId, name,
+                PageRequest.of(page, size));
         return ResponseEntity.ok(response);
     }
 

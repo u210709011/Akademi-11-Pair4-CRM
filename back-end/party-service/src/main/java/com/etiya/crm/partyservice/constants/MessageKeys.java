@@ -15,6 +15,11 @@ public final class MessageKeys {
 	public static final String DOWNSTREAM_CALL_FAILED = "error.downstream.call-failed";
 	public static final String DOWNSTREAM_UNAVAILABLE = "error.downstream.unavailable";
 	public static final String UNEXPECTED_ERROR = "error.unexpected";
+	public static final String PARAMETER_TYPE_MISMATCH = "validation.parameter.type-mismatch";
+	public static final String INVALID_REQUEST_PARAMETER = "validation.parameter.invalid";
+	public static final String MISSING_REQUEST_PARAMETER = "validation.parameter.missing";
+	public static final String METHOD_NOT_SUPPORTED = "error.http.method-not-allowed";
+	public static final String ROUTE_NOT_FOUND = "error.http.route-not-found";
 
 	private MessageKeys() {
 	}

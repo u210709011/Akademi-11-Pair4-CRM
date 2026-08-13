@@ -40,6 +40,9 @@ public final class MessageKeys {
 	public static final String ACCOUNT_NUMBER_COLLISION = "error.customer-account.number-collision";
 	public static final String PARAMETER_TYPE_MISMATCH = "validation.parameter.type-mismatch";
 	public static final String INVALID_REQUEST_PARAMETER = "validation.parameter.invalid";
+	public static final String MISSING_REQUEST_PARAMETER = "validation.parameter.missing";
+	public static final String METHOD_NOT_SUPPORTED = "error.http.method-not-allowed";
+	public static final String ROUTE_NOT_FOUND = "error.http.route-not-found";
 	public static final String CITY_INVALID = "validation.city.invalid";
 	public static final String GENDER_INVALID = "validation.gender.invalid";
 

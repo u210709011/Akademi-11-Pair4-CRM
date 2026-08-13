@@ -11,11 +11,11 @@ import com.etiya.crm.productservice.constants.SwaggerText;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = SwaggerText.CAMPAIGN_TAG_NAME, description = SwaggerText.CAMPAIGN_TAG_DESCRIPTION)
 @RestController
@@ -51,8 +51,12 @@ public class CampaignController {
 
     @Operation(summary = SwaggerText.CAMPAIGN_GET_ALL_SUMMARY)
     @GetMapping
-    public ResponseEntity<List<GetAllCampaignResponse>> getAll(){
-        List<GetAllCampaignResponse> response = campaignService.getAll();
+    public ResponseEntity<Page<GetAllCampaignResponse>> getAll(
+            @RequestParam(required = false) Long campaignId,
+            @RequestParam(required = false) String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size){
+        Page<GetAllCampaignResponse> response = campaignService.getAll(campaignId, name, PageRequest.of(page, size));
         return ResponseEntity.ok(response);
     }
 
