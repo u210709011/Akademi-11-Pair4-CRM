@@ -44,8 +44,11 @@ public final class CustomerBuilder {
     // Alan kilit oneme sahip: gecersiz bir varsayilan, "mutlu yol" testlerinde
     // Create butonunu sessizce pasif birakir.
     private String homePhone = "2121234567";
-    // Fax'in basamak kurali yok, yalnizca en fazla 11 hane.
-    private String fax = "2129876543";
+    // Fax kurali: 0 ile baslar, 11 hane (FR-003 tablosunun ornegi "02121234567"; UI'da
+    // /^0\d{10}$/). Eski varsayilan "2129876543" bu kurala uymuyordu ve homePhone icin
+    // yukarida uyarilan tuzagin ta kendisine dusuyordu: mutlu yol testlerinde Create
+    // butonu sessizce pasif kaliyordu. Deger, FR-006 fixture'indaki gecerli fax ile ayni.
+    private String fax = "02121234567";
 
     private final List<AddressInfo> addresses = new ArrayList<>();
 

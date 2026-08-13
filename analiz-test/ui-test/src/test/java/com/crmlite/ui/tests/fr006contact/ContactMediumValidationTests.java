@@ -64,19 +64,16 @@ public class ContactMediumValidationTests extends AuthenticatedTest {
     }
 
     @Test(groups = {"fr006", "regression"},
-            dataProvider = "contactMediumValidation", dataProviderClass = ValidationDataProvider.class,
+            dataProvider = "contactMediumErrorMessages", dataProviderClass = ValidationDataProvider.class,
             description = "UI-FR006-08 | Gecersiz alanlarda dokumandaki hata mesaji gosterilir")
     @Story("Validasyon — Hata mesajlari")
     @TmsLink("FR-006-VAL-MESSAGES")
     @Severity(SeverityLevel.NORMAL)
     @Description("Beklenen metinler dokumandaki validasyon tablosundan alinir "
             + "(expected/messages_en.properties). Uygulama farkli metin kullaniyorsa "
-            + "bu test uyumsuzlugu ortaya cikarir.")
+            + "bu test uyumsuzlugu ortaya cikarir. Provider yalnizca hata bekleyen satirlari "
+            + "verir; pozitif satirlar saveButtonStateMatchesFieldValidity tarafindan kontrol edilir.")
     public void invalidFieldShowsDocumentedErrorMessage(ValidationCase testCase) {
-        if (!testCase.expectsError()) {
-            throw new org.testng.SkipException("Pozitif vaka — hata mesaji beklenmiyor: " + testCase);
-        }
-
         CreatedCustomer customer = TestDataFactory.simpleCustomer();
         CustomerDetailPage detail = openCustomerDetail(customer.custId()).openContactTab();
 

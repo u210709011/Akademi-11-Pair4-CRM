@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  FR-013 Katalog ve Kampanya Listeleme (UC-EACRML-013).
+  Calistirma: ./mvnw test -Dsuite=fr013
+
+  ON KOSUL: product-service ayakta olmalidir. Testler seed verisine dayanir
+  (V4__seed_catalog_demo_data.sql: 3 katalog, 23 urun teklifi, 10 kampanya) ancak
+  urun kimliklerini SABITLEMEZ - ad parcasiyla arama yapar.
+
+  DOKUMAN NOTU: bu FR'nin kabul kriterleri dokumanda UC-EACRML-012 basliginin
+  altinda yer alir; bloklar ait olduklari basliktan once gelir.
+-->
+<suite name="CRM Lite UI - FR-013" verbose="1" parallel="false" configfailurepolicy="continue">
+
+    <listeners>
+        <listener class-name="com.crmlite.ui.core.listeners.SuiteListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.TestListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
+    <test name="FR-013 Katalog ve Kampanya Listeleme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr013catalog.CatalogCampaignSearchTests"/>
+        </classes>
+    </test>
+
+</suite>

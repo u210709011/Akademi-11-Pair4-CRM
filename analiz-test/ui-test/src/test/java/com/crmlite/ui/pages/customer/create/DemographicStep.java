@@ -13,8 +13,8 @@ import org.openqa.selenium.WebDriver;
  */
 public class DemographicStep extends BasePage {
 
-    public static final String GENDER_MALE = "1";
-    public static final String GENDER_FEMALE = "2";
+    // Cinsiyet secenek degerleri lookup id'sidir ve seed degistiginde kayar (1/2 -> 3/4).
+    // Sabitlenmez; deger gerektiginde Gender.X.value() kullanilir.
 
     private static final By FORM = By.cssSelector("form.create-form");
 

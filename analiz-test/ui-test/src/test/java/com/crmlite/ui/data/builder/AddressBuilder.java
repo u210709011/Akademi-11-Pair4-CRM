@@ -1,5 +1,6 @@
 package com.crmlite.ui.data.builder;
 
+import com.crmlite.ui.data.api.LookupApi;
 import com.crmlite.ui.data.model.AddressInfo;
 
 /**
@@ -8,7 +9,11 @@ import com.crmlite.ui.data.model.AddressInfo;
  */
 public final class AddressBuilder {
 
-    private Integer cityId = AddressInfo.CITY_ANKARA;
+    // Varsayilan sehir build() aninda cozulur (bkz. LookupApi): kurucu icinde cozmek,
+    // negatif senaryolar dahil her builder olusturmada gereksiz bir HTTP cagrisi demek olurdu.
+    // cityOverridden, "varsayilan" ile "bilincli olarak null" (withoutCity) durumunu ayirir.
+    private Integer cityId;
+    private boolean cityOverridden;
     private String streetName = "Cumhuriyet Cad.";
     private String buildingName = "No:1 D:2";
     private String addressDesc = "Ev adresi";
@@ -31,6 +36,7 @@ public final class AddressBuilder {
 
     public AddressBuilder withCityId(Integer cityId) {
         this.cityId = cityId;
+        this.cityOverridden = true;
         return this;
     }
 
@@ -58,6 +64,7 @@ public final class AddressBuilder {
 
     public AddressBuilder withoutCity() {
         this.cityId = null;
+        this.cityOverridden = true;
         return this;
     }
 
@@ -83,6 +90,11 @@ public final class AddressBuilder {
     }
 
     public AddressInfo build() {
-        return new AddressInfo(cityId, streetName, buildingName, addressDesc, primary);
+        // Integer.valueOf ZORUNLU: cityAnkara() int dondugu icin ucuncul operator sayisal
+        // terfi uygular ve iki dali da int'e cevirir - bu da withoutCity()'nin biraktigi
+        // null cityId'yi unbox edip NullPointerException firlatir. Sarmalayinca operatorun
+        // tipi Integer olarak kalir ve null gecebilir.
+        Integer city = cityOverridden ? cityId : Integer.valueOf(LookupApi.cityAnkara());
+        return new AddressInfo(city, streetName, buildingName, addressDesc, primary);
     }
 }

@@ -49,9 +49,15 @@ public class AddressStep extends BasePage {
         return getText(ADDRESS_COUNT);
     }
 
-    /** ACC-011: hic adres yokken bos durum gosterilir. */
+    /**
+     * ACC-011: hic adres yokken bos durum gosterilir.
+     *
+     * <p>Beklemeli kontrol ZORUNLU: demografik adimdan gecis artik asenkron (Next butonu
+     * dogrulama sirasinda spinner gosteriyor), bu yuzden anlik {@code isDisplayed} panel
+     * henuz render edilmeden false doner.
+     */
     public boolean isEmptyStateDisplayed() {
-        return isDisplayed(EMPTY_STATE);
+        return isDisplayedAfterWait(EMPTY_STATE);
     }
 
     public String emptyStateTitle() {

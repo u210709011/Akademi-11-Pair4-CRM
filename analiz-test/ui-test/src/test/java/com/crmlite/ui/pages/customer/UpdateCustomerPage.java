@@ -1,5 +1,6 @@
 package com.crmlite.ui.pages.customer;
 
+import com.crmlite.ui.data.model.Gender;
 import com.crmlite.ui.pages.BasePage;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -14,8 +15,9 @@ import org.openqa.selenium.WebDriver;
  */
 public class UpdateCustomerPage extends BasePage {
 
-    public static final String GENDER_MALE = "1";
-    public static final String GENDER_FEMALE = "2";
+    // Cinsiyet secenek degerleri lookup id'sidir ve seed degistiginde kayar (1/2 -> 3/4).
+    // Sabit tutulmaz; deger gerektiginde Gender.X.value(), secim icin selectGender(Gender)
+    // kullanilir (etikete gore secer, id'den bagimsizdir).
 
     private static final By FORM = By.cssSelector("form.update-form");
     private static final By PAGE_TITLE = By.cssSelector(".update-customer-page h1.page-title");
@@ -123,8 +125,15 @@ public class UpdateCustomerPage extends BasePage {
         return this;
     }
 
+    /** Ham deger ile secim — gecersiz deger gerektiren negatif senaryolar icin. */
     public UpdateCustomerPage selectGender(String genderValue) {
         selectByValue(GENDER, genderValue);
+        return this;
+    }
+
+    /** Etikete gore secim — pozitif senaryolarda tercih edilir, lookup id'sinden bagimsizdir. */
+    public UpdateCustomerPage selectGender(Gender gender) {
+        selectByVisibleText(GENDER, gender.label());
         return this;
     }
 

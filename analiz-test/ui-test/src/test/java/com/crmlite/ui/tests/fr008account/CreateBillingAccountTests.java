@@ -150,7 +150,7 @@ public class CreateBillingAccountTests extends AuthenticatedTest {
         assertThat(detail.successToastText())
                 .as("ACC-013 — basari mesaji metni")
                 .isEqualTo(ExpectedMessages.get("detail.createAccountSuccess"));
-        assertThat(detail.accountCount())
+        assertThat(detail.waitForAccountCount(before + 1))
                 .as("ACC-014 — hesap sayisi bir artar").isEqualTo(before + 1);
         assertThat(detail.accountNames())
                 .as("ACC-014 — yeni hesap tabloda listelenir").contains(accountName);
@@ -176,7 +176,7 @@ public class CreateBillingAccountTests extends AuthenticatedTest {
         modal.create();
         modal.waitUntilClosed();
 
-        assertThat(detail.accountCount())
+        assertThat(detail.waitForAccountCount(before + 1))
                 .as("ACC-011 — yeni adresle hesap olusturuldu").isEqualTo(before + 1);
         assertThat(detail.accountNames())
                 .as("ACC-014 — yeni hesap tabloda listelenir").contains(accountName);
@@ -206,7 +206,8 @@ public class CreateBillingAccountTests extends AuthenticatedTest {
         modal.create();
         modal.waitUntilClosed();
 
-        assertThat(detail.accountNames())
+        // Beklemeli okuma: tablo, modal kapandiktan SONRA asenkron tazeleniyor.
+        assertThat(detail.waitForAccountNamed(accountName))
                 .as("ACC-012 — hesap billing account tipinde olustu (tabloda listeleniyor)")
                 .contains(accountName);
     }

@@ -24,8 +24,9 @@ public record AddressInfo(
         String addressDesc,
         Boolean primary) {
 
-    /** Ankara — UI'daki tek sehir secenegi ({@code value="201"}). */
-    public static final int CITY_ANKARA = 201;
+    // Sehir id'si BURADA SABITLENMEZ: lookup seed'i degistiginde 201 -> 5 kaydi ve
+    // AddressInfo.cityId uzerindeki @ExistsInLookupGroup dogrulamasi adres iceren tum
+    // musteri olusturma akisini kirdi. Gecerli id icin LookupApi.cityAnkara() kullanilir.
 
     /** Onboarding govdesi {@code primary} alani icermez; onu disarida birakan kopya. */
     public AddressInfo withoutPrimaryFlag() {

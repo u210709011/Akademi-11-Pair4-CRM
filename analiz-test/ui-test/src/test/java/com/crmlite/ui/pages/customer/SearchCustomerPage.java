@@ -214,6 +214,16 @@ public class SearchCustomerPage extends BasePage {
         return getText(PAGE_TITLE);
     }
 
+    /**
+     * Search butonunun uzerindeki metin.
+     *
+     * <p>FR-018 dil testleri arayuzun secilen dile dondugunu bu metin uzerinden dogrular;
+     * sabit bir arayuz etiketi oldugu icin veriye bagli degildir.
+     */
+    public String searchButtonLabel() {
+        return getText(SEARCH_BUTTON);
+    }
+
     public boolean hasResults() {
         return resultsTable().hasAnyRow();
     }

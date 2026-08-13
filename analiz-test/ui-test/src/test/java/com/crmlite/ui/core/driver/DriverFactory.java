@@ -6,6 +6,7 @@ import com.crmlite.ui.core.driver.options.EdgeOptionsBuilder;
 import com.crmlite.ui.core.driver.options.FirefoxOptionsBuilder;
 import com.crmlite.ui.core.exceptions.FrameworkException;
 import org.openqa.selenium.MutableCapabilities;
+import org.openqa.selenium.SessionNotCreatedException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
@@ -111,24 +112,74 @@ public final class DriverFactory {
                         scaled(config.commandTimeout(), config.timeoutMultiplier())));
     }
 
+    /** Tarayici baslatma denemesi sayisi (ilk deneme dahil). */
+    private static final int BROWSER_START_ATTEMPTS = 3;
+
+    /** Denemeler arasi bekleme — cakisan surecin/portun serbest kalmasina zaman tanir. */
+    private static final Duration BROWSER_START_RETRY_DELAY = Duration.ofSeconds(3);
+
+    /**
+     * Yerel tarayiciyi baslatir; <b>gecici</b> baslatma hatalarinda yeniden dener.
+     *
+     * <p>Uzun kosumlarda (200+ test) tarayici ara sira acilamiyor ve Selenium
+     * {@code SessionNotCreatedException: browser start-up failure} firlatiyor - tipik
+     * sebepler gecicidir: profil dizini/port cakismasi, onceki oturumun tam kapanmamis
+     * olmasi, anlik kaynak sikisikligi. Tek denemede pes edildiginde o test ve ona bagli
+     * testler kosumun geri kalaninda kayboluyordu; 11.08.2026 tam regresyonunda ucu birden
+     * bu yuzden basarisiz sayilmisti (testler tek baslarina sorunsuz geciyordu).
+     *
+     * <p>Yeniden deneme YALNIZCA oturum kurulamamasi durumunda yapilir. Tarayicinin kurulu
+     * olmamasi gibi kalici hatalar ayni sekilde ilk denemede hata verir - gercek bir
+     * yapilandirma sorununu tekrar deneyerek gizlemek istemiyoruz.
+     */
     private static WebDriver createLocal(BrowserType browser, MutableCapabilities options,
                                          ClientConfig clientConfig) {
+        RuntimeException lastFailure = null;
+
+        for (int attempt = 1; attempt <= BROWSER_START_ATTEMPTS; attempt++) {
+            try {
+                return startBrowser(browser, options, clientConfig);
+            } catch (SessionNotCreatedException e) {
+                lastFailure = e;
+                log.warn("Tarayici baslatilamadi | tarayici={} | deneme={}/{} | sebep={}",
+                        browser, attempt, BROWSER_START_ATTEMPTS, e.getMessage());
+                if (attempt < BROWSER_START_ATTEMPTS) {
+                    sleep(BROWSER_START_RETRY_DELAY);
+                }
+            } catch (RuntimeException e) {
+                // Kalici hata (orn. tarayici kurulu degil) - tekrar denemenin anlami yok.
+                throw new FrameworkException(
+                        "Yerel WebDriver baslatilamadi (tarayici=" + browser + "). "
+                                + "Tarayicinin kurulu oldugundan emin olun.", e);
+            }
+        }
+
+        throw new FrameworkException(
+                "Yerel WebDriver " + BROWSER_START_ATTEMPTS + " denemede baslatilamadi (tarayici="
+                        + browser + "). Acik kalmis tarayici/surucu sureclerini ve %TEMP% "
+                        + "dizinindeki artiklari kontrol edin.", lastFailure);
+    }
+
+    private static WebDriver startBrowser(BrowserType browser, MutableCapabilities options,
+                                          ClientConfig clientConfig) {
+        return switch (browser) {
+            case CHROME -> new ChromeDriver(
+                    ChromeDriverService.createDefaultService(),
+                    (org.openqa.selenium.chrome.ChromeOptions) options, clientConfig);
+            case FIREFOX -> new FirefoxDriver(
+                    GeckoDriverService.createDefaultService(),
+                    (org.openqa.selenium.firefox.FirefoxOptions) options, clientConfig);
+            case EDGE -> new EdgeDriver(
+                    EdgeDriverService.createDefaultService(),
+                    (org.openqa.selenium.edge.EdgeOptions) options, clientConfig);
+        };
+    }
+
+    private static void sleep(Duration duration) {
         try {
-            return switch (browser) {
-                case CHROME -> new ChromeDriver(
-                        ChromeDriverService.createDefaultService(),
-                        (org.openqa.selenium.chrome.ChromeOptions) options, clientConfig);
-                case FIREFOX -> new FirefoxDriver(
-                        GeckoDriverService.createDefaultService(),
-                        (org.openqa.selenium.firefox.FirefoxOptions) options, clientConfig);
-                case EDGE -> new EdgeDriver(
-                        EdgeDriverService.createDefaultService(),
-                        (org.openqa.selenium.edge.EdgeOptions) options, clientConfig);
-            };
-        } catch (RuntimeException e) {
-            throw new FrameworkException(
-                    "Yerel WebDriver baslatilamadi (tarayici=" + browser + "). "
-                            + "Tarayicinin kurulu oldugundan emin olun.", e);
+            Thread.sleep(duration.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

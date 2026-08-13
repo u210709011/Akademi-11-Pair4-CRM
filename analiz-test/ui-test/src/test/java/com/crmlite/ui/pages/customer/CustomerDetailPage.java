@@ -4,6 +4,8 @@ import com.crmlite.ui.pages.BasePage;
 import com.crmlite.ui.pages.components.AddressCardComponent;
 import com.crmlite.ui.pages.components.AddressModalComponent;
 import com.crmlite.ui.pages.components.BillingAccountModalComponent;
+import com.crmlite.ui.pages.components.ProductDetailModalComponent;
+import com.crmlite.ui.pages.newsale.OfferSelectionPage;
 import com.crmlite.ui.pages.components.ConfirmDialogComponent;
 import com.crmlite.ui.pages.components.ContactModalComponent;
 import com.crmlite.ui.pages.components.NavbarComponent;
@@ -51,12 +53,37 @@ public class CustomerDetailPage extends BasePage {
     private static final By ADDRESS_EMPTY_STATE = By.cssSelector(".address-empty-state");
 
     // Accounts sekmesi
-    private static final By ACCOUNT_ROWS = By.cssSelector("table.accounts-table tbody tr");
+    // Dogrudan cocuk (>) sart: satir genisletildiginde icine URUN TABLOSU render ediliyor ve
+    // torun secici onun satirlarini da sayardi. :not(.account-detail-row) ise genisletilmis
+    // satirin kendisini disarida birakir - o bir hesap degil, acilan panelin kabidir.
+    private static final By ACCOUNT_ROWS =
+            By.cssSelector("table.accounts-table > tbody > tr:not(.account-detail-row)");
     private static final By ACCOUNTS_TABLE = By.cssSelector("table.accounts-table");
+    // Hesap yoksa tablo hic render edilmez, yerine bu metin gosterilir (FR-009 ACC-001).
+    private static final By ACCOUNTS_PANEL = By.cssSelector(".accounts-table-wrapper");
     private static final By ACCOUNT_HEADERS = By.cssSelector("table.accounts-table thead th");
     // Accounts sekmesindeki "+ Create New Account" butonu; adres sekmesindeki ekleme
     // butonuyla ayni sinifi paylasir, sekme bazinda ayrisir.
     private static final By CREATE_ACCOUNT_BUTTON = By.cssSelector(".info-panel-actions .add-address-button");
+
+    // FR-011: "silinemez" diyalogu. Silme onay diyaloguyla ayni .delete-confirm-card sinifini
+    // paylasir; ayirt edici isaret uyari ikonu ve OK butonudur (.save-button) — onay
+    // diyalogunda .delete-confirm-button vardir, .save-button yoktur.
+    private static final By CANNOT_DELETE_DIALOG =
+            By.cssSelector(".modal-card.delete-confirm-card .delete-confirm-icon-warning");
+    private static final By CANNOT_DELETE_MESSAGE =
+            By.cssSelector(".modal-card.delete-confirm-card .delete-confirm-message");
+    private static final By CANNOT_DELETE_CLOSE =
+            By.cssSelector(".modal-card.delete-confirm-card .modal-actions .save-button");
+
+    // FR-009: genisletilmis hesap satirindaki urun tablosu ve sayfalama.
+    private static final By PRODUCTS_TABLE = By.cssSelector("table.products-table");
+    private static final By PRODUCT_HEADERS = By.cssSelector("table.products-table thead th");
+    private static final By NO_PRODUCTS_MESSAGE = By.cssSelector(".account-no-products");
+    private static final By START_NEW_SALE_BUTTON = By.cssSelector(".start-new-sale-button");
+    private static final By ACCOUNTS_PAGINATION = By.cssSelector(".accounts-table-wrapper .pagination");
+    private static final By ACCOUNTS_PAGINATION_RANGE =
+            By.cssSelector(".accounts-table-wrapper .pagination .pagination-range");
 
     // Contact Medium sekmesi (FR-006)
     private static final By CONTACT_GRID = By.cssSelector(".contact-info-grid");
@@ -307,6 +334,18 @@ public class CustomerDetailPage extends BasePage {
         return new ConfirmDialogComponent(driver);
     }
 
+    /**
+     * Silme onaylandiktan sonra listenin gercekten kisalmasini bekler.
+     *
+     * <p>{@link #addAddress} ile ayni tuzak: onay diyaloginin kapanmasi kaydin listeden
+     * dustugu anlamina gelmez, liste backend round-trip'inden sonra asenkron yenileniyor.
+     * Beklemeden yapilan {@link #addressCount()} bayat degeri okur.
+     */
+    public CustomerDetailPage waitUntilAddressCountIsLessThan(int previousCount) {
+        wait.until(ExpectedConditions.numberOfElementsToBeLessThan(ADDRESS_TILES, previousCount));
+        return this;
+    }
+
     /** ACC-011: silme reddedildiginde liste ustunde gosterilen hata. */
     public boolean hasAddressActionError() {
         return isDisplayedAfterWait(ADDRESS_ACTION_ERROR);
@@ -409,9 +448,16 @@ public class CustomerDetailPage extends BasePage {
      * <p>Hazir olma kosulu tablonun kendisidir; onboarding her musteriye varsayilan bir hesap
      * actigi icin tablo hicbir zaman bos degildir.
      */
+    /**
+     * Accounts sekmesini acar.
+     *
+     * <p>Tablonun degil <b>panelin</b> gorunmesi beklenir: musterinin hic fatura hesabi yoksa
+     * tablo render edilmez, yerine "There are no billing accounts yet." metni gosterilir
+     * (FR-009 ACC-001). Tabloyu beklemek bu durumda sonsuza kadar takilirdi.
+     */
     public CustomerDetailPage openAccountsTab() {
         selectTab(Tab.ACCOUNTS);
-        wait.until(ExpectedConditions.visibilityOfElementLocated(ACCOUNTS_TABLE));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(ACCOUNTS_PANEL));
         return this;
     }
 
@@ -421,6 +467,39 @@ public class CustomerDetailPage extends BasePage {
         BillingAccountModalComponent modal = new BillingAccountModalComponent(driver);
         modal.waitUntilLoaded();
         return modal;
+    }
+
+    /**
+     * Hesap sayisi beklenen degere ulasana kadar bekler ve o degeri dondurur.
+     *
+     * <p>Hesap olusturma modali BASARIDA kapanir, tablo tazelemesi ise kapanmanin
+     * ARDINDAN asenkron baslar (bkz. detail-customer.component.ts: modal kapatilir,
+     * sonra refreshAccountsAndAddresses cagrilir). Modal kapandi diye hemen saymak
+     * eski listeyi okumak demektir; test hesap olusmus olmasina ragmen kirmizi duser.
+     */
+    public int waitForAccountCount(int expected) {
+        try {
+            wait.until(driver -> driver.findElements(ACCOUNT_ROWS).size() == expected);
+        } catch (org.openqa.selenium.TimeoutException e) {
+            // Beklenen sayiya ulasilmadi; cagiran assert gercek degeri raporlasin.
+        }
+        return accountCount();
+    }
+
+    /**
+     * Verilen adli hesap tabloda gorunene kadar bekler ve guncel ad listesini dondurur.
+     *
+     * <p>{@link #waitForAccountCount(int)} ile ayni yaris icin: modal basarida kapanir,
+     * tablo tazelemesi kapanmanin ARDINDAN asenkron baslar. Sayi yerine ADI dogrulayan
+     * testler bu surumu kullanir.
+     */
+    public List<String> waitForAccountNamed(String accountName) {
+        try {
+            wait.until(driver -> accountNames().contains(accountName));
+        } catch (org.openqa.selenium.TimeoutException e) {
+            // Gorunmedi; cagiran assert gercek listeyi raporlasin.
+        }
+        return accountNames();
     }
 
     /** ACC-014: tablodaki hesap satiri sayisi (anlik, beklemez). */
@@ -451,5 +530,186 @@ public class CustomerDetailPage extends BasePage {
             headers.add(header.getText().trim());
         }
         return headers;
+    }
+
+    // --- FR-009: hesap satirini genisletme ve bagli urunler ---
+
+    /** FR-009 ACC-003: satiri genisletip daraltan ok, her hesap satirinda bulunur. */
+    public boolean hasExpandToggle(int rowIndex) {
+        return isDisplayed(expandToggle(rowIndex));
+    }
+
+    /** FR-009 ACC-004: oka tiklar. Ayni oka tekrar tiklamak satiri daraltir. */
+    public CustomerDetailPage toggleAccountRow(int rowIndex) {
+        click(expandToggle(rowIndex));
+        return this;
+    }
+
+    /** Satirin acik olup olmadigi — uygulama acik satirdaki oka {@code expanded} sinifi ekler. */
+    public boolean isAccountRowExpanded(int rowIndex) {
+        return find(expandToggle(rowIndex)).getAttribute("class").contains("expanded");
+    }
+
+    /** FR-009 ACC-004: genisletilmis satirdaki urun tablosu goruntuleniyor mu. */
+    public boolean isProductTableDisplayed() {
+        return isDisplayedAfterWait(PRODUCTS_TABLE);
+    }
+
+    /** Satir daraltildiktan sonra urun tablosunun DOM'dan kalktigini bekler. */
+    public CustomerDetailPage waitUntilProductTableHidden() {
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(PRODUCTS_TABLE));
+        return this;
+    }
+
+    /** FR-009 ACC-005: urun tablosu kolon basliklari. */
+    public List<String> productColumnHeaders() {
+        List<String> headers = new ArrayList<>();
+        for (WebElement header : findAll(PRODUCT_HEADERS)) {
+            headers.add(header.getText().trim());
+        }
+        return headers;
+    }
+
+    /**
+     * Verilen adli urun tabloda gorunene kadar bekler ve guncel ad listesini dondurur.
+     *
+     * <p>Hesap satiri genisletildiginde urun tablosu API'den ASENKRON yuklenir; anlik
+     * okuma tablo dolmadan bos liste dondurur.
+     */
+    public List<String> waitForProductNamed(String productName) {
+        try {
+            wait.until(driver -> productNames().contains(productName));
+        } catch (org.openqa.selenium.TimeoutException e) {
+            // Gorunmedi; cagiran assert gercek listeyi raporlasin.
+        }
+        return productNames();
+    }
+
+    /** Urun tablosundaki urun adlari (2. kolon). */
+    public List<String> productNames() {
+        List<String> names = new ArrayList<>();
+        for (WebElement cell : findAll(By.cssSelector("table.products-table tbody tr td:nth-child(2)"))) {
+            names.add(cell.getText().trim());
+        }
+        return names;
+    }
+
+    /** Hesabin hic urunu yoksa tablo yerine gosterilen metin. */
+    public boolean hasNoProductsMessage() {
+        return isDisplayedAfterWait(NO_PRODUCTS_MESSAGE);
+    }
+
+    public String noProductsMessage() {
+        return getText(NO_PRODUCTS_MESSAGE);
+    }
+
+    /** FR-009 ACC-006: urun satirindaki goz ikonu → Product Offer Details modal'i. */
+    public ProductDetailModalComponent openProductDetail(int productRowIndex) {
+        click(By.cssSelector(String.format(
+                "table.products-table tbody tr:nth-of-type(%d) .icon-button", productRowIndex + 1)));
+        ProductDetailModalComponent modal = new ProductDetailModalComponent(driver);
+        modal.waitUntilLoaded();
+        return modal;
+    }
+
+    // --- FR-010 / FR-011: hesap satiri aksiyonlari ---
+
+    /**
+     * FR-010 ACC-001: kalem ikonu → "Update Billing Account" ekrani.
+     *
+     * <p>Uygulama <b>ayni modal'i</b> kullanir; baslik {@code editingAccount()} degerine gore
+     * degisir. Bu yuzden alan id'leri, kaydet butonu ve FR-008'de bulunan modal tasmasi
+     * (UI-01) guncelleme akisi icin de gecerlidir.
+     */
+    public BillingAccountModalComponent openEditAccountModal(int rowIndex) {
+        click(By.cssSelector(String.format(
+                "table.accounts-table tbody tr:nth-of-type(%d) .account-row-actions "
+                        + ".icon-button:not(.icon-button-danger)", rowIndex + 1)));
+        BillingAccountModalComponent modal = new BillingAccountModalComponent(driver);
+        modal.waitUntilLoaded();
+        return modal;
+    }
+
+    /** FR-011 ACC-001: cop ikonu → silme onay diyalogu. */
+    public ConfirmDialogComponent deleteAccount(int rowIndex) {
+        click(By.cssSelector(String.format(
+                "table.accounts-table tbody tr:nth-of-type(%d) .account-row-actions "
+                        + ".icon-button-danger", rowIndex + 1)));
+        return new ConfirmDialogComponent(driver);
+    }
+
+    /**
+     * FR-011 ACC-003/ACC-004: silme reddedildiginde acilan "silinemez" diyalogu.
+     *
+     * <p>Onay diyalogundan <b>ayri</b> bir modaldir: silme istegi 409 dondugunde onay
+     * diyalogu kapanir ve backend'in mesajini tasiyan bu diyalog acilir.
+     */
+    public boolean hasCannotDeleteAccountDialog() {
+        return isDisplayedAfterWait(CANNOT_DELETE_DIALOG);
+    }
+
+    public String cannotDeleteAccountMessage() {
+        return getText(CANNOT_DELETE_MESSAGE);
+    }
+
+    public CustomerDetailPage closeCannotDeleteAccountDialog() {
+        click(CANNOT_DELETE_CLOSE);
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(CANNOT_DELETE_DIALOG));
+        return this;
+    }
+
+    /** Silme sonrasi hesap sayisinin gercekten azalmasini bekler (liste asenkron yenilenir). */
+    public CustomerDetailPage waitUntilAccountCountIsLessThan(int previousCount) {
+        wait.until(ExpectedConditions.numberOfElementsToBeLessThan(ACCOUNT_ROWS, previousCount));
+        return this;
+    }
+
+    /**
+     * FR-012 ACC-001: genisletilmis hesap satirindaki "Start New Sale" butonu.
+     *
+     * <p>Buton yalnizca satir genisletildiginde gorunur — once
+     * {@link #toggleAccountRow(int)} cagrilmalidir.
+     */
+    public OfferSelectionPage startNewSale() {
+        click(START_NEW_SALE_BUTTON);
+        OfferSelectionPage page = new OfferSelectionPage(driver);
+        page.waitUntilLoaded();
+        return page;
+    }
+
+    /**
+     * Beklemeli kontrol: buton, hesap satiri GENISLETILDIGINDE acilan panelin icinde
+     * render edilir. Anlik kontrol, panel henuz cizilmeden false donebilir.
+     */
+    public boolean hasStartNewSaleButton() {
+        return isDisplayedAfterWait(START_NEW_SALE_BUTTON);
+    }
+
+    // --- FR-009 ACC-009: sayfalama ---
+
+    /** Sayfalama kontrolleri yalnizca birden fazla sayfa varsa render edilir. */
+    public boolean hasAccountsPagination() {
+        return isDisplayed(ACCOUNTS_PAGINATION);
+    }
+
+    /** "1-5 / 7" bicimindeki aralik etiketi. */
+    public String accountsRangeLabel() {
+        return getText(ACCOUNTS_PAGINATION_RANGE);
+    }
+
+    /**
+     * Panelin gorunen metni.
+     *
+     * <p>Beklenen bir metnin ekranda <b>hic bulunmadigini</b> gostermek icin kullanilir:
+     * metin implement edilmediginde ona ait bir locator da olmadigi icin normal yontemle
+     * assert edilemez (FR-009 ACC-001 bos durum mesaji).
+     */
+    public String pageText() {
+        return getText(ROOT);
+    }
+
+    private By expandToggle(int rowIndex) {
+        return By.cssSelector(String.format(
+                "table.accounts-table tbody tr:nth-of-type(%d) .account-expand-toggle", rowIndex + 1));
     }
 }

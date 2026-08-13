@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  Tek test kosmak icin suite - demo/sunum ve kararsiz bir testi hizlica siniflandirmak
+  icin kullanilir. Tum suite'i kosmak yerine yalnizca secilen testi kosar.
+
+  Kullanim: ./mvnw test -Dsuite=single
+  Baska bir testi kosmak icin asagidaki sinif ve metot adini degistirmek yeterlidir.
+
+  Su an secili: FR-017 ACC-003/004 - siparis iletilir ve basari mesaji gosterilir.
+  Satis akisinin TAMAMINI yurutur: musteri ve fatura hesabi API ile kurulur, ardindan
+  tarayicida urun aranir, sepete eklenir, konfigure edilir, ozet ekrani acilir, Submit
+  onaylanir ve "Order Successfully Created" modali gorunur.
+
+  ON KOSUL: tum servisler + frontend ayakta olmalidir.
+  NOT: bu test GERCEK SIPARIS olusturur.
+-->
+<suite name="CRM Lite UI - Tek Test" verbose="1" parallel="false" configfailurepolicy="continue">
+
+    <listeners>
+        <listener class-name="com.crmlite.ui.core.listeners.SuiteListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.TestListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
+    <test name="Tek Test">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr017submit.SubmitOrderTests">
+                <methods>
+                    <include name="submitSendsOrderAndShowsSuccessMessage"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+</suite>

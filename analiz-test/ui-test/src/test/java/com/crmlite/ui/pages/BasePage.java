@@ -260,13 +260,14 @@ public abstract class BasePage {
      *
      * <p>Uygulamada hata mesaji, input ile ayni sarmalayici icinde kardes olarak duruyor
      * (sarmalayici sinifi ekrana gore degisiyor: {@code form-field} / {@code modal-field} /
-     * {@code filter-field}). Bu yuzden alanin id'sinden yukari cikip sarmalayici icinde aranir.
+     * {@code filter-field} / login ekraninda {@code form-group}). Bu yuzden alanin id'sinden
+     * yukari cikip sarmalayici icinde aranir.
      */
     protected By fieldErrorFor(String fieldId) {
         return By.xpath(String.format(
                 "//*[@id='%s']/ancestor::div["
                         + "contains(@class,'form-field') or contains(@class,'modal-field')"
-                        + " or contains(@class,'filter-field')][1]"
+                        + " or contains(@class,'filter-field') or contains(@class,'form-group')][1]"
                         + "//span[contains(@class,'field-error')]",
                 fieldId));
     }

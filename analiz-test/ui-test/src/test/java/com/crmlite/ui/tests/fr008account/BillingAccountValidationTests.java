@@ -8,7 +8,6 @@ import com.crmlite.ui.tests.AuthenticatedTest;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -65,24 +64,28 @@ public class BillingAccountValidationTests extends AuthenticatedTest {
     @Story("ACC-009 — Account Name zorunlu")
     @TmsLink("FR-008-ACC-009")
     @Severity(SeverityLevel.CRITICAL)
+    @Description("Adres secimi Account Name'i OTOMATIK DOLDURUR (commit 220375e: secilen adresin "
+            + "addrDesc'i isme yazilir, kullanici elle yazmadiysa). Bu yuzden alan, adres "
+            + "secildikten sonra bilincli olarak temizlenir — aksi halde 'isim bos' durumu "
+            + "hic olusmaz ve test dogrulamak istedigi kurali hic sinamaz.")
     public void createIsDisabledWithoutAccountName() {
         CreatedCustomer customer = TestDataFactory.customerWithAddresses(1);
         CustomerDetailPage detail = openCustomerDetail(customer.custId()).openAccountsTab();
 
         BillingAccountModalComponent modal = detail.openCreateAccountModal();
         modal.enterAccountDescription("Aciklama").selectFirstExistingAddress();
+        modal.clearAccountName();
 
         assertThat(modal.isCreateDisabled())
                 .as("ACC-009 — Account Name bosken Create pasif").isTrue();
     }
 
-    @Test(groups = {"fr008", "documented-gap"},
+    @Test(groups = {"fr008", "regression"},
             description = "UI-FR008-11 | Account Description girilmeden Create aktiflesmez")
     @Story("ACC-009 — Account Description zorunlu")
     @TmsLink("FR-008-ACC-009")
-    @Issue("FR-008-GAP-ACC009")
     @Severity(SeverityLevel.NORMAL)
-    @Description("BILINEN UYUMSUZLUK — kirmizi kalmasi beklenir. Dokuman ACC-009 ve validasyon "
+    @Description("12.08.2026: ozellik uygulandi, test acildi. Dokuman ACC-009 ve validasyon "
             + "tablosu Account Description'i ZORUNLU sayar; uygulamada alan opsiyoneldir "
             + "(accountForm yalnizca accountName istiyor, alanda * isareti ve hata blogu yok, "
             + "istek govdesinde accountDesc null gonderilebiliyor).")
@@ -130,7 +133,7 @@ public class BillingAccountValidationTests extends AuthenticatedTest {
         modal.enterAccountName("Eksik Adresli").enterAccountDescription("Aciklama");
         modal.toggleAddressMode();
         // Address Description bilincli olarak bos birakilir.
-        modal.selectNewAddressCity(BillingAccountModalComponent.CITY_ANKARA)
+        modal.selectNewAddressCity(BillingAccountModalComponent.CITY_ANKARA_LABEL)
                 .enterNewStreet("Eksik Sokak")
                 .enterNewHouseNumber("No:1");
 

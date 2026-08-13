@@ -87,8 +87,15 @@ public class PrimaryAddressTests extends AuthenticatedTest {
     @Story("ACC-009 — Birincil adres silinemez")
     @TmsLink("FR-005-ACC-009")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Silme secenegi pasif olmali ve ipucu metni sebebi aciklamalidir. "
-            + "Adres listesi degismeden kalir.")
+    @Description("12.08.2026: ozellik uygulandi, test acildi. Dokuman ACC-009 silme "
+            + "secenegininin pasif olmasini ve ipucu metninin sebebi aciklamasini sart kosar. "
+            + "Uygulamada birincil adres icin HICBIR koruma yok: menudeki Delete butonunda "
+            + "[disabled] baglamasi bulunmuyor, openDeleteAddressConfirm() birincil adresi "
+            + "ayirt etmiyor ve \"Primary address cannot be deleted.\" metni frontend'de hic "
+            + "tanimli degil. Koruma varsa yalnizca backend tarafindadir; dokumanin istedigi "
+            + "UI davranisi karsilanmiyor.\n"
+            + "10.08.2026: pull oncesi ve sonrasi surumler karsilastirildi, buton her iki "
+            + "surumde de ayni - bu bir regresyon degil, bastan beri var olan bir eksik.")
     public void primaryAddressCannotBeDeleted() {
         CreatedCustomer customer = TestDataFactory.customerWithAddresses(2);
         CustomerDetailPage detail = openCustomerDetail(customer.custId()).openAddressTab();

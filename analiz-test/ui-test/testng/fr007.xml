@@ -5,9 +5,10 @@
   FR-007 Musteri Silme (UC-EACRML-007).
   Calistirma: ./mvnw test -Dsuite=fr007
 
-  DeleteCustomerLinkedProductTests (ACC-004) enabled=false ile kapalidir: kural silme
-  akisinda hic cagrilmiyor ve on kosulu (pasif hesap + bagli urun) mevcut UI ile
-  kurulamiyor. FR-010 implemente edildiginde aktiflestirilmelidir.
+  DeleteCustomerLinkedProductTests (ACC-004) 12.08.2026'da gercek govdesiyle yazilip
+  ACILDI ve GECTI; on kosul artik BillingAccountApi.deactivate ile kurulabiliyor.
+  Test on kosulunu kanitlar (hesabin gercekten pasif oldugunu ve engelin ACC-003'ten
+  gelmedigini dogrular), boylece dogru davranisi yanlis gerekceyle onaylamaz.
 
   NOT: Bu suite VERI SILER. Her test kendi musterisini kurar, ancak basarili silme
   testi geri alinamaz - paylasilan veri uzerinde calistirilmamalidir.
