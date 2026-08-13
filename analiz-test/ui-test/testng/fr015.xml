@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  FR-015 Urun Konfigurasyonu (UC-EACRML-015).
+  Calistirma: ./mvnw test -Dsuite=fr015
+
+  ON KOSUL: product-service ve order-service ayakta olmalidir. Ekrana ancak sepette
+  urun varken Next'e basarak gelinir; her test bu on kosulu kendisi kurar.
+
+  DOKUMAN NOTU: bu FR'nin kabul kriterleri dokumanda UC-EACRML-014 basliginin
+  altinda yer alir; bloklar ait olduklari basliktan once gelir.
+
+  ATLAMA YOK: on kosullar assert edilir. Onceden iki test SkipException ile atlaniyordu;
+  atlanan test hicbir sey dogrulamadigi halde basarisiz da gorunmedigi icin kok neden
+  (zorunlu karakteristiklerin doldurulmamasi) ilk kosumda fark edilmedi.
+-->
+<suite name="CRM Lite UI - FR-015" verbose="1" parallel="false" configfailurepolicy="continue">
+
+    <listeners>
+        <listener class-name="com.crmlite.ui.core.listeners.SuiteListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.TestListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
+    <test name="FR-015 Urun Konfigurasyonu">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr015configuration.ProductConfigurationTests"/>
+        </classes>
+    </test>
+
+</suite>

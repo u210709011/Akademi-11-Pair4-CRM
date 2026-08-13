@@ -9,7 +9,6 @@ import com.crmlite.ui.tests.AuthenticatedTest;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
-import io.qameta.allure.Issue;
 import io.qameta.allure.Severity;
 import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
@@ -44,11 +43,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Feature("UC-EACRML-008")
 public class BillingAccountCancelTests extends AuthenticatedTest {
 
-    @Test(groups = {"fr008", "documented-gap"},
+    @Test(groups = {"fr008", "regression"},
             description = "UI-FR008-14 | Create Billing Account ekraninda Cancel uyari gosterir")
     @Story("ACC-010 — Cancel uyarisi")
     @TmsLink("FR-008-ACC-010")
-    @Issue("FR-008-GAP-ACC010")
     @Severity(SeverityLevel.NORMAL)
     @Description("Dokuman Cancel sonrasi onay mesaji sart kosuyor; uygulama modal'i dogrudan "
             + "kapatiyor ve girilen veriler uyarisiz kayboluyor.")
@@ -65,11 +63,10 @@ public class BillingAccountCancelTests extends AuthenticatedTest {
                 .as("ACC-010 — kaydedilmemis degisiklikler icin uyari gosterilmelidir").isTrue();
     }
 
-    @Test(groups = {"fr008", "documented-gap"},
+    @Test(groups = {"fr008", "regression"},
             description = "UI-FR008-15 | Cancel onaylanmazsa Create Billing Account ekraninda kalinir")
     @Story("ACC-010 — Onaylanmazsa ayni ekranda kalinir")
     @TmsLink("FR-008-ACC-010")
-    @Issue("FR-008-GAP-ACC010")
     @Severity(SeverityLevel.NORMAL)
     @Description("ACC-010'un ikinci yarisi: uyari reddedilirse modal acik kalmali ve "
             + "girilen veriler korunmalidir.")
@@ -91,11 +88,10 @@ public class BillingAccountCancelTests extends AuthenticatedTest {
                 .isTrue();
     }
 
-    @Test(groups = {"fr008", "documented-gap"},
+    @Test(groups = {"fr008", "regression"},
             description = "UI-FR008-18 | Yeni adres modunda Create/Cancel butonlarina erisilebilir")
     @Story("ACC-011 — Hesap olusturulabilmeli")
     @TmsLink("FR-008-ACC-011")
-    @Issue("FR-008-BUG-MODAL-OVERFLOW")
     @Severity(SeverityLevel.CRITICAL)
     @Description("GERCEK URUN HATASI. Yeni adres modunda modal viewport'tan uzun oluyor ve "
             + "Create/Cancel butonlari ekranin altinda kaliyor. .modal-backdrop position:fixed "
@@ -116,11 +112,10 @@ public class BillingAccountCancelTests extends AuthenticatedTest {
                 .isTrue();
     }
 
-    @Test(groups = {"fr008", "documented-gap"},
+    @Test(groups = {"fr008", "regression"},
             description = "UI-FR008-16 | Yeni adres formunda Cancel uyari gosterir")
     @Story("ACC-006 — Yeni adres ekraninda Cancel uyarisi")
     @TmsLink("FR-008-ACC-006")
-    @Issue("FR-008-GAP-ACC006")
     @Severity(SeverityLevel.MINOR)
     @Description("Dokuman ayri bir yeni-adres ekrani ve o ekranda Cancel uyarisi tarif ediyor. "
             + "Uygulamada ayri ekran yok; adres satir ici formda aliniyor ve kendi Cancel'i "

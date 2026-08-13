@@ -2,6 +2,7 @@ package com.crmlite.ui.data.api;
 
 import com.crmlite.ui.data.builder.CustomerBuilder;
 import com.crmlite.ui.data.model.AddressInfo;
+import com.crmlite.ui.data.model.BillingAccountResponse;
 import com.crmlite.ui.data.model.CreatedCustomer;
 import com.crmlite.ui.data.model.CustomerData;
 import org.slf4j.Logger;
@@ -69,6 +70,31 @@ public final class TestDataFactory {
     }
 
     /**
+     * FR-009 on kosulu: fatura hesabi <b>ve o hesaba bagli bir urunu</b> olan musteri.
+     *
+     * <p>Urun dogrudan olusturulamaz — siparis akisinin tamami islemek zorundadir
+     * (bkz. {@link OrderApi}). Bu yuzden hazirlik digerlerinden yavastir; yalnizca
+     * urun tablosunu ve urun detay modalini test eden senaryolarda kullanilmalidir.
+     *
+     * @return musteri ile birlikte olusan urunun adi (urun tablosunda beklenen deger)
+     */
+    public static CustomerWithProduct customerWithAccountProduct() {
+        CreatedCustomer customer = simpleCustomer();
+        long addressId = AddressApi.primaryAddress(customer.custId()).id();
+        BillingAccountResponse account =
+                BillingAccountApi.create(customer.custId(), addressId, "FR009 Urun Hesabi");
+        String productName =
+                OrderApi.createFinishedProduct(customer.custId(), account.custAcctId(), addressId);
+        return new CustomerWithProduct(customer, account, productName);
+    }
+
+    /** {@link #customerWithAccountProduct()} sonucu — testin ihtiyaci olan uc deger. */
+    public record CustomerWithProduct(CreatedCustomer customer,
+                                      BillingAccountResponse account,
+                                      String productName) {
+    }
+
+    /**
      * FR-002 ACC-007 / ACC-008: sayfalama ve siralama icin ayni soyada sahip
      * {@code count} adet musteri uretir ve ortak soyadi dondurur.
      *
@@ -98,7 +124,7 @@ public final class TestDataFactory {
     /** Musteriye ek adres ekler ve olusan adresi dondurur. */
     public static long addAddress(CreatedCustomer customer, String street, String buildingName, String desc) {
         return AddressApi.create(customer.custId(),
-                new AddressInfo(AddressInfo.CITY_ANKARA, street, buildingName, desc, false)).id();
+                new AddressInfo(LookupApi.cityAnkara(), street, buildingName, desc, false)).id();
     }
 
     /**

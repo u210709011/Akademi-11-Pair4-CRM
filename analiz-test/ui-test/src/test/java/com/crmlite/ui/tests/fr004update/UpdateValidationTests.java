@@ -1,5 +1,6 @@
 package com.crmlite.ui.tests.fr004update;
 
+import com.crmlite.ui.data.model.Gender;
 import com.crmlite.ui.core.utils.DateUtil;
 import com.crmlite.ui.data.ExpectedMessages;
 import com.crmlite.ui.data.api.TestDataFactory;
@@ -108,8 +109,10 @@ public class UpdateValidationTests extends AuthenticatedTest {
         update.blurField(UpdateCustomerPage.Field.NATIONAL_ID);
 
         assertThat(update.isSaveDisabled()).as("10 haneli NAT ID reddedilir").isTrue();
+        // FR-004'un KENDI validasyon tablosu kullanilir, FR-003'unki degil: dokumanda iki
+        // tablo ayni alan icin farkli metin veriyor (bkz. ExpectedMessages aciklamasi).
         assertThat(update.fieldError(UpdateCustomerPage.Field.NATIONAL_ID))
-                .isEqualTo(ExpectedMessages.get("create.nationalIdError"));
+                .isEqualTo(ExpectedMessages.get("update.nationalIdError"));
     }
 
     @Test(groups = {"fr004"},
@@ -147,7 +150,7 @@ public class UpdateValidationTests extends AuthenticatedTest {
                 .as("placeholder secilemez, dolayisiyla gender bosaltilamaz").isTrue();
 
         // Diger secenege gecilebilir; form gecerli kalmalidir.
-        update.selectGender(UpdateCustomerPage.GENDER_FEMALE);
+        update.selectGender(Gender.FEMALE);
         assertThat(update.isSaveEnabled())
                 .as("gecerli bir gender secildiginde Save aktif").isTrue();
     }
