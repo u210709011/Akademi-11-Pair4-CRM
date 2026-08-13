@@ -2,6 +2,7 @@ package com.etiya.crm.lookupservice.business.concretes;
 
 import com.etiya.crm.shared.contracts.gnlcharval.CreateGnlCharValRequest;
 import com.etiya.crm.shared.contracts.gnlcharval.UpdateGnlCharValRequest;
+import com.etiya.crm.lookupservice.business.abstracts.TranslationService;
 import com.etiya.crm.lookupservice.business.exceptions.BusinessException;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlCharRepository;
@@ -33,10 +34,13 @@ class GnlCharValManagerTest {
     @Mock
     private GnlCharRepository gnlCharRepository;
 
+    @Mock
+    private TranslationService translationService;
+
     private final GnlCharValMapper gnlCharValMapper = new GnlCharValMapperImpl();
 
     private GnlCharValManager manager() {
-        return new GnlCharValManager(gnlCharValRepository, gnlCharRepository, gnlCharValMapper);
+        return new GnlCharValManager(gnlCharValRepository, gnlCharRepository, gnlCharValMapper, translationService);
     }
 
     @Test
