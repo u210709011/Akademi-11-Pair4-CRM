@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -126,13 +127,23 @@ public class CampaignOfferingManager implements CampaignOfferingService {
         return responses;
     }
 
+    /**
+     * FR-013: Offer Selection'da hangi kampanyalarin bir teklife uygulanabilir oldugunu
+     * gostermek icin (ve order-service'in resolveCampaignPrice ile fiyat cozmesi icin) kullanilir
+     * - pasif (is_actv=false) ya da suresi dolmus (endDate gecmis) satirlar hicbir zaman gercekten
+     * uygulanamayacagi icin burada filtrelenir. getAll() (admin/katalog yonetim listesi) kasitli
+     * olarak filtresiz birakildi - orada pasif kayitlarin da gorunmesi/yonetilmesi gerekiyor.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<GetAllCampaignOfferingResponse> getByCampaignId(Long campaignId) {
         campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new CampaignNotFoundException(campaignId));
 
-        List<CampaignOffering> campaignOfferings = campaignOfferingRepository.findByCampaign_CampaignId(campaignId);
+        List<CampaignOffering> campaignOfferings = campaignOfferingRepository.findByCampaign_CampaignId(campaignId)
+                .stream()
+                .filter(co -> co.isActive() && (co.getEndDate() == null || !co.getEndDate().isBefore(LocalDate.now())))
+                .toList();
         List<GetAllCampaignOfferingResponse> responses = campaignOfferingMapper.toGetAllResponseList(campaignOfferings);
 
         for (int i = 0; i < campaignOfferings.size(); i++) {

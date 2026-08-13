@@ -3,6 +3,7 @@ package com.etiya.crm.orderservice.business.concretes;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import com.etiya.crm.orderservice.business.dtos.requests.CreateOrderRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ItemCharValsRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.OrderConfigurationRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ProdCharValRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.ValidateBasketRequest;
 import com.etiya.crm.orderservice.business.dtos.responses.ActiveOfferResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderListItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderSummaryResponse;
@@ -43,6 +45,7 @@ import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountPageResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingRelationResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingResponse;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterRepository;
@@ -141,6 +144,39 @@ class CustOrdManagerTest {
 				.thenReturn(FINISHED_STATUS_ID);
 	}
 
+	// ---- validateBasket ----
+
+	// FR-014: validateBasket onceden prodOfrId'nin product-service'te gercekten var oldugunu
+	// hic kontrol etmiyordu - var olmayan bir id ile 200 donup hata ancak createOrder'da ortaya
+	// cikiyordu. Artik createOrder'daki applyProductOffering ile ayni kontrolu (productClient.getById)
+	// erken yapiyor.
+	@Test
+	void validateBasket_throws_whenOfferingDoesNotExist() {
+		stubCustomerAndAccount();
+		when(productClient.getById(999999999L)).thenThrow(new RuntimeException("offering not found"));
+
+		ValidateBasketRequest request = new ValidateBasketRequest(CUST_ID, CUST_ACCT_ID,
+				List.of(new BasketItemRequest(999999999L, null, null)));
+
+		assertThatThrownBy(() -> custOrdManager.validateBasket(request))
+				.isInstanceOf(RuntimeException.class)
+				.hasMessage("offering not found");
+	}
+
+	@Test
+	void validateBasket_passes_whenOfferingExists() {
+		stubCustomerAndAccount();
+		when(productClient.getById(200L)).thenReturn(
+				new ProductOfferingResponse(200L, 9L, "Mobile Prepaid 5GB", "descr", null, 1L, new BigDecimal("89.90")));
+
+		ValidateBasketRequest request = new ValidateBasketRequest(CUST_ID, CUST_ACCT_ID,
+				List.of(new BasketItemRequest(200L, null, null)));
+
+		custOrdManager.validateBasket(request);
+
+		verify(productClient).getById(200L);
+	}
+
 	// ---- createOrder ----
 
 	@Test
@@ -195,6 +231,69 @@ class CustOrdManagerTest {
 
 		assertThatThrownBy(() -> custOrdManager.createOrder(request))
 				.isInstanceOf(AccountNotBelongToCustomerException.class);
+	}
+
+	// FR-014 ACC-003/004: onceden sadece front-end (offer-selection.component.ts) zorunlu
+	// urunleri sepete ekliyordu - dogrudan API'ye istek atan bir istemci bu korumayi
+	// atlayabiliyordu. Artik createOrder, gonderilen her item icin mandatory=true/active=true
+	// iliskileri kendisi cozup eksik companion'lari otomatik ekliyor.
+	@Test
+	void createOrder_autoAddsMandatoryCompanionOffering_whenNotSubmittedByCaller() {
+		stubCustomerAndAccount();
+		stubBsnInterSpec();
+		stubBsnInterSave();
+		stubCustOrdSave();
+		AtomicLong idGen = new AtomicLong(900L);
+		when(custOrdItemRepository.save(any(CustOrdItem.class))).thenAnswer(inv -> {
+			CustOrdItem item = inv.getArgument(0);
+			item.setCustOrdItemId(idGen.getAndIncrement());
+			return item;
+		});
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(productClient.getOfferingRelations()).thenReturn(List.of(
+				new ProductOfferingRelationResponse(1L, 18L, true, false, true)));
+		when(productClient.getById(1L)).thenReturn(
+				new ProductOfferingResponse(1L, 9L, "Home Fiber 100Mbps", "descr", null, 1L, new BigDecimal("299.90")));
+		when(productClient.getById(18L)).thenReturn(
+				new ProductOfferingResponse(18L, 2L, "Broadband Modem", "descr", null, 1L, new BigDecimal("1199.90")));
+
+		CreateOrderRequest request = new CreateOrderRequest(CUST_ID, CUST_ACCT_ID,
+				List.of(new BasketItemRequest(1L, null, null)));
+
+		OrderSummaryResponse response = custOrdManager.createOrder(request);
+
+		assertThat(response.items()).hasSize(2);
+		assertThat(response.items()).extracting(i -> i.prodOfrId()).containsExactlyInAnyOrder(1L, 18L);
+		assertThat(response.totalAmount()).isEqualByComparingTo("1499.80");
+	}
+
+	@Test
+	void createOrder_doesNotDuplicateMandatoryCompanion_whenAlreadySubmittedByCaller() {
+		stubCustomerAndAccount();
+		stubBsnInterSpec();
+		stubBsnInterSave();
+		stubCustOrdSave();
+		AtomicLong idGen = new AtomicLong(900L);
+		when(custOrdItemRepository.save(any(CustOrdItem.class))).thenAnswer(inv -> {
+			CustOrdItem item = inv.getArgument(0);
+			item.setCustOrdItemId(idGen.getAndIncrement());
+			return item;
+		});
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(productClient.getOfferingRelations()).thenReturn(List.of(
+				new ProductOfferingRelationResponse(1L, 18L, true, false, true)));
+		when(productClient.getById(1L)).thenReturn(
+				new ProductOfferingResponse(1L, 9L, "Home Fiber 100Mbps", "descr", null, 1L, new BigDecimal("299.90")));
+		when(productClient.getById(18L)).thenReturn(
+				new ProductOfferingResponse(18L, 2L, "Broadband Modem", "descr", null, 1L, new BigDecimal("1199.90")));
+
+		// front-end zaten ikisini birden gondermis - backend ikinci bir modem satiri eklememeli.
+		CreateOrderRequest request = new CreateOrderRequest(CUST_ID, CUST_ACCT_ID,
+				List.of(new BasketItemRequest(1L, null, null), new BasketItemRequest(18L, null, null)));
+
+		OrderSummaryResponse response = custOrdManager.createOrder(request);
+
+		assertThat(response.items()).hasSize(2);
 	}
 
 	// ---- addItem ----
@@ -283,6 +382,39 @@ class CustOrdManagerTest {
 
 		assertThat(response.items().get(1).cmpgName()).isEqualTo("Summer Discount");
 		assertThat(response.items().get(1).price()).isEqualByComparingTo("134.91");
+	}
+
+	// FR-014 ACC-003/004: bkz. createOrder_autoAddsMandatoryCompanionOffering... - addItem
+	// icin de ayni koruma gecerli, WAIT durumundaki siparise sonradan eklenen item icin de.
+	@Test
+	void addItem_autoAddsMandatoryCompanionOffering_whenNotAlreadyInOrder() {
+		CustOrd custOrd = waitingOrder();
+		CustOrdItem existingItem = new CustOrdItem();
+		existingItem.setCustOrdItemId(900L);
+		existingItem.setCustOrd(custOrd);
+		existingItem.setCustAcctId(CUST_ACCT_ID);
+		existingItem.setProdOfrId(200L);
+		custOrd.getItems().add(existingItem);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(productClient.getOfferingRelations()).thenReturn(List.of(
+				new ProductOfferingRelationResponse(1L, 18L, true, false, true)));
+		when(productClient.getById(1L)).thenReturn(
+				new ProductOfferingResponse(1L, 9L, "Home Fiber 100Mbps", "descr", null, 1L, new BigDecimal("299.90")));
+		when(productClient.getById(18L)).thenReturn(
+				new ProductOfferingResponse(18L, 2L, "Broadband Modem", "descr", null, 1L, new BigDecimal("1199.90")));
+		AtomicLong idGen = new AtomicLong(901L);
+		when(custOrdItemRepository.save(any(CustOrdItem.class))).thenAnswer(inv -> {
+			CustOrdItem item = inv.getArgument(0);
+			item.setCustOrdItemId(idGen.getAndIncrement());
+			return item;
+		});
+
+		OrderSummaryResponse response = custOrdManager.addItem(CUST_ORD_ID, new BasketItemRequest(1L, null, null));
+
+		assertThat(response.items()).hasSize(3); // existing(200) + fiber(1) + auto-added modem(18)
+		assertThat(response.items()).extracting(i -> i.prodOfrId()).contains(1L, 18L);
 	}
 
 	@Test

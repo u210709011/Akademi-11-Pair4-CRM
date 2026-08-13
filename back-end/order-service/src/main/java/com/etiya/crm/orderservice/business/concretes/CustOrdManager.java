@@ -36,6 +36,7 @@ import com.etiya.crm.orderservice.clients.responses.CampaignResponse;
 import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductCatalogOfferingResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingRelationResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingResponse;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterRepository;
@@ -68,9 +69,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -103,7 +107,10 @@ public class CustOrdManager implements CustOrdService {
         basketValidationRules.ensureAccountBelongsToCustomer(request.custAcctId(), accounts);
         basketValidationRules.ensureNoDuplicateItems(request.items());
         basketValidationRules.ensureNoConflictingItems(request.items(), productClient.getOfferingRelations());
-        request.items().forEach(item -> ensureOfferNotAlreadyActive(request.custAcctId(), item.prodOfrId()));
+        request.items().forEach(item -> {
+            ensureOfferNotAlreadyActive(request.custAcctId(), item.prodOfrId());
+            ensureOfferingExists(item.prodOfrId(), item.cmpgId());
+        });
     }
 
     /**
@@ -120,7 +127,8 @@ public class CustOrdManager implements CustOrdService {
         List<CustomerAccountResponse> accounts = customerClient.getAccounts(request.custId(), 1000).content();
         basketValidationRules.ensureAccountBelongsToCustomer(request.custAcctId(), accounts);
         basketValidationRules.ensureNoDuplicateItems(request.items());
-        basketValidationRules.ensureNoConflictingItems(request.items(), productClient.getOfferingRelations());
+        List<ProductOfferingRelationResponse> relations = productClient.getOfferingRelations();
+        basketValidationRules.ensureNoConflictingItems(request.items(), relations);
         request.items().forEach(item -> ensureOfferNotAlreadyActive(request.custAcctId(), item.prodOfrId()));
 
         BsnInterSpec spec = bsnInterSpecRepository.findByShrtCode(LookupCodes.BSN_INTER_SPEC_NEW_SALE)
@@ -141,24 +149,16 @@ public class CustOrdManager implements CustOrdService {
         custOrd.setBsnInterSpec(spec);
         custOrd = custOrdRepository.save(custOrd);
 
-        for (BasketItemRequest itemRequest : request.items()) {
-            CustOrdItem item = custOrderItemMapper.toEntity(itemRequest);
-            item.setCustOrd(custOrd);
-            item.setCustAcctId(request.custAcctId());
-            item.setCustId(request.custId());
-            applyProductOffering(item, itemRequest.prodOfrId(), itemRequest.cmpgId());
+        // FR-014 ACC-003/004: zorunlu (mandatory) iliskili urunler onceden sadece front-end
+        // tarafindan ekleniyordu (bkz. offer-selection.component.ts) - API'yi dogrudan cagiran
+        // bir istemci bu korumayi atlayabiliyordu. Sunucu artik zaten sepette olmayanlari
+        // kendisi tamamliyor; front-end'in onceden eklediklerini tekrar eklemez (idempotent).
+        List<BasketItemRequest> itemsToCreate = expandWithMandatoryOfferings(request.items(), relations, Set.of());
+
+        for (BasketItemRequest itemRequest : itemsToCreate) {
             // product-service tamamlanınca burada ayrica PROD instance olusturulup
             // dogan prodId buraya yazilacak (subscription provisioning, henuz yok).
-            item = custOrdItemRepository.save(item);
-            // custOrd yeni persist edildigi icin Hibernate items koleksiyonunu bos baslatir ve
-            // ayri bir repository cagrisiyla eklenen satirlari kendiliginden gormez - buildSummary'nin
-            // dogru listeyi donebilmesi icin bidirectional iliski burada elle senkron tutulur.
-            custOrd.getItems().add(item);
-
-            BsnInterItem bsnInterItem = new BsnInterItem();
-            bsnInterItem.setBsnInter(bsnInter);
-            bsnInterItem.setRowId(item.getCustOrdItemId());
-            bsnInterItemRepository.save(bsnInterItem);
+            addOrderItem(custOrd, request.custAcctId(), request.custId(), itemRequest);
         }
 
         return buildSummary(custOrd);
@@ -176,25 +176,67 @@ public class CustOrdManager implements CustOrdService {
                 .orElseThrow(() -> new OrderNotFoundException(custOrdId));
         ensureEditable(custOrd);
         basketValidationRules.ensureItemNotAlreadyInBasket(request, custOrd.getItems());
-        basketValidationRules.ensureItemNotConflicting(request, custOrd.getItems(), productClient.getOfferingRelations());
+        List<ProductOfferingRelationResponse> relations = productClient.getOfferingRelations();
+        basketValidationRules.ensureItemNotConflicting(request, custOrd.getItems(), relations);
 
         Long custAcctId = custOrd.getItems().get(0).getCustAcctId();
         ensureOfferNotAlreadyActive(custAcctId, request.prodOfrId());
 
-        CustOrdItem item = custOrderItemMapper.toEntity(request);
+        // FR-014 ACC-003/004: bkz. createOrder - alreadyPresent, custOrd'a zaten eklenmis
+        // item'lari dikkate alarak ayni zorunlu urunun iki kez eklenmesini engeller.
+        Set<Long> alreadyPresent = custOrd.getItems().stream()
+                .map(CustOrdItem::getProdOfrId).collect(Collectors.toSet());
+        List<BasketItemRequest> itemsToAdd = expandWithMandatoryOfferings(List.of(request), relations, alreadyPresent);
+
+        for (BasketItemRequest itemRequest : itemsToAdd) {
+            addOrderItem(custOrd, custAcctId, custOrd.getCustId(), itemRequest);
+        }
+
+        return buildSummary(custOrd);
+    }
+
+    /**
+     * FR-014 ACC-003/004: relations icindeki mandatory=true+active=true iliskilere gore, items
+     * icindeki her offering'in zorunlu companion'larini (relation.productOfferingId1 -> id2 yonu,
+     * bkz. offer-selection.component.ts buildRequiredOfferingsMap ile ayni yon) alreadyPresent'e
+     * (ve birbirlerine) gore idempotent sekilde ekler - front-end zaten eklediyse tekrar eklemez.
+     */
+    private List<BasketItemRequest> expandWithMandatoryOfferings(List<BasketItemRequest> items,
+            List<ProductOfferingRelationResponse> relations, Set<Long> alreadyPresentOfferingIds) {
+        List<BasketItemRequest> expanded = new ArrayList<>(items);
+        Set<Long> present = new HashSet<>(alreadyPresentOfferingIds);
+        items.forEach(item -> present.add(item.prodOfrId()));
+
+        for (BasketItemRequest item : items) {
+            for (ProductOfferingRelationResponse relation : relations) {
+                if (Boolean.TRUE.equals(relation.mandatory()) && Boolean.TRUE.equals(relation.active())
+                        && item.prodOfrId().equals(relation.productOfferingId1())
+                        && present.add(relation.productOfferingId2())) {
+                    expanded.add(new BasketItemRequest(relation.productOfferingId2(), null, null));
+                }
+            }
+        }
+        return expanded;
+    }
+
+    /** createOrder/addItem'daki tekrarlanan "item olustur+kaydet+siparise ekle" bloğu. */
+    private CustOrdItem addOrderItem(CustOrd custOrd, Long custAcctId, Long custId, BasketItemRequest itemRequest) {
+        CustOrdItem item = custOrderItemMapper.toEntity(itemRequest);
         item.setCustOrd(custOrd);
         item.setCustAcctId(custAcctId);
-        item.setCustId(custOrd.getCustId());
-        applyProductOffering(item, request.prodOfrId(), request.cmpgId());
+        item.setCustId(custId);
+        applyProductOffering(item, itemRequest.prodOfrId(), itemRequest.cmpgId());
         item = custOrdItemRepository.save(item);
+        // custOrd yeni persist edildigi icin Hibernate items koleksiyonunu bos baslatir ve
+        // ayri bir repository cagrisiyla eklenen satirlari kendiliginden gormez - buildSummary'nin
+        // dogru listeyi donebilmesi icin bidirectional iliski burada elle senkron tutulur.
         custOrd.getItems().add(item);
 
         BsnInterItem bsnInterItem = new BsnInterItem();
         bsnInterItem.setBsnInter(custOrd.getBsnInter());
         bsnInterItem.setRowId(item.getCustOrdItemId());
         bsnInterItemRepository.save(bsnInterItem);
-
-        return buildSummary(custOrd);
+        return item;
     }
 
     /**
@@ -436,6 +478,20 @@ public class CustOrdManager implements CustOrdService {
         Long waitStatusId = lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING);
         if (!waitStatusId.equals(custOrd.getOrdStId())) {
             throw new OrderNotEditableException(custOrd.getCustOrdId());
+        }
+    }
+
+    /**
+     * FR-014: validateBasket, createOrder'in aksine item'lari kalici olarak kaydetmedigi icin
+     * applyProductOffering'i hic cagirmiyordu - var olmayan bir prodOfrId ile validate-basket
+     * 200 donup hata ancak sonraki createOrder adiminda ortaya cikiyordu. Ayni dogrulamayi
+     * (offering var mi, cmpgId varsa o offering'e gercekten uygulaniyor mu) burada da yapip
+     * sonucu atarak Next adiminda erken geri bildirim verir.
+     */
+    private void ensureOfferingExists(Long prodOfrId, Long cmpgId) {
+        productClient.getById(prodOfrId);
+        if (cmpgId != null) {
+            resolveCampaignPrice(cmpgId, prodOfrId);
         }
     }
 

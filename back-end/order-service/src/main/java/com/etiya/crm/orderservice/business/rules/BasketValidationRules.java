@@ -38,8 +38,9 @@ public class BasketValidationRules {
         }
 
         // FR-017/BR-02 (varsayim): ayni prodOfrId+cmpgId kombinasyonu sepette birden fazla
-        // kez olamaz. "Already Active" (BR-03) ve hizmet cakismasi (BR-04) product-service
-        // olmadan kontrol edilemiyor - bkz. FR-014 ACC-007/ACC-008.
+        // kez olamaz. "Already Active" (BR-03, bkz. CustOrdManager.ensureOfferNotAlreadyActive)
+        // ve hizmet cakismasi (BR-04, bkz. ensureNoConflictingItems/ensureItemNotConflicting
+        // asagida) artik ayri yerlerde kontrol ediliyor.
         public void ensureNoDuplicateItems(List<BasketItemRequest> items) {
                 Set<String> seen = new HashSet<>();
                 for (BasketItemRequest item : items) {
