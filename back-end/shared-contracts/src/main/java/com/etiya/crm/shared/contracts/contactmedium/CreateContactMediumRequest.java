@@ -5,24 +5,26 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
 /** contact-info-service POST /api/v1/contact-mediums/single istek govdesi. */
-@Schema(description = "POST /api/v1/contact-mediums/single istek govdesi.")
+@Schema(description = SwaggerText.CREATE_CONTACT_MEDIUM_REQUEST_DESCRIPTION)
 public record CreateContactMediumRequest(
 
-		@Schema(description = "Contact medium'un sahibinin id'si (ornegin custId).", example = "1")
+		@Schema(description = SwaggerText.CREATE_CONTACT_MEDIUM_ROW_ID_DESCRIPTION, example = "1")
 		@NotNull
 		Long rowId,
 
-		@Schema(description = "lookup-service DATA_TYPE grubundaki deger id'si (musteri icin 102).", example = "102")
+		@Schema(description = SwaggerText.CREATE_CONTACT_MEDIUM_DATA_TYPE_ID_DESCRIPTION, example = "102")
 		@NotNull
 		Long dataTypeId,
 
-		@Schema(description = "Iletisim verisi (e-posta, telefon no, vb.)", example = "ahmet.yilmaz@example.com")
+		@Schema(description = SwaggerText.CONTACT_DATA_DESCRIPTION, example = "ahmet.yilmaz@example.com")
 		@NotBlank
 		@Size(max = 100)
 		String cntcData,
 
-		@Schema(description = "lookup-service CNTC_MEDIUM_TYPE grubundaki deger id'si (EMAIL=4001, MOBILE_PHONE=4002, HOME_PHONE=4003, FAX=4004).",
+		@Schema(description = SwaggerText.CNTC_MEDIUM_TYPE_ID_DESCRIPTION,
 				example = "4001")
 		@NotNull
 		Long cntcMediumTypeId) {

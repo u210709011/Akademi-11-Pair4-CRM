@@ -12,6 +12,8 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 
+import com.etiya.crm.customerservice.constants.SwaggerText;
+
 /**
  * Swagger UI: http://localhost:{port}/swagger-ui.html
  * OpenAPI JSON: http://localhost:{port}/v3/api-docs
@@ -35,17 +37,12 @@ public class OpenApiConfig {
 	public OpenAPI customerServiceOpenApi() {
 		return new OpenAPI()
 				.info(new Info()
-						.title("Customer Service API")
-						.description("""
-								Musteri onboarding, arama ve editleme (kisisel bilgi / adres / contact) uc noktalari.
-								Bu servis party-service ve contact-info-service icin orkestrasyon (front door) katmanidir:
-								front-end her zaman buraya yazar, bu servis downstream'lere proxy'ler ve customer'a
-								ozel is kurallarini (max 5 adres, tek primary, alan bazli editlenebilirlik) burada uygular.
-								""")
+						.title(SwaggerText.OPENAPI_TITLE)
+						.description(SwaggerText.OPENAPI_DESCRIPTION)
 						.version("v1"))
 				.servers(List.of(
-						new Server().url("http://localhost:8080").description("API Gateway uzerinden (onerilen)"),
-						new Server().url("/").description("Bu servisin kendi adresi (gateway'i atlar)")))
+						new Server().url("http://localhost:8080").description(SwaggerText.OPENAPI_GATEWAY_SERVER_DESCRIPTION),
+						new Server().url("/").description(SwaggerText.OPENAPI_DIRECT_SERVER_DESCRIPTION)))
 				.components(new Components()
 						.addSecuritySchemes(BEARER_SCHEME, new SecurityScheme()
 								.type(SecurityScheme.Type.HTTP)

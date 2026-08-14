@@ -119,8 +119,9 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 				.orElseThrow(() -> new BillingAccountNotFoundException(custId, accountId));
 
 		// Onboarding'de acilan varsayilan CUST_ACCT tipi hesabin durumu da degistirilemez -
-		// deleteBillingAccount'taki ile ayni guard.
-		rules.ensureAccountIsBillingType(account, lookupResolver.resolveBillingAccountTypeId());
+		// deleteBillingAccount'taki ile ayni guard, ama B-13b: "silinemez" yerine "durumu
+		// degistirilemez" mesaji donen ayri exception kullanir.
+		rules.ensureAccountIsBillingTypeForStatusChange(account, lookupResolver.resolveBillingAccountTypeId());
 
 		Long activeStatusId = lookupResolver.resolveActiveAccountStatusId();
 		Long targetStatusId = UpdateBillingAccountStatusRequest.ACTIVE.equals(request.status()) ? activeStatusId

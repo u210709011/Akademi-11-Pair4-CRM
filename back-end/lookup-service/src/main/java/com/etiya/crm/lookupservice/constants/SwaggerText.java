@@ -89,6 +89,17 @@ public final class SwaggerText {
 	public static final String TYPE_VALUE_UPDATE_DESCRIPTION = "tableName/fieldName degistirilemez (immutable kimlik).";
 	public static final String TYPE_VALUE_DELETE_SUMMARY = "Degeri sil (hard delete)";
 
+	// OpenApiConfig
+	public static final String OPENAPI_TITLE = "Lookup Service API";
+	public static final String OPENAPI_DESCRIPTION =
+			"Genel amacli id-deger tablosu (GROUP_CODE + VALUE_ID + CODE + deger). Amaci "
+					+ "diger servislerdeki (customer/party/contact-info) kucuk referans tablolarinin "
+					+ "(gender, city, status, contact medium type, data type ...) coklanmasini onlemek. "
+					+ "Sadece okunur; deger ekleme/degistirme migration ile yapilir (bkz. "
+					+ "lookup-service V2__seed_lookup.sql basindaki degismezlik kurallari).";
+	public static final String OPENAPI_GATEWAY_SERVER_DESCRIPTION = "API Gateway uzerinden (onerilen)";
+	public static final String OPENAPI_DIRECT_SERVER_DESCRIPTION = "Bu servisin kendi adresi (gateway'i atlar)";
+
 	private SwaggerText() {
 	}
 }

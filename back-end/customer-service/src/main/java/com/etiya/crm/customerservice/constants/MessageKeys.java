@@ -37,6 +37,7 @@ public final class MessageKeys {
 	public static final String BILLING_ACCOUNT_HAS_ACTIVE_PRODUCTS = "error.billing-account.has-active-products";
 	public static final String CUSTOMER_HAS_ACTIVE_BILLING_ACCOUNT = "error.customer.has-active-billing-account";
 	public static final String DEFAULT_ACCOUNT_CANNOT_BE_DELETED = "error.customer-account.default-cannot-be-deleted";
+	public static final String DEFAULT_ACCOUNT_CANNOT_BE_CHANGED = "error.customer-account.default-cannot-be-changed";
 	public static final String ACCOUNT_NUMBER_COLLISION = "error.customer-account.number-collision";
 	public static final String PARAMETER_TYPE_MISMATCH = "validation.parameter.type-mismatch";
 	public static final String INVALID_REQUEST_PARAMETER = "validation.parameter.invalid";

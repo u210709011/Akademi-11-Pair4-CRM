@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.ProductOfferingRelation;
 
+import com.etiya.crm.productservice.constants.MessageKeys;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -14,19 +15,19 @@ import lombok.Setter;
 @AllArgsConstructor
 public class CreateProductOfferingRelationRequest {
 
-    @NotNull(message = "Kaynak ürün teklifi id alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.PRODUCT_OFFERING_SOURCE_REQUIRED + "}")
     private Long productOfferingId1;
 
-    @NotNull(message = "Hedef ürün teklifi id alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.PRODUCT_OFFERING_TARGET_REQUIRED + "}")
     private Long productOfferingId2;
 
-    @NotBlank(message = "İlişki tipi kodu zorunludur")
+    @NotBlank(message = "{" + MessageKeys.RELATION_TYPE_CODE_REQUIRED + "}")
     private String relationTypeCode;
 
-    @NotNull(message = "Miktar alanı zorunludur")
-    @Positive(message = "Miktar pozitif olmalıdır")
+    @NotNull(message = "{" + MessageKeys.QTY_REQUIRED + "}")
+    @Positive(message = "{" + MessageKeys.QTY_POSITIVE + "}")
     private Integer qty;
 
-    @NotNull(message = "Aktiflik alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.ACTIVE_REQUIRED + "}")
     private Boolean active;
 }

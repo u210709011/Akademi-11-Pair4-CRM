@@ -1,6 +1,7 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
 import com.etiya.crm.shared.contracts.rsrcspec.CreateRsrcSpecRequest;
+import com.etiya.crm.lookupservice.business.abstracts.TranslationService;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
 import com.etiya.crm.lookupservice.business.rules.GnlStExistenceRule;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlStRepository;
@@ -30,10 +31,14 @@ class RsrcSpecManagerTest {
     @Mock
     private GnlStRepository gnlStRepository;
 
+    @Mock
+    private TranslationService translationService;
+
     private final RsrcSpecMapper rsrcSpecMapper = new RsrcSpecMapperImpl();
 
     private RsrcSpecManager manager() {
-        return new RsrcSpecManager(rsrcSpecRepository, new GnlStExistenceRule(gnlStRepository), rsrcSpecMapper);
+        return new RsrcSpecManager(rsrcSpecRepository, new GnlStExistenceRule(gnlStRepository), rsrcSpecMapper,
+                translationService);
     }
 
     @Test

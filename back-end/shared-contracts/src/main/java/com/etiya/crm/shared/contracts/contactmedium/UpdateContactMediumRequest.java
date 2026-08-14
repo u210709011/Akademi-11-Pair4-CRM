@@ -5,16 +5,18 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
 /** contact-info-service PUT /api/v1/contact-mediums/{id} istek govdesi. */
-@Schema(description = "PUT /api/v1/contact-mediums/{id} istek govdesi.")
+@Schema(description = SwaggerText.UPDATE_CONTACT_MEDIUM_REQUEST_DESCRIPTION)
 public record UpdateContactMediumRequest(
 
-		@Schema(description = "Iletisim verisi (e-posta, telefon no, vb.)", example = "ahmet.yilmazoglu@example.com")
+		@Schema(description = SwaggerText.CONTACT_DATA_DESCRIPTION, example = "ahmet.yilmazoglu@example.com")
 		@NotBlank
 		@Size(max = 100)
 		String cntcData,
 
-		@Schema(description = "lookup-service CNTC_MEDIUM_TYPE grubundaki deger id'si (EMAIL=4001, MOBILE_PHONE=4002, HOME_PHONE=4003, FAX=4004).",
+		@Schema(description = SwaggerText.CNTC_MEDIUM_TYPE_ID_DESCRIPTION,
 				example = "4001")
 		@NotNull
 		Long cntcMediumTypeId) {

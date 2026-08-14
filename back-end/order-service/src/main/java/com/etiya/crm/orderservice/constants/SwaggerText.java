@@ -59,6 +59,15 @@ public final class SwaggerText {
 
 	public static final String REMOVE_ITEM_DESCRIPTION = "WAIT durumundaki siparisten tek bir item'i siler.";
 
+	// OpenApiConfig
+	public static final String OPENAPI_TITLE = "Order Service API";
+	public static final String OPENAPI_DESCRIPTION =
+			"Offer Selection -> Product Configuration -> Review & Confirm siparis akisi "
+					+ "(CustOrd/CustOrdItem/BsnInter). Sepet dogrulama, karakteristik/adres autosave, "
+					+ "finish'te product-service provizyonu ve OrderSubmittedEvent yayini bu serviste.";
+	public static final String OPENAPI_GATEWAY_SERVER_DESCRIPTION = "API Gateway uzerinden (onerilen)";
+	public static final String OPENAPI_DIRECT_SERVER_DESCRIPTION = "Bu servisin kendi adresi (gateway'i atlar)";
+
 	private SwaggerText() {
 	}
 }

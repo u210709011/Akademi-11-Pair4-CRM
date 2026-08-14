@@ -5,26 +5,28 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-@Schema(description = "lookup-service POST /api/v1/characteristics istek govdesi.")
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
+@Schema(description = SwaggerText.GNL_CHAR_CREATE_REQUEST_DESCRIPTION)
 public record CreateGnlCharRequest(
 
-        @Schema(description = "Karakteristik adi.", example = "Renk")
+        @Schema(description = SwaggerText.GNL_CHAR_NAME_DESCRIPTION, example = "Renk")
         @NotBlank @Size(max = 100)
         String name,
 
-        @Schema(description = "Aciklama.", example = "Urun rengi")
+        @Schema(description = SwaggerText.GNL_CHAR_DESCR_DESCRIPTION, example = "Urun rengi")
         @NotBlank @Size(max = 100)
         String descr,
 
-        @Schema(description = "Deger saglayici sinif (opsiyonel).", example = "com.etiya.crm.ColorProvider")
+        @Schema(description = SwaggerText.GNL_CHAR_PRVDR_CLS_DESCRIPTION, example = "com.etiya.crm.ColorProvider")
         @Size(max = 100)
         String prvdrCls,
 
-        @Schema(description = "Kisa kod.", example = "COLOR")
+        @Schema(description = SwaggerText.GNL_CHAR_SHRT_CODE_DESCRIPTION, example = "COLOR")
         @NotBlank @Size(max = 50)
         String shrtCode,
 
-        @Schema(description = "Aktif mi.", example = "true")
+        @Schema(description = SwaggerText.GNL_CHAR_ACTIVE_DESCRIPTION, example = "true")
         @NotNull
         Boolean active) {
 }

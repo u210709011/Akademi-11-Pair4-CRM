@@ -20,6 +20,12 @@ public final class SwaggerText {
 	public static final String UPDATE_BY_PARTY_ROLE_ID_DESCRIPTION =
 			"nationalId degistiriliyorsa, degerin baska bir bireyle cakismadigi dogrulanir.";
 
+	// OpenApiConfig
+	public static final String OPENAPI_TITLE = "Party Service API";
+	public static final String OPENAPI_DESCRIPTION = "Individual, Party ve PartyRole yonetimi.";
+	public static final String OPENAPI_GATEWAY_SERVER_DESCRIPTION = "API Gateway uzerinden";
+	public static final String OPENAPI_DIRECT_SERVER_DESCRIPTION = "Servis Port'u uzerinden";
+
 	private SwaggerText() {
 	}
 }

@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.ProductRelation;
 
+import com.etiya.crm.productservice.constants.MessageKeys;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -12,15 +13,15 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateProductRelationRequest {
-    @NotNull(message = "Kaynak ürün id alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.PRODUCT_ID_SOURCE_REQUIRED + "}")
     private Long productId1;
 
-    @NotNull(message = "Hedef ürün id alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.PRODUCT_ID_TARGET_REQUIRED + "}")
     private Long productId2;
 
-    @NotBlank(message = "İlişki tipi kodu zorunludur")
+    @NotBlank(message = "{" + MessageKeys.RELATION_TYPE_CODE_REQUIRED + "}")
     private String relationTypeCode;
 
-    @NotNull(message = "Aktiflik alanı zorunludur")
+    @NotNull(message = "{" + MessageKeys.ACTIVE_REQUIRED + "}")
     private Boolean active;
 }

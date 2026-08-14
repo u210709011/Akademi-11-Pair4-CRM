@@ -112,8 +112,8 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
 	@ExceptionHandler({ PrimaryAddressCannotBeDeletedException.class, AddressLinkedToAccountException.class,
 			BillingAccountActiveCannotBeDeletedException.class, CustomerHasActiveBillingAccountException.class,
-			DefaultAccountCannotBeDeletedException.class, BillingAccountHasActiveProductsException.class,
-			AccountNumberCollisionException.class })
+			DefaultAccountCannotBeDeletedException.class, DefaultAccountCannotBeChangedException.class,
+			BillingAccountHasActiveProductsException.class, AccountNumberCollisionException.class })
 	public ResponseEntity<ErrorResponse> handleGuardViolation(BusinessException ex, HttpServletRequest request) {
 		return build(HttpStatus.CONFLICT, ex, request);
 	}

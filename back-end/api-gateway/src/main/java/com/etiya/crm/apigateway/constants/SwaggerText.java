@@ -18,6 +18,19 @@ public final class SwaggerText {
 
 	public static final String LOGOUT_SUMMARY = "Oturumu kapat (refresh token'i gecersiz kil)";
 
+	// LoginRequest
+	public static final String CLIENT_ID_DESCRIPTION =
+			"Opsiyonel - hangi Keycloak client'i ile token alinacak. Bos birakilirse "
+					+ "varsayilan (8 saat) client kullanilir. Test amacli 30sn'lik token icin 'short-lived' gonderin. "
+					+ "Bu ikisi disinda (orn. gercek Keycloak client_id'si) bir deger gonderilirse istek reddedilir.";
+
+	// OpenApiConfig
+	public static final String OPENAPI_TITLE = "API Gateway - Auth";
+	public static final String OPENAPI_DESCRIPTION =
+			"Keycloak (realm: crm) onunde confidential client (crm-client) olarak calisan "
+					+ "token endpoint'leri. Diger tum servislerin gercek is API'leri icin sagdaki "
+					+ "dropdown'dan ilgili servisi secin - bu sayfa sadece login/refresh/logout icindir.";
+
 	private SwaggerText() {
 	}
 }

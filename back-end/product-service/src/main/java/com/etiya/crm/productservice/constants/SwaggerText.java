@@ -127,6 +127,12 @@ public final class SwaggerText {
     public static final String RELATION_GET_ALL_SUMMARY = "Tum iliskileri listele";
     public static final String RELATION_DELETE_SUMMARY = "Iliskiyi sil";
 
+    // OpenApiConfig
+    public static final String OPENAPI_TITLE = "Product Service API";
+    public static final String OPENAPI_DESCRIPTION = "Urun/servis/kaynak spesifikasyonlari, katalog, teklif ve kampanya yonetimi.";
+    public static final String OPENAPI_GATEWAY_SERVER_DESCRIPTION = "API Gateway uzerinden (onerilen)";
+    public static final String OPENAPI_DIRECT_SERVER_DESCRIPTION = "Bu servisin kendi adresi (gateway'i atlar)";
+
     private SwaggerText() {
     }
 }

@@ -73,6 +73,18 @@ public final class SwaggerText {
 
 	public static final String DELETE_CONTACT_MEDIUM_SUMMARY = "Contact medium'u sil (soft-delete)";
 
+	// OpenApiConfig
+	public static final String OPENAPI_TITLE = "Contact Info Service API";
+	public static final String OPENAPI_DESCRIPTION =
+			"Adres (ADDR) ve iletisim (CNTC_MEDIUM) kayitlarinin CRUD'u. Her iki tablo da "
+					+ "polimorfiktir: bir kayit rowId+dataTypeId ciftiyle \"kime ait oldugunu\" belirtir "
+					+ "(bugun icin tek DATA_TYPE=CUST/102 - musteri). Bu servis rowId'nin bir customer, "
+					+ "party ya da baska bir sey oldugunu bilmez/bilmemelidir; customer'a ozel kurallar "
+					+ "(max 5 adres, tek primary secimi haric - o burada uygulanir) customer-service'te "
+					+ "uygulanir.";
+	public static final String OPENAPI_GATEWAY_SERVER_DESCRIPTION = "API Gateway uzerinden (onerilen)";
+	public static final String OPENAPI_DIRECT_SERVER_DESCRIPTION = "Bu servisin kendi adresi (gateway'i atlar)";
+
 	private SwaggerText() {
 	}
 }

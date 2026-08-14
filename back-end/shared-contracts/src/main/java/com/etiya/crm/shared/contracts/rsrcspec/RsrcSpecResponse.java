@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 
-@Schema(description = "Kaynak spesifikasyonu.")
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
+@Schema(description = SwaggerText.RSRC_SPEC_RESPONSE_DESCRIPTION)
 public record RsrcSpecResponse(
 
         Long rsrcSpecId,

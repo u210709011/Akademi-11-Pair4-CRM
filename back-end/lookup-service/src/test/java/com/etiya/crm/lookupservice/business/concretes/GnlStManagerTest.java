@@ -1,5 +1,6 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
+import com.etiya.crm.lookupservice.business.abstracts.TranslationService;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlStRepository;
 import com.etiya.crm.lookupservice.entities.concretes.GnlSt;
@@ -15,6 +16,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,10 +26,15 @@ class GnlStManagerTest {
     @Mock
     private GnlStRepository gnlStRepository;
 
+    @Mock
+    private TranslationService translationService;
+
     private final GnlStMapper gnlStMapper = new GnlStMapperImpl();
 
     private GnlStManager manager() {
-        return new GnlStManager(gnlStRepository, gnlStMapper);
+        lenient().when(translationService.translate(any(), any(), any(), any()))
+                .thenAnswer(invocation -> invocation.getArgument(3));
+        return new GnlStManager(gnlStRepository, gnlStMapper, translationService);
     }
 
     @Test
@@ -55,6 +62,8 @@ class GnlStManagerTest {
     void getByEntCodeNameAndShrtCode_returnsMappedResponse() {
         GnlSt gnlSt = new GnlSt();
         gnlSt.setGnlStId(5L);
+        gnlSt.setName("Active");
+        gnlSt.setDescr("Active");
         gnlSt.setEntCodeName("CUST_STATUS");
         gnlSt.setShrtCode("ACTIVE");
         when(gnlStRepository.findByEntCodeNameAndShrtCode("CUST_STATUS", "ACTIVE")).thenReturn(Optional.of(gnlSt));

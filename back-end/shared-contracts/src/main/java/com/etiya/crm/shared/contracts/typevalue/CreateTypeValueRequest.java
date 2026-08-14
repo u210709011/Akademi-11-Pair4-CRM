@@ -5,26 +5,28 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-@Schema(description = "lookup-service POST /api/v1/type-values istek govdesi.")
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
+@Schema(description = SwaggerText.CREATE_TYPE_VALUE_REQUEST_DESCRIPTION)
 public record CreateTypeValueRequest(
 
-        @Schema(description = "Polimorfik sahiplik etiketi verilen gercek is tablosunun adi.", example = "PARTY")
+        @Schema(description = SwaggerText.TYPE_VALUE_TABLE_NAME_DESCRIPTION, example = "PARTY")
         @NotBlank @Size(max = 40)
         String tableName,
 
-        @Schema(description = "Bu tabloya atanan tip etiketi numarasi.", example = "9")
+        @Schema(description = SwaggerText.TYPE_VALUE_FIELD_NAME_DESCRIPTION, example = "9")
         @NotNull
         Long fieldName,
 
-        @Schema(description = "Aciklama.", example = "Party_id")
+        @Schema(description = SwaggerText.CREATE_TYPE_VALUE_DESCRIPTION_FIELD_DESCRIPTION, example = "Party_id")
         @NotBlank @Size(max = 200)
         String description,
 
-        @Schema(description = "Kisa kod (opsiyonel).", example = "PARTY_ID")
+        @Schema(description = SwaggerText.CREATE_TYPE_VALUE_VALUE_DESCRIPTION, example = "PARTY_ID")
         @Size(max = 50)
         String value,
 
-        @Schema(description = "Bu degeri kullanan servis/modul (bilgi amacli).", example = "party-service")
+        @Schema(description = SwaggerText.TYPE_VALUE_USING_MODULE_NAME_DESCRIPTION, example = "party-service")
         @Size(max = 50)
         String usingModuleName) {
 }

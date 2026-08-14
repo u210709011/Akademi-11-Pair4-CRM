@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 
-@Schema(description = "Bir is tablosuna atanmis polimorfik tip etiketi.")
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
+@Schema(description = SwaggerText.TYPE_VALUE_RESPONSE_DESCRIPTION)
 public record TypeValueResponse(
 
         Long typeValueId,

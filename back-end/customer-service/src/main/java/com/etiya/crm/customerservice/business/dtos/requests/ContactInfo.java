@@ -1,6 +1,7 @@
 package com.etiya.crm.customerservice.business.dtos.requests;
 
 import com.etiya.crm.customerservice.constants.MessageKeys;
+import com.etiya.crm.customerservice.constants.SwaggerText;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
@@ -14,24 +15,24 @@ import jakarta.validation.constraints.Pattern;
  * tek bir contact bilgisi vardir; hem onboarding'de hem edit'te (GET/PUT
  * /api/v1/customers/{custId}/contact) ayni sekil kullanilir.
  */
-@Schema(description = "Musterinin iletisim bilgisi (musteri basina 1 adet).")
+@Schema(description = SwaggerText.CONTACT_INFO_SCHEMA_DESCRIPTION)
 public record ContactInfo(
 
-		@Schema(description = "E-posta - zorunlu", example = "ahmet.yilmaz@example.com")
+		@Schema(description = SwaggerText.CONTACT_INFO_EMAIL_DESCRIPTION, example = "ahmet.yilmaz@example.com")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		@Email(message = "{" + MessageKeys.EMAIL_INVALID + "}")
 		String email,
 
-		@Schema(description = "Cep telefonu - zorunlu, 10 haneli rakam, 5 ile baslamali", example = "5551234567", pattern = "^5[0-9]{9}$")
+		@Schema(description = SwaggerText.CONTACT_INFO_MOBILE_PHONE_DESCRIPTION, example = "5551234567", pattern = "^5[0-9]{9}$")
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		@Pattern(regexp = "^5[0-9]{9}$", message = "{" + MessageKeys.PHONE_INVALID + "}")
 		String mobilePhone,
 
-		@Schema(description = "Ev telefonu - opsiyonel, 10 haneli rakam, 2 ile baslamali", example = "2121234567", pattern = "^2[0-9]{9}$")
+		@Schema(description = SwaggerText.CONTACT_INFO_HOME_PHONE_DESCRIPTION, example = "2121234567", pattern = "^2[0-9]{9}$")
 		@Pattern(regexp = "^2[0-9]{9}$", message = "{" + MessageKeys.PHONE_INVALID + "}")
 		String homePhone,
 
-		@Schema(description = "Faks - opsiyonel, 10-11 haneli rakam", pattern = "^[0-9]{10,11}$")
+		@Schema(description = SwaggerText.CONTACT_INFO_FAX_DESCRIPTION, pattern = "^[0-9]{10,11}$")
 		@Pattern(regexp = "^[0-9]{10,11}$", message = "{" + MessageKeys.FAX_INVALID + "}")
 		String fax) {
 }
