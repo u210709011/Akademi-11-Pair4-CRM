@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  Uctan uca kullanici yolculugu — TEK test.
+
+  Kullanim: ./mvnw test -Dsuite=e2e
+
+  Bu suite BILEREK regression.xml disinda tutulur: yolculuk testi alti ekrana dokundugu
+  icin en kirilgan testimizdir ve kararsizligi 239 testlik yesil paketi kirmemelidir.
+  Bagimsiz kosulur, ust uste yesil verdikce guven kazanir.
+
+  ON KOSUL: tum servisler + frontend ayakta olmalidir.
+  NOT: bu test GERCEK MUSTERI ve GERCEK SIPARIS olusturur.
+-->
+<suite name="CRM Lite UI - E2E Yolculuk" verbose="1" parallel="false" configfailurepolicy="continue">
+
+    <listeners>
+        <listener class-name="com.crmlite.ui.core.listeners.SuiteListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.TestListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
+    <test name="Uctan Uca Yolculuk">
+        <classes>
+            <class name="com.crmlite.ui.tests.e2e.CustomerToOrderJourneyTest"/>
+        </classes>
+    </test>
+
+</suite>
