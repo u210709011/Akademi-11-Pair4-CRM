@@ -20,6 +20,7 @@ import com.etiya.crm.orderservice.business.exceptions.BsnInterSpecNotFoundExcept
 import com.etiya.crm.orderservice.business.exceptions.CampaignNotAppliedToOfferingException;
 import com.etiya.crm.orderservice.business.exceptions.CharacteristicValueMismatchException;
 import com.etiya.crm.orderservice.business.exceptions.CharacteristicValueMissingException;
+import com.etiya.crm.orderservice.business.exceptions.MandatoryCharacteristicMissingException;
 import com.etiya.crm.orderservice.business.exceptions.OfferAlreadyActiveException;
 import com.etiya.crm.orderservice.business.exceptions.OrderItemNotFoundException;
 import com.etiya.crm.orderservice.business.exceptions.OrderNotEditableException;
@@ -37,6 +38,7 @@ import com.etiya.crm.orderservice.clients.responses.CampaignResponse;
 import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductCatalogOfferingResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingCharUseResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingRelationResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingResponse;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
@@ -333,6 +335,8 @@ public class CustOrdManager implements CustOrdService {
             throw new ServiceAddressMissingException(custOrdId);
         }
 
+        ensureMandatoryCharacteristicsProvided(custOrd);
+
         Long processingStatusId = lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING);
         custOrd.setOrdStId(processingStatusId);
         custOrd = custOrdRepository.save(custOrd);
@@ -375,6 +379,37 @@ public class CustOrdManager implements CustOrdService {
             CreateProductCharacteristicValueRequest request = new CreateProductCharacteristicValueRequest(
                     item.getProdId(), charVal.getCharId(), charVal.getCharValId(), charVal.getVal(), null);
             productClient.createProductCharacteristicValue(request);
+        }
+    }
+
+    /**
+     * FR-015 ACC-009/TC-015-44: finishOrder'da, sepetteki her item icin, teklifinin mandatory
+     * isaretli (product-offering-char-uses/by-offering/{id}, mandatory=true+active=true)
+     * karakteristiklerinin hepsi doldurulmus mu kontrol eder - servis adresi icin zaten yapilan
+     * ayni sunucu-tarafi zorunluluk kuralinin (ServiceAddressMissingException) karakteristik
+     * ayagi. Bir CustOrdCharVal satirinin var olmasi yeterli kanittir - saveConfiguration'daki
+     * validateCharacteristic zaten charValId/val'den en az birinin dolu olmasini garanti eder.
+     */
+    private void ensureMandatoryCharacteristicsProvided(CustOrd custOrd) {
+        for (CustOrdItem item : custOrd.getItems()) {
+            List<Long> mandatoryCharIds = productClient.getOfferingCharUsesByOfferingId(item.getProdOfrId()).stream()
+                    .filter(charUse -> Boolean.TRUE.equals(charUse.mandatory()) && Boolean.TRUE.equals(charUse.active()))
+                    .map(ProductOfferingCharUseResponse::characteristicId)
+                    .toList();
+            if (mandatoryCharIds.isEmpty()) {
+                continue;
+            }
+
+            Set<Long> providedCharIds = custOrdCharValRepository
+                    .findByCustOrdItem_CustOrdItemId(item.getCustOrdItemId()).stream()
+                    .map(CustOrdCharVal::getCharId)
+                    .collect(Collectors.toSet());
+
+            for (Long charId : mandatoryCharIds) {
+                if (!providedCharIds.contains(charId)) {
+                    throw new MandatoryCharacteristicMissingException(item.getCustOrdItemId(), charId);
+                }
+            }
         }
     }
 

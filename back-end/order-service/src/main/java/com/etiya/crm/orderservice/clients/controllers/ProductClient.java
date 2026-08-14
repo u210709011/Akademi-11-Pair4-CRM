@@ -12,6 +12,7 @@ import com.etiya.crm.orderservice.clients.responses.CampaignOfferingResponse;
 import com.etiya.crm.orderservice.clients.responses.CampaignResponse;
 import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductCatalogOfferingResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingCharUseResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingRelationResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingResponse;
 
@@ -55,5 +56,11 @@ public interface ProductClient {
     // karakteristikleri (CustOrdCharVal) islemek icin.
     @PostMapping("/api/v1/product-characteristic-values")
     void createProductCharacteristicValue(@RequestBody CreateProductCharacteristicValueRequest request);
+
+    // FR-015 ACC-002/TC-015-44: finishOrder'da bir item'in teklifi hangi karakteristiklerin
+    // zorunlu (mandatory) oldugunu bildirmek icin - bkz. ensureMandatoryCharacteristicsProvided.
+    @GetMapping("/api/v1/product-offering-char-uses/by-offering/{productOfferingId}")
+    List<ProductOfferingCharUseResponse> getOfferingCharUsesByOfferingId(
+            @PathVariable("productOfferingId") Long productOfferingId);
 
 }

@@ -18,6 +18,7 @@ public final class MessageKeys {
 	public static final String ADDRESS_NOT_BELONG_TO_CUSTOMER = "error.order.address-not-belong-to-customer";
 	public static final String CHARACTERISTIC_VALUE_MISMATCH = "error.order.characteristic-value-mismatch";
 	public static final String CHARACTERISTIC_VALUE_MISSING = "error.order.characteristic-value-missing";
+	public static final String MANDATORY_CHARACTERISTIC_MISSING = "error.order.mandatory-characteristic-missing";
 	public static final String CAMPAIGN_NOT_APPLIED_TO_OFFERING = "error.order.campaign-not-applied-to-offering";
 	public static final String OFFER_ALREADY_ACTIVE = "error.order.offer-already-active";
 	public static final String DOWNSTREAM_CALL_FAILED = "error.downstream.call-failed";
