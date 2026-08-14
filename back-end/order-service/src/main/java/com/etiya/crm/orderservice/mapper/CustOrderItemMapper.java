@@ -23,6 +23,9 @@ public interface CustOrderItemMapper {
     @Mapping(target = "serviceStartDate", source = "item.cdate")
     OrderItemSummaryResponse toSummaryResponse(CustOrdItem item, List<ProdCharValResponse> charVals);
     //getItemsByCustAcctId
+    //custOrdId: modalin ihtiyaci olan diger alanlari (ofrName/prodSpecId/serviceStartDate/charVals/
+    //serviceAddress) tasiyan GET /orders/{custOrdId}'ye arayuzun ulasabilmesi icin (bkz. FR-009 ACC-006/007)
+    @Mapping(target = "custOrdId", source = "item.custOrd.custOrdId")
     @Mapping(target = "prodNo", expression = "java(formatNo(item.getProdId()))")
     @Mapping(target = "cmpgNo", expression = "java(formatNo(item.getCmpgId()))")
     CustOrdItemResponse toItemResponse(CustOrdItem item);
