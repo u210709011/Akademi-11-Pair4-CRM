@@ -81,11 +81,14 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ex, request);
     }
 
-    @ExceptionHandler({ AddressSelectionInvalidException.class, AccountNotBelongToCustomerException.class,
-            DuplicateBasketItemException.class, ServiceAddressMissingException.class,
-            AddressNotBelongToCustomerException.class, CharacteristicValueMismatchException.class,
-            CampaignNotAppliedToOfferingException.class, OfferAlreadyActiveException.class,
-            ConflictingBasketItemException.class })
+    // Varsayilan: her yeni BusinessException alt sinifi otomatik 400 olur - listeye eklemeyi
+    // unutmak artik mumkun degil (bkz. B-20 sonrasi geri bildirim: CharacteristicValueMissingException
+    // burada sayilmadigi icin @ExceptionHandler(Exception.class)'a duşup 500 donmustu). 404/409/500
+    // gerektiren alt siniflar (OrderNotFoundException, OrderItemNotFoundException,
+    // BsnInterSpecNotFoundException, OrderNotEditableException) kendi handler'larinda kalir -
+    // Spring, thrown exception'in en spesifik @ExceptionHandler'ini (ExceptionDepthComparator) secer,
+    // bu yuzden onlar hala bu varsayilanin onune gecer.
+    @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex, request);
     }
