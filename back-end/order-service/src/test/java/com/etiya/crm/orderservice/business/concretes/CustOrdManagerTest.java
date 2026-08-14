@@ -29,6 +29,7 @@ import com.etiya.crm.orderservice.business.exceptions.AddressSelectionInvalidExc
 import com.etiya.crm.orderservice.business.exceptions.CampaignNotAppliedToOfferingException;
 import com.etiya.crm.orderservice.business.exceptions.CharacteristicValueMismatchException;
 import com.etiya.crm.orderservice.business.exceptions.DuplicateBasketItemException;
+import com.etiya.crm.orderservice.business.exceptions.MandatoryCharacteristicMissingException;
 import com.etiya.crm.orderservice.business.exceptions.OfferAlreadyActiveException;
 import com.etiya.crm.orderservice.business.exceptions.OrderItemNotFoundException;
 import com.etiya.crm.orderservice.business.exceptions.OrderNotEditableException;
@@ -45,6 +46,7 @@ import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountPageResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingCharUseResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingRelationResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingResponse;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
@@ -717,6 +719,32 @@ class CustOrdManagerTest {
 		verify(outboxEventPublisher, never()).publish(any(), any(), any(), any());
 	}
 
+	// TC-015-44/FR-015 ACC-009: servis adresi icin yapilan kontrolun karakteristik ayagi.
+	@Test
+	void finishOrder_throws_whenMandatoryCharacteristicMissing() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setAddressId(77L);
+		CustOrdItem item = new CustOrdItem();
+		item.setCustOrdItemId(900L);
+		item.setCustOrd(custOrd);
+		item.setCustAcctId(CUST_ACCT_ID);
+		item.setProdOfrId(200L);
+		item.setProdSpecId(9L);
+		custOrd.getItems().add(item);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(productClient.getOfferingCharUsesByOfferingId(200L)).thenReturn(List.of(
+				new ProductOfferingCharUseResponse(1L, 200L, 1L, "Hiz", true, true)));
+		when(custOrdCharValRepository.findByCustOrdItem_CustOrdItemId(900L)).thenReturn(List.of());
+
+		assertThatThrownBy(() -> custOrdManager.finishOrder(CUST_ORD_ID))
+				.isInstanceOf(MandatoryCharacteristicMissingException.class);
+
+		verify(outboxEventPublisher, never()).publish(any(), any(), any(), any());
+		verify(productClient, never()).createProduct(any());
+	}
+
 	@Test
 	void finishOrder_throws_whenOrderNotInWaitStatus() {
 		CustOrd custOrd = waitingOrder();
@@ -846,6 +874,48 @@ class CustOrdManagerTest {
 		verify(productClient).createProductCharacteristicValue(
 				new com.etiya.crm.orderservice.clients.requests.CreateProductCharacteristicValueRequest(
 						500L, 1L, 2L, "200Mbps", null));
+	}
+
+	// TC-015-44/FR-015 ACC-009: mandatory karakteristik doldurulmussa finish normal ilerler.
+	@Test
+	void finishOrder_succeeds_whenMandatoryCharacteristicProvided() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setAddressId(77L);
+		CustOrdItem item = new CustOrdItem();
+		item.setCustOrdItemId(900L);
+		item.setCustOrd(custOrd);
+		item.setCustAcctId(CUST_ACCT_ID);
+		item.setProdOfrId(200L);
+		item.setProdSpecId(9L);
+		custOrd.getItems().add(item);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING))
+				.thenReturn(PROCESSING_STATUS_ID);
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.FINISHED))
+				.thenReturn(FINISHED_STATUS_ID);
+		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
+		AddressResponse address = new AddressResponse(77L, CUST_ORD_ID, 21L, 5L, "Street", "12", "Desc", true, null,
+				null, null, null);
+		when(contactAddressClient.getById(77L)).thenReturn(address);
+		when(addressMapper.toSummaryResponse(address))
+				.thenReturn(new com.etiya.crm.orderservice.business.dtos.responses.AddressSummaryResponse(77L, 5L,
+						null, "Street", "12", "Desc"));
+		when(lookupCacheService.getGeneralType(5L)).thenReturn(new com.etiya.crm.shared.contracts.gnltp.GnlTpResponse(
+				5L, "Ankara", null, "ANKARA", "CITY", "CITY", true, null, null, null, null));
+		when(productClient.createProduct(any()))
+				.thenReturn(new CreatedProductResponse(500L, null, 200L, 9L, "Mobile Prepaid 5GB", null, null, 1L));
+		when(productClient.getOfferingCharUsesByOfferingId(200L)).thenReturn(List.of(
+				new ProductOfferingCharUseResponse(1L, 200L, 1L, "Hiz", true, true)));
+		CustOrdCharVal charVal = new CustOrdCharVal();
+		charVal.setCharId(1L);
+		charVal.setCharValId(2L);
+		when(custOrdCharValRepository.findByCustOrdItem_CustOrdItemId(900L)).thenReturn(List.of(charVal));
+
+		OrderSummaryResponse response = custOrdManager.finishOrder(CUST_ORD_ID);
+
+		assertThat(response.ordStId()).isEqualTo(FINISHED_STATUS_ID);
 	}
 
 	// ---- cancelOrder ----
