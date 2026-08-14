@@ -25,7 +25,7 @@ public class AddressBusinessRules {
 	 * server-side primary sayilir, digerleri primary=false gider. cityId dogrulamasi artik
 	 * burada YAPILMAZ - AddressInfo.cityId'deki @ExistsInLookupGroup, bu metod cagrilmadan
 	 * ONCE, @Valid @RequestBody OnboardCustomerRequest binding'inde zaten calisir (bkz.
-	 * business/validation/ExistsInLookupGroup).
+	 * shared-contracts'teki com.etiya.crm.shared.contracts.validation.ExistsInLookupGroup - B-21).
 	 */
 	public List<AddressCommand> toAddressCommandsWithPrimaryRule(List<AddressInfo> addresses) {
 		List<AddressCommand> commands = new ArrayList<>(addresses.size());

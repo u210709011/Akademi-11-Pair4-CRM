@@ -2,9 +2,9 @@ package com.etiya.crm.customerservice.business.dtos.requests;
 
 import java.time.LocalDate;
 
-import com.etiya.crm.customerservice.business.validation.ExistsInLookupGroup;
 import com.etiya.crm.customerservice.constants.MessageKeys;
 import com.etiya.crm.shared.contracts.gnltp.GnlTpGroups;
+import com.etiya.crm.shared.contracts.validation.ExistsInLookupGroup;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.swagger.v3.oas.annotations.media.Schema;

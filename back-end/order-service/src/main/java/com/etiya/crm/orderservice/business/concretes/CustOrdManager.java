@@ -19,6 +19,7 @@ import com.etiya.crm.orderservice.business.dtos.responses.ProdCharValResponse;
 import com.etiya.crm.orderservice.business.exceptions.BsnInterSpecNotFoundException;
 import com.etiya.crm.orderservice.business.exceptions.CampaignNotAppliedToOfferingException;
 import com.etiya.crm.orderservice.business.exceptions.CharacteristicValueMismatchException;
+import com.etiya.crm.orderservice.business.exceptions.CharacteristicValueMissingException;
 import com.etiya.crm.orderservice.business.exceptions.OfferAlreadyActiveException;
 import com.etiya.crm.orderservice.business.exceptions.OrderItemNotFoundException;
 import com.etiya.crm.orderservice.business.exceptions.OrderNotEditableException;
@@ -521,9 +522,18 @@ public class CustOrdManager implements CustOrdService {
                 .orElseThrow(() -> new CampaignNotAppliedToOfferingException(cmpgId, prodOfrId));
     }
 
-    /** charId'nin var oldugunu, verildiyse charValId'nin de o charId'ye ait oldugunu dogrular. */
+    /**
+     * charId'nin var oldugunu, verildiyse charValId'nin de o charId'ye ait oldugunu dogrular.
+     * charValId (listeden secim) ve val (serbest metin) en az birinin dolu olmasini zorunlu kilar
+     * - ikisi de bos kalirsa DB'deki chk_cust_ord_char_val_has_value constraint'ine gitmeden
+     * once burada 400 donduruluyor (bkz. B-20).
+     */
     private void validateCharacteristic(ProdCharValRequest request) {
         lookupCacheService.getCharacteristic(request.charId());
+
+        if (request.charValId() == null && (request.val() == null || request.val().isBlank())) {
+            throw new CharacteristicValueMissingException(request.charId());
+        }
 
         if (request.charValId() != null) {
             GnlCharValResponse charVal = lookupCacheService.getCharacteristicValue(request.charValId());
