@@ -51,8 +51,9 @@ interface CampaignResultRow {
   totalPrice: number;
 }
 
-// product-service'te filtreli/arama destekleyen bir GET endpoint yok (sadece getAll/getById),
-// bu yuzden tum listeler bir kere cekilip Search butonuna basildiginda burada filtreleniyor.
+// product-service artik sunucu tarafinda da arama/sayfalama destekliyor (bkz. product.service.ts
+// FETCH_ALL_SIZE notu), ama bu ekran hala tum listeyi bir kere cekip Search butonuna
+// basildiginda burada (client-side) filtreliyor - mevcut UX/testler degismesin diye bilerek.
 @Component({
   selector: 'app-offer-selection',
   imports: [ReactiveFormsModule, DecimalPipe],
