@@ -1,12 +1,12 @@
 import { NgComponentOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, Injectable, Type, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injectable, Type, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BasketItemRequest, ItemCharValsRequest, OrderConfigurationRequest, OrderItemSummaryResponse, OrderService } from '../../../core/order';
 import { AddressResponse, CustomerService } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
 import { LookupService } from '../../../core/lookup';
-import { ProductOfferingCharUse } from '../../../core/product';
+import { ProductOfferingCharUse, ProductService } from '../../../core/product';
 import { ConfigurationStepComponent } from './steps/configuration/configuration-step.component';
 import { OfferSelectionComponent } from './steps/offer-selection/offer-selection.component';
 import { ReviewStepComponent } from './steps/review/review-step.component';
@@ -61,6 +61,8 @@ export interface BasketGroup {
 @Injectable()
 export class NewSaleFormStateService {
   private readonly lookupService = inject(LookupService);
+  private readonly productService = inject(ProductService);
+  private readonly i18n = inject(I18nService);
   // Hangi charId'lerin secim listesi (GNL_CHAR_VAL) oldugunu belirler - saveConfiguration
   // isteginde charValId mi yoksa serbest metin (val) mi gonderilecegine karar vermek icin.
   private readonly selectableCharIds = signal<ReadonlySet<number>>(new Set());
@@ -68,6 +70,46 @@ export class NewSaleFormStateService {
   constructor() {
     this.lookupService.getCharacteristicValues().subscribe(values => {
       this.selectableCharIds.set(new Set(values.map(v => v.charId)));
+    });
+
+    // Sepete eklenirken offerName/cmpgName o andaki dilde "donmus" kopyalanir (bkz. addToBasket) -
+    // dil degistiginde Basket paneli VE Configuration'daki urun basligi ayni satiri gosterdigi
+    // icin burada, tek yerde, guncellenirse ikisi de dogru dile gecer. untracked(): basket() hem
+    // okunuyor hem (subscribe icinde) yaziliyor - untracked olmadan bu effect'in kendi yazdigi
+    // degeri tekrar okuyup sonsuz dongu tetiklemesi riski var, o yuzden sadece i18n.lang()
+    // izlenen bagimlilik.
+    effect(() => {
+      this.i18n.lang();
+      untracked(() => this.retranslateBasketLines());
+    });
+  }
+
+  private retranslateBasketLines(): void {
+    if (this.basket().length === 0) {
+      return;
+    }
+
+    this.productService.getOfferings().subscribe(offerings => {
+      const nameByOfferingId = new Map(offerings.map(o => [o.productOfferingId, o.name]));
+      this.basket.update(items =>
+        items.map(item => {
+          const freshName = nameByOfferingId.get(item.prodOfrId);
+          return freshName !== undefined && freshName !== item.offerName ? { ...item, offerName: freshName } : item;
+        })
+      );
+    });
+
+    this.productService.getCampaigns().subscribe(campaigns => {
+      const nameByCampaignId = new Map(campaigns.map(c => [c.campaignId, c.name]));
+      this.basket.update(items =>
+        items.map(item => {
+          if (item.cmpgId === null) {
+            return item;
+          }
+          const freshName = nameByCampaignId.get(item.cmpgId);
+          return freshName !== undefined && freshName !== item.cmpgName ? { ...item, cmpgName: freshName } : item;
+        })
+      );
     });
   }
 

@@ -4,7 +4,7 @@ import { form, FormField, required } from '@angular/forms/signals';
 import { AddressEditRequest, AddressResponse, CustomerService } from '../../../../../core/customer';
 import { I18nService } from '../../../../../core/i18n';
 import { CharacteristicValue, GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
-import { ProductService } from '../../../../../core/product';
+import { ProductOfferingCharUse, ProductService } from '../../../../../core/product';
 import { BasketLine, NewSaleFormStateService } from '../../new-sale.component';
 
 const UNKNOWN = '—';
@@ -50,8 +50,12 @@ export class ConfigurationStepComponent {
 
   protected readonly cities = signal<GnlType[]>([]);
   private readonly characteristicValues = signal<CharacteristicValue[]>([]);
-  // dil de anahtarin parcasi - bkz. asagidaki yorum, offering basina degil (dil, offering) basina cache'lenir.
-  private readonly loadedCharUseKeys = new Set<string>();
+  // dil de anahtarin parcasi - (dil, offering) basina cache'lenir. Deger de (sadece "yuklendi mi"
+  // flag'i degil) tutulur ki daha once gorulmus bir dile geri donulunce o dilin gercek verisi
+  // aninda yeniden uygulanabilsin - flag-only bir Set kullanilsaydi, ikinci kez gorulen bir dil
+  // hicbir zaman yeniden fetch edilmez AMA charUsesByOffering'deki deger de guncellenmezdi, yani
+  // ekran bir onceki dilin cevirisinde takili kalirdi (bkz. eski implementasyon).
+  private readonly charUseCache = new Map<string, ProductOfferingCharUse[]>();
 
   constructor() {
     // city/characteristic degerleri backend-driven ve dile gore cevrilir - i18n.lang() burada
@@ -65,16 +69,19 @@ export class ConfigurationStepComponent {
 
     // Sepetteki her offering icin karakteristik semasini ceker (formState.charUsesByOffering'e
     // yazar ki Review adimi da ayni veriyi tekrar cekmeden kullanabilsin). characteristicName de
-    // dile gore cevrildigi icin cache key'i (dil, offering) ciftidir - dil degisince yeniden cekilir.
+    // dile gore cevrildigi icin cache key'i (dil, offering) ciftidir - dil degisince yeniden cekilir,
+    // ama daha once cekilmis bir dile donulunce agdan beklemeden cache'ten aninda uygulanir.
     effect(() => {
       const lang = this.i18n.lang();
       for (const line of this.configurableLines()) {
         const key = `${lang}:${line.prodOfrId}`;
-        if (this.loadedCharUseKeys.has(key)) {
+        const cached = this.charUseCache.get(key);
+        if (cached) {
+          this.formState.charUsesByOffering.update(all => ({ ...all, [line.prodOfrId]: cached }));
           continue;
         }
-        this.loadedCharUseKeys.add(key);
         this.productService.getCharUsesByOffering(line.prodOfrId).subscribe(charUses => {
+          this.charUseCache.set(key, charUses);
           this.formState.charUsesByOffering.update(all => ({ ...all, [line.prodOfrId]: charUses }));
         });
       }
