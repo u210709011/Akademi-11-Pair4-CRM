@@ -98,6 +98,8 @@
         </div>
         @if (digitsOnlyErrorField() === 'fax') {
             <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+        } @else if (contactForm.fax().invalid() && contactForm.fax().touched()) {
+            <span class="field-error">{{ i18n.t('create.faxFormatError') }}</span>
         }
     </div>
 

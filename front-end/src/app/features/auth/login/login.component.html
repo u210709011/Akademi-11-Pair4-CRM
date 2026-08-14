@@ -36,9 +36,11 @@
           [formField]="loginForm.username"
           [placeholder]="i18n.t('login.usernamePlaceholder')"
           autocomplete="username"
-          (blur)="trimUsername()"
         >
       </div>
+      @if (usernameErrorKey(); as errorKey) {
+        <span class="field-error">{{ i18n.t('login.' + errorKey) }}</span>
+      }
     </div>
 
     <div class="form-group">
@@ -66,13 +68,22 @@
           </svg>
         </button>
       </div>
+      @if (passwordErrorKey(); as errorKey) {
+        <span class="field-error">{{ i18n.t('login.' + errorKey) }}</span>
+      }
     </div>
 
-    <button type="submit" class="submit-btn" [disabled]="loginForm().invalid() || loginErrors().accountLocked">
+    <button type="submit" class="submit-btn" [disabled]="loginForm().invalid() || loginErrors().accountLocked || isLoggingIn()">
       <span class="submit-btn-label">{{ i18n.t('login.submit') }}</span>
-      <svg class="submit-btn-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M13 5l7 7-7 7M5 12h14" />
-      </svg>
+      @if (isLoggingIn()) {
+        <svg class="submit-btn-icon btn-spinner" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2a10 10 0 0 1 10 10" />
+        </svg>
+      } @else {
+        <svg class="submit-btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M13 5l7 7-7 7M5 12h14" />
+        </svg>
+      }
     </button>
 
   </form>

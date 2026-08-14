@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  ActiveOfferResponse,
   CreateOrderRequest,
   CustOrdItemResponse,
   OrderConfigurationRequest,
@@ -17,7 +18,13 @@ export class OrderService {
   // Products/campaigns currently linked to a billing account, sourced from fulfilled order line items.
   getByCustAcctId(custAcctId: number): Observable<CustOrdItemResponse[]> {
     const params = new HttpParams().set('custAcctId', custAcctId);
-    return this.http.get<CustOrdItemResponse[]>(`${environment.apiGatewayUrl}/api/v1/orders`, { params });
+    return this.http.get<CustOrdItemResponse[]>(`${environment.apiGatewayUrl}/api/v1/orders/by-account`, { params });
+  }
+
+  // FR-014 ACC-011/BR-05: Offer Selection'da "Already Active" rozeti icin - hesabin zaten sahip oldugu teklifler.
+  getActiveOffers(custAcctId: number): Observable<ActiveOfferResponse[]> {
+    const params = new HttpParams().set('custAcctId', custAcctId);
+    return this.http.get<ActiveOfferResponse[]>(`${environment.apiGatewayUrl}/api/v1/orders/active-offers`, { params });
   }
 
   // FR-017: Offer Selection'da Next - Product Configuration'a gecmeden once sepeti dogrular.

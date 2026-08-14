@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
-import { form, FormField, maxLength, minDate, minLength, required } from '@angular/forms/signals';
+import { form, FormField, maxDate, maxLength, minDate, minLength, required } from '@angular/forms/signals';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -46,10 +46,16 @@ export class DemographicTabComponent {
 
   protected readonly demographicForm = form(this.demographicModel, path => {
     required(path.firstName);
+    maxLength(path.firstName, 50);
+    maxLength(path.middleName, 50);
     required(path.lastName);
+    maxLength(path.lastName, 50);
     required(path.birthDate);
     minDate(path.birthDate, this.minBirthDate);
+    maxDate(path.birthDate, this.today);
     required(path.gender);
+    maxLength(path.fatherName, 50);
+    maxLength(path.motherName, 50);
     required(path.nationalId);
     minLength(path.nationalId, 11);
     maxLength(path.nationalId, 11);

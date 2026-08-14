@@ -6,21 +6,23 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
 /** contact-info-service GET/POST/PUT /api/v1/addresses yanit govdesi. */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(description = "Adres kaydi.")
+@Schema(description = SwaggerText.ADDRESS_RESPONSE_DESCRIPTION)
 public record AddressResponse(
 
-		@Schema(description = "Adresin kendi id'si (guncelleme/silme icin kullanilir).", example = "42")
+		@Schema(description = SwaggerText.ADDRESS_ID_DESCRIPTION, example = "42")
 		Long id,
 
-		@Schema(description = "Adresin sahibinin id'si (ornegin custId).", example = "1")
+		@Schema(description = SwaggerText.OWNER_ROW_ID_DESCRIPTION, example = "1")
 		Long rowId,
 
-		@Schema(description = "lookup-service DATA_TYPE grubundaki deger id'si.", example = "102")
+		@Schema(description = SwaggerText.DATA_TYPE_ID_LOOKUP_DESCRIPTION, example = "102")
 		Long dataTypeId,
 
-		@Schema(description = "lookup-service CITY grubundaki deger id'si.", example = "201")
+		@Schema(description = SwaggerText.CITY_ID_DESCRIPTION, example = "201")
 		Long cityId,
 
 		String streetName,
@@ -29,7 +31,7 @@ public record AddressResponse(
 
 		String addrDesc,
 
-		@Schema(description = "Musterinin birden fazla adresi olabilir, en fazla biri primary=true olur.")
+		@Schema(description = SwaggerText.ADDRESS_RESPONSE_PRIMARY_DESCRIPTION)
 		boolean primary,
 
 		Instant cdate,

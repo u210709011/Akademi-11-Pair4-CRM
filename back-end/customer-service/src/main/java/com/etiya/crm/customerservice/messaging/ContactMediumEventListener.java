@@ -5,6 +5,7 @@ import org.springframework.kafka.annotation.RetryableTopic;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
+import com.etiya.crm.customerservice.constants.KafkaConsumerGroups;
 import com.etiya.crm.shared.events.KafkaTopics;
 import com.etiya.crm.shared.events.contactmedium.ContactMediumEvent;
 
@@ -30,7 +31,7 @@ public class ContactMediumEventListener {
 			backoff = @Backoff(delay = 1000, multiplier = 2.0),
 			dltTopicSuffix = "-dlt",
 			include = Exception.class)
-	@KafkaListener(topics = KafkaTopics.CONTACT_MEDIUM_EVENTS, groupId = "customer-service",
+	@KafkaListener(topics = KafkaTopics.CONTACT_MEDIUM_EVENTS, groupId = KafkaConsumerGroups.CUSTOMER_SERVICE,
 			containerFactory = "contactMediumKafkaListenerContainerFactory")
 	public void onContactMediumEvent(ContactMediumEvent event) {
 		contactMediumEventHandler.handle(event);

@@ -6,12 +6,9 @@ import org.openqa.selenium.WebDriver;
 /**
  * Ust menu: dil secici, profil menusu ve Logout.
  *
- * <p><b>UYARI — FR-001 ACC-012/013 (Logout) UI'da uygulanmamistir.</b>
- * Hem {@code navbar .profile-option.logout} hem {@code sidebar .nav-item.logout}
- * butonlarinda {@code (click)} baglayicisi yok ve {@code AuthService} icinde
- * {@code logout()} metodu bulunmuyor (yalnizca cagrilmayan bir {@code clearSession()} var).
- * Locator'lar, ozellik gelistirildiginde hazir olsun diye simdiden tanimlandi;
- * {@link #logout()} bugun tiklar ama oturum sonlanmaz.
+ * <p>11.08.2026: FR-001 ACC-012/013 (Logout) uygulandi. {@code AuthService.logout()}
+ * oturumu temizleyip {@code /logout} cagrisi yapiyor, navbar ve sidebar butonlarinda
+ * {@code (click)} baglayicisi var. {@link #logout()} artik gercekten oturumu sonlandirir.
  */
 public class NavbarComponent extends BaseComponent {
 
@@ -42,6 +39,31 @@ public class NavbarComponent extends BaseComponent {
         return getText(LANGUAGE_BUTTON);
     }
 
+    // --- FR-018 Dil Destegi ---
+
+    /** ACC-001: ust menude dil secenegi bulunmalidir. */
+    public boolean hasLanguageOption() {
+        return isDisplayed(LANGUAGE_BUTTON);
+    }
+
+    /** Buyuk harfe normalize edilmis dil kodu — karsilastirmalar bunun uzerinden yapilir. */
+    public String currentLanguage() {
+        return currentLanguageCode().trim().toUpperCase();
+    }
+
+    /**
+     * Dili degistirir ve buton etiketinin degismesini bekler.
+     *
+     * <p>Uygulamada acilir menu YOKTUR: tek buton EN ve TR arasinda dogrudan gecis yapar
+     * (bilesendeki metot adi {@code toggleLangMenu} olsa da davranis budur).
+     */
+    public NavbarComponent toggleLanguage() {
+        String before = currentLanguage();
+        click(LANGUAGE_BUTTON);
+        wait.until(driver -> !currentLanguage().equals(before));
+        return this;
+    }
+
     public NavbarComponent openProfileMenu() {
         if (!isDisplayed(PROFILE_MENU)) {
             click(PROFILE_BUTTON);
@@ -54,13 +76,7 @@ public class NavbarComponent extends BaseComponent {
         return isDisplayedAfterWait(LOGOUT_BUTTON);
     }
 
-    /**
-     * Logout butonuna tiklar.
-     *
-     * <p>Bugun bu tiklama <b>oturumu sonlandirmaz</b> — butonun click handler'i yok
-     * (yukaridaki sinif notuna bakiniz). FR-001 ACC-012/013 testleri bu nedenle
-     * gecmeyecektir; bu bir otomasyon hatasi degil, uygulamadaki eksikliktir.
-     */
+    /** Profil menusunu acar ve Logout'a tiklar; oturum sonlanir. */
     public void logout() {
         openProfileMenu();
         click(LOGOUT_BUTTON);

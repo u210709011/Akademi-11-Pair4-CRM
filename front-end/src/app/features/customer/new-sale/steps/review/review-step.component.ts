@@ -27,19 +27,37 @@ export class ReviewStepComponent {
     this.lookupService.getTypesByGroup(LOOKUP_GROUPS.CITY).subscribe(cities => this.cities.set(cities));
   }
 
-  protected readonly selectedLines = computed(() => this.formState.basket().filter(line => !line.isAutoAdded));
   protected readonly autoAddedLines = computed(() => this.formState.basket().filter(line => line.isAutoAdded));
 
   protected readonly selectedAddress = computed<AddressResponse | null>(
     () => this.formState.addresses().find(address => address.id === this.formState.selectedAddressId()) ?? null
   );
 
-  // Backend OrderSummaryResponse sadece tek bir totalAmount donduruyor - Monthly/One-time/Discounts/
-  // Taxes/Activation Fee gibi bir kirilim yok, o yuzden Price Summary karti sadece bunu gosterir.
+  // Backend OrderSummaryResponse sadece tek bir totalAmount donduruyor - One-time/Taxes/Activation
+  // Fee gibi bir kirilim yok. Discount ise kampanya satirlarinin originalPrice/price farkindan
+  // (frontend'de) hesaplanir - order-service da ayni indirimli fiyati zaten uyguladigi icin
+  // totalAmount ile bu hesaplamanin toplami birbirini tutar.
   protected readonly grandTotal = computed(() => this.formState.totalAmount());
+
+  protected readonly totalDiscount = computed(() =>
+    this.formState
+      .selectedLines()
+      .filter(line => line.originalPrice !== null)
+      .reduce((sum, line) => sum + (line.originalPrice! - line.price), 0)
+  );
+
+  protected readonly totalBeforeDiscount = computed(() => this.grandTotal() + this.totalDiscount());
 
   protected isConfigured(prodOfrId: number): boolean {
     return this.formState.isConfigured(prodOfrId);
+  }
+
+  // Kampanya ile eklenen offering'lerin tablo satirlarinin ustune bir kere baslik gostermek
+  // icin - satirlar sepette ardisik geldigi icin index bazli "grup degisti mi" kontrolu yeterli.
+  protected isFirstInCampaignGroup(index: number): boolean {
+    const lines = this.formState.selectedLines();
+    const line = lines[index];
+    return line.cmpgId !== null && (index === 0 || lines[index - 1].cmpgId !== line.cmpgId);
   }
 
   protected cityName(cityId: number): string {

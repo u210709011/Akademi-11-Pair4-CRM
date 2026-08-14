@@ -10,6 +10,7 @@ import com.etiya.crm.customerservice.business.exceptions.BillingAccountAddressCo
 import com.etiya.crm.customerservice.business.exceptions.BillingAccountAddressRequiredException;
 import com.etiya.crm.customerservice.business.exceptions.BillingAccountHasActiveProductsException;
 import com.etiya.crm.customerservice.business.exceptions.CustomerHasActiveBillingAccountException;
+import com.etiya.crm.customerservice.business.exceptions.DefaultAccountCannotBeChangedException;
 import com.etiya.crm.customerservice.business.exceptions.DefaultAccountCannotBeDeletedException;
 import com.etiya.crm.customerservice.entities.concretes.CustomerAccount;
 
@@ -32,11 +33,7 @@ public class BillingAccountBusinessRules {
 		}
 	}
 
-	/**
-	 * ACC-004: pasif hesaba bagli aktif urun varsa fatura hesabi silinemez. order-service
-	 * entegrasyonu gelene kadar caller (BillingAccountServiceImpl) NoOpBillingAccountProductGuard
-	 * uzerinden hep false gecer - bkz. BillingAccountProductGuard.
-	 */
+	/** ACC-004: pasif hesaba bagli aktif urun varsa fatura hesabi silinemez - bkz. BillingAccountProductGuard. */
 	public void ensureNoLinkedProducts(boolean hasLinkedProducts) {
 		if (hasLinkedProducts) {
 			throw new BillingAccountHasActiveProductsException();
@@ -81,6 +78,18 @@ public class BillingAccountBusinessRules {
 	public void ensureAccountIsBillingType(CustomerAccount account, Long billingAccountTypeId) {
 		if (!billingAccountTypeId.equals(account.getAccountTpId())) {
 			throw new DefaultAccountCannotBeDeletedException();
+		}
+	}
+
+	/**
+	 * B-13b: durum degistirme (PATCH status) akisi icin ensureAccountIsBillingType'in ayni
+	 * kontrolu ama "silinemez" yerine "durumu degistirilemez" mesaji donen kopyasi -
+	 * DefaultAccountCannotBeDeletedException'in silme ve durum degisimi arasinda paylasilmasi
+	 * kullaniciya durum degisimi denerken yanlislikla "silinemez" hatasi gosteriyordu.
+	 */
+	public void ensureAccountIsBillingTypeForStatusChange(CustomerAccount account, Long billingAccountTypeId) {
+		if (!billingAccountTypeId.equals(account.getAccountTpId())) {
+			throw new DefaultAccountCannotBeChangedException();
 		}
 	}
 }

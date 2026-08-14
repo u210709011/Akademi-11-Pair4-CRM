@@ -13,8 +13,8 @@
             <span class="review-summary-value">{{ formState.customerName() }}</span>
         </div>
         <div class="review-summary-field">
-            <span class="review-summary-label">{{ i18n.t('newSale.billingAccount') }}</span>
-            <span class="review-summary-value">{{ formState.billingAccountNo() }}</span>
+            <span class="review-summary-label">{{ i18n.t('newSale.billingAccountLabel') }}</span>
+            <span class="review-summary-value">ACC-{{ formState.billingAccountNo() }}</span>
         </div>
         <div class="review-summary-field">
             <span class="review-summary-label">{{ i18n.t('newSale.orderDate') }}</span>
@@ -41,9 +41,17 @@
             </tr>
         </thead>
         <tbody>
-            @for (line of selectedLines(); track line.prodOfrId) {
+            @for (line of formState.selectedLines(); track line.prodOfrId; let i = $index) {
+                @if (isFirstInCampaignGroup(i)) {
+                    <tr class="review-campaign-group-row">
+                        <td colspan="5">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z" /><circle cx="7" cy="7" r="1" /></svg>
+                            {{ line.cmpgName }}
+                        </td>
+                    </tr>
+                }
                 <tr>
-                    <td class="offer-id-cell">OFR-{{ line.prodOfrId }}</td>
+                    <td class="offer-id-cell">OFR-{{ line.prodOfrNo }}</td>
                     <td>{{ line.offerName }}</td>
                     <td>
                         <span class="catalog-cell">
@@ -98,7 +106,7 @@
             <tbody>
                 @for (line of autoAddedLines(); track line.prodOfrId) {
                     <tr>
-                        <td class="offer-id-cell">OFR-{{ line.prodOfrId }}</td>
+                        <td class="offer-id-cell">OFR-{{ line.prodOfrNo }}</td>
                         <td>{{ line.offerName }}</td>
                         <td>
                         <span class="catalog-cell">
@@ -148,20 +156,12 @@
                 <span class="review-summary-value">{{ cityName(address.cityId) }}</span>
             </div>
             <div class="review-summary-field">
-                <span class="review-summary-label">{{ i18n.t('newSale.addressDistrict') }}</span>
-                <span class="review-summary-value">—</span>
-            </div>
-            <div class="review-summary-field">
                 <span class="review-summary-label">{{ i18n.t('create.street') }}</span>
                 <span class="review-summary-value">{{ address.streetName }}</span>
             </div>
             <div class="review-summary-field">
                 <span class="review-summary-label">{{ i18n.t('create.houseNumber') }}</span>
                 <span class="review-summary-value">{{ address.houseName }}</span>
-            </div>
-            <div class="review-summary-field">
-                <span class="review-summary-label">{{ i18n.t('newSale.addressApartmentNo') }}</span>
-                <span class="review-summary-value">—</span>
             </div>
             <div class="review-summary-field">
                 <span class="review-summary-label">{{ i18n.t('create.addressDescription') }}</span>
@@ -176,8 +176,17 @@
 <div class="review-price-card">
     <h3>{{ i18n.t('newSale.priceSummary') }}</h3>
 
+    <div class="review-price-row">
+        <span>{{ i18n.t('newSale.monthlyCharges') }}</span>
+        <span>{{ totalBeforeDiscount() | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
+    </div>
+    <div class="review-price-row review-discount-row">
+        <span>{{ i18n.t('newSale.discounts') }}</span>
+        <span>{{ totalDiscount() > 0 ? '-' : '' }}{{ totalDiscount() | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
+    </div>
+
     <div class="review-total-row">
-        <span>{{ i18n.t('newSale.grandTotal') }}</span>
+        <span>{{ i18n.t('newSale.totalAmount') }}</span>
         <span>{{ grandTotal() | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
     </div>
 </div>

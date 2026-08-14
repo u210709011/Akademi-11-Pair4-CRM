@@ -7,12 +7,13 @@ import com.etiya.crm.productservice.business.dtos.responses.ProductOffering.GetA
 import com.etiya.crm.productservice.business.dtos.responses.ProductOffering.GetProductOfferingResponse;
 import com.etiya.crm.productservice.business.dtos.responses.ProductOffering.UpdatedProductOfferingResponse;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface ProductOfferingService {
     CreatedProductOfferingResponse create(CreateProductOfferingRequest request);
     UpdatedProductOfferingResponse update(Long productOfferingId, UpdateProductOfferingRequest request);
     GetProductOfferingResponse getById(Long productOfferingId);
-    List<GetAllProductOfferingResponse> getAll();
+    Page<GetAllProductOfferingResponse> getAll(Long productOfferingId, String name, Pageable pageable);
     void delete(Long productOfferingId);
 }

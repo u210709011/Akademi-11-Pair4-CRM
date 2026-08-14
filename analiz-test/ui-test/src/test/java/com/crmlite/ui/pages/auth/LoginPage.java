@@ -117,6 +117,15 @@ public class LoginPage extends BasePage {
         return find(ERROR_MESSAGE).getCssValue("color");
     }
 
+    /**
+     * Username alaninin altinda gosterilen validasyon mesaji (zorunlu / maks 50 /
+     * bas-son bosluk). Alan "touched" olmadan mesaj render EDILMEZ, bu yuzden
+     * cagirmadan once alandan cikilmis olmalidir.
+     */
+    public String usernameFieldError() {
+        return fieldErrorText("username");
+    }
+
     /** Hata mesaji kaybolana kadar bekler (ACC-006). */
     public boolean errorMessageDisappears() {
         try {

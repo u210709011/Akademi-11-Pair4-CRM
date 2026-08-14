@@ -43,8 +43,11 @@ public class AddressModalComponent extends BaseComponent {
         }
     }
 
-    /** Sehir listesindeki tek secenek: Ankara (her iki sablonda da {@code value="201"}). */
-    public static final String CITY_ANKARA = "201";
+    /**
+     * Sehir listesindeki tek secenek. Secim <b>deger yerine etikete</b> gore yapilir:
+     * secenek degerleri lookup id'sidir ve seed degistiginde kayar (201 -> 5), etiket kaymaz.
+     */
+    public static final String CITY_ANKARA_LABEL = "Ankara";
 
     private final Variant variant;
 
@@ -66,7 +69,8 @@ public class AddressModalComponent extends BaseComponent {
     }
 
     public AddressModalComponent selectAnkara() {
-        return selectCity(CITY_ANKARA);
+        selectByVisibleText(By.id(variant.cityId), CITY_ANKARA_LABEL);
+        return this;
     }
 
     public AddressModalComponent enterStreet(String street) {

@@ -34,8 +34,8 @@ public class BillingAccountModalComponent extends BaseComponent {
     private static final By SAVE_ERROR = By.cssSelector(".modal-card .address-save-error");
     private static final By TOGGLE_ADDRESS_MODE = By.cssSelector(".modal-card .add-new-address-link");
 
-    /** Ankara, her iki sablonda da {@code value="201"} (bkz. AddressModalComponent). */
-    public static final String CITY_ANKARA = "201";
+    /** Ankara — deger yerine etikete gore secilir (bkz. AddressModalComponent). */
+    public static final String CITY_ANKARA_LABEL = "Ankara";
 
     /** Modal alanlari; id'ler {@code detail-customer.component.html} ile birebir. */
     public enum Field {
@@ -123,15 +123,27 @@ public class BillingAccountModalComponent extends BaseComponent {
     }
 
     /** ACC-005: yeni adres alanlarinin ekranda bulunmasi. */
+    /**
+     * ACC-005: yeni adres alanlarinin dordu de gorunur mu.
+     *
+     * <p>Beklemeli kontrol: alanlar {@code toggleAddressMode()} sonrasi kosullu render
+     * edilir, anlik bakildiginda henuz cizilmemis olabilirler.
+     */
     public boolean hasNewAddressFields() {
-        return isDisplayed(Field.NEW_CITY.locator())
-                && isDisplayed(Field.NEW_STREET.locator())
-                && isDisplayed(Field.NEW_HOUSE_NUMBER.locator())
-                && isDisplayed(Field.NEW_DESCRIPTION.locator());
+        try {
+            wait.until(driver -> isDisplayed(Field.NEW_CITY.locator())
+                    && isDisplayed(Field.NEW_STREET.locator())
+                    && isDisplayed(Field.NEW_HOUSE_NUMBER.locator())
+                    && isDisplayed(Field.NEW_DESCRIPTION.locator()));
+            return true;
+        } catch (org.openqa.selenium.TimeoutException e) {
+            return false;
+        }
     }
 
-    public BillingAccountModalComponent selectNewAddressCity(String cityValue) {
-        selectByValue(Field.NEW_CITY.locator(), cityValue);
+    /** Sehri ekranda gorunen etikete gore secer (secenek degerleri lookup id'sidir, kayabilir). */
+    public BillingAccountModalComponent selectNewAddressCity(String cityLabel) {
+        selectByVisibleText(Field.NEW_CITY.locator(), cityLabel);
         return this;
     }
 
@@ -152,7 +164,7 @@ public class BillingAccountModalComponent extends BaseComponent {
 
     /** Yeni adres formunu tumuyle doldurur (City varsayilan Ankara). */
     public BillingAccountModalComponent fillNewAddress(String street, String houseNumber, String description) {
-        return selectNewAddressCity(CITY_ANKARA)
+        return selectNewAddressCity(CITY_ANKARA_LABEL)
                 .enterNewStreet(street)
                 .enterNewHouseNumber(houseNumber)
                 .enterNewAddressDescription(description);
@@ -216,6 +228,49 @@ public class BillingAccountModalComponent extends BaseComponent {
     /** ACC-011: "Create" butonu. */
     public void create() {
         clickAction(CREATE_BUTTON);
+    }
+
+    /**
+     * FR-010 ACC-010: guncelleme akisinda ayni buton "Save" olarak gorunur.
+     * Ayri bir locator yoktur — modal olusturma ve guncelleme icin ortaktir.
+     */
+    public void save() {
+        clickAction(CREATE_BUTTON);
+    }
+
+    // --- FR-010 ACC-002: alanlarin mevcut bilgilerle dolu gelmesi ---
+
+    public String accountNameValue() {
+        return getValue(Field.ACCOUNT_NAME.locator());
+    }
+
+    public String accountDescriptionValue() {
+        return getValue(Field.ACCOUNT_DESC.locator());
+    }
+
+    /** Secili adresin option degeri (adres id'si). */
+    public String selectedAddressValue() {
+        return getValue(Field.SERVICE_ADDRESS.locator());
+    }
+
+    /**
+     * Account Name alanini bosaltir ve odagi kaldirir.
+     *
+     * <p>Odak kaldirilmadan Signal Forms alani {@code touched} saymaz ve buton durumu
+     * guncellenmeyebilir — FR-006'da ayni tuzaga dusuldu.
+     */
+    public BillingAccountModalComponent clearAccountName() {
+        clear(Field.ACCOUNT_NAME.locator());
+        blur(Field.ACCOUNT_NAME.locator());
+        return this;
+    }
+
+    public boolean isSaveEnabled() {
+        return becomesEnabled(CREATE_BUTTON);
+    }
+
+    public boolean isSaveDisabled() {
+        return remainsDisabled(CREATE_BUTTON);
     }
 
     public void cancel() {

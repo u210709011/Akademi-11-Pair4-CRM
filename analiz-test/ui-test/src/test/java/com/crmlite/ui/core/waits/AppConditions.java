@@ -62,9 +62,17 @@ public final class AppConditions {
         };
     }
 
-    /** FR-003/FR-004: Next'e basildiginda calisan tekillik + KPS dogrulama gostergesi kaybolana kadar bekler. */
+    /**
+     * FR-003/FR-004: Next'e basildiginda calisan tekillik + KPS dogrulama gostergesi
+     * kaybolana kadar bekler.
+     *
+     * <p>10.08.2026: sinif adi {@code .verifying-indicator} -> {@code .btn-spinner-wrap}
+     * olarak degisti (commit 6cce9c1) ve spinner tum ekranlarda ortak hale geldi. Eski
+     * secici hicbir sey bulmadigi icin bekleme aninda donuyor ve adim gecisleri yarisa
+     * giriyordu - testler sirayla degil, rastgele kirmizi oluyordu.
+     */
     public static ExpectedCondition<Boolean> identityVerificationFinished() {
-        By spinner = By.cssSelector(".verifying-indicator");
+        By spinner = By.cssSelector(".btn-spinner-wrap");
         return driver -> {
             List<WebElement> indicators = driver.findElements(spinner);
             return indicators.stream().noneMatch(AppConditions::isSafelyDisplayed);

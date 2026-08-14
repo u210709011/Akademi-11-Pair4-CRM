@@ -7,6 +7,9 @@ import com.etiya.crm.productservice.business.dtos.responses.ProductCharacteristi
 import com.etiya.crm.productservice.business.dtos.responses.ProductCharacteristicValue.GetAllProductCharacteristicValueResponse;
 import com.etiya.crm.productservice.business.dtos.responses.ProductCharacteristicValue.GetProductCharacteristicValueResponse;
 import com.etiya.crm.productservice.business.dtos.responses.ProductCharacteristicValue.UpdatedProductCharacteristicValueResponse;
+import com.etiya.crm.productservice.constants.SwaggerText;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = SwaggerText.PRODUCT_CHAR_VAL_TAG_NAME, description = SwaggerText.PRODUCT_CHAR_VAL_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/product-characteristic-values")
 public class ProductCharacteristicValueController {
@@ -23,36 +27,42 @@ public class ProductCharacteristicValueController {
         this.productCharacteristicValueService = productCharacteristicValueService;
     }
 
+    @Operation(summary = SwaggerText.PRODUCT_CHAR_VAL_CREATE_SUMMARY)
     @PostMapping
     public ResponseEntity<CreatedProductCharacteristicValueResponse> create(@Valid @RequestBody CreateProductCharacteristicValueRequest request) {
         CreatedProductCharacteristicValueResponse response = productCharacteristicValueService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = SwaggerText.PRODUCT_CHAR_VAL_UPDATE_SUMMARY)
     @PutMapping("/{productCharacteristicValueId}")
     public ResponseEntity<UpdatedProductCharacteristicValueResponse> update(@PathVariable Long productCharacteristicValueId, @Valid @RequestBody UpdateProductCharacteristicValueRequest request) {
         UpdatedProductCharacteristicValueResponse response = productCharacteristicValueService.update(productCharacteristicValueId, request);
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = SwaggerText.PRODUCT_CHAR_VAL_GET_BY_ID_SUMMARY)
     @GetMapping("/{productCharacteristicValueId}")
     public ResponseEntity<GetProductCharacteristicValueResponse> getById(@PathVariable Long productCharacteristicValueId) {
         GetProductCharacteristicValueResponse response = productCharacteristicValueService.getById(productCharacteristicValueId);
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = SwaggerText.PRODUCT_CHAR_VAL_GET_ALL_SUMMARY)
     @GetMapping
     public ResponseEntity<List<GetAllProductCharacteristicValueResponse>> getAll() {
         List<GetAllProductCharacteristicValueResponse> response = productCharacteristicValueService.getAll();
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = SwaggerText.PRODUCT_CHAR_VAL_GET_BY_PRODUCT_SUMMARY)
     @GetMapping("/by-product/{productId}")
     public ResponseEntity<List<GetAllProductCharacteristicValueResponse>> getByProductId(@PathVariable Long productId) {
         List<GetAllProductCharacteristicValueResponse> response = productCharacteristicValueService.getByProductId(productId);
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = SwaggerText.PRODUCT_CHAR_VAL_DELETE_SUMMARY)
     @DeleteMapping("/{productCharacteristicValueId}")
     public ResponseEntity<Void> delete(@PathVariable Long productCharacteristicValueId) {
         productCharacteristicValueService.delete(productCharacteristicValueId);

@@ -41,6 +41,34 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
         return resolve(MessageKeys.DOWNSTREAM_UNAVAILABLE);
     }
 
+    // B-15: HttpRequestMethodNotSupportedException gibi framework istisnalari ozel bir handler
+    // bulamayinca @ExceptionHandler(Exception.class) dalina duşup 500'e sizardi - artik bu 5
+    // hook'u AbstractDownstreamExceptionHandler'daki ilgili handler'lar kullaniyor.
+    @Override
+    protected String parameterTypeMismatchMessage(String parameterName) {
+        return resolve(MessageKeys.PARAMETER_TYPE_MISMATCH, parameterName);
+    }
+
+    @Override
+    protected String invalidRequestParameterMessage() {
+        return resolve(MessageKeys.INVALID_REQUEST_PARAMETER);
+    }
+
+    @Override
+    protected String missingParameterMessage(String parameterName) {
+        return resolve(MessageKeys.MISSING_REQUEST_PARAMETER, parameterName);
+    }
+
+    @Override
+    protected String methodNotSupportedMessage(String httpMethod) {
+        return resolve(MessageKeys.METHOD_NOT_SUPPORTED, httpMethod);
+    }
+
+    @Override
+    protected String routeNotFoundMessage() {
+        return resolve(MessageKeys.ROUTE_NOT_FOUND);
+    }
+
     @ExceptionHandler({ OrderNotFoundException.class, OrderItemNotFoundException.class })
     public ResponseEntity<ErrorResponse> handleNotFound(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, ex, request);
@@ -53,10 +81,14 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ex, request);
     }
 
-    @ExceptionHandler({ AddressSelectionInvalidException.class, AccountNotBelongToCustomerException.class,
-            DuplicateBasketItemException.class, ServiceAddressMissingException.class,
-            AddressNotBelongToCustomerException.class, CharacteristicValueMismatchException.class,
-            CampaignNotAppliedToOfferingException.class, OfferAlreadyActiveException.class })
+    // Varsayilan: her yeni BusinessException alt sinifi otomatik 400 olur - listeye eklemeyi
+    // unutmak artik mumkun degil (bkz. B-20 sonrasi geri bildirim: CharacteristicValueMissingException
+    // burada sayilmadigi icin @ExceptionHandler(Exception.class)'a duşup 500 donmustu). 404/409/500
+    // gerektiren alt siniflar (OrderNotFoundException, OrderItemNotFoundException,
+    // BsnInterSpecNotFoundException, OrderNotEditableException) kendi handler'larinda kalir -
+    // Spring, thrown exception'in en spesifik @ExceptionHandler'ini (ExceptionDepthComparator) secer,
+    // bu yuzden onlar hala bu varsayilanin onune gecer.
+    @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(BusinessException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex, request);
     }

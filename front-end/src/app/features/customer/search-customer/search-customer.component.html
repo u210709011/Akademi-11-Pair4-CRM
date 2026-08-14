@@ -113,10 +113,15 @@
                     <input
                         id="firstName"
                         type="text"
+                        maxlength="50"
                         formControlName="firstName"
                         placeholder="First Name"
                         (input)="sanitizeLetters($event, 'firstName')"
+                        (blur)="onNameBlur('firstName')"
                     >
+                    @if (fieldErrors().firstName) {
+                        <span class="field-error">{{ i18n.t('search.firstNameError') }}</span>
+                    }
                 </div>
 
                 <div class="filter-field">
@@ -124,10 +129,15 @@
                     <input
                         id="lastName"
                         type="text"
+                        maxlength="50"
                         formControlName="lastName"
                         placeholder="Last Name"
                         (input)="sanitizeLetters($event, 'lastName')"
+                        (blur)="onNameBlur('lastName')"
                     >
+                    @if (fieldErrors().lastName) {
+                        <span class="field-error">{{ i18n.t('search.lastNameError') }}</span>
+                    }
                 </div>
 
                 <div class="filter-field">
@@ -156,7 +166,16 @@
                     class="search-button"
                     [disabled]="!hasFilledFilter() || isSearching() || hasFieldErrors()"
                     (click)="search()"
-                >{{ i18n.t('search.searchBtn') }}</button>
+                >
+                    @if (isSearching()) {
+                        <span class="btn-spinner-wrap">
+                            <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                            {{ i18n.t('search.searchBtn') }}
+                        </span>
+                    } @else {
+                        {{ i18n.t('search.searchBtn') }}
+                    }
+                </button>
             </div>
         </section>
 
@@ -210,32 +229,81 @@
                     <p class="results-empty-description">{{ i18n.t('search.noResultsSubtitle') }}</p>
                 </div>
             } @else {
+                <div class="results-table-wrap">
                 <table class="results-table">
                     <thead>
                         <tr>
                             <th class="sortable" [class.active]="sortColumn() === 'custId'" (click)="toggleSort('custId')">
                                 {{ i18n.t('search.custId') }}
-                                <span class="sort-indicator" [class.active]="sortColumn() === 'custId'">{{ sortColumn() === 'custId' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'custId'">
+                                    @if (sortColumn() === 'custId' && sortDirection() === 'asc') {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+                                    } @else if (sortColumn() === 'custId' && sortDirection() === 'desc') {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                                    } @else {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5-5 5 5" /><path d="M7 14l5 5 5-5" /></svg>
+                                    }
+                                </span>
                             </th>
                             <th class="sortable" [class.active]="sortColumn() === 'firstName'" (click)="toggleSort('firstName')">
                                 {{ i18n.t('search.firstName') }}
-                                <span class="sort-indicator" [class.active]="sortColumn() === 'firstName'">{{ sortColumn() === 'firstName' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'firstName'">
+                                    @if (sortColumn() === 'firstName' && sortDirection() === 'asc') {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+                                    } @else if (sortColumn() === 'firstName' && sortDirection() === 'desc') {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                                    } @else {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5-5 5 5" /><path d="M7 14l5 5 5-5" /></svg>
+                                    }
+                                </span>
                             </th>
                             <th class="sortable" [class.active]="sortColumn() === 'middleName'" (click)="toggleSort('middleName')">
                                 {{ i18n.t('search.middleName') }}
-                                <span class="sort-indicator" [class.active]="sortColumn() === 'middleName'">{{ sortColumn() === 'middleName' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'middleName'">
+                                    @if (sortColumn() === 'middleName' && sortDirection() === 'asc') {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+                                    } @else if (sortColumn() === 'middleName' && sortDirection() === 'desc') {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                                    } @else {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5-5 5 5" /><path d="M7 14l5 5 5-5" /></svg>
+                                    }
+                                </span>
                             </th>
                             <th class="sortable" [class.active]="sortColumn() === 'lastName'" (click)="toggleSort('lastName')">
                                 {{ i18n.t('search.lastName') }}
-                                <span class="sort-indicator" [class.active]="sortColumn() === 'lastName'">{{ sortColumn() === 'lastName' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'lastName'">
+                                    @if (sortColumn() === 'lastName' && sortDirection() === 'asc') {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+                                    } @else if (sortColumn() === 'lastName' && sortDirection() === 'desc') {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                                    } @else {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5-5 5 5" /><path d="M7 14l5 5 5-5" /></svg>
+                                    }
+                                </span>
                             </th>
                             <th class="sortable" [class.active]="sortColumn() === 'role'" (click)="toggleSort('role')">
                                 {{ i18n.t('search.role') }}
-                                <span class="sort-indicator" [class.active]="sortColumn() === 'role'">{{ sortColumn() === 'role' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'role'">
+                                    @if (sortColumn() === 'role' && sortDirection() === 'asc') {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+                                    } @else if (sortColumn() === 'role' && sortDirection() === 'desc') {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                                    } @else {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5-5 5 5" /><path d="M7 14l5 5 5-5" /></svg>
+                                    }
+                                </span>
                             </th>
                             <th class="sortable" [class.active]="sortColumn() === 'tcNo'" (click)="toggleSort('tcNo')">
                                 {{ i18n.t('search.natId') }}
-                                <span class="sort-indicator" [class.active]="sortColumn() === 'tcNo'">{{ sortColumn() === 'tcNo' && sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                                <span class="sort-indicator" [class.active]="sortColumn() === 'tcNo'">
+                                    @if (sortColumn() === 'tcNo' && sortDirection() === 'asc') {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+                                    } @else if (sortColumn() === 'tcNo' && sortDirection() === 'desc') {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                                    } @else {
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5-5 5 5" /><path d="M7 14l5 5 5-5" /></svg>
+                                    }
+                                </span>
                             </th>
                         </tr>
                     </thead>
@@ -254,6 +322,7 @@
                         }
                     </tbody>
                 </table>
+                </div>
 
                 @if (totalPages() > 1) {
                     <div class="pagination">

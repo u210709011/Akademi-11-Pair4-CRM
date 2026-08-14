@@ -10,6 +10,9 @@ export interface ProductCatalog {
 // GET /api/v1/products/{productOfferingId} icindeki teklif - offer selection tablosunda gosterilir.
 export interface ProductOffering {
   productOfferingId: number;
+  // Backend'de sifirla soldan 6 haneye doldurulmus (ör. "000042") - CUST_ACCT.ACCT_NO ile ayni
+  // kural (bkz. ProductServiceDefaults.formatNo). Prefix (OFR-) sadece burada, gorunumde eklenir.
+  productOfferingNo: string;
   productSpecId: number;
   name: string;
   descr: string;
@@ -30,6 +33,7 @@ export interface ProductCatalogOffering {
 // GET /api/v1/product-campaigns - kampanya listesi.
 export interface Campaign {
   campaignId: number;
+  campaignNo: string;
   name: string;
   descr: string;
   campaignCode: string;
@@ -46,6 +50,10 @@ export interface CampaignOffering {
   productOfferingId: number;
   productOfferingName: string;
   priority: number;
+  // Kampanyanin bu teklife uyguladigi indirim - discountedPrice, offering'in totalPrice'indan
+  // hesaplanmis (discountPct%) net fiyat, backend'de order-service da ayni degeri kullanir.
+  discountPct: number;
+  discountedPrice: number;
   startDate: string | null;
   endDate: string | null;
   active: boolean;
@@ -59,6 +67,8 @@ export interface ProductOfferingRelation {
   productOfferingId2: number;
   relationTypeId: number;
   mandatory: boolean;
+  // FR-014 ACC-012/BR-04: true ise bu iki offering sepette es zamanli olamaz (EXCL).
+  exclusive: boolean;
   qty: number;
   active: boolean;
 }
@@ -72,4 +82,34 @@ export interface ProductOfferingCharUse {
   characteristicName: string;
   mandatory: boolean;
   active: boolean;
+}
+
+// GET /api/v1/products/{productId} - siparis tamamlandiginda (finishOrder -> provisionProducts)
+// gercekten provizyon edilmis urun ornegi. Product Offer Details modali icin (bkz. detail-customer).
+export interface Product {
+  productId: number;
+  productNo: string;
+  parentProductId: number | null;
+  productOfferingId: number;
+  productOfferingName: string;
+  productSpecId: number;
+  name: string;
+  descr: string;
+  campaignId: number | null;
+  campaignName: string | null;
+  statusId: number;
+  serviceStartDate: string | null;
+}
+
+// GET /api/v1/product-characteristic-values/by-product/{productId} - siparis Configuration
+// adiminda secilmis, provizyon sirasinda urune islenmis karakteristik degerleri.
+export interface ProductCharacteristicValue {
+  productCharacteristicValueId: number;
+  characteristicName: string;
+  productId: number;
+  characteristicId: number;
+  characteristicValueId: number | null;
+  characteristicValueName: string | null;
+  value: string | null;
+  statusId: number;
 }

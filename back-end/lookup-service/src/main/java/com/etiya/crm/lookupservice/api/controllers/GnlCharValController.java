@@ -1,6 +1,7 @@
 package com.etiya.crm.lookupservice.api.controllers;
 
 import com.etiya.crm.lookupservice.business.abstracts.GnlCharValService;
+import com.etiya.crm.lookupservice.constants.SwaggerText;
 import com.etiya.crm.shared.contracts.gnlcharval.CreateGnlCharValRequest;
 import com.etiya.crm.shared.contracts.gnlcharval.UpdateGnlCharValRequest;
 import com.etiya.crm.shared.contracts.gnlcharval.GnlCharValResponse;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Characteristic Values (GNL_CHAR_VAL)", description = "Karakteristik degerleri CRUD")
+@Tag(name = SwaggerText.GNL_CHAR_VAL_TAG_NAME, description = SwaggerText.GNL_CHAR_VAL_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/characteristic-values")
 @RequiredArgsConstructor
@@ -29,31 +30,31 @@ public class GnlCharValController {
 
     private final GnlCharValService gnlCharValService;
 
-    @Operation(summary = "Tum karakteristik degerlerini listele")
+    @Operation(summary = SwaggerText.GNL_CHAR_VAL_GET_ALL_SUMMARY)
     @GetMapping
     public ResponseEntity<List<GnlCharValResponse>> getAll() {
         return ResponseEntity.ok(gnlCharValService.getAll());
     }
 
-    @Operation(summary = "Karakteristik degerini id ile getir")
+    @Operation(summary = SwaggerText.GNL_CHAR_VAL_GET_BY_ID_SUMMARY)
     @GetMapping("/{id}")
     public ResponseEntity<GnlCharValResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(gnlCharValService.getById(id));
     }
 
-    @Operation(summary = "Yeni karakteristik degeri ekle", description = "charId var olan bir GNL_CHAR'a ait olmali.")
+    @Operation(summary = SwaggerText.GNL_CHAR_VAL_ADD_SUMMARY, description = SwaggerText.GNL_CHAR_VAL_ADD_DESCRIPTION)
     @PostMapping
     public ResponseEntity<GnlCharValResponse> add(@Valid @RequestBody CreateGnlCharValRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(gnlCharValService.add(request));
     }
 
-    @Operation(summary = "Karakteristik degerini guncelle", description = "charId degistirilemez.")
+    @Operation(summary = SwaggerText.GNL_CHAR_VAL_UPDATE_SUMMARY, description = SwaggerText.GNL_CHAR_VAL_UPDATE_DESCRIPTION)
     @PutMapping("/{id}")
     public ResponseEntity<GnlCharValResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateGnlCharValRequest request) {
         return ResponseEntity.ok(gnlCharValService.update(id, request));
     }
 
-    @Operation(summary = "Karakteristik degerini sil (soft-delete)")
+    @Operation(summary = SwaggerText.GNL_CHAR_VAL_DELETE_SUMMARY)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         gnlCharValService.delete(id);

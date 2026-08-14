@@ -1,5 +1,6 @@
 package com.etiya.crm.productservice.business.dtos.requests.Product;
 
+import com.etiya.crm.productservice.constants.MessageKeys;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -15,10 +16,10 @@ public class CreateProductRequest {
 
     private Long parentProductId;
 
-    @NotNull(message = "Ürün Teklif alanı boş bırakılamaz")
+    @NotNull(message = "{" + MessageKeys.PRODUCT_OFFERING_ID_REQUIRED + "}")
     private Long productOfferingId;
 
-    @NotNull(message = "Ürün Tanım alanı boş bırakılamaz")
+    @NotNull(message = "{" + MessageKeys.PRODUCT_SPEC_ID_REQUIRED + "}")
     private Long productSpecId;
 
     private String name;
@@ -27,6 +28,6 @@ public class CreateProductRequest {
 
     private Long campaignId;
 
-    @NotBlank(message = "Durum kodu zorunludur.")
+    @NotBlank(message = "{" + MessageKeys.STATUS_CODE_REQUIRED + "}")
     private String statusCode;
 }

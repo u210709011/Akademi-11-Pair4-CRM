@@ -119,11 +119,12 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 				.orElseThrow(() -> new BillingAccountNotFoundException(custId, accountId));
 
 		// Onboarding'de acilan varsayilan CUST_ACCT tipi hesabin durumu da degistirilemez -
-		// deleteBillingAccount'taki ile ayni guard.
-		rules.ensureAccountIsBillingType(account, lookupResolver.resolveBillingAccountTypeId());
+		// deleteBillingAccount'taki ile ayni guard, ama B-13b: "silinemez" yerine "durumu
+		// degistirilemez" mesaji donen ayri exception kullanir.
+		rules.ensureAccountIsBillingTypeForStatusChange(account, lookupResolver.resolveBillingAccountTypeId());
 
 		Long activeStatusId = lookupResolver.resolveActiveAccountStatusId();
-		Long targetStatusId = "ACTIVE".equals(request.status()) ? activeStatusId
+		Long targetStatusId = UpdateBillingAccountStatusRequest.ACTIVE.equals(request.status()) ? activeStatusId
 				: lookupResolver.resolvePassiveAccountStatusId();
 		account.setAcctStId(targetStatusId);
 		account = customerAccountRepository.save(account);
@@ -147,8 +148,7 @@ public class BillingAccountServiceImpl implements BillingAccountService {
 
 		rules.ensureBillingAccountNotActive(account, lookupResolver.resolveActiveAccountStatusId());
 
-		// ACC-004: order-service entegrasyonu gelene kadar productGuard (NoOpBillingAccountProductGuard)
-		// hep false doner - bkz. BillingAccountProductGuard.
+		// ACC-004: bkz. OrderServiceBillingAccountProductGuard.
 		rules.ensureNoLinkedProducts(productGuard.hasLinkedProducts(account.getCustAcctId()));
 
 		account.setAcctStId(lookupResolver.resolveDeletedAccountStatusId());

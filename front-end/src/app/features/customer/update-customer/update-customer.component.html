@@ -46,6 +46,8 @@
                 >
                 @if (letterFieldErrors().firstName) {
                     <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                } @else if (updateForm.firstName().invalid() && updateForm.firstName().touched()) {
+                    <span class="field-error">{{ updateModel().firstName ? i18n.t('update.maxLengthError') : i18n.t('create.fieldRequired') }}</span>
                 }
             </div>
 
@@ -62,6 +64,8 @@
                 >
                 @if (letterFieldErrors().middleName) {
                     <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                } @else if (updateForm.middleName().invalid() && updateForm.middleName().touched()) {
+                    <span class="field-error">{{ i18n.t('update.maxLengthError') }}</span>
                 }
             </div>
 
@@ -78,6 +82,8 @@
                 >
                 @if (letterFieldErrors().lastName) {
                     <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                } @else if (updateForm.lastName().invalid() && updateForm.lastName().touched()) {
+                    <span class="field-error">{{ updateModel().lastName ? i18n.t('update.maxLengthError') : i18n.t('create.fieldRequired') }}</span>
                 }
             </div>
 
@@ -100,6 +106,9 @@
                         panelClass="app-date-picker-panel"
                     ></mat-datepicker>
                 </mat-form-field>
+                @if (birthDateErrorKey(); as errorKey) {
+                    <span class="field-error">{{ i18n.t(errorKey) }}</span>
+                }
             </div>
 
             <div class="form-field">
@@ -110,6 +119,9 @@
                         <option [value]="gender.gnlTpId">{{ genderLabel(gender.shrtCode) }}</option>
                     }
                 </select>
+                @if (updateForm.gender().invalid() && updateForm.gender().touched()) {
+                    <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                }
             </div>
 
             <div class="form-field">
@@ -122,6 +134,8 @@
                 >
                 @if (letterFieldErrors().fatherName) {
                     <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                } @else if (updateForm.fatherName().invalid() && updateForm.fatherName().touched()) {
+                    <span class="field-error">{{ i18n.t('update.maxLengthError') }}</span>
                 }
             </div>
 
@@ -135,6 +149,8 @@
                 >
                 @if (letterFieldErrors().motherName) {
                     <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                } @else if (updateForm.motherName().invalid() && updateForm.motherName().touched()) {
+                    <span class="field-error">{{ i18n.t('update.maxLengthError') }}</span>
                 }
             </div>
 
@@ -148,9 +164,9 @@
                     (blur)="nationalIdError.set(false)"
                 >
                 @if (nationalIdError()) {
-                    <span class="field-error">{{ i18n.t('create.nationalIdError') }}</span>
+                    <span class="field-error">{{ i18n.t('update.nationalIdError') }}</span>
                 } @else if (updateForm.nationalId().touched() && updateForm.nationalId().value().length > 0 && updateForm.nationalId().value().length < 11) {
-                    <span class="field-error">{{ i18n.t('create.nationalIdError') }}</span>
+                    <span class="field-error">{{ i18n.t('update.nationalIdError') }}</span>
                 }
             </div>
 
@@ -159,7 +175,14 @@
         <div class="update-actions">
             <button type="button" class="previous-button" (click)="previous()">{{ i18n.t('update.previousBtn') }}</button>
             <button type="button" class="save-button" [disabled]="updateForm().invalid() || isSaving()" (click)="save()">
-                {{ isSaving() ? i18n.t('create.submitting') : i18n.t('create.saveBtn') }}
+                @if (isSaving()) {
+                    <span class="btn-spinner-wrap">
+                        <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                        {{ i18n.t('create.submitting') }}
+                    </span>
+                } @else {
+                    {{ i18n.t('create.saveBtn') }}
+                }
             </button>
         </div>
     </div>

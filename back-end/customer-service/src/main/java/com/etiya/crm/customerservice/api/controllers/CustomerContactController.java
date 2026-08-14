@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.etiya.crm.customerservice.business.abstracts.CustomerContactService;
 import com.etiya.crm.customerservice.business.dtos.requests.ContactInfo;
 import com.etiya.crm.customerservice.constants.Roles;
+import com.etiya.crm.customerservice.constants.SwaggerText;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,7 +20,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /** Musterinin iletisim bilgisi (contact-info-service'e proxy) uc noktalari. */
-@Tag(name = "Customers", description = "Musteri iletisim bilgisi yonetimi")
+@Tag(name = SwaggerText.CUSTOMER_TAG_NAME, description = SwaggerText.CUSTOMER_CONTACT_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
@@ -28,15 +29,13 @@ public class CustomerContactController {
 
 	private final CustomerContactService contactService;
 
-	@Operation(summary = "Contact bilgisini getir", description = "contact-info-service'e proxy (musteri basina tek contact bilgisi).")
+	@Operation(summary = SwaggerText.GET_CONTACT_SUMMARY, description = SwaggerText.GET_CONTACT_DESCRIPTION)
 	@GetMapping("/{custId}/contact")
 	public ResponseEntity<ContactInfo> getContact(@PathVariable Long custId) {
 		return ResponseEntity.ok(contactService.getContact(custId));
 	}
 
-	@Operation(summary = "Contact bilgisini guncelle",
-			description = "contact-info-service'e proxy. email/mobilePhone her zaman zorunlu; "
-					+ "homePhone/fax bos gonderilirse mevcut kayit varsa dokunulmaz, yoksa olusturulmaz.")
+	@Operation(summary = SwaggerText.UPDATE_CONTACT_SUMMARY, description = SwaggerText.UPDATE_CONTACT_DESCRIPTION)
 	@PutMapping("/{custId}/contact")
 	public ResponseEntity<ContactInfo> updateContact(@PathVariable Long custId,
 			@Valid @RequestBody ContactInfo request) {

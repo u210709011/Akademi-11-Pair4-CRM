@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
 /**
  * Tum servislerin @RestControllerAdvice/AuthExceptionHandler'inda kullandigi
  * ortak hata govdesi. Daha once api-gateway/customer-service birbirinden
@@ -17,7 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * tek bir kontrat olsun diye buraya tasindi.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(description = "Standart hata govdesi.")
+@Schema(description = SwaggerText.ERROR_RESPONSE_DESCRIPTION)
 public record ErrorResponse(
 
 		Instant timestamp,
@@ -25,15 +27,15 @@ public record ErrorResponse(
 		@Schema(example = "404")
 		int status,
 
-		@Schema(description = "HTTP status'un reason phrase'i.", example = "Not Found")
+		@Schema(description = SwaggerText.ERROR_RESPONSE_ERROR_DESCRIPTION, example = "Not Found")
 		String error,
 
 		String message,
 
-		@Schema(description = "Hatanin olustugu istek path'i.", example = "/api/v1/customers/999")
+		@Schema(description = SwaggerText.ERROR_RESPONSE_PATH_DESCRIPTION, example = "/api/v1/customers/999")
 		String path,
 
-		@Schema(description = "Validasyon hatasi ise alan adi -> hata mesaji eslemesi; aksi halde null.")
+		@Schema(description = SwaggerText.ERROR_RESPONSE_VALIDATION_ERRORS_DESCRIPTION)
 		Map<String, String> validationErrors) {
 
 	public static ErrorResponse of(int status, String error, String message, String path) {

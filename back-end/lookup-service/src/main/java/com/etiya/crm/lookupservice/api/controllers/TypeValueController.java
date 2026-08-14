@@ -1,6 +1,7 @@
 package com.etiya.crm.lookupservice.api.controllers;
 
 import com.etiya.crm.lookupservice.business.abstracts.TypeValueService;
+import com.etiya.crm.lookupservice.constants.SwaggerText;
 import com.etiya.crm.shared.contracts.typevalue.CreateTypeValueRequest;
 import com.etiya.crm.shared.contracts.typevalue.UpdateTypeValueRequest;
 import com.etiya.crm.shared.contracts.typevalue.TypeValueResponse;
@@ -21,8 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Type Values (TYPE_VALUE)",
-        description = "Is tablolarina (PROD, PARTY, CUST, CUST_ACCT...) atanan polimorfik tip etiketleri CRUD")
+@Tag(name = SwaggerText.TYPE_VALUE_TAG_NAME, description = SwaggerText.TYPE_VALUE_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/type-values")
 @RequiredArgsConstructor
@@ -30,40 +30,37 @@ public class TypeValueController {
 
     private final TypeValueService typeValueService;
 
-    @Operation(summary = "Tum degerleri listele")
+    @Operation(summary = SwaggerText.TYPE_VALUE_GET_ALL_SUMMARY)
     @GetMapping
     public ResponseEntity<List<TypeValueResponse>> getAll() {
         return ResponseEntity.ok(typeValueService.getAll());
     }
 
-    @Operation(summary = "Degeri id ile getir")
+    @Operation(summary = SwaggerText.TYPE_VALUE_GET_BY_ID_SUMMARY)
     @GetMapping("/{id}")
     public ResponseEntity<TypeValueResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(typeValueService.getById(id));
     }
 
-    @Operation(summary = "Bir is tablosunun polimorfik tip etiketini coz",
-            description = "Kod bazli erisim - caller bir tabloya (orn. CUST) atanmis tip etiketi "
-                    + "numarasini (field_name) numeric id hardcode etmeden coder. "
-                    + "Ornek: GET /api/v1/type-values/by-table/CUST")
+    @Operation(summary = SwaggerText.TYPE_VALUE_GET_BY_TABLE_NAME_SUMMARY, description = SwaggerText.TYPE_VALUE_GET_BY_TABLE_NAME_DESCRIPTION)
     @GetMapping("/by-table/{tableName}")
     public ResponseEntity<TypeValueResponse> getByTableName(@PathVariable String tableName) {
         return ResponseEntity.ok(typeValueService.getByTableName(tableName));
     }
 
-    @Operation(summary = "Yeni tip etiketi ekle", description = "tableName benzersiz olmali - her is tablosunun tek bir tip etiketi olur.")
+    @Operation(summary = SwaggerText.TYPE_VALUE_ADD_SUMMARY, description = SwaggerText.TYPE_VALUE_ADD_DESCRIPTION)
     @PostMapping
     public ResponseEntity<TypeValueResponse> add(@Valid @RequestBody CreateTypeValueRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(typeValueService.add(request));
     }
 
-    @Operation(summary = "Degeri guncelle", description = "tableName/fieldName degistirilemez (immutable kimlik).")
+    @Operation(summary = SwaggerText.TYPE_VALUE_UPDATE_SUMMARY, description = SwaggerText.TYPE_VALUE_UPDATE_DESCRIPTION)
     @PutMapping("/{id}")
     public ResponseEntity<TypeValueResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateTypeValueRequest request) {
         return ResponseEntity.ok(typeValueService.update(id, request));
     }
 
-    @Operation(summary = "Degeri sil (hard delete)")
+    @Operation(summary = SwaggerText.TYPE_VALUE_DELETE_SUMMARY)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         typeValueService.delete(id);

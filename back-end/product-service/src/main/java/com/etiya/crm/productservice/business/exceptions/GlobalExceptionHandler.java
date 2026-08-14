@@ -41,6 +41,34 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
         return resolve(MessageKeys.DOWNSTREAM_UNAVAILABLE);
     }
 
+    // B-15: HttpRequestMethodNotSupportedException gibi framework istisnalari ozel bir handler
+    // bulamayinca @ExceptionHandler(Exception.class) dalina duşup 500'e sizardi - artik bu 5
+    // hook'u AbstractDownstreamExceptionHandler'daki ilgili handler'lar kullaniyor.
+    @Override
+    protected String parameterTypeMismatchMessage(String parameterName) {
+        return resolve(MessageKeys.PARAMETER_TYPE_MISMATCH, parameterName);
+    }
+
+    @Override
+    protected String invalidRequestParameterMessage() {
+        return resolve(MessageKeys.INVALID_REQUEST_PARAMETER);
+    }
+
+    @Override
+    protected String missingParameterMessage(String parameterName) {
+        return resolve(MessageKeys.MISSING_REQUEST_PARAMETER, parameterName);
+    }
+
+    @Override
+    protected String methodNotSupportedMessage(String httpMethod) {
+        return resolve(MessageKeys.METHOD_NOT_SUPPORTED, httpMethod);
+    }
+
+    @Override
+    protected String routeNotFoundMessage() {
+        return resolve(MessageKeys.ROUTE_NOT_FOUND);
+    }
+
     // NOT: yeni "...NotFoundException" eklendikçe buraya listeye eklenecek.
     @ExceptionHandler({ ProductSpecNotFoundException.class, ProductNotFoundException.class,
             ProductOfferingNotFoundException.class, ProductCatalogNotFoundException.class,

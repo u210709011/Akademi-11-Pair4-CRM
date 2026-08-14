@@ -177,7 +177,9 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 		view.setTcNo(individual.nationalId());
 		view.setGsm(contact.mobilePhone());
 		view.setAcctNo(accountNo);
-		view.setRole(lookupCacheService.resolveTypeValue(lookupResolver.resolveCustomerRoleTypeId()));
+		Long customerRoleTypeId = lookupResolver.resolveCustomerRoleTypeId();
+		view.setRole(lookupCacheService.resolveTypeValue(customerRoleTypeId));
+		view.setPartyRoleTypeId(customerRoleTypeId);
 		view.setStatus("ACTIVE");
 		view.setDeleted(false);
 		customerSearchViewRepository.save(view);

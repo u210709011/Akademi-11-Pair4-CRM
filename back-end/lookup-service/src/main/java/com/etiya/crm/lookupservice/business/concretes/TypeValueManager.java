@@ -5,6 +5,7 @@ import com.etiya.crm.shared.contracts.typevalue.CreateTypeValueRequest;
 import com.etiya.crm.shared.contracts.typevalue.UpdateTypeValueRequest;
 import com.etiya.crm.shared.contracts.typevalue.TypeValueResponse;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
+import com.etiya.crm.lookupservice.constants.EntityNames;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.TypeValueRepository;
 import com.etiya.crm.lookupservice.entities.concretes.TypeValue;
 import com.etiya.crm.lookupservice.mapper.TypeValueMapper;
@@ -40,7 +41,7 @@ public class TypeValueManager implements TypeValueService {
     @Override
     public TypeValueResponse getByTableName(String tableName) {
         TypeValue typeValue = typeValueRepository.findByTableName(tableName)
-                .orElseThrow(() -> new EntityNotFoundException("TypeValue", tableName));
+                .orElseThrow(() -> new EntityNotFoundException(EntityNames.TYPE_VALUE, tableName));
         return typeValueMapper.toResponse(typeValue);
     }
 
@@ -69,6 +70,6 @@ public class TypeValueManager implements TypeValueService {
     }
 
     private TypeValue getEntity(Long id) {
-        return typeValueRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("TypeValue", id));
+        return typeValueRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(EntityNames.TYPE_VALUE, id));
     }
 }

@@ -10,6 +10,7 @@ import com.etiya.crm.customerservice.business.exceptions.BillingAccountAddressCo
 import com.etiya.crm.customerservice.business.exceptions.BillingAccountAddressRequiredException;
 import com.etiya.crm.customerservice.business.exceptions.BillingAccountHasActiveProductsException;
 import com.etiya.crm.customerservice.business.exceptions.CustomerHasActiveBillingAccountException;
+import com.etiya.crm.customerservice.business.exceptions.DefaultAccountCannotBeChangedException;
 import com.etiya.crm.customerservice.business.exceptions.DefaultAccountCannotBeDeletedException;
 import com.etiya.crm.customerservice.entities.concretes.CustomerAccount;
 
@@ -150,6 +151,24 @@ class BillingAccountBusinessRulesTest {
 		CustomerAccount account = billingAccount(ACTIVE_STATUS_ID);
 
 		assertThatCode(() -> rules.ensureAccountIsBillingType(account, BILL_ACCT_TYPE_ID))
+				.doesNotThrowAnyException();
+	}
+
+	// --- B-13b: ensureAccountIsBillingTypeForStatusChange (durum degistirme, "silinemez" mesaji donmemeli) ---
+
+	@Test
+	void ensureAccountIsBillingTypeForStatusChange_throws_whenAccountIsDefaultCustAcctType() {
+		CustomerAccount account = account(OTHER_TYPE_ID, ACTIVE_STATUS_ID); // OTHER_TYPE_ID = varsayilan CUST_ACCT
+
+		assertThatThrownBy(() -> rules.ensureAccountIsBillingTypeForStatusChange(account, BILL_ACCT_TYPE_ID))
+				.isInstanceOf(DefaultAccountCannotBeChangedException.class);
+	}
+
+	@Test
+	void ensureAccountIsBillingTypeForStatusChange_passes_whenAccountIsBillAcctType() {
+		CustomerAccount account = billingAccount(ACTIVE_STATUS_ID);
+
+		assertThatCode(() -> rules.ensureAccountIsBillingTypeForStatusChange(account, BILL_ACCT_TYPE_ID))
 				.doesNotThrowAnyException();
 	}
 

@@ -131,6 +131,7 @@ public class AddressCrudTests extends AuthenticatedTest {
 
         dialog.confirm();
         dialog.waitUntilClosed();
+        detail.waitUntilAddressCountIsLessThan(before);
 
         assertThat(detail.addressCount())
                 .as("ACC-012 — adres silindi").isEqualTo(before - 1);

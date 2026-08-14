@@ -1,7 +1,9 @@
 package com.etiya.crm.lookupservice.business.concretes;
 
 import com.etiya.crm.shared.contracts.srvcspec.CreateSrvcSpecRequest;
+import com.etiya.crm.lookupservice.business.abstracts.TranslationService;
 import com.etiya.crm.lookupservice.business.exceptions.EntityNotFoundException;
+import com.etiya.crm.lookupservice.business.rules.GnlStExistenceRule;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.GnlStRepository;
 import com.etiya.crm.lookupservice.dataAccess.abstracts.SrvcSpecRepository;
 import com.etiya.crm.lookupservice.entities.concretes.SrvcSpec;
@@ -29,10 +31,14 @@ class SrvcSpecManagerTest {
     @Mock
     private GnlStRepository gnlStRepository;
 
+    @Mock
+    private TranslationService translationService;
+
     private final SrvcSpecMapper srvcSpecMapper = new SrvcSpecMapperImpl();
 
     private SrvcSpecManager manager() {
-        return new SrvcSpecManager(srvcSpecRepository, gnlStRepository, srvcSpecMapper);
+        return new SrvcSpecManager(srvcSpecRepository, new GnlStExistenceRule(gnlStRepository), srvcSpecMapper,
+                translationService);
     }
 
     @Test

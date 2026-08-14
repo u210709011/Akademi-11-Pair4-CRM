@@ -114,7 +114,7 @@ public class CustomerSearchTests extends AuthenticatedTest {
 
         SearchCustomerPage second = openSearchCustomer();
         second.enterFirstName(customer.individual().firstName())
-                .enterLastName("EslesmeyenSoyad" + System.nanoTime())
+                .enterLastName(unmatchableLastName())
                 .search();
 
         assertThat(second.isEmptyStateDisplayed())
@@ -206,5 +206,22 @@ public class CustomerSearchTests extends AuthenticatedTest {
                 .as("filtre alani temizlendi").isEmpty();
         assertThat(page.isSearchDisabled())
                 .as("filtre kalmadigi icin Search tekrar pasif").isTrue();
+    }
+
+    /**
+     * Hicbir kayitla eslesmeyecek, YALNIZCA HARFLERDEN olusan bir soyad uretir.
+     *
+     * <p>Rakam KULLANILAMAZ: arama ekrani ad alanlarinda harf disi karakterleri
+     * {@code sanitizeLetters} ile siler ve alani hatali isaretler; hata varken Search
+     * butonu pasif kalir, dolayisiyla tiklama basarisiz olur. (Dokuman da ad alanlari
+     * icin "Name can't contain numbers." kuralini koyar.) Benzersizligi korumak icin
+     * zaman damgasinin rakamlari harflere eslenir.
+     */
+    private static String unmatchableLastName() {
+        StringBuilder suffix = new StringBuilder();
+        for (char digit : Long.toString(System.nanoTime()).toCharArray()) {
+            suffix.append((char) ('A' + (digit - '0')));
+        }
+        return "Eslesmeyen" + suffix;
     }
 }

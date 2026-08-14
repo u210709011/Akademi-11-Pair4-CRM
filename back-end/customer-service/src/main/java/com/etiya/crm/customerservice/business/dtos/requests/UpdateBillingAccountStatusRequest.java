@@ -1,6 +1,7 @@
 package com.etiya.crm.customerservice.business.dtos.requests;
 
 import com.etiya.crm.customerservice.constants.MessageKeys;
+import com.etiya.crm.customerservice.constants.SwaggerText;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -11,11 +12,19 @@ import jakarta.validation.constraints.Pattern;
  * acct_st_id=DEL) ile ayri bir kavramdir: sadece ACTIVE<->PASSIVE gecisini kapsar - DELETED bu uctan
  * hicbir zaman set edilemez, silme sadece DELETE endpoint'inden yapilir (bkz. CustomerAccount.acctStId).
  */
-@Schema(description = "Fatura hesabinin aktiflik durumunu degistirir (soft-delete DEGIL).")
+@Schema(description = SwaggerText.UPDATE_BILLING_ACCOUNT_STATUS_REQUEST_SCHEMA_DESCRIPTION)
 public record UpdateBillingAccountStatusRequest(
 
-		@Schema(description = "Yeni hesap durumu", example = "PASSIVE", allowableValues = { "ACTIVE", "PASSIVE" })
+		@Schema(description = SwaggerText.UPDATE_BILLING_ACCOUNT_STATUS_REQUEST_STATUS_DESCRIPTION,
+				example = "PASSIVE", allowableValues = { ACTIVE, PASSIVE })
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
-		@Pattern(regexp = "ACTIVE|PASSIVE", message = "{" + MessageKeys.BILLING_ACCOUNT_STATUS_INVALID + "}")
+		@Pattern(regexp = ACTIVE + "|" + PASSIVE, message = "{" + MessageKeys.BILLING_ACCOUNT_STATUS_INVALID + "}")
 		String status) {
+
+	/**
+	 * Bu API sozlesmesindeki durum degerleri; lookup-service'in GNL_ST shrt_code'lariyla
+	 * (GnlStCodes.ACTIVE = "ACTV") KARISTIRILMAMALI - farkli bir deger uzayi.
+	 */
+	public static final String ACTIVE = "ACTIVE";
+	public static final String PASSIVE = "PASSIVE";
 }

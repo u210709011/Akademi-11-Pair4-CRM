@@ -174,9 +174,10 @@ export class CreateCustomerComponent {
       error: (httpError: HttpErrorResponse) => {
         this.formState.isVerifyingIdentity.set(false);
         this.formState.identityVerificationError.set(
-          httpError.status === 409
-            ? this.i18n.t('create.identityDuplicate')
-            : this.i18n.t('create.identityError')
+          (httpError.error as { message?: string } | null)?.message ??
+            (httpError.status === 409
+              ? this.i18n.t('create.identityDuplicate')
+              : this.i18n.t('create.identityError'))
         );
       }
     });
@@ -198,14 +199,16 @@ export class CreateCustomerComponent {
     this.customerService.onboard({ individual, addresses, contact }).subscribe({
       next: response => {
         this.formState.isSubmitting.set(false);
-        this.router.navigate(['/detail-customer', response.custId]);
+        // ACC-016: basari mesaji Customer Info ekraninda gosterilir - bkz. detail-customer.component.ts constructor.
+        this.router.navigate(['/detail-customer', response.custId], { queryParams: { created: '1' } });
       },
       error: (httpError: HttpErrorResponse) => {
         this.formState.isSubmitting.set(false);
         this.formState.submitError.set(
-          httpError.status === 409
-            ? this.i18n.t('create.identityDuplicate')
-            : this.i18n.t('create.submitError')
+          (httpError.error as { message?: string } | null)?.message ??
+            (httpError.status === 409
+              ? this.i18n.t('create.identityDuplicate')
+              : this.i18n.t('create.submitError'))
         );
       }
     });

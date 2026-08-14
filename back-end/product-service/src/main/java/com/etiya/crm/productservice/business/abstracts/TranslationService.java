@@ -1,0 +1,11 @@
+package com.etiya.crm.productservice.business.abstracts;
+
+/**
+ * Herhangi bir varliğin herhangi bir string alanini istekteki dile (LocaleContextHolder) gore
+ * cevirir. Varsayilan dil Ingilizce'dir - ingilizce istekte translation tablosuna hic gidilmez,
+ * defaultValue oldugu gibi donulur. lookup-service'teki ayni isimli servisle birebir ayni sekil.
+ */
+public interface TranslationService {
+
+    String translate(String entityName, Long entityId, String fieldName, String defaultValue);
+}

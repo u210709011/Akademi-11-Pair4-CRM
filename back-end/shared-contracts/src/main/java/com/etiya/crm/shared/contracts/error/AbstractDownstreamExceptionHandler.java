@@ -7,7 +7,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cloud.client.circuitbreaker.NoFallbackAvailableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -46,6 +50,21 @@ import jakarta.servlet.http.HttpServletRequest;
  * ve generic 502 dalina duşuyordu (orn. PUT /customers/{id}/individual duplicate TC no -> 409
  * yerine 502). Asagidaki findKnownCause artik FeignException/CallNotPermittedException bulana
  * kadar (ya da MAX_UNWRAP_DEPTH sinirina kadar) TUM zinciri dolasir.
+ *
+ * B-15: customer-service'te B-09 (MethodArgumentTypeMismatchException) ve B-10
+ * (IllegalArgumentException) icin buraya tasinmadan once yerel handler'lar eklenmisti;
+ * order-service/product-service'te bu ikisi hic yoktu ve HttpRequestMethodNotSupportedException/
+ * MissingServletRequestParameterException hicbir serviste yoktu - hepsi @ExceptionHandler(Exception.class)
+ * dalina duşup yanlis metot/eksik parametre gonderen caller'a bile 500 donduruyordu. Ayni aile bir
+ * kez daha (dorduncu bir serviste) tek tek yakalanmasin diye burada, subclass'larin sadece
+ * yerellestirilmis mesaji sagladigi hook metotlarla merkezilestirildi.
+ *
+ * NoHandlerFoundException notu: DispatcherServlet bunu SADECE
+ * spring.mvc.throw-exception-if-no-handler-found=true (+ spring.web.resources.add-mappings=false)
+ * ayariyla firlatir; bu repo'da o ayar config-server'in ayri git deposunda yasiyor ve buradan
+ * degistirilemiyor. Ayar acilana kadar bu handler hicbir zaman tetiklenmez - tamamen eslesmeyen
+ * bir path zaten Spring Boot'un varsayilan /error akisi uzerinden (farkli govde formatiyla ama
+ * dogru 404 statusuyle) doner, 500'e sizmaz. Ayar acildiginda handler hazir bekler.
  */
 public abstract class AbstractDownstreamExceptionHandler {
 
@@ -53,6 +72,9 @@ public abstract class AbstractDownstreamExceptionHandler {
 
 	/** Cause zincirinde sonsuz donguye karsi savunma - gercek zincirler bundan cok daha kisa. */
 	private static final int MAX_UNWRAP_DEPTH = 10;
+
+	/** ex.request() null geldiginde (Feign istegi kuramadan basarisiz oldugunda) log'da yerini tutar. */
+	private static final String UNKNOWN_REQUEST_DESCRIPTION = "unknown";
 
 	private final ObjectMapper objectMapper;
 
@@ -66,6 +88,50 @@ public abstract class AbstractDownstreamExceptionHandler {
 	/** Circuit breaker OPEN durumundayken kullanilacak yerellestirilmis fallback mesaji. */
 	protected abstract String downstreamUnavailableMessage();
 
+	/** B-15: MethodArgumentTypeMismatchException icin (parametre adi ile) yerellestirilmis mesaj. */
+	protected abstract String parameterTypeMismatchMessage(String parameterName);
+
+	/** B-15: MissingServletRequestParameterException icin (parametre adi ile) yerellestirilmis mesaj. */
+	protected abstract String missingParameterMessage(String parameterName);
+
+	/** B-15: caller'in gecersiz bir deger gonderdigi genel IllegalArgumentException durumu icin mesaj. */
+	protected abstract String invalidRequestParameterMessage();
+
+	/** B-15: HttpRequestMethodNotSupportedException icin (kullanilan HTTP metodu ile) mesaj. */
+	protected abstract String methodNotSupportedMessage(String httpMethod);
+
+	/** B-15: NoHandlerFoundException icin mesaj (bkz. sinif ustu not - bugun icin genelde tetiklenmez). */
+	protected abstract String routeNotFoundMessage();
+
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, parameterTypeMismatchMessage(ex.getName()), request);
+	}
+
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity<ErrorResponse> handleMissingParameter(MissingServletRequestParameterException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, missingParameterMessage(ex.getParameterName()), request);
+	}
+
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, invalidRequestParameterMessage(), request);
+	}
+
+	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+	public ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.METHOD_NOT_ALLOWED, methodNotSupportedMessage(ex.getMethod()), request);
+	}
+
+	@ExceptionHandler(NoHandlerFoundException.class)
+	public ResponseEntity<ErrorResponse> handleNoHandlerFound(NoHandlerFoundException ex, HttpServletRequest request) {
+		return build(HttpStatus.NOT_FOUND, routeNotFoundMessage(), request);
+	}
+
 	@ExceptionHandler(FeignException.class)
 	public ResponseEntity<ErrorResponse> handleFeignException(FeignException ex, HttpServletRequest request) {
 		return buildFeignExceptionResponse(ex, request);
@@ -74,7 +140,7 @@ public abstract class AbstractDownstreamExceptionHandler {
 	@ExceptionHandler(CallNotPermittedException.class)
 	public ResponseEntity<ErrorResponse> handleCircuitBreakerOpen(CallNotPermittedException ex,
 			HttpServletRequest request) {
-		return buildCircuitBreakerOpenResponse(request);
+		return buildCircuitBreakerOpenResponse(ex, request);
 	}
 
 	/**
@@ -89,8 +155,8 @@ public abstract class AbstractDownstreamExceptionHandler {
 		if (knownCause instanceof FeignException feignException) {
 			return buildFeignExceptionResponse(feignException, request);
 		}
-		if (knownCause instanceof CallNotPermittedException) {
-			return buildCircuitBreakerOpenResponse(request);
+		if (knownCause instanceof CallNotPermittedException circuitBreakerException) {
+			return buildCircuitBreakerOpenResponse(circuitBreakerException, request);
 		}
 		log.error(LogMessages.NO_FALLBACK_UNEXPECTED_CAUSE, String.valueOf(ex.getCause()), ex);
 		HttpStatus status = HttpStatus.BAD_GATEWAY;
@@ -113,17 +179,27 @@ public abstract class AbstractDownstreamExceptionHandler {
 		return null;
 	}
 
+	private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, HttpServletRequest request) {
+		return ResponseEntity.status(status)
+				.body(ErrorResponse.of(status.value(), status.getReasonPhrase(), message, request.getRequestURI()));
+	}
+
 	private ResponseEntity<ErrorResponse> buildFeignExceptionResponse(FeignException ex, HttpServletRequest request) {
 		HttpStatus status = HttpStatus.resolve(ex.status());
 		if (status == null) {
 			status = HttpStatus.BAD_GATEWAY;
 		}
+		String requestDescription = ex.request() == null ? UNKNOWN_REQUEST_DESCRIPTION
+				: ex.request().httpMethod() + " " + ex.request().url();
+		log.warn(LogMessages.DOWNSTREAM_CALL_FAILED_LOG, requestDescription, ex.status(), ex.getMessage());
 		String message = extractDownstreamMessage(ex).orElseGet(this::downstreamCallFailedMessage);
 		return ResponseEntity.status(status)
 				.body(ErrorResponse.of(status.value(), status.getReasonPhrase(), message, request.getRequestURI()));
 	}
 
-	private ResponseEntity<ErrorResponse> buildCircuitBreakerOpenResponse(HttpServletRequest request) {
+	private ResponseEntity<ErrorResponse> buildCircuitBreakerOpenResponse(CallNotPermittedException ex,
+			HttpServletRequest request) {
+		log.warn(LogMessages.DOWNSTREAM_CIRCUIT_OPEN_LOG, ex.getCausingCircuitBreakerName());
 		HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
 		return ResponseEntity.status(status).body(ErrorResponse.of(status.value(), status.getReasonPhrase(),
 				downstreamUnavailableMessage(), request.getRequestURI()));

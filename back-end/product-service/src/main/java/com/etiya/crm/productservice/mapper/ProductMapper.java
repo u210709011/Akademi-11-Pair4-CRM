@@ -6,6 +6,7 @@ import com.etiya.crm.productservice.business.dtos.responses.Product.CreatedProdu
 import com.etiya.crm.productservice.business.dtos.responses.Product.GetAllProductResponse;
 import com.etiya.crm.productservice.business.dtos.responses.Product.GetProductResponse;
 import com.etiya.crm.productservice.business.dtos.responses.Product.UpdatedProductResponse;
+import com.etiya.crm.productservice.constants.ProductServiceDefaults;
 import com.etiya.crm.productservice.entities.concretes.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -30,6 +31,7 @@ public interface ProductMapper {
     @Mapping(target = "uuser", ignore = true)
     Product toEntity(CreateProductRequest request);
 
+    @Mapping(target = "productNo", expression = "java(formatNo(product.getProductId()))")
     @Mapping(target = "parentProductId", source = "parentProduct.productId")
     @Mapping(target = "productOfferingId", source = "productOffering.productOfferingId")
     @Mapping(target = "productSpecId", source = "productSpec.productSpecId")
@@ -49,6 +51,7 @@ public interface ProductMapper {
     @Mapping(target = "uuser", ignore = true)
     void updateEntityFromRequest(UpdateProductRequest request, @MappingTarget Product product);
 
+    @Mapping(target = "productNo", expression = "java(formatNo(product.getProductId()))")
     @Mapping(target = "parentProductId", source = "parentProduct.productId")
     @Mapping(target = "productOfferingId", source = "productOffering.productOfferingId")
     @Mapping(target = "productSpecId", source = "productSpec.productSpecId")
@@ -56,6 +59,7 @@ public interface ProductMapper {
     UpdatedProductResponse toUpdatedResponse(Product product);
 
     // GET (tekil)
+    @Mapping(target = "productNo", expression = "java(formatNo(product.getProductId()))")
     @Mapping(target = "parentProductId", source = "parentProduct.productId")
     @Mapping(target = "productOfferingId", source = "productOffering.productOfferingId")
     @Mapping(target = "productSpecId", source = "productSpec.productSpecId")
@@ -63,6 +67,7 @@ public interface ProductMapper {
     GetProductResponse toGetResponse(Product product);
 
     // GET ALL (tekil — nested mapping olduğu için elle yazıyoruz)
+    @Mapping(target = "productNo", expression = "java(formatNo(product.getProductId()))")
     @Mapping(target = "parentProductId", source = "parentProduct.productId")
     @Mapping(target = "productOfferingId", source = "productOffering.productOfferingId")
     @Mapping(target = "productSpecId", source = "productSpec.productSpecId")
@@ -71,5 +76,9 @@ public interface ProductMapper {
 
     // GET ALL (liste — tekil metodu kullanır)
     List<GetAllProductResponse> toGetAllResponseList(List<Product> products);
+
+    default String formatNo(Long productId) {
+        return productId == null ? null : ProductServiceDefaults.formatNo(productId);
+    }
 
 }

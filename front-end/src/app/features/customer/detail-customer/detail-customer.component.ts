@@ -16,9 +16,9 @@ import {
 import { I18nService } from '../../../core/i18n';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../core/lookup';
 import { OrderService } from '../../../core/order';
+import { ProductService } from '../../../core/product';
 import {
   AccountProduct,
-  CITY_NAMES,
   CustomerAccount,
   CustomerContact,
   CustomerDetail,
@@ -27,7 +27,11 @@ import {
   mapToCustomerContact,
   mapToCustomerDetail
 } from './detail-customer.mapper';
-import { getMockProductDetail, ProductCharacteristic } from './mock/product-detail-mock.data';
+
+export interface ProductCharacteristic {
+  label: string;
+  value: string;
+}
 
 interface AddressFormModel {
   city: string;
@@ -119,6 +123,7 @@ export class DetailCustomerComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly customerService = inject(CustomerService);
   private readonly orderService = inject(OrderService);
+  private readonly productService = inject(ProductService);
   private readonly lookupService = inject(LookupService);
 
   protected readonly isLoading = signal(true);
@@ -180,6 +185,9 @@ export class DetailCustomerComponent {
   protected readonly isContactModalOpen = signal(false);
   protected readonly isSavingContact = signal(false);
   protected readonly contactSaveError = signal<string | null>(null);
+  // FR-006 ACC-006 / FR-008 ACC-010: Cancel'da kaydedilmemis degisiklik varsa (form dirty)
+  // modal dogrudan kapanmadan once onay istenir - bkz. closeContactModal/closeCreateAccountModal.
+  protected readonly isContactCancelConfirmOpen = signal(false);
   // sag ust, mockup'taki gercek toast tasarimi - hem contact save hem de billing account
   // create basari mesajlari bunu kullanir (bkz. showToast).
   protected readonly toastMessage = signal<string | null>(null);
@@ -195,6 +203,7 @@ export class DetailCustomerComponent {
   protected readonly isCreateAccountModalOpen = signal(false);
   protected readonly isSavingAccount = signal(false);
   protected readonly createAccountError = signal<string | null>(null);
+  protected readonly isAccountCancelConfirmOpen = signal(false);
   // false: mevcut adres dropdown'i; true: inline "+ Add New Address" formu.
   protected readonly isAddingNewAddressForAccount = signal(false);
   // kullanici Account Name'i elle degistirdiyse true olur - auto-fill sadece false iken calisir (bkz. constructor'daki effect).
@@ -237,6 +246,8 @@ export class DetailCustomerComponent {
   // accountFormValid computed'undan gelir (bkz. (e) dilimi) - "tam olarak biri" kurali capraz alan.
   protected readonly accountForm = form(this.accountModel, path => {
     required(path.accountName);
+    maxLength(path.accountName, 50);
+    required(path.accountDesc);
   });
 
   // "+ Add New Address" ile acilan inline form - addressForm'un validasyon kurallarinin birebir
@@ -252,7 +263,7 @@ export class DetailCustomerComponent {
   });
 
   // addressId/newAddress'ten tam olarak biri kuralini capraz-alan olarak burada uyguluyoruz -
-  // accountForm sadece accountName'i (schema-only alan) dogrular.
+  // accountForm accountName + accountDesc (schema-only alanlar) dogrular.
   protected readonly accountFormValid = computed(() => {
     if (this.accountForm().invalid()) {
       return false;
@@ -290,6 +301,13 @@ export class DetailCustomerComponent {
   // customer-service tek giris noktasi - /individual'i party-service'e, /contact'i contact-info-service'e
   // kendi icinde proxy'liyor, o yuzden ucu de dogrudan custId ile paralel cekilebiliyor.
   constructor() {
+    // ACC-016: create-customer basarili olusturma sonrasi buraya ?created=1 ile yonlendirir -
+    // basari mesaji burada gosterilir (create ekraninda gostermenin bir anlami yok, hemen ayriliyor).
+    if (this.route.snapshot.queryParamMap.get('created') === '1') {
+      this.showToast(this.i18n.t('detail.customerCreatedSuccess'));
+      this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+    }
+
     forkJoin({
       customerDetail: this.customerService.getById(this.custId),
       individual: this.customerService.getIndividual(this.custId),
@@ -470,7 +488,20 @@ export class DetailCustomerComponent {
   }
 
   protected closeCreateAccountModal(): void {
+    if (this.accountForm().dirty() || this.newAccountAddressForm().dirty()) {
+      this.isAccountCancelConfirmOpen.set(true);
+      return;
+    }
     this.isCreateAccountModalOpen.set(false);
+  }
+
+  protected discardAccountChanges(): void {
+    this.isAccountCancelConfirmOpen.set(false);
+    this.isCreateAccountModalOpen.set(false);
+  }
+
+  protected keepEditingAccount(): void {
+    this.isAccountCancelConfirmOpen.set(false);
   }
 
   protected markAccountNameTouched(): void {
@@ -584,16 +615,49 @@ export class DetailCustomerComponent {
   }
 
   protected openProductDetail(account: CustomerAccount, product: AccountProduct): void {
-    const mock = getMockProductDetail(product.productId);
-    this.selectedProductDetail.set({
-      productName: product.productName,
-      productOfferId: `OFR-${product.productId}`,
-      productSpecId: mock.productSpecId,
-      serviceStartDate: mock.serviceStartDate,
-      characteristics: mock.characteristics,
-      address: this.addresses().find(candidate => candidate.id === account.addressId) ?? null
+    const productId = Number(product.productId);
+    const address = this.addresses().find(candidate => candidate.id === account.addressId) ?? null;
+
+    forkJoin({
+      product: this.productService.getById(productId),
+      characteristics: this.productService.getCharacteristicsByProductId(productId)
+    }).subscribe({
+      next: ({ product: provisionedProduct, characteristics }) => {
+        this.selectedProductDetail.set({
+          productName: product.productName,
+          productOfferId: `OFR-${provisionedProduct.productNo}`,
+          productSpecId: `SPEC-${provisionedProduct.productSpecId}`,
+          serviceStartDate: this.formatServiceStartDate(provisionedProduct.serviceStartDate),
+          characteristics: characteristics.map(charVal => ({
+            label: charVal.characteristicName,
+            value: charVal.value ?? charVal.characteristicValueName ?? UNKNOWN
+          })),
+          address
+        });
+        this.productDetailOpen.set(true);
+      },
+      error: () => {
+        this.selectedProductDetail.set({
+          productName: product.productName,
+          productOfferId: `OFR-${product.productNo}`,
+          productSpecId: UNKNOWN,
+          serviceStartDate: UNKNOWN,
+          characteristics: [],
+          address
+        });
+        this.productDetailOpen.set(true);
+      }
     });
-    this.productDetailOpen.set(true);
+  }
+
+  // backend LocalDate'i ISO ("YYYY-MM-DD") dondurur - uygulamanin geri kalaniyla tutarli olmasi
+  // icin DD/MM/YYYY'e ceviriyoruz (bkz. create.birthDate placeholder'i).
+  private formatServiceStartDate(isoDate: string | null): string {
+    if (!isoDate) {
+      return UNKNOWN;
+    }
+    const [year, month, day] = isoDate.split('-');
+    return `${day}/${month}/${year}`;
   }
 
   protected closeProductDetail(): void {
@@ -641,6 +705,9 @@ export class DetailCustomerComponent {
   }
 
   protected openDeleteAddressConfirm(address: AddressResponse): void {
+    if (address.primary) {
+      return;
+    }
     this.openAddressMenuId.set(null);
     this.deleteAddressError.set(null);
     this.addressToDelete.set(address);
@@ -719,12 +786,14 @@ export class DetailCustomerComponent {
       next: () => {
         this.isSavingAddress.set(false);
         this.isAddressModalOpen.set(false);
+        this.showToast(this.i18n.t(editingId ? 'detail.updateAddressSuccess' : 'detail.addAddressSuccess'));
         this.refreshAddresses();
       },
       error: (httpError: HttpErrorResponse) => {
         this.isSavingAddress.set(false);
         this.addressSaveError.set(
-          httpError.status === 409 ? this.i18n.t('detail.maxAddressesReached') : this.i18n.t('detail.addressSaveError')
+          (httpError.error as { message?: string } | null)?.message ??
+            (httpError.status === 409 ? this.i18n.t('detail.maxAddressesReached') : this.i18n.t('detail.addressSaveError'))
         );
       }
     });
@@ -742,7 +811,20 @@ export class DetailCustomerComponent {
   }
 
   protected closeContactModal(): void {
+    if (this.contactForm().dirty()) {
+      this.isContactCancelConfirmOpen.set(true);
+      return;
+    }
     this.isContactModalOpen.set(false);
+  }
+
+  protected discardContactChanges(): void {
+    this.isContactCancelConfirmOpen.set(false);
+    this.isContactModalOpen.set(false);
+  }
+
+  protected keepEditingContact(): void {
+    this.isContactCancelConfirmOpen.set(false);
   }
 
   protected saveContact(): void {

@@ -1,11 +1,14 @@
 package com.etiya.crm.customerservice.business.concretes;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.clients.controllers.LookupClient;
 import com.etiya.crm.customerservice.constants.CacheNames;
+import com.etiya.crm.customerservice.constants.LogMessages;
 
 import lombok.RequiredArgsConstructor;
 
@@ -14,7 +17,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LookupCacheServiceImpl implements LookupCacheService {
 
+	private static final Logger log = LoggerFactory.getLogger(LookupCacheServiceImpl.class);
+
 	private final LookupClient lookupClient;
+	private final LookupTypeByIdCache typeByIdCache;
 
 	@Override
 	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
@@ -37,28 +43,45 @@ public class LookupCacheServiceImpl implements LookupCacheService {
 		return lookupClient.getTypeValueByTableName(tableName).fieldName();
 	}
 
+	// Cache key'e istekteki dil dahil edilir - aksi halde Ingilizce bir cagri sonucu Turkce bir
+	// istek icin (ya da tam tersi) yanlislikla cache'ten donerdi. Kafka listener'lar gibi istek
+	// baglami olmayan cagrilarda LocaleContextHolder JVM varsayilanini doner - zararsizdir, cunku
+	// AcceptLanguagePropagationInterceptor o durumda lookup-service'e hicbir header gondermez ve
+	// taban (Ingilizce) deger gelir; sadece ayri (kullanilmayan) bir cache girdisi olusur.
 	@Override
 	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
-			key = "'value_' + #id")
+			key = "'value_' + #id + '_' + T(org.springframework.context.i18n.LocaleContextHolder).getLocale().toLanguageTag()")
 	public String resolveTypeValue(Long id) {
 		return lookupClient.getTypeById(id).name();
 	}
 
+	// KASITLI olarak burasi @Cacheable DEGIL (onceden oyleydi) - getTypeById cagrisini burada,
+	// bu metodun try/catch'inin ICINDE, DOGRUDAN @Cacheable yapmak, exception yakalanip false
+	// donuldugunde o "false" sonucunun da 30 dakikaligina cache'lenmesine yol aciyordu (ör.
+	// gender=MALE id'si, ilk dogrulama denemesi lookup-service'in gecici bir aksakligina denk
+	// geldiyse, id gercekte var/aktif olsa BILE 30 dakika boyunca "Invalid gender" donduruyordu -
+	// Female'in ayni anda calismasi sirf onun cache'e daha once basariyla girmis olmasindandi).
+	// Cache'lenen kismi (LookupTypeByIdCache.getTypeById) bu yuzden AYRI bir bean'e tasindi -
+	// @Cacheable, Spring'in proxy tabanli AOP'siyle calisir ve self-invocation'i (bu sinifin
+	// kendi metodunu kendi govdesinden cagirmasi) yakalayamaz; ayri bir bean uzerinden cagirmak
+	// gercek bir proxy cagrisi olmasini garantiler. Simdi sadece basariyla donen sonuc
+	// cache'leniyor; exception her cagrida taze denenir, boylece lookup-service toparlaninca
+	// bir sonraki istek hemen duzelir.
 	@Override
-	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
-			key = "'exists_' + #entCodeName + '_' + #id")
 	public boolean existsInGroup(Long id, String entCodeName) {
 		if (id == null) {
 			return false;
 		}
 		try {
-			var type = lookupClient.getTypeById(id);
+			var type = typeByIdCache.getTypeById(id);
 			return type.active() && entCodeName.equals(type.entCodeName());
 		} catch (RuntimeException ex) {
 			// id yok (404) ya da downstream baska bir sekilde basarisiz oldu (feign.circuitbreaker.enabled=true
 			// oldugunda ham FeignException degil NoFallbackAvailableException gelir, bkz.
 			// AbstractDownstreamExceptionHandler'daki B-03 notu) - hangisi olursa olsun cityId
-			// dogrulanamadi demektir, "gecersiz" sayilir.
+			// dogrulanamadi demektir, "gecersiz" sayilir. Yine de "yok" (404) ile "lookup-service
+			// erisilemez" birbirinden ayirt edilebilsin diye logluyoruz.
+			log.warn(LogMessages.LOOKUP_EXISTS_IN_GROUP_FAILED, id, entCodeName, ex.toString());
 			return false;
 		}
 	}

@@ -2,6 +2,7 @@ package com.etiya.crm.productservice.business.concretes;
 
 import com.etiya.crm.productservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.productservice.business.abstracts.ProductCatalogService;
+import com.etiya.crm.productservice.business.abstracts.TranslationService;
 import com.etiya.crm.productservice.business.dtos.requests.ProductCatalog.CreateProductCatalogRequest;
 import com.etiya.crm.productservice.business.dtos.requests.ProductCatalog.UpdateProductCatalogRequest;
 import com.etiya.crm.productservice.business.dtos.responses.ProductCatalog.CreatedProductCatalogResponse;
@@ -21,14 +22,18 @@ import java.util.List;
 @Service
 public class ProductCatalogManager implements ProductCatalogService {
 
+    private static final String ENTITY_NAME = "PROD_CATAL";
+
     private final ProductCatalogRepository productCatalogRepository;
     private final ProductCatalogMapper productCatalogMapper;
     private final LookupCacheService lookupCacheService;
+    private final TranslationService translationService;
 
-    public ProductCatalogManager(ProductCatalogRepository productCatalogRepository, ProductCatalogMapper productCatalogMapper, LookupCacheService lookupCacheService) {
+    public ProductCatalogManager(ProductCatalogRepository productCatalogRepository, ProductCatalogMapper productCatalogMapper, LookupCacheService lookupCacheService, TranslationService translationService) {
         this.productCatalogRepository = productCatalogRepository;
         this.productCatalogMapper = productCatalogMapper;
         this.lookupCacheService = lookupCacheService;
+        this.translationService = translationService;
     }
 
 
@@ -58,13 +63,28 @@ public class ProductCatalogManager implements ProductCatalogService {
         ProductCatalog productCatalog = productCatalogRepository.findById(productCatalogId)
                 .orElseThrow(() -> new ProductCatalogNotFoundException(productCatalogId));
 
-        return productCatalogMapper.toGetResponse(productCatalog);
+        GetProductCatalogResponse response = productCatalogMapper.toGetResponse(productCatalog);
+        applyTranslation(response);
+        return response;
     }
 
     @Override
     public List<GetAllProductCatalogResponse> getAll() {
         List<ProductCatalog> productCatalogs = productCatalogRepository.findAll();
-        return productCatalogMapper.toGetAllResponseList(productCatalogs);
+        List<GetAllProductCatalogResponse> responses = productCatalogMapper.toGetAllResponseList(productCatalogs);
+        responses.forEach(this::applyTranslation);
+        return responses;
+    }
+
+    /** name/descr taban degerleri Ingilizce'dir - bkz. lookup-service GnlTpManager (ayni desen). */
+    private void applyTranslation(GetProductCatalogResponse response) {
+        response.setName(translationService.translate(ENTITY_NAME, response.getProductCatalogId(), "NAME", response.getName()));
+        response.setDescr(translationService.translate(ENTITY_NAME, response.getProductCatalogId(), "DESCR", response.getDescr()));
+    }
+
+    private void applyTranslation(GetAllProductCatalogResponse response) {
+        response.setName(translationService.translate(ENTITY_NAME, response.getProductCatalogId(), "NAME", response.getName()));
+        response.setDescr(translationService.translate(ENTITY_NAME, response.getProductCatalogId(), "DESCR", response.getDescr()));
     }
 
     @Override
