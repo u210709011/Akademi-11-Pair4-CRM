@@ -316,7 +316,7 @@
                                 <td>{{ customer.firstName }}</td>
                                 <td>{{ customer.middleName ?? '-' }}</td>
                                 <td>{{ customer.lastName }}</td>
-                                <td>{{ customer.role ?? '-' }}</td>
+                                <td>{{ roleLabel(customer) }}</td>
                                 <td>{{ customer.tcNo }}</td>
                             </tr>
                         }

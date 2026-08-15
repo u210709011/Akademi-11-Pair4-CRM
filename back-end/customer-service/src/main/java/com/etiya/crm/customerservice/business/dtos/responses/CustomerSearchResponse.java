@@ -8,6 +8,7 @@ public record CustomerSearchResponse(
 		String tcNo,
 		String acctNo,
 		String role,
+		String roleShrtCode,
 		String gsm,
 		String status) {
 }

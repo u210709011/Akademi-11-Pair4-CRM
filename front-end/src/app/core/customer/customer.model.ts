@@ -15,6 +15,7 @@ export interface CustomerSearchResult {
   tcNo: string;
   acctNo: string;
   role: string | null;
+  roleShrtCode: string | null;
   gsm: string | null;
   status: string;
 }

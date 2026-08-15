@@ -68,6 +68,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'search.status' : 'Status',
     'search.middleName' : 'Second Name',
     'search.role' : 'Role',
+    'search.roleCustomer' : 'Customer',
+    'search.rolePartner' : 'Supplier/Partner',
 
     'create.createCustomer': 'Create Customer',
     'create.tabDemographic': 'Demographic Information',
@@ -394,6 +396,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'search.status' : 'Durum',
     'search.middleName' : 'İkinci Ad',
     'search.role' : 'Rol',
+    'search.roleCustomer' : 'Müşteri',
+    'search.rolePartner' : 'Tedarikçi/Partner',
 
     'create.createCustomer': 'Müşteri Oluştur',
     'create.tabDemographic': 'Demografik Bilgiler',

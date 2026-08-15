@@ -149,6 +149,18 @@ export class SearchCustomerComponent {
       });
   }
 
+  // isim yerine shrtCode'a gore secilir - bkz. demographic-tab.component.ts genderLabel ile ayni
+  // desen. Backend'in cevirdigi role/name yazim hatasi tasiyabilir (ör. GNL_TP seed verisindeki
+  // "Musteri"), o yuzden sadece shrtCode taniniyorsa sozlukten okunur; taninmayan/eslesmeyen bir
+  // kod gelirse (yeni bir rol eklendi ama arayuz henuz guncellenmedi) backend'in name'ine dusulur.
+  protected roleLabel(customer: CustomerSearchResult): string {
+    switch (customer.roleShrtCode) {
+      case 'CUSTOMER': return this.i18n.t('search.roleCustomer');
+      case 'PARTNER': return this.i18n.t('search.rolePartner');
+      default: return customer.role ?? '-';
+    }
+  }
+
   protected viewCustomerDetail(customer: CustomerSearchResult): void {
     this.router.navigate(['/detail-customer', customer.custId], { state: { customer } });
   }

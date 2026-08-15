@@ -55,6 +55,14 @@ public class LookupCacheServiceImpl implements LookupCacheService {
 		return lookupClient.getTypeById(id).name();
 	}
 
+	// shrtCode locale'e gore degismedigi icin locale-aware bir cache key'e ihtiyaci yok -
+	// typeByIdCache (existsInGroup'un da kullandigi, sade "id" anahtarli cache) burada da
+	// dogrudan kullanilabilir.
+	@Override
+	public String resolveTypeShrtCode(Long id) {
+		return typeByIdCache.getTypeById(id).shrtCode();
+	}
+
 	// KASITLI olarak burasi @Cacheable DEGIL (onceden oyleydi) - getTypeById cagrisini burada,
 	// bu metodun try/catch'inin ICINDE, DOGRUDAN @Cacheable yapmak, exception yakalanip false
 	// donuldugunde o "false" sonucunun da 30 dakikaligina cache'lenmesine yol aciyordu (ör.
