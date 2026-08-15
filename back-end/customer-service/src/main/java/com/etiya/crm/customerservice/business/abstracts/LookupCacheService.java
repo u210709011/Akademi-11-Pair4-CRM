@@ -25,6 +25,14 @@ public interface LookupCacheService extends LookupExistenceChecker {
 	/** general-types/{id} - gosterim metnini (name) doner. */
 	String resolveTypeValue(Long id);
 
+	/**
+	 * general-types/{id} - shrtCode'unu doner. name'in aksine dile gore degismez (locale-aware
+	 * cache key gerektirmez) - arayuzun kendi i18n sozlugunden dogru/yazim-hatasiz etiketi
+	 * cozebilmesi icin (frontend artik role gibi alanlarda name yerine shrtCode + kendi i18n
+	 * sozlugunu kullaniyor, name sadece eslesmeyen bir kod icin fallback olarak kalir).
+	 */
+	String resolveTypeShrtCode(Long id);
+
 	// existsInGroup: LookupExistenceChecker'dan miras (bkz. B-07/B-14 - id'nin gercekten var,
 	// aktif VE belirtilen entCodeName grubuna ait olup olmadigini dogrular).
 }

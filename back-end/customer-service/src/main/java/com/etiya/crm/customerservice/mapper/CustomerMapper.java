@@ -26,6 +26,7 @@ public interface CustomerMapper {
 	@Mapping(target = "active", expression = "java(isActive(account, activeStatusId))")
 	CustomerAccountResponse toResponse(CustomerAccount account, @Context Long activeStatusId);
 
+	@Mapping(target = "roleShrtCode", ignore = true)
 	CustomerSearchResponse toResponse(CustomerSearchView searchView);
 
 	/**

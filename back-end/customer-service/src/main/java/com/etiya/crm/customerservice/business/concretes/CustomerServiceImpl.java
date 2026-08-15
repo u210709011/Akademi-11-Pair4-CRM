@@ -73,6 +73,11 @@ public class CustomerServiceImpl implements CustomerService {
 	 * listener'in/onboarding'in o anki dili neyse o kalir, hicbir zaman aramayi yapan kullanicinin
 	 * dilini yansitmaz. partyRoleTypeId varsa, istekteki dile gore (Accept-Language ->
 	 * LookupCacheServiceImpl'in locale-aware cache key'i) burada YENIDEN cozulur.
+	 *
+	 * roleShrtCode da (locale'den bagimsiz) ayrica eklenir: arayuz artik role etiketini kendi
+	 * i18n sozlugunden shrtCode'a gore basiyor (bkz. GNL_TP seed verisindeki yazim hatalari -
+	 * "Musteri" gibi - bu yolla duzeltilebiliyor), role/translatedRole sadece shrtCode
+	 * sozlukte eslesmezse fallback olarak kullanilir.
 	 */
 	private CustomerSearchResponse toTranslatedSearchResponse(CustomerSearchView searchView) {
 		CustomerSearchResponse response = customerMapper.toResponse(searchView);
@@ -80,12 +85,10 @@ public class CustomerServiceImpl implements CustomerService {
 			return response;
 		}
 		String translatedRole = lookupCacheService.resolveTypeValue(searchView.getPartyRoleTypeId());
-		if (translatedRole.equals(response.role())) {
-			return response;
-		}
+		String roleShrtCode = lookupCacheService.resolveTypeShrtCode(searchView.getPartyRoleTypeId());
 		return new CustomerSearchResponse(response.custId(), response.firstName(), response.middleName(),
-				response.lastName(), response.tcNo(), response.acctNo(), translatedRole, response.gsm(),
-				response.status());
+				response.lastName(), response.tcNo(), response.acctNo(), translatedRole, roleShrtCode,
+				response.gsm(), response.status());
 	}
 
 	@Override
