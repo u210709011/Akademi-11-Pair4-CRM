@@ -16,10 +16,13 @@ public class ProductClient {
 		this.gatewayClient = gatewayClient;
 	}
 
+	// /api/v1/product-offerings artik Page zarfli donuyor (content/pageable/totalElements) -
+	// tum katalogu tek istekte almak icin varsayilan sayfa boyutunu (5) buyuk bir deger ile ezer.
 	public List<ProductOfferingResponse> getAllOfferings() {
-		return gatewayClient.get("/api/v1/product-offerings",
-				new ParameterizedTypeReference<List<ProductOfferingResponse>>() {
+		PageResponse<ProductOfferingResponse> page = gatewayClient.get("/api/v1/product-offerings?size=500",
+				new ParameterizedTypeReference<PageResponse<ProductOfferingResponse>>() {
 				});
+		return page.content();
 	}
 
 	public List<ProductOfferingRelationResponse> getRelations(Long productOfferingId) {
@@ -35,5 +38,9 @@ public class ProductClient {
 	public record ProductOfferingRelationResponse(Long productOfferingRelationId, Long productOfferingId1,
 			Long productOfferingId2, Long relationTypeId, Boolean mandatory, Boolean exclusive, Integer qty,
 			Boolean active) {
+	}
+
+	/** Spring Data Page'in sadece ihtiyac duyulan alani - digerleri (pageable, totalPages, ...) yok sayilir. */
+	public record PageResponse<T>(List<T> content) {
 	}
 }
