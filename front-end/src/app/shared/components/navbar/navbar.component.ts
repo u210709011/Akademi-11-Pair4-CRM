@@ -1,7 +1,9 @@
-import { Component, ElementRef, EventEmitter, HostListener, Output, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Output, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth';
 import { I18nService } from '../../../core/i18n';
+
+const DEFAULT_JOB_TITLE_KEY = 'navbar.jobTitle.default';
 
 @Component({
   selector: 'app-navbar',
@@ -18,7 +20,18 @@ export class NavbarComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
+  private readonly currentUser = this.authService.getCurrentUser();
+
   protected readonly profileMenuOpen = signal(false);
+
+  protected readonly userName = computed(() => this.currentUser?.name || this.i18n.t('navbar.unknownUser'));
+
+  protected readonly userTitle = computed(() => {
+    const role = this.currentUser?.roles[0];
+    const key = role ? `navbar.jobTitle.${role}` : DEFAULT_JOB_TITLE_KEY;
+    const translated = this.i18n.t(key);
+    return translated === key ? this.i18n.t(DEFAULT_JOB_TITLE_KEY) : translated;
+  });
 
   protected toggleLangMenu(): void {
     this.i18n.setLang(this.i18n.lang() === 'en' ? 'tr' : 'en');
