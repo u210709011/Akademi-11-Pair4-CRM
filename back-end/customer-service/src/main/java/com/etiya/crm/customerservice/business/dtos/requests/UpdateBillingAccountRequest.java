@@ -20,12 +20,12 @@ import jakarta.validation.constraints.Size;
 @Schema(description = SwaggerText.UPDATE_BILLING_ACCOUNT_REQUEST_SCHEMA_DESCRIPTION)
 public record UpdateBillingAccountRequest(
 
-		@Schema(description = SwaggerText.BILLING_ACCOUNT_ACCOUNT_NAME_DESCRIPTION, example = "Home")
+		@Schema(description = SwaggerText.BILLING_ACCOUNT_ACCOUNT_NAME_DESCRIPTION)
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		@Size(max = 50, message = "{" + MessageKeys.FIELD_MAX_LENGTH + "}")
 		String accountName,
 
-		@Schema(description = SwaggerText.BILLING_ACCOUNT_ACCOUNT_DESC_DESCRIPTION, example = "Aylik elektrik/su faturasi icin")
+		@Schema(description = SwaggerText.BILLING_ACCOUNT_ACCOUNT_DESC_DESCRIPTION)
 		@NotBlank(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		String accountDesc,
 
