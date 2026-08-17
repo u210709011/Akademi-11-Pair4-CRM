@@ -8,13 +8,23 @@
   Kullanim: ./mvnw test -Dsuite=single
   Baska bir testi kosmak icin asagidaki sinif ve metot adini degistirmek yeterlidir.
 
-  Su an secili: FR-017 ACC-003/004 - siparis iletilir ve basari mesaji gosterilir.
-  Satis akisinin TAMAMINI yurutur: musteri ve fatura hesabi API ile kurulur, ardindan
-  tarayicida urun aranir, sepete eklenir, konfigure edilir, ozet ekrani acilir, Submit
-  onaylanir ve "Order Successfully Created" modali gorunur.
+  Su an secili: E2E uctan uca kullanici yolculugu (~19 sn).
+  Bir satis temsilcisinin gunluk isinin TAMAMI arayuzden yurutulur: sisteme giris,
+  yeni musteri olusturma (adres + iletisim), fatura hesabi acma, o hesap uzerinden
+  satis, katalogdan urun secme, konfigurasyon, ozet, Submit onayi ve son olarak
+  siparisin fatura hesabinda GORUNDUGUNUN dogrulanmasi. Hicbir adimda API kullanilmaz.
+
+  ONCEKI SECIM (geri almak icin asagidaki <class> blogunu bununla degistir):
+    <class name="com.crmlite.ui.tests.fr017submit.SubmitOrderTests">
+        <methods><include name="submitSendsOrderAndShowsSuccessMessage"/></methods>
+    </class>
+  Fark: FR-017 testi satis sihirbazinin ORTASINDAN baslar, musteri ve fatura hesabi
+  API ile hazirlanir. E2E ise sifirdan baslar ve onun kapsadigi her adimi da icerir.
 
   ON KOSUL: tum servisler + frontend ayakta olmalidir.
-  NOT: bu test GERCEK SIPARIS olusturur.
+  NOT: bu test GERCEK MUSTERI ve GERCEK SIPARIS olusturur.
+  NOT: soguk baslangicta Selenium Manager surucu listesini indirmeye calisip ~4,5 dk
+  takilabiliyor. SUNUMDAN ONCE bir kez isitma kosumu yapilmalidir.
 -->
 <suite name="CRM Lite UI - Tek Test" verbose="1" parallel="false" configfailurepolicy="continue">
 
@@ -26,11 +36,7 @@
 
     <test name="Tek Test">
         <classes>
-            <class name="com.crmlite.ui.tests.fr017submit.SubmitOrderTests">
-                <methods>
-                    <include name="submitSendsOrderAndShowsSuccessMessage"/>
-                </methods>
-            </class>
+            <class name="com.crmlite.ui.tests.e2e.CustomerToOrderJourneyTest"/>
         </classes>
     </test>
 
