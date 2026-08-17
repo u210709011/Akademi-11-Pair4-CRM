@@ -34,6 +34,9 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
 
     'navbar.myProfile' : 'My Profile',
     'navbar.logout' : 'Log out',
+    'navbar.unknownUser' : 'User',
+    'navbar.jobTitle.default' : 'CRM Agent',
+    'navbar.jobTitle.CRM_AGENT' : 'Mobility - Resp. Sales Rep.',
 
     'search.searchCustomer' : 'Search Customer',
     'search.b2c' : 'B2C',
@@ -362,6 +365,9 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
 
     'navbar.myProfile' : 'Profilim',
     'navbar.logout' : 'Çkış',
+    'navbar.unknownUser' : 'Kullanıcı',
+    'navbar.jobTitle.default' : 'CRM Temsilcisi',
+    'navbar.jobTitle.CRM_AGENT' : 'Mobil - Sorumlu Satış Temsilcisi',
 
     'search.searchCustomer' : 'Müşteri Ara',
     'search.b2c' : 'B2C',

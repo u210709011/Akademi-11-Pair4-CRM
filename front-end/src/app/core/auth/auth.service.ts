@@ -12,6 +12,11 @@ interface TokenResponse {
 
 export type LoginResult = 'success' | 'invalidCredentials' | 'accountLocked';
 
+export interface CurrentUser {
+  name: string;
+  roles: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
@@ -33,6 +38,43 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     return !!localStorage.getItem('accessToken');
+  }
+
+  // accessToken is the raw Keycloak-issued JWT (see api-gateway AuthController/AuthService -
+  // it's forwarded as-is, never re-signed), so the user's name and roles can be read straight
+  // from its claims without an extra backend call.
+  getCurrentUser(): CurrentUser | null {
+    const token = localStorage.getItem('accessToken');
+    const payload = token ? this.decodeJwtPayload(token) : null;
+    if (!payload) {
+      return null;
+    }
+
+    const givenName = typeof payload['given_name'] === 'string' ? payload['given_name'] as string : '';
+    const familyName = typeof payload['family_name'] === 'string' ? payload['family_name'] as string : '';
+    const fullName = `${givenName} ${familyName}`.trim();
+    const name = fullName
+      || (typeof payload['name'] === 'string' ? payload['name'] as string : '')
+      || (typeof payload['preferred_username'] === 'string' ? payload['preferred_username'] as string : '');
+    const roles = (payload['realm_access'] as { roles?: string[] } | undefined)?.roles ?? [];
+
+    return { name, roles };
+  }
+
+  private decodeJwtPayload(token: string): Record<string, unknown> | null {
+    const payload = token.split('.')[1];
+    if (!payload) {
+      return null;
+    }
+
+    try {
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+      const bytes = Uint8Array.from(atob(padded), char => char.charCodeAt(0));
+      return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    } catch {
+      return null;
+    }
   }
 
   clearSession(): void {
