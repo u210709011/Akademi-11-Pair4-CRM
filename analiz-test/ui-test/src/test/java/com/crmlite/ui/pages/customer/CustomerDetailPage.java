@@ -546,9 +546,15 @@ public class CustomerDetailPage extends BasePage {
         return this;
     }
 
-    /** Satirin acik olup olmadigi — uygulama acik satirdaki oka {@code expanded} sinifi ekler. */
+    /**
+     * Satirin acik olup olmadigi — uygulama acik satirdaki oka {@code expanded} sinifi ekler.
+     *
+     * <p>{@code getAttribute} null donebilir (element {@code class} tasimayabilir); sonucu
+     * dogrudan zincirlemek yerine kontrol edilir.
+     */
     public boolean isAccountRowExpanded(int rowIndex) {
-        return find(expandToggle(rowIndex)).getAttribute("class").contains("expanded");
+        String classes = find(expandToggle(rowIndex)).getAttribute("class");
+        return classes != null && classes.contains("expanded");
     }
 
     /** FR-009 ACC-004: genisletilmis satirdaki urun tablosu goruntuleniyor mu. */
