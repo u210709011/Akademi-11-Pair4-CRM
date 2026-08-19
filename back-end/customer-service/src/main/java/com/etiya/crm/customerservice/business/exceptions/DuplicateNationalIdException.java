@@ -2,7 +2,7 @@ package com.etiya.crm.customerservice.business.exceptions;
 
 import com.etiya.crm.customerservice.constants.MessageKeys;
 
-/** ACC-012: ayni Nationality ID mevcutsa kullanici ilerleyememeli. */
+/** Aynı kimlik numarasıyla ikinci müşteri oluşturulmasını bildirir. */
 public class DuplicateNationalIdException extends BusinessException {
 
 	public DuplicateNationalIdException() {

@@ -23,18 +23,13 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Iki katmanli cache: Caffeine (local) sik degismeyen kucuk lookup verileri
- * icin, Redis (distributed) instance'lar arasi paylasilan musteri verisi
- * icin. Hangi @Cacheable'in hangi manager'i kullanacagi cacheManager
- * attribute'u ile acikca belirtilir (bkz. CacheNames.*_CACHE_MANAGER).
- */
+/** Lookup için local, müşteri verileri için dağıtık cache yapılandırır. */
 @Slf4j
 @Configuration
 @EnableCaching
 public class CacheConfig implements CachingConfigurer {
 
-	// LookupCacheServiceImpl'in lookup-service sonuclarini local'de tuttugu cache. CAFFEINE
+	// Genelde lookup sonuçları için kullanılır. Instance içinde tutulur.
 	@Bean(CacheNames.CAFFEINE_CACHE_MANAGER)
 	public CacheManager caffeineCacheManager() {
 		CaffeineCacheManager manager = new CaffeineCacheManager(CacheNames.LOOKUPS);
@@ -45,7 +40,7 @@ public class CacheConfig implements CachingConfigurer {
 	}
 
 
-	// Kullanılan asıl cache manager. REDIS
+	// Sık değişen verisi olan servislerin verileri instance'lar arasında paylaşılır.
 	@Bean(CacheNames.REDIS_CACHE_MANAGER)
 	@Primary
 	public CacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
@@ -60,12 +55,7 @@ public class CacheConfig implements CachingConfigurer {
 				.build();
 	}
 
-	/**
-	 * Redis erisilemez oldugunda (baglanti hatasi, timeout) cache bir "best-effort
-	 * hizlandirma" katmani olmaktan cikip API'yi asagi cekmesin diye - varsayilan
-	 * SimpleCacheErrorHandler hatayi oldugu gibi caller'a firlatir, bu ise sadece
-	 * loglayip yutar; @Cacheable/@CacheEvict metodu DB'ye dusmus gibi calismaya devam eder.
-	 */
+	/** Cache arızası API çağrısını durdurmasın diye hatayı loglar. */
 	@Override
 	public CacheErrorHandler errorHandler() {
 		return new CacheErrorHandler() {

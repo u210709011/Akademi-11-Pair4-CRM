@@ -20,6 +20,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "cust")
+/** Müşteri aggregate'inin servis içindeki kalıcı modelidir. */
 public class Customer extends BaseEntity {
 
 	@Id
@@ -27,14 +28,13 @@ public class Customer extends BaseEntity {
 	@Column(name = "cust_id")
 	private Long custId;
 
-	// party-service'e logical referans. FK DEGIL, sadece Long.
+	// party-service'e logical referans
 	@Column(name = "party_role_id", nullable = false)
 	private Long partyRoleId;
 
 	@Column(name = "cust_tp_id")
 	private Long custTpId;
 
-	// Servis-ici iliski. CascadeType.REMOVE / orphanRemoval KULLANMA (soft delete var).
 	@OneToMany(mappedBy = "customer", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
 	private List<CustomerAccount> accounts = new ArrayList<>();
 }

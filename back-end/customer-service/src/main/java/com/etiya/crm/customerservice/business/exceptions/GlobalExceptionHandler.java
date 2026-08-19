@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestControllerAdvice
+/** Customer servisindeki hataları ortak API formatına çevirir. */
 public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
 	private final MessageSource messageSource;
@@ -142,11 +143,7 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 						message, request.getRequestURI()));
 	}
 
-	/**
-	 * FR-002: CustomerController.search() alanlarindaki @Size/@Pattern @RequestParam
-	 * uzerinde oldugu icin (govde degil), ihlaller MethodArgumentNotValidException degil
-	 * ConstraintViolationException olarak gelir - @Validated sinif seviyesinde bunu tetikler.
-	 */
+	/** Request parametrelerindeki bean validation hatalarını karşılar. */
 	@ExceptionHandler(ConstraintViolationException.class)
 	public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex,
 			HttpServletRequest request) {
@@ -157,10 +154,7 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 		return build(HttpStatus.BAD_REQUEST, message, request);
 	}
 
-	// B-09 (MethodArgumentTypeMismatchException), B-10 (IllegalArgumentException) ve B-15
-	// (MissingServletRequestParameterException/HttpRequestMethodNotSupportedException/
-	// NoHandlerFoundException) artik AbstractDownstreamExceptionHandler'dan miras aliniyor -
-	// bkz. yukaridaki parameterTypeMismatchMessage/invalidRequestParameterMessage/... hook'lari.
+	// Ortak parametre ve downstream hataları üst sınıftan yönetilir.
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {

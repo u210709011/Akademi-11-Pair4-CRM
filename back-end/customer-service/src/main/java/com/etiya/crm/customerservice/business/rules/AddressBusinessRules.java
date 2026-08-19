@@ -13,20 +13,13 @@ import com.etiya.crm.customerservice.business.exceptions.PrimaryAddressCannotBeD
 import com.etiya.crm.shared.contracts.address.AddressResponse;
 import com.etiya.crm.shared.contracts.contactmedium.AddressCommand;
 
-/** contact-info-service'teki ADDR kayitlarina ozel FR-005/ACC-014..017 kurallari. */
 @Component
+/** Adres ekleme ve silme kurallarını merkezi olarak uygular. */
 public class AddressBusinessRules {
 
-	/** Musteri basina en fazla 5 adres olabilir (ADDRESS_MAX_EXCEEDED onboarding'de de kullanilir). */
 	private static final int MAX_ADDRESS_COUNT = 5;
 
-	/**
-	 * ACC-014..017: UI'da adres icin "primary" secimi yok; listedeki ilk adres
-	 * server-side primary sayilir, digerleri primary=false gider. cityId dogrulamasi artik
-	 * burada YAPILMAZ - AddressInfo.cityId'deki @ExistsInLookupGroup, bu metod cagrilmadan
-	 * ONCE, @Valid @RequestBody OnboardCustomerRequest binding'inde zaten calisir (bkz.
-	 * shared-contracts'teki com.etiya.crm.shared.contracts.validation.ExistsInLookupGroup - B-21).
-	 */
+
 	public List<AddressCommand> toAddressCommandsWithPrimaryRule(List<AddressInfo> addresses) {
 		List<AddressCommand> commands = new ArrayList<>(addresses.size());
 		for (int i = 0; i < addresses.size(); i++) {
@@ -38,14 +31,14 @@ public class AddressBusinessRules {
 		return commands;
 	}
 
-	/** Edit akisinda yeni adres eklenirken musteri basina max 5 sinirini uygular. */
+	/** Müşteri başına adres sayısını sınırlar. */
 	public void validateAddressLimit(long currentAddressCount) {
 		if (currentAddressCount >= MAX_ADDRESS_COUNT) {
 			throw new AddressLimitExceededException();
 		}
 	}
 
-	/** IDOR onlemi: addressId, custId'nin kendi adresleri arasinda mi kontrol eder. */
+	/** Adresin ilgili müşteriye ait olduğunu doğrular. */
 	public AddressResponse ensureAddressBelongsToCustomer(Long custId, Long addressId, List<AddressResponse> addresses) {
 		return addresses.stream()
 				.filter(address -> address.id().equals(addressId))
@@ -53,14 +46,14 @@ public class AddressBusinessRules {
 				.orElseThrow(() -> new AddressNotFoundException(custId, addressId));
 	}
 
-	/** FR-005 ACC-009: birincil adres silinemez. */
+	/** Birincil adresin silinmesini engeller. */
 	public void ensureAddressNotPrimary(AddressResponse address) {
 		if (address.primary()) {
 			throw new PrimaryAddressCannotBeDeletedException();
 		}
 	}
 
-	/** FR-005 ACC-010/011: bir fatura hesabina bagli adres silinemez. */
+	/** Fatura hesabına bağlı adresin silinmesini engeller. */
 	public void ensureAddressNotLinkedToBillingAccount(boolean linkedToBillingAccount) {
 		if (linkedToBillingAccount) {
 			throw new AddressLinkedToAccountException();

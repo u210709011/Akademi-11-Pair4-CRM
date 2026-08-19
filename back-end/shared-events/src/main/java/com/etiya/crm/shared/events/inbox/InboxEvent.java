@@ -12,17 +12,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * Kafka consumer'larda idempotency icin islenen event id'lerinin kaydi.
- * Her servis kendi veritabaninda bu semayla bir "inbox" tablosu tutar
- * (bkz. infra/debezium/outbox-table.sql).
- */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "inbox")
+/** İşlenmiş event kimliklerini idempotency için saklar. */
 public class InboxEvent {
 
 	@Id
@@ -36,6 +32,7 @@ public class InboxEvent {
 	private Instant processedAt;
 
 	public static InboxEvent of(UUID eventId, String eventType) {
+		// Event kaydı yalnızca işlendiği transaction içinde oluşturulur.
 		return new InboxEvent(eventId, eventType, Instant.now());
 	}
 }
