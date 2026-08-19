@@ -4,6 +4,7 @@ import com.etiya.crm.partyservice.constants.LogMessages;
 import com.etiya.crm.shared.events.KafkaTopics;
 import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
 import com.etiya.crm.shared.events.messaging.NonRetryableEventException;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.DltHandler;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Component;
 public class CustomerEventListener {
 
 	private final CustomerDeletedEventHandler customerDeletedEventHandler;
+	private final MeterRegistry meterRegistry;
 
 	@RetryableTopic(
 			attempts = "4",
@@ -53,5 +55,6 @@ public class CustomerEventListener {
 			@Header(value = KafkaHeaders.EXCEPTION_FQCN, required = false) String exceptionType,
 			@Header(value = KafkaHeaders.EXCEPTION_MESSAGE, required = false) String exceptionMessage) {
 		log.error(LogMessages.CUSTOMER_EVENT_DLT, event.eventId(), event.type(), exceptionType, exceptionMessage);
+		meterRegistry.counter("kafka.dlt.events", "eventType", event.type(), "listener", "PartyServiceCustomerEventListener").increment();
 	}
 }

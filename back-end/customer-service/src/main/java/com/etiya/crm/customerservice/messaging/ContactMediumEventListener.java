@@ -1,5 +1,6 @@
 package com.etiya.crm.customerservice.messaging;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
@@ -32,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ContactMediumEventListener {
 
 	private final ContactMediumEventHandler contactMediumEventHandler;
+	private final MeterRegistry meterRegistry;
 
 	@RetryableTopic(
 			attempts = "4",
@@ -50,5 +52,6 @@ public class ContactMediumEventListener {
 			@Header(value = KafkaHeaders.EXCEPTION_FQCN, required = false) String exceptionType,
 			@Header(value = KafkaHeaders.EXCEPTION_MESSAGE, required = false) String exceptionMessage) {
 		log.error(LogMessages.CONTACT_MEDIUM_EVENT_DLT, event.eventId(), event.type(), exceptionType, exceptionMessage);
+		meterRegistry.counter("kafka.dlt.events", "eventType", event.type(), "listener", "ContactMediumEventListener").increment();
 	}
 }

@@ -6,6 +6,7 @@ import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
 import com.etiya.crm.shared.events.messaging.NonRetryableEventException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -42,6 +43,7 @@ public class CustomerEventListener {
 
 	private final CustomerDeletedEventHandler customerDeletedEventHandler;
 	private final ObjectMapper objectMapper;
+	private final MeterRegistry meterRegistry;
 
 	@RetryableTopic(
 			attempts = "4",
@@ -68,5 +70,8 @@ public class CustomerEventListener {
 			@Header(value = KafkaHeaders.EXCEPTION_FQCN, required = false) String exceptionType,
 			@Header(value = KafkaHeaders.EXCEPTION_MESSAGE, required = false) String exceptionMessage) {
 		log.error(LogMessages.CUSTOMER_EVENT_DLT, record.key(), exceptionType, exceptionMessage);
+		// Bu adapter'da event deserialize edilmeden once hata olusabildigi icin
+		// (bkz. onMessage) event tipine erisim yok - sabit literal tag kullanilir.
+		meterRegistry.counter("kafka.dlt.events", "eventType", "CustomerDeletedEvent", "listener", "ContactInfoServiceCustomerEventListener").increment();
 	}
 }

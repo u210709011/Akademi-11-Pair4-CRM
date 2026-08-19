@@ -17,8 +17,8 @@ echo Using container engine: %ENGINE%
 set SPRING_PROFILE=prod
 echo Using SPRING_PROFILE=%SPRING_PROFILE%
 
-echo === Starting infra (Postgres, Kafka, Redis, Keycloak) ===
-%COMPOSE% -f docker-compose.yml up -d postgres kafka kafka-ui debezium debezium-connectors redis redis-commander keycloak
+echo === Starting infra (Postgres, Kafka, Redis, Keycloak, Grafana/Prometheus/Loki/Tempo) ===
+%COMPOSE% -f docker-compose.yml up -d postgres kafka kafka-ui debezium debezium-connectors redis redis-commander keycloak prometheus loki tempo grafana
 
 echo.
 echo === Building and starting app services + front-end ===
@@ -32,6 +32,7 @@ echo   Keycloak:  http://localhost:8180 (admin/admin)
 echo   Kafka UI:  http://localhost:8090
 echo   Debezium:  http://localhost:8083/connectors
 echo   Redis UI:  http://localhost:8081
+echo   Grafana:   http://localhost:3000
 echo.
 echo Tail logs with: %COMPOSE% logs -f ^<service^>
 echo Stop everything with: stop.bat

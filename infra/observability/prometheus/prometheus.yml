@@ -1,0 +1,60 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+# discovery-server (Eureka) kendini Eureka'ya kayit etmiyor (register-with-eureka:
+# false), config-server ise hic Eureka client'i degil - ikisi de portlari sabit
+# (8761/8888) oldugu icin static olarak tanimlaniyor. Diger her sey (gateway +
+# 6 is servisi) asagidaki eureka_sd_configs job'i ile DINAMIK bulunuyor - hicbir
+# yerde sabit port varsayimi yok, tipki gateway'in servisleri lb:// ile bulmasi
+# gibi.
+#
+# HOST'A ULASMA: dev modunda discovery-server konteyner degil, host'ta native
+# calisiyor (bkz. infra/run/dev/start.bat), bu yuzden Prometheus konteynerinin
+# host'a cikan bir yola ihtiyaci var. Bu makinede olculdu (podman machine, VM
+# TYPE=wsl): "host.containers.internal" VE "host.docker.internal" ikisi de bu
+# kurulumda calismiyor - podman'in wsl backend'i (Hyper-V/gvproxy backend'inin
+# aksine) bu ozel adlari container agindaki bridge gateway'ine (10.89.x.x)
+# cozuyor, gercek Windows host'a degil. Calisan gercek adres, podman machine'in
+# WSL VM'i icinden `ip route show default`in verdigi gateway IP'si:
+#   172.29.16.1
+# Bu IP, o makinedeki WSL sanal switch'ine bagli - podman machine yeniden
+# olusturulursa (machine rm + init) degisebilir, ama normal
+# start/stop/reboot'larda genelde sabit kalir. Degisirse: yukaridaki komutu
+# tekrar calistirip asagidaki IP'yi guncelleyin. host.docker.internal de
+# fallback olarak birakildi (Docker Desktop kullanan biri icin calisir, bu
+# ortamda calismiyor ama zararsizca "down" gorunur).
+scrape_configs:
+  - job_name: discovery-server
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["172.29.16.1:8761", "host.docker.internal:8761"]
+
+  - job_name: config-server
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["172.29.16.1:8888", "host.docker.internal:8888"]
+
+  - job_name: eureka-services
+    eureka_sd_configs:
+      - server: http://172.29.16.1:8761/eureka
+        refresh_interval: 10s
+      - server: http://host.docker.internal:8761/eureka
+        refresh_interval: 10s
+    relabel_configs:
+      # Sadece saglikli (UP) instance'lar scrape edilsin.
+      - source_labels: [__meta_eureka_app_instance_status]
+        regex: UP
+        action: keep
+      # Tum servisler ayni actuator path'ini kullaniyor - Eureka bunu bilmez,
+      # burada sabitleniyor.
+      - target_label: __metrics_path__
+        replacement: /actuator/prometheus
+      # Job adi Eureka'daki uygulama adindan turetilir (varsayilan BUYUK harf,
+      # okunabilirlik icin kucuk harfe cevrilir).
+      - source_labels: [__meta_eureka_app_name]
+        target_label: job
+        action: replace
+      - source_labels: [job]
+        target_label: job
+        action: lowercase

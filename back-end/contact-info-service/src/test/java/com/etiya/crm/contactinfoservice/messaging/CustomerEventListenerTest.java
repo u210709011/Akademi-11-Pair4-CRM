@@ -2,6 +2,7 @@ package com.etiya.crm.contactinfoservice.messaging;
 
 import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +53,19 @@ class CustomerEventListenerTest {
 		customerEventListener.onMessage(record);
 
 		verify(customerDeletedEventHandler, never()).handle(org.mockito.ArgumentMatchers.any());
+	}
+
+	@Test
+	void onMessageDlt_incrementsDltCounter() {
+		SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+		CustomerEventListener dltListener = new CustomerEventListener(customerDeletedEventHandler, objectMapper,
+				meterRegistry);
+		ConsumerRecord<String, String> record = recordWithType("CustomerDeleted");
+
+		dltListener.onMessageDlt(record, "SomeException", "boom");
+
+		assertThat(meterRegistry.get("kafka.dlt.events").tag("eventType", "CustomerDeletedEvent").counter().count())
+				.isEqualTo(1.0);
 	}
 
 	private ConsumerRecord<String, String> recordWithType(String type) {
