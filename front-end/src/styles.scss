@@ -269,42 +269,6 @@ html {
   padding: 20px 24px;
   background: #fff;
   border-top: 1px solid #e5e7eb;
-
-  button {
-    min-width: 140px;
-    padding: 12px 24px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: filter 0.2s ease, background 0.2s ease;
-  }
-}
-
-.cancel-button {
-  color: #374151;
-  background: #fff;
-  border: 1px solid #d1d5db;
-
-  &:hover {
-    background: #f9fafb;
-  }
-}
-
-.save-button {
-  color: #fff;
-  background: #F47920;
-  border: none;
-
-  &:hover {
-    filter: brightness(1.05);
-  }
-
-  &:disabled {
-    color: #9ca3af;
-    cursor: not-allowed;
-    background: #e5e7eb;
-  }
 }
 
 // "Sil"/"Vazgec" onay dialoglari (delete-confirm-card ile .modal-card genisletilir) - musteri
@@ -362,24 +326,9 @@ html {
   padding: 0 24px;
 }
 
-.delete-confirm-button {
-  color: #fff;
-  background: var(--error);
-  border: none;
-
-  &:hover {
-    filter: brightness(1.05);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    background: #f3a5a5;
-  }
-}
-
-// Buton icinde "islem suruyor" gostergesi - herhangi bir async islem tetikleyen butonda
-// [disabled] ile birlikte kullanilir. stroke: currentColor sayesinde butonun kendi metin
-// rengini (beyaz/orange/lacivert) otomatik miras alir, ayrica renk varyanti gerekmez.
+// Buton icinde "islem suruyor" gostergesi - app-button (ButtonComponent) [loading]="true" ile
+// kendi kopyasini kullanir, ama next-button/submit-btn gibi henuz app-button'a tasinmamis birkac
+// yerde de dogrudan bu global class'lar kullaniliyor - o yuzden global tanim burada kaldi.
 .btn-spinner-wrap {
   display: inline-flex;
   align-items: center;

@@ -4,12 +4,13 @@ import { AddressInfo } from '../../../../../core/customer';
 import { I18nService } from '../../../../../core/i18n';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
 import { AddressFormModel, CreateCustomerFormStateService } from '../../create-customer.component';
+import { ButtonComponent } from '../../../../../shared/components/button/button.component';
 
 const EMPTY_ADDRESS: AddressFormModel = { city: '', street: '', houseNumber: '', description: '' };
 
 @Component({
   selector: 'app-address-tab',
-  imports: [FormField],
+  imports: [FormField, ButtonComponent],
   templateUrl: './address-tab.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './address-tab.component.scss'

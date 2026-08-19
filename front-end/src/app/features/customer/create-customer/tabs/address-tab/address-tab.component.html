@@ -130,8 +130,8 @@
             </form>
 
             <div class="modal-actions">
-                <button type="button" class="cancel-button" (click)="closeAddAddressModal()">{{ i18n.t('create.cancelBtn') }}</button>
-                <button type="button" class="save-button" [disabled]="addressForm().invalid()" (click)="saveAddress()">{{ i18n.t('create.saveBtn') }}</button>
+                <app-button variant="secondary" (buttonClick)="closeAddAddressModal()">{{ i18n.t('create.cancelBtn') }}</app-button>
+                <app-button [disabled]="addressForm().invalid()" (buttonClick)="saveAddress()">{{ i18n.t('create.saveBtn') }}</app-button>
             </div>
 
         </div>

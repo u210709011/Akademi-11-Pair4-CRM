@@ -7,6 +7,7 @@ import { I18nService } from '../../../core/i18n';
 import { AddressTabComponent } from './tabs/address-tab/address-tab.component';
 import { ContactTabComponent } from './tabs/contact-tab/contact-tab.component';
 import { DemographicTabComponent } from './tabs/demographic-tab/demographic-tab.component';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 
 type CreateCustomerTab = 'demographic' | 'address' | 'contact';
 
@@ -79,7 +80,7 @@ export class CreateCustomerFormStateService {
 
 @Component({
   selector: 'app-create-customer',
-  imports: [NgComponentOutlet],
+  imports: [NgComponentOutlet, ButtonComponent],
   templateUrl: './create-customer.component.html',
   styleUrl: './create-customer.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,

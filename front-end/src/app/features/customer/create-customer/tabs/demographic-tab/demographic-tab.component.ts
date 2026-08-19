@@ -8,6 +8,7 @@ import { I18nService } from '../../../../../core/i18n';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
 import { DatePickerHeaderComponent } from '../../../../../shared/components/date-picker-header/date-picker-header.component';
 import { CreateCustomerFormStateService } from '../../create-customer.component';
+import { DateInputDirective } from '../../../../../shared/directives/date-input.directive';
 
 type LetterFieldName = 'firstName' | 'middleName' | 'lastName' | 'fatherName' | 'motherName';
 
@@ -15,7 +16,7 @@ const LETTER_FIELDS: LetterFieldName[] = ['firstName', 'middleName', 'lastName',
 
 @Component({
   selector: 'app-demographic-tab',
-  imports: [FormField, MatDatepickerModule, MatFormFieldModule, MatInputModule],
+  imports: [FormField, MatDatepickerModule, MatFormFieldModule, MatInputModule, DateInputDirective],
   templateUrl: './demographic-tab.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './demographic-tab.component.scss'

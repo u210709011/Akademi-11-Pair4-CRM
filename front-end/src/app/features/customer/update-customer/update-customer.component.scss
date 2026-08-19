@@ -226,18 +226,3 @@
   }
 }
 
-.save-button {
-  color: #fff;
-  background: var(--etiya-orange);
-  border: none;
-
-  &:hover {
-    filter: brightness(1.05);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-    filter: none;
-  }
-}

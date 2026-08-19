@@ -18,6 +18,8 @@ public final class SwaggerText {
 
 	public static final String LOGOUT_SUMMARY = "Oturumu kapat (refresh token'i gecersiz kil)";
 
+	public static final String ME_SUMMARY = "Giris yapmis kullanicinin adini/rollerini doner (cookie'deki JWT'den)";
+
 	// LoginRequest
 	public static final String CLIENT_ID_DESCRIPTION =
 			"Opsiyonel - hangi Keycloak client'i ile token alinacak. Bos birakilirse "

@@ -216,17 +216,8 @@
             </form>
 
             <div class="modal-actions">
-                <button type="button" class="cancel-button" (click)="promptDiscardAddress()">{{ i18n.t('create.cancelBtn') }}</button>
-                <button type="button" class="save-button" [disabled]="addressForm().invalid() || isSavingAddress()" (click)="saveNewAddress()">
-                    @if (isSavingAddress()) {
-                        <span class="btn-spinner-wrap">
-                            <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
-                            {{ i18n.t('create.saveBtn') }}
-                        </span>
-                    } @else {
-                        {{ i18n.t('create.saveBtn') }}
-                    }
-                </button>
+                <app-button variant="secondary" (buttonClick)="promptDiscardAddress()">{{ i18n.t('create.cancelBtn') }}</app-button>
+                <app-button [disabled]="addressForm().invalid()" [loading]="isSavingAddress()" (buttonClick)="saveNewAddress()">{{ i18n.t('create.saveBtn') }}</app-button>
             </div>
 
         </div>
@@ -256,8 +247,8 @@
             </div>
 
             <div class="modal-actions">
-                <button type="button" class="cancel-button" (click)="keepEditingAddress()">{{ i18n.t('detail.discardChangesCancelBtn') }}</button>
-                <button type="button" class="delete-confirm-button" (click)="discardAddress()">{{ i18n.t('detail.discardChangesConfirmBtn') }}</button>
+                <app-button variant="secondary" (buttonClick)="keepEditingAddress()">{{ i18n.t('detail.discardChangesCancelBtn') }}</app-button>
+                <app-button variant="danger" (buttonClick)="discardAddress()">{{ i18n.t('detail.discardChangesConfirmBtn') }}</app-button>
             </div>
 
         </div>

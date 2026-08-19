@@ -74,9 +74,9 @@
     <div class="wizard-actions">
         <div class="wizard-buttons-group">
             @if (activeStepIndex() === 0) {
-                <button type="button" class="cancel-button" (click)="openCancelConfirm()">{{ i18n.t('newSale.cancelBtn') }}</button>
+                <app-button variant="secondary" (buttonClick)="openCancelConfirm()">{{ i18n.t('newSale.cancelBtn') }}</app-button>
             } @else {
-                <button type="button" class="cancel-button" (click)="previous()">{{ i18n.t('newSale.previousBtn') }}</button>
+                <app-button variant="secondary" (buttonClick)="previous()">{{ i18n.t('newSale.previousBtn') }}</app-button>
             }
 
             <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="next()">
@@ -115,8 +115,8 @@
                 </div>
 
                 <div class="modal-actions">
-                    <button type="button" class="cancel-button" (click)="closeCancelConfirm()">{{ i18n.t('newSale.cancelConfirmKeepBtn') }}</button>
-                    <button type="button" class="delete-confirm-button" (click)="confirmCancel()">{{ i18n.t('newSale.cancelConfirmConfirmBtn') }}</button>
+                    <app-button variant="secondary" (buttonClick)="closeCancelConfirm()">{{ i18n.t('newSale.cancelConfirmKeepBtn') }}</app-button>
+                    <app-button variant="danger" (buttonClick)="confirmCancel()">{{ i18n.t('newSale.cancelConfirmConfirmBtn') }}</app-button>
                 </div>
 
             </div>
@@ -146,8 +146,8 @@
                 </div>
 
                 <div class="modal-actions">
-                    <button type="button" class="cancel-button" (click)="closeSubmitConfirm()">{{ i18n.t('newSale.submitConfirmKeepBtn') }}</button>
-                    <button type="button" class="delete-confirm-button" (click)="confirmSubmit()">{{ i18n.t('newSale.submitConfirmConfirmBtn') }}</button>
+                    <app-button variant="secondary" (buttonClick)="closeSubmitConfirm()">{{ i18n.t('newSale.submitConfirmKeepBtn') }}</app-button>
+                    <app-button variant="danger" (buttonClick)="confirmSubmit()">{{ i18n.t('newSale.submitConfirmConfirmBtn') }}</app-button>
                 </div>
 
             </div>
@@ -180,8 +180,8 @@
                 </div>
 
                 <div class="order-success-actions">
-                    <button type="button" class="cancel-button" (click)="goToBillingAccount()">{{ i18n.t('newSale.goToBillingAccount') }}</button>
-                    <button type="button" class="save-button" (click)="startNewOrderForSameAccount()">{{ i18n.t('newSale.addNewProductBtn') }}</button>
+                    <app-button variant="secondary" (buttonClick)="goToBillingAccount()">{{ i18n.t('newSale.goToBillingAccount') }}</app-button>
+                    <app-button (buttonClick)="startNewOrderForSameAccount()">{{ i18n.t('newSale.addNewProductBtn') }}</app-button>
                 </div>
 
             </div>

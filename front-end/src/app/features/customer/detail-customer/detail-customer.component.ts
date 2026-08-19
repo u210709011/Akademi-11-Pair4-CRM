@@ -17,6 +17,7 @@ import { I18nService } from '../../../core/i18n';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../core/lookup';
 import { OrderService } from '../../../core/order';
 import { ProductService } from '../../../core/product';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 import {
   AccountProduct,
   CustomerAccount,
@@ -113,7 +114,7 @@ const EMPTY_CUSTOMER_CONTACT: CustomerContact = {
 
 @Component({
   selector: 'app-detail-customer',
-  imports: [RouterLink, FormField, NgTemplateOutlet],
+  imports: [RouterLink, FormField, NgTemplateOutlet, ButtonComponent],
   templateUrl: './detail-customer.component.html',
   styleUrl: './detail-customer.component.scss',
 })

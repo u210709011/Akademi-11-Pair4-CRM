@@ -10,6 +10,7 @@ import { ProductOfferingCharUse, ProductService } from '../../../core/product';
 import { ConfigurationStepComponent } from './steps/configuration/configuration-step.component';
 import { OfferSelectionComponent } from './steps/offer-selection/offer-selection.component';
 import { ReviewStepComponent } from './steps/review/review-step.component';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 
 type NewSaleStep = 'offer' | 'configuration' | 'review';
 
@@ -319,7 +320,7 @@ export class NewSaleFormStateService {
 
 @Component({
   selector: 'app-new-sale',
-  imports: [NgComponentOutlet, RouterLink],
+  imports: [NgComponentOutlet, RouterLink, ButtonComponent],
   templateUrl: './new-sale.component.html',
   styleUrl: './new-sale.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,

@@ -6,6 +6,7 @@ import { I18nService } from '../../../../../core/i18n';
 import { CharacteristicValue, GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
 import { ProductOfferingCharUse, ProductService } from '../../../../../core/product';
 import { BasketLine, NewSaleFormStateService } from '../../new-sale.component';
+import { ButtonComponent } from '../../../../../shared/components/button/button.component';
 
 const UNKNOWN = '—';
 
@@ -36,7 +37,7 @@ interface CharacteristicField {
 
 @Component({
   selector: 'app-configuration-step',
-  imports: [FormField],
+  imports: [FormField, ButtonComponent],
   templateUrl: './configuration-step.component.html',
   styleUrl: './configuration-step.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager

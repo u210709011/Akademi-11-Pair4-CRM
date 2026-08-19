@@ -1,0 +1,22 @@
+<button
+  [type]="type"
+  class="app-button"
+  [class.app-button-primary]="variant === 'primary'"
+  [class.app-button-secondary]="variant === 'secondary'"
+  [class.app-button-danger]="variant === 'danger'"
+  [disabled]="disabled || loading"
+  (click)="onClick()"
+>
+  @if (loading) {
+    <span class="btn-spinner-wrap">
+      <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+      @if (loadingLabel) {
+        {{ loadingLabel }}
+      } @else {
+        <ng-content />
+      }
+    </span>
+  } @else {
+    <ng-content />
+  }
+</button>

@@ -47,7 +47,7 @@
   }
 
   <div class="wizard-actions">
-      <button type="button" class="cancel-button" (click)="cancel()">{{ i18n.t('create.cancelBtn') }}</button>
+      <app-button variant="secondary" (buttonClick)="cancel()">{{ i18n.t('create.cancelBtn') }}</app-button>
 
       <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="nextTab()">
           @if (formState.isVerifyingIdentity()) {

@@ -58,8 +58,10 @@
         <mat-form-field class="date-field" appearance="outline" subscriptSizing="dynamic">
             <input
                 matInput
+                appDateInput
                 id="birthDate"
                 placeholder="DD/MM/YYYY"
+                maxlength="10"
                 [matDatepicker]="birthDatePicker"
                 [max]="today"
                 [min]="minBirthDate"

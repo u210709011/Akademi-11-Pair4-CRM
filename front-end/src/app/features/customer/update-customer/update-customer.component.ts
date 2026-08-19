@@ -9,6 +9,8 @@ import { IndividualInfo, CustomerService } from '../../../core/customer';
 import { I18nService } from '../../../core/i18n';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../core/lookup';
 import { DatePickerHeaderComponent } from '../../../shared/components/date-picker-header/date-picker-header.component';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
+import { DateInputDirective } from '../../../shared/directives/date-input.directive';
 
 type LetterFieldName = 'firstName' | 'middleName' | 'lastName' | 'fatherName' | 'motherName';
 
@@ -44,7 +46,7 @@ function parseBirthDate(value: string): Date {
 
 @Component({
   selector: 'app-update-customer',
-  imports: [FormField, RouterLink, MatDatepickerModule, MatFormFieldModule, MatInputModule],
+  imports: [FormField, RouterLink, MatDatepickerModule, MatFormFieldModule, MatInputModule, ButtonComponent, DateInputDirective],
   templateUrl: './update-customer.component.html',
   styleUrl: './update-customer.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager

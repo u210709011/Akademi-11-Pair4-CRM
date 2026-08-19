@@ -13,6 +13,8 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+import com.etiya.crm.apigateway.auth.CookieBearerTokenConverter;
+
 @Configuration
 @EnableWebFluxSecurity
 /** Gateway kimlik doğrulama ve CORS kurallarını tanımlar. */
@@ -21,18 +23,29 @@ public class SecurityConfig {
     @Value("${cors.allowed-origins:http://localhost:4200}")
     private List<String> allowedOrigins;
 
+    private final CookieBearerTokenConverter cookieBearerTokenConverter;
+
+    public SecurityConfig(CookieBearerTokenConverter cookieBearerTokenConverter) {
+        this.cookieBearerTokenConverter = cookieBearerTokenConverter;
+    }
+
     @Bean
-    /** Public uçları açık bırakıp kalan istekleri JWT ile korur. */
+    /** Public uçları açık bırakıp kalan istekleri (access_token cookie veya Authorization header'daki) JWT ile korur. */
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
+                // CSRF-token mekanizmasi kurulmadi: SameSite=Lax cookie'ler zaten cross-site
+                // XHR/fetch'e eklenmiyor, front-end/gateway de ayni "site" (port farki site
+                // sinirini degistirmiyor) - bkz. AuthCookieFactory yorumu.
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeExchange(exchange -> exchange
-                        .pathMatchers("/actuator/**", "/eureka/**", "/api/v1/auth/**").permitAll()
+                        .pathMatchers("/actuator/**", "/eureka/**").permitAll()
+                        .pathMatchers("/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout").permitAll()
                         .pathMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll()
                         .anyExchange().authenticated())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {
-                }));
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .bearerTokenConverter(cookieBearerTokenConverter)
+                        .jwt(Customizer.withDefaults()));
         return http.build();
     }
 
