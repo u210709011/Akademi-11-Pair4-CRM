@@ -29,6 +29,11 @@ public class SecurityConfig {
         this.cookieBearerTokenConverter = cookieBearerTokenConverter;
     }
 
+    // Birim testi yok: govde sadece ServerHttpSecurity DSL'ini zincirliyor, kendi kod dalimiz
+    // (branch) yok - bu yuzden Mockito ile anlamli bir sey dogrulanamaz. Gercekten test etmenin
+    // tek yolu bir Spring context (@WebFluxTest/@SpringBootTest) ayaga kaldirip path'lere gercek
+    // istek atmak, bu da bu projede kullanilan Mockito-only birim test kapsaminin disinda kaliyor.
+    // corsConfigurationSource() ise saf bir bean builder oldugu icin ayrica test edildi.
     @Bean
     /** Public uçları açık bırakıp kalan istekleri (access_token cookie veya Authorization header'daki) JWT ile korur. */
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {

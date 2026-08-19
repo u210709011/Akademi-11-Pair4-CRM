@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +42,16 @@ class TypeValueManagerTest {
         typeValue.setFieldName(9L);
         typeValue.setDescription("Party_id");
         return typeValue;
+    }
+
+    @Test
+    void getAll_returnsMappedResponses() {
+        when(typeValueRepository.findAll()).thenReturn(List.of(typeValue(1L)));
+
+        List<TypeValueResponse> responses = manager().getAll();
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).tableName()).isEqualTo("PARTY");
     }
 
     @Test

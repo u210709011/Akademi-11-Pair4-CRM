@@ -42,4 +42,16 @@ class SecurityConfigTest {
 
 		assertThat(authorities).isEmpty();
 	}
+
+	@Test
+	void returnsNoAuthorities_whenRolesClaimIsNotACollection() {
+		JwtAuthenticationConverter converter = securityConfig.jwtAuthenticationConverter();
+		Jwt jwt = Jwt.withTokenValue("token").header("alg", "none")
+				.claim("realm_access", Map.of("roles", "CRM_AGENT"))
+				.build();
+
+		var authorities = converter.convert(jwt).getAuthorities();
+
+		assertThat(authorities).isEmpty();
+	}
 }
