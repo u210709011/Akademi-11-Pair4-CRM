@@ -29,6 +29,14 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      # mvnw dosyalari bu repoda Windows'tan commit ediliyor - NTFS'te "executable"
+      # kavrami olmadigi icin git bu izni hic tutmuyor, Linux runner'da "Permission
+      # denied" (exit 126) ile patliyor. Git dosya modunu duzeltmek (chmod +x + commit)
+      # bir sonraki Windows commit'inde tekrar kaybolabilir - bunun yerine burada,
+      # her calistirmada garanti olacak sekilde izin veriliyor.
+      - name: mvnw dosyalarina calistirma izni ver
+        run: chmod +x back-end/*/mvnw
+
       - name: Paylasilan modulleri kur
         working-directory: back-end
         run: ./customer-service/mvnw -B -f pom.xml install -DskipTests
