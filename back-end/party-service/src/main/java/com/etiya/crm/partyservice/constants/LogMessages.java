@@ -9,6 +9,9 @@ public final class LogMessages {
 	public static final String CUSTOMER_EVENT_ALREADY_PROCESSED =
 			"customer-events mesaji zaten islenmis, atlaniyor: partyRoleId={}";
 
+	public static final String CUSTOMER_EVENT_DLT =
+			"customer-events DLT'ye dustu (tum retry denemeleri tukendi): eventId={}, type={}, exception={}: {}";
+
 	public static final String UNEXPECTED_ERROR = "Unexpected error";
 
 	private LogMessages() {

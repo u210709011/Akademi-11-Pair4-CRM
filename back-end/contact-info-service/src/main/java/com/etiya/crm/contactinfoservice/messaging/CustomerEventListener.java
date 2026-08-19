@@ -3,13 +3,17 @@ package com.etiya.crm.contactinfoservice.messaging;
 import com.etiya.crm.contactinfoservice.constants.LogMessages;
 import com.etiya.crm.shared.events.KafkaTopics;
 import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
+import com.etiya.crm.shared.events.messaging.NonRetryableEventException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +48,9 @@ public class CustomerEventListener {
 			backoff = @Backoff(delay = 1000, multiplier = 2.0),
 			retryTopicSuffix = "-retry-contact-info",
 			dltTopicSuffix = "-dlt-contact-info",
-			include = Exception.class)
+			include = Exception.class,
+			exclude = NonRetryableEventException.class,
+			traversingCauses = "true")
 	@KafkaListener(topics = KafkaTopics.CUSTOMER_EVENTS, groupId = "contact-info-service")
 	public void onMessage(ConsumerRecord<String, String> record) {
 		CustomerDeletedEvent event;
@@ -56,5 +62,12 @@ public class CustomerEventListener {
 		}
 
 		customerDeletedEventHandler.handle(event);
+	}
+
+	@DltHandler
+	public void onMessageDlt(ConsumerRecord<String, String> record,
+			@Header(value = KafkaHeaders.EXCEPTION_FQCN, required = false) String exceptionType,
+			@Header(value = KafkaHeaders.EXCEPTION_MESSAGE, required = false) String exceptionMessage) {
+		log.error(LogMessages.CUSTOMER_EVENT_DLT, record.key(), exceptionType, exceptionMessage);
 	}
 }
