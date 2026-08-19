@@ -1,0 +1,54 @@
+# Backend CI — build + unit test her PR'da (paylasilan modulleri kuran/servisleri
+# ayaga kaldiran gecelik regresyondan (ui-test-nightly.yml) farkli olarak, bu is
+# altyapi/Docker acmiyor, sadece saf Mockito/JUnit testlerini kosuyor. Bilincli
+# olarak hafif tutuldu: eski ui-test-pr.yml "resource constraints / long execution
+# times" gerekcesiyle silinmisti (bkz. commit 4289439), ayni akibete ugramamasi icin
+# bu is hicbir servisi gercekten baslatmiyor.
+
+name: Backend CI
+
+on:
+  pull_request:
+    paths:
+      - 'back-end/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build-and-test:
+    name: Build & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK 25 kurulumu
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Paylasilan modulleri kur
+        working-directory: back-end
+        run: ./customer-service/mvnw -B -f pom.xml install -DskipTests
+
+      # Context yukleyen testler (*ApplicationTests, JacksonConfigTest) config-server
+      # olmadan acilamiyor (bkz. CLAUDE.md) — bu is altyapisiz calistigi icin disarida
+      # birakiliyor. Geri kalan her sey (business rules, mapper, messaging listener/
+      # handler testleri) saf Mockito/JUnit, altyapi gerektirmiyor.
+      # failIfNoSpecifiedTests=false gerekli: hic test dosyasi olmayan modullerde
+      # (shared-contracts, data-seeder, ...) sadece exclude iceren -Dtest pattern'i
+      # Surefire'i "eslesen test yok" hatasiyla durduruyor, aslinda hata degil.
+      - name: Testleri calistir
+        working-directory: back-end
+        run: ./customer-service/mvnw -B -f pom.xml test -Dtest='!*ApplicationTests,!JacksonConfigTest' -Dsurefire.failIfNoSpecifiedTests=false
+
+      - name: JaCoCo coverage raporlarini yukle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-raporlari
+          path: '**/target/site/jacoco/'
+          retention-days: 14
+          if-no-files-found: ignore

@@ -70,9 +70,9 @@ call "%~dp0..\detect-engine.bat"
 if errorlevel 1 exit /b 1
 echo Using container engine: %ENGINE%
 
-echo === Starting infra (Postgres, Kafka, Redis, Keycloak) ===
+echo === Starting infra (Postgres, Kafka, Redis, Keycloak, Grafana/Prometheus/Loki/Tempo) ===
 pushd "%INFRA%"
-%COMPOSE% -f docker-compose.yml up -d postgres kafka kafka-ui debezium debezium-connectors redis redis-commander keycloak
+%COMPOSE% -f docker-compose.yml up -d postgres kafka kafka-ui debezium debezium-connectors redis redis-commander keycloak prometheus loki tempo grafana
 popd
 
 call :waitforport 5432 "PostgreSQL"
@@ -122,6 +122,7 @@ echo   Keycloak:         http://localhost:8180 (admin/admin)
 echo   Kafka UI:         http://localhost:8090
 echo   Debezium Connect: http://localhost:8083/connectors
 echo   Redis Commander:  http://localhost:8081
+echo   Grafana:          http://localhost:3000
 echo.
 echo status.bat            - check what's up
 echo restart.bat ^<service^> - restart just one (also works for front-end)
