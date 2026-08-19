@@ -8,16 +8,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-/**
- * FR-010: "Update Billing Account" ekrani. Guncellenebilir alanlar accountName/
- * accountDesc/adres - accountNo ve accountTpId burada YOK, hicbir zaman
- * degistirilemez (bkz. CustomerServiceImpl.updateBillingAccount). accountName
- * ZORUNLUDUR - front-end tipik olarak (muhtemelen degisen) adresin addrDesc'ini
- * onceden doldurup gonderir, ama backend'de otomatik turetme/fallback YOKTUR.
- * addressId (var olan adres) ile newAddress (yeni adres olusturma) alanlarindan
- * tam olarak biri doldurulmali - CreateBillingAccountRequest ile ayni desen.
- */
+
 @Schema(description = SwaggerText.UPDATE_BILLING_ACCOUNT_REQUEST_SCHEMA_DESCRIPTION)
+/** Fatura hesabı güncelleme alanlarını taşır. */
 public record UpdateBillingAccountRequest(
 
 		@Schema(description = SwaggerText.BILLING_ACCOUNT_ACCOUNT_NAME_DESCRIPTION)

@@ -12,16 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * CustomerDeletedEvent'i isleyen broker-bagimsiz mantik: idempotency kontrolu +
- * musteriye ait adres/iletisim kayitlarini pasife cekme (AS-002: silme = statu
- * guncellemesi). Kafka'ya ozgu hicbir sey icermez - "CustomerEventListener"
- * (deserialize/parse dahil) bu sinifi cagiran ince bir adapter'dir. Broker
- * degisirse sadece adapter yeniden yazilir, bu sinifa dokunulmaz.
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j
+/** Müşteri silme event'i geldiğinde iletişim verilerini pasifleştirir. */
 public class CustomerDeletedEventHandler {
 
 	private final AddressService addressService;
@@ -29,6 +23,7 @@ public class CustomerDeletedEventHandler {
 	private final InboxEventRepository inboxEventRepository;
 
 	@Transactional
+	/** Aynı event'in tekrar işlenmesini Inbox kaydıyla engeller. */
 	public void handle(CustomerDeletedEvent event) {
 		if (!CustomerEventTypes.CUSTOMER_DELETED.equals(event.type())) {
 			return;

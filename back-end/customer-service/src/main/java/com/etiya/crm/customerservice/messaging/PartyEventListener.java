@@ -11,14 +11,7 @@ import com.etiya.crm.shared.events.party.PartyEvent;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * party-service'in party-events topic'ine yayinladigi event'leri dinleyen
- * Kafka'ya OZGU ince adapter - deserialize edilmis event'i oldugu gibi
- * PartyEventHandler'a devreder, is mantigi/idempotency orada. Bu sinif
- * broker-spesifiktir (KafkaListener/RetryableTopic); baska bir mesajlasma
- * aracina gecilirse sadece bu adapter degisir, handler ve testleri etkilenmez.
- * Kalici hatalarda 4 deneme sonrasi "party-events-dlt" topic'ine dusurulur (DLQ).
- */
+
 @Component
 @RequiredArgsConstructor
 public class PartyEventListener {

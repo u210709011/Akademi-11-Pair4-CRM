@@ -17,12 +17,7 @@ import com.etiya.crm.shared.events.party.PartyEventTypes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * PartyEvent'i isleyen broker-bagimsiz mantik: idempotency kontrolu +
- * CUSTOMER_SEARCH_VIEW senkronu. Kafka'ya ozgu hicbir sey icermez -
- * "PartyEventListener" bu sinifi cagiran ince bir adapter'dir. Broker degisirse
- * (orn. RabbitMQ) sadece adapter yeniden yazilir, bu sinifa dokunulmaz.
- */
+/** Party event'leriyle müşteri arama görünümünü günceller. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -34,9 +29,11 @@ public class PartyEventHandler {
 	private final LookupCacheService lookupCacheService;
 
 	@Transactional
+	/** Event'i bir kez işler ve ilgili read-model'i günceller. */
 	public void handle(PartyEvent event) {
+		
 		if (inboxEventRepository.existsById(event.eventId())) {
-			return; // idempotency: ayni event tekrar teslim edilirse islenmez.
+			return;
 		}
 		inboxEventRepository.save(InboxEvent.of(event.eventId(), event.type()));
 
@@ -49,6 +46,7 @@ public class PartyEventHandler {
 	}
 
 	private void syncSearchView(PartyEvent event) {
+		// Party rolü ancak yerel müşteri kaydı varsa arama görünümüne yazılır.
 		customerRepository.findByPartyRoleId(event.partyRoleId()).ifPresentOrElse(
 				customer -> upsertSearchView(customer, event),
 				() -> log.warn(LogMessages.PARTY_EVENT_CUSTOMER_NOT_FOUND, event.partyRoleId()));
@@ -70,6 +68,7 @@ public class PartyEventHandler {
 	}
 
 	private String resolveRole(Long partyRoleTypeId) {
+		// Rol adı response içinde gösterilmek üzere lookup-service'den çevrilir.
 		if (partyRoleTypeId == null) {
 			return null;
 		}

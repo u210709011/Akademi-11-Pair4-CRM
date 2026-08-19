@@ -35,16 +35,10 @@ import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * "Customer" kaynaginin front-door'u (bkz. CustomerController). Kendisi sadece
- * Customer aggregate'inin oz yasam donguсunu (arama, okuma, soft-delete) tutar;
- * onboarding saga'si, adres/contact/billing-account yonetimi ve lookup-service ID
- * cozumleme her biri kendi arayuzu arkasindaki ayri bir collaborator'a
- * devredilir - boylece bu sinifin degisme sebebi tek kalir: "Customer aggregate'i
- * nasil aranir/okunur/silinir".
- */
+
 @Service
 @RequiredArgsConstructor
+/** Müşteri arama, görüntüleme ve silme işlemlerini yürütür. */
 public class CustomerServiceImpl implements CustomerService {
 
 	private final CustomerRepository customerRepository;
@@ -60,6 +54,7 @@ public class CustomerServiceImpl implements CustomerService {
 
 	@Override
 	@Transactional(readOnly = true)
+	/** Filtreli arama sonucunu yerelleştirilmiş rol bilgisiyle döner. */
 	public Page<CustomerSearchResponse> search(CustomerSearchRequest request, Pageable pageable) {
 		rules.ensureAtLeastOneFilterProvided(request);
 		return customerSearchViewRepository
@@ -68,17 +63,7 @@ public class CustomerServiceImpl implements CustomerService {
 				.map(this::toTranslatedSearchResponse);
 	}
 
-	/**
-	 * customer_search_view.role, yazilma aninda dondurulmus (donmus) bir string'tir - Kafka
-	 * listener'in/onboarding'in o anki dili neyse o kalir, hicbir zaman aramayi yapan kullanicinin
-	 * dilini yansitmaz. partyRoleTypeId varsa, istekteki dile gore (Accept-Language ->
-	 * LookupCacheServiceImpl'in locale-aware cache key'i) burada YENIDEN cozulur.
-	 *
-	 * roleShrtCode da (locale'den bagimsiz) ayrica eklenir: arayuz artik role etiketini kendi
-	 * i18n sozlugunden shrtCode'a gore basiyor (bkz. GNL_TP seed verisindeki yazim hatalari -
-	 * "Musteri" gibi - bu yolla duzeltilebiliyor), role/translatedRole sadece shrtCode
-	 * sozlukte eslesmezse fallback olarak kullanilir.
-	 */
+
 	private CustomerSearchResponse toTranslatedSearchResponse(CustomerSearchView searchView) {
 		CustomerSearchResponse response = customerMapper.toResponse(searchView);
 		if (searchView.getPartyRoleTypeId() == null) {
@@ -94,6 +79,7 @@ public class CustomerServiceImpl implements CustomerService {
 	@Override
 	@Transactional(readOnly = true)
 	@Cacheable(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
+	/** Aktif müşteriyi hesaplarıyla birlikte getirir. */
 	public CustomerResponse getById(Long custId) {
 		Customer customer = customerFinder.getActiveCustomerOrThrow(custId);
 		List<CustomerAccount> accounts = customerAccountRepository
@@ -104,6 +90,7 @@ public class CustomerServiceImpl implements CustomerService {
 	@Override
 	@Transactional
 	@CacheEvict(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
+	/** Müşteriyi, hesaplarını ve arama görünümünü pasifleştirir. */
 	public void softDelete(Long custId) {
 		Customer customer = customerFinder.getActiveCustomerOrThrow(custId);
 		List<CustomerAccount> accounts = customerAccountRepository

@@ -15,12 +15,14 @@ import java.util.List;
 
 @Configuration
 @EnableWebFluxSecurity
+/** Gateway kimlik doğrulama ve CORS kurallarını tanımlar. */
 public class SecurityConfig {
 
     @Value("${cors.allowed-origins:http://localhost:4200}")
     private List<String> allowedOrigins;
 
     @Bean
+    /** Public uçları açık bırakıp kalan istekleri JWT ile korur. */
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -35,6 +37,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    /** Front-end kaynakları için izin verilen CORS politikasını oluşturur. */
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(allowedOrigins);
