@@ -30,6 +30,12 @@ public final class LogMessages {
 	public static final String LOOKUP_SERVICE_CALL_FAILED =
 			"lookup-service call failed (expected to be transient: network/auth), will retry via RetryableTopic: {}";
 
+	public static final String PARTY_EVENT_DLT =
+			"party-events DLT'ye dustu (tum retry denemeleri tukendi): eventId={}, type={}, exception={}: {}";
+
+	public static final String CONTACT_MEDIUM_EVENT_DLT =
+			"contact-medium-events DLT'ye dustu (tum retry denemeleri tukendi): eventId={}, type={}, exception={}: {}";
+
 	public static final String LOOKUP_EXISTS_IN_GROUP_FAILED =
 			"lookup-service existsInGroup check failed for id={}, entCodeName={}, treating as not-found: {}";
 
