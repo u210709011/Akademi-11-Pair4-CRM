@@ -29,10 +29,10 @@ public class PartyEventListener {
 			attempts = "4",
 			backoff = @Backoff(delay = 1000, multiplier = 2.0),
 			dltTopicSuffix = "-dlt",
-			include = Exception.class,
 			exclude = NonRetryableEventException.class,
 			traversingCauses = "true")
-	@KafkaListener(topics = KafkaTopics.PARTY_EVENTS, groupId = KafkaConsumerGroups.CUSTOMER_SERVICE)
+	@KafkaListener(topics = KafkaTopics.PARTY_EVENTS, groupId = KafkaConsumerGroups.CUSTOMER_SERVICE,
+			containerFactory = "partyKafkaListenerContainerFactory")
 	public void onPartyEvent(PartyEvent event) {
 		partyEventHandler.handle(event);
 	}
