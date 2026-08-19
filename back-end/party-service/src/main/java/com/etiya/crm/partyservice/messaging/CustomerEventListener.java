@@ -41,7 +41,6 @@ public class CustomerEventListener {
 			backoff = @Backoff(delay = 1000, multiplier = 2.0),
 			retryTopicSuffix = "-retry-party",
 			dltTopicSuffix = "-dlt-party",
-			include = Exception.class,
 			exclude = NonRetryableEventException.class,
 			traversingCauses = "true")
 	@KafkaListener(topics = KafkaTopics.CUSTOMER_EVENTS, groupId = "party-service")

@@ -37,7 +37,6 @@ public class ContactMediumEventListener {
 			attempts = "4",
 			backoff = @Backoff(delay = 1000, multiplier = 2.0),
 			dltTopicSuffix = "-dlt",
-			include = Exception.class,
 			exclude = NonRetryableEventException.class,
 			traversingCauses = "true")
 	@KafkaListener(topics = KafkaTopics.CONTACT_MEDIUM_EVENTS, groupId = KafkaConsumerGroups.CUSTOMER_SERVICE,
