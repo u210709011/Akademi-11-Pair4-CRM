@@ -17,12 +17,9 @@ public record KeycloakTokenResponse(
 		String tokenType,
 
 		@JsonProperty("expires_in")
-		Long expiresIn,
-
-		@JsonProperty("refresh_expires_in")
-		Long refreshExpiresIn) {
+		Long expiresIn) {
 
 	public TokenResponse toTokenResponse() {
-		return new TokenResponse(accessToken, refreshToken, tokenType, expiresIn, refreshExpiresIn);
+		return new TokenResponse(accessToken, refreshToken, tokenType, expiresIn);
 	}
 }
