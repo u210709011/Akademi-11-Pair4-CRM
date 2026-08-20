@@ -1,13 +1,6 @@
 import { Directive, HostListener } from '@angular/core';
 
-// DD/MM/YYYY formatinda elle yazilan tarih alanlari icin (create-customer/update-customer
-// birth-date): matDatepicker'dan takvimle secim zaten her zaman gecerli bir tarih uretiyor
-// (klavye olaylarina hic girmiyor). Elle yazarken sadece yasak tuslari engellemek yetmiyordu -
-// "/" kullanicinin kendisi girmedigi surece 8 rakam ust uste yazilabiliyor ve DD/MM/YYYY olarak
-// hic parse edilemiyordu (bkz. "5555555555" -> "Bu alan zorunludur"). Bu yuzden "/" ekleme dahil
-// input'u tamamen biz yonetiyoruz: her tus basimini preventDefault edip degeri kendimiz kurup
-// native 'input' event'i elle dispatch ediyoruz (boylece matDatepicker/formField degisikligi
-// normal sekilde yakalayip parse ediyor).
+
 @Directive({
   selector: 'input[appDateInput]'
 })

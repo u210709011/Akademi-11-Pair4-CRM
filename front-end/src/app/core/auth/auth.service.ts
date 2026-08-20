@@ -10,10 +10,6 @@ export interface CurrentUser {
   roles: string[];
 }
 
-// Token artik httpOnly cookie'de (JS'ten okunamaz, XSS ile calinamaz) - bu servis token'i
-// hic gormez. Kullanicinin kim oldugunu (isim/roller) ogrenmek icin backend'deki /me ucuna
-// gidilir, cevap bellekte (signal) tutulur - sayfa yenilenince kaybolur, bu yuzden authGuard
-// her rota aktivasyonunda ensureAuthenticated() ile (gerekirse) /me'yi tekrar sorar.
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
@@ -24,16 +20,13 @@ export class AuthService {
     return this.http.post<void>(`${environment.authApiUrl}/login`, { username, password }).pipe(
       switchMap(() => this.fetchCurrentUser()),
       map(() => 'success' as const),
-      // Backend returns 423 Locked only when Keycloak's real brute-force protection
-      // (crm-realm.json: 5 attempts / 15 min) has actually kicked in - any other error
-      // (wrong password, etc.) is treated as plain invalid credentials.
+
       catchError((err: HttpErrorResponse) =>
         of(err.status === 423 ? ('accountLocked' as const) : ('invalidCredentials' as const)))
     );
   }
 
-  /** authGuard bunu cagirir: bu SPA calisirken zaten kontrol edildiyse tekrar aga gitmez,
-   * ilk cagrida (ör. sayfa yenilenmesinden sonra) cookie hala gecerliyse /me 200 doner. */
+
   ensureAuthenticated(): Observable<boolean> {
     if (this.sessionChecked) {
       return of(!!this.currentUserSignal());
@@ -57,10 +50,7 @@ export class AuthService {
     this.sessionChecked = true;
   }
 
-  // UC-EACRML-001 Alt Senaryo 5: oturumu sonlandirir. Local session backend cagrisindan
-  // BAGIMSIZ olarak hemen temizlenir - kullanici agin/backend'in durumundan etkilenmeden
-  // her zaman cikis yapabilmeli. Cookie'ler (dolayisiyla Keycloak'taki refresh token) backend
-  // tarafinda best-effort temizlenir; basarisiz olsa da kullaniciyi engellemez.
+
   logout(): Observable<void> {
     this.clearSession();
     return this.http.post<void>(`${environment.authApiUrl}/logout`, {}).pipe(
