@@ -20,6 +20,15 @@
 #   onbellekleri), ikinci kosum ~24 sn. Isitma bunu da halleder.
 #
 # ON KOSUL: tum servisler + frontend ayakta olmalidir.
+#
+# ONEMLI: frontend "npm start" (ng serve) ile DEGIL, front-end/ icinde
+# "npm run start:static" ile baslatilmis olmali. ng serve, lazy-load edilen
+# her route'u ilk istekte anlik derliyor; demo sirasinda daha once hic
+# ziyaret edilmemis bir route'a gidildiginde bu derleme suresi (birkac-onlarca
+# saniye) isitma kosumunun kapsamadigi ekstra gecikme olarak eklenir ve demo
+# "eskisi gibi 30 sn" yerine cok daha uzun surer. start:static onceden
+# derlenmis (ng build) statik dosyalari servis eder, bu gecikmeyi tamamen
+# ortadan kaldirir.
 # NOT: isitma kosumu GERCEK MUSTERI ve GERCEK SIPARIS olusturur.
 
 set -u

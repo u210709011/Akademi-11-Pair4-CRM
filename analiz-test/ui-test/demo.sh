@@ -18,6 +18,9 @@
 #
 # ON KOSUL:
 #   - Tum servisler + frontend ayakta
+#     (frontend: front-end/ icinde "npm run start:static" - "npm start" DEGIL,
+#     bkz. demo-hazirlik.sh ust notu - ng serve lazy route'lari anlik derledigi
+#     icin demo sureleri katlanabiliyor)
 #   - target/test-classes derlenmis  (./mvnw -o test-compile)
 #   - target/cp.txt mevcut           (asagida yoksa otomatik uretilir)
 #
