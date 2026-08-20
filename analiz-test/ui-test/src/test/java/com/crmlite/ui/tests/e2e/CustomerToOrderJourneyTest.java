@@ -26,49 +26,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * E2E — Uctan uca kullanici yolculugu: giris → musteri → adres → fatura hesabi →
- * satis → siparis → siparisin hesapta gorunmesi.
- *
- * <p><b>Bu testin varlik sebebi.</b> FR bazli testlerin hepsi on kosullarini API ile kurar
- * ({@code TestDataFactory}); hizli ve teshis edilebilir olduklari icin bu dogru tercihtir.
- * Ancak bunun bir bedeli var: API'nin urettigi musteri ile ARAYUZUN urettigi musteri
- * birebir ayni olmayabilir (varsayilan degerler, lookup cozumlemeleri, event yayilimi).
- * Arayuz sihirbazi satis akisinin tuketemeyecegi bir kayit uretirse, API ile kurulum yapan
- * hicbir test bunu yakalayamaz. Bu test tam olarak o DIKISLERI dogrular.
- *
- * <p><b>Kapsam.</b> Hicbir adimda API kullanilmaz — oturum bile gercek login ekranindan
- * acilir (digerlerinde token {@code localStorage}'a enjekte edilir). Zincir: Chrome →
- * Angular → Gateway → Keycloak → customer/party/contact-info/product/order servisleri →
- * PostgreSQL.
- *
- * <p><b>Kapsam DISI — Kafka/outbox yayilimi.</b> {@code finishOrder} bir
- * {@code OrderSubmittedEvent} yayinlar, ancak hesap ekranindaki urun listesi bu olayi
- * TUKETMEZ: {@code order.service.ts#getByCustAcctId} → {@code GET /api/v1/orders/by-account}
- * ile siparis kalemlerini order-service'ten SENKRON okur. Dolayisiyla son adim olay
- * yayilimini degil, siparisin dogru hesaba baglanarak kalici hale geldigini dogrular.
- *
- * <p><b>Neden tek test.</b> Alti ekrana dokundugu icin en kirilgan testimizdir ve patladiginda
- * "hangi ozellik bozuk" sorusuna FR testleri kadar iyi cevap veremez. Degeri ayrintida degil,
- * gecislerdedir; ayrinti kapsamini 239 FR testi zaten saglar. Bu yuzden ikinci bir yolculuk
- * testi EKLENMEMELIDIR.
- *
- * <p><b>Suite disidir.</b> {@code e2e} grubundadir; {@code regression.xml} ve {@code smoke}
- * icinde YER ALMAZ. Kararsizligi mevcut paketi kirmasin diye ayri kosulur:
- * {@code ./mvnw test -Dsuite=e2e}
- *
- * <p><b>Yan kazanc — zorunlu iliskili urunler.</b> Son adimdaki dogrulama, secilen teklifin
- * yani sira ona ZORUNLU ILISKIYLE otomatik eklenen urunlerin de hesaba dustugunu gosterir:
- * "Home Fiber 200Mbps" siparis edildiginde hesapta "Wi-Fi Router Purchase" ve
- * "Broadband Modem" de listelenir. Bu zincir baska hicbir testte uctan uca kosulmuyor.
- *
- * <p><b>NOT: bu test GERCEK MUSTERI ve GERCEK SIPARIS olusturur.</b>
- */
 @Epic("E2E — Uctan uca kullanici yolculugu")
 @Feature("Giris → Musteri → Hesap → Satis → Siparis")
 public class CustomerToOrderJourneyTest extends BaseTest {
 
-    /** Seed veride bu parcayi iceren birden fazla teklif bulunur. */
     private static final String OFFER_NAME_FRAGMENT = "Home";
 
     @Test(groups = {"e2e"},
@@ -86,7 +47,7 @@ public class CustomerToOrderJourneyTest extends BaseTest {
         CustomerData data = CustomerBuilder.aValidCustomer().build();
         Allure.parameter("Nationality ID", data.individual().nationalId());
 
-        // --- 1. Giris: gercek login ekranindan, token enjeksiyonu YOK ---
+        
         Allure.step("1. Sisteme giris yapilir");
         LoginPage loginPage = new LoginPage(driver());
         loginPage.waitUntilLoaded();
@@ -95,7 +56,7 @@ public class CustomerToOrderJourneyTest extends BaseTest {
         assertThat(searchPage.isAt())
                 .as("giris sonrasi Customer Search ekrani acilir").isTrue();
 
-        // --- 2. Musteri olusturma: sihirbazin tamami arayuzden ---
+       
         Allure.step("2. Yeni musteri olusturulur (demografik → adres → iletisim)");
         CreateCustomerPage wizard = searchPage.goToCreateCustomer();
 
@@ -125,9 +86,6 @@ public class CustomerToOrderJourneyTest extends BaseTest {
                 .as("olusturulan musteri girilen kimlik numarasini tasir")
                 .isEqualTo(data.individual().nationalId());
 
-        // --- 3. Fatura hesabi: sihirbazda girilen adres burada secilebilmelidir ---
-        // Bu, API kurulumunun atladigi ILK dikis: adres arayuzden yaratildi, hesap onu
-        // tuketiyor. Adres listesi bos gelirse burada patlar.
         Allure.step("3. Musteriye fatura hesabi acilir (sihirbazdaki adres secilerek)");
         detail.openAccountsTab();
         assertThat(detail.accountCount())
@@ -147,7 +105,6 @@ public class CustomerToOrderJourneyTest extends BaseTest {
         assertThat(detail.waitForAccountNamed(accountName))
                 .as("fatura hesabi olusturuldu ve tabloda listelenir").contains(accountName);
 
-        // --- 4. Satis: hesap satirindan sihirbaz baslatilir ---
         Allure.step("4. Fatura hesabi uzerinden yeni satis baslatilir");
         detail.toggleAccountRow(0);
         assertThat(detail.hasStartNewSaleButton())
@@ -163,10 +120,6 @@ public class CustomerToOrderJourneyTest extends BaseTest {
         List<String> basketNames = sale.basketItemNames();
         assertThat(basketNames).as("secilen teklif sepete eklenir").isNotEmpty();
 
-        // Sepet once KULLANICININ SECTIGI satirlari, sonra zorunlu iliskiyle otomatik
-        // eklenen kilitli satirlari gosterir; bu yuzden ilk isim bizim sectigimiz tekliftir.
-        // Varsayim ORTULU kalmasin diye asagida ACIKCA dogrulanir: panel sirasi bir gun
-        // degisirse test yanlis urunu sessizce dogrulamak yerine burada patlar.
         String orderedProduct = basketNames.stream()
                 .filter(name -> !name.isBlank())
                 .findFirst()
@@ -178,7 +131,6 @@ public class CustomerToOrderJourneyTest extends BaseTest {
                 .containsIgnoringCase(OFFER_NAME_FRAGMENT);
         sale.clickNext();
 
-        // --- 5. Konfigurasyon ---
         Allure.step("5. Urun konfigurasyonu tamamlanir");
         ConfigurationStepPage configuration = new ConfigurationStepPage(driver());
         configuration.waitUntilLoaded();
@@ -189,7 +141,6 @@ public class CustomerToOrderJourneyTest extends BaseTest {
         sale.clickNext();
         sale.waitForActiveStep(ExpectedMessages.get("newSale.stepReview"));
 
-        // --- 6. Ozet ve siparisin gonderilmesi ---
         Allure.step("6. Siparis ozeti onaylanir ve siparis gonderilir");
         ReviewStepPage review = new ReviewStepPage(driver());
         review.waitUntilLoaded();
@@ -207,13 +158,6 @@ public class CustomerToOrderJourneyTest extends BaseTest {
                 .as("basari basligi")
                 .isEqualTo(ExpectedMessages.get("newSale.orderSuccessTitle"));
 
-        // --- 7. Kapanis: siparis fatura hesabinda gorunur ---
-        // ASIL DEGERLI ADIM. Basari modali tek basina hicbir sey kanitlamaz: siparisin
-        // DOGRU FATURA HESABINA baglandigini ancak hesap ekranindan geri okuyarak
-        // gorebiliriz. Bu adim olmadan test, "modal cikti" demekten ibaret kalirdi.
-        //
-        // NOT: burada Kafka/outbox yayilimi DOGRULANMAZ — hesap urun listesi
-        // GET /api/v1/orders/by-account ile order-service'ten senkron okunur.
         Allure.step("7. Siparis edilen urun fatura hesabinda gorunur");
         review.goToBillingAccount();
 

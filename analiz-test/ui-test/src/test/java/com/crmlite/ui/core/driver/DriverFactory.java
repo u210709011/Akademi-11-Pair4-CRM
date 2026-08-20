@@ -79,9 +79,18 @@ public final class DriverFactory {
         driver.manage().timeouts().pageLoadTimeout(
                 Duration.ofSeconds(scaled(config.pageLoadTimeout(), config.timeoutMultiplier())));
 
-        if (!config.headless()) {
-            driver.manage().window().maximize();
-        }
+        // Pencere boyutu ChromeOptions'taki --window-size ile ayarlanir (1920x1080),
+        // burada AYRICA maximize() CAGRILMAZ.
+        //
+        // 17.08.2026: maximize() Chrome 151'de patliyor - surucu pencereyi buyutmek icin
+        // CDP'nin 'Runtime.evaluate' komutunu kullaniyor, bu Chrome surumu onu acmiyor:
+        //   "unknown error: JavaScript code failed
+        //    from unknown command: 'Runtime.evaluate' wasn't found"
+        // Hata setUp icinde olustugu icin test HIC BASLAMADAN dusuyordu.
+        //
+        // Kaldirmak kayipsiz: --window-size zaten deterministik bir boyut veriyor ve
+        // testler icin maximize'dan DAHA IYI - maximize viewport'u makinenin ekranina
+        // bagli kilar, bu da farkli makinelerde farkli gorunum demektir.
 
         log.debug("WebDriver olusturuldu | tarayici={} | headless={} | remote={}",
                 browser, config.headless(), !config.remoteUrl().isBlank());

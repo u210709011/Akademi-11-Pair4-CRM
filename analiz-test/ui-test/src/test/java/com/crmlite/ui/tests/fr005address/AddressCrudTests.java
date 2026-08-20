@@ -18,12 +18,6 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * FR-005 — Adres Yonetimi (UC-EACRML-005): listeleme, ekleme, guncelleme, silme.
- *
- * <p>Her test kendi musterisini kurar (adres islemleri veriyi degistirir).
- * On kosul adresler API ile hazirlanir; dogrulanan davranis UI'dadir.
- */
 @Epic("FR-005 Adres Yonetimi")
 @Feature("UC-EACRML-005")
 public class AddressCrudTests extends AuthenticatedTest {
@@ -190,7 +184,6 @@ public class AddressCrudTests extends AuthenticatedTest {
                 .as("Street 200 karakteri asmamalidir").isLessThanOrEqualTo(200);
     }
 
-    /** Kart araminda kullanilan yardimci — okunabilirlik icin. */
     @SuppressWarnings("unused")
     private static boolean matchesStreet(AddressCardComponent card, String street) {
         return card.addressLine().contains(street);

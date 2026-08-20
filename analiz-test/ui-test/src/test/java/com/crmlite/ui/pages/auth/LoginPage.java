@@ -1,14 +1,10 @@
 package com.crmlite.ui.pages.auth;
-
 import com.crmlite.ui.core.waits.AppConditions;
 import com.crmlite.ui.pages.BasePage;
 import com.crmlite.ui.pages.customer.SearchCustomerPage;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
-/**
- * FR-001 — Sistem Girisi (UC-EACRML-001).
- */
 public class LoginPage extends BasePage {
 
     private static final By USERNAME = By.id("username");
@@ -36,7 +32,6 @@ public class LoginPage extends BasePage {
         return "Login";
     }
 
-    // --- Alanlar (ACC-001) ---
 
     public LoginPage enterUsername(String username) {
         type(USERNAME, username);
@@ -60,7 +55,6 @@ public class LoginPage extends BasePage {
         return isDisplayed(USERNAME);
     }
 
-    /** Alandaki etkin deger — uzunluk sinirinin gercekten uygulandigini dogrulamak icin. */
     public String usernameValue() {
         String value = getValue(USERNAME);
         return value == null ? "" : value;
@@ -70,26 +64,21 @@ public class LoginPage extends BasePage {
         return isDisplayed(PASSWORD);
     }
 
-    // --- Login butonu (ACC-002) ---
 
-    /** ACC-002: iki alan da dolunca Login butonu aktiflesmelidir. */
     public boolean isSubmitEnabled() {
         return becomesEnabled(SUBMIT);
     }
 
-    /** ACC-002 negatif: alanlardan biri bossa Login butonu pasif KALMALIDIR. */
     public boolean isSubmitDisabled() {
         return remainsDisabled(SUBMIT);
     }
 
-    // --- Sifre gorunurlugu (ACC-003) ---
 
     public LoginPage togglePasswordVisibility() {
         click(TOGGLE_PASSWORD);
         return this;
     }
 
-    /** ACC-003: goz ikonu ile {@code type} alani password &lt;-&gt; text arasinda degisir. */
     public boolean isPasswordMasked() {
         return "password".equals(getAttribute(PASSWORD, "type"));
     }
@@ -98,35 +87,23 @@ public class LoginPage extends BasePage {
         wait.until(AppConditions.attributeToBe(PASSWORD, "type", "text"));
     }
 
-    // --- Hata mesaji (ACC-005, ACC-006, ACC-008) ---
 
     public boolean hasErrorMessage() {
         return isDisplayedAfterWait(ERROR_WRAPPER);
     }
 
-    /**
-     * ACC-005 -> "Wrong user name or password. Please try again."
-     * ACC-008 -> "Your account has been locked. Please try again after 15 minutes."
-     */
     public String errorMessage() {
         return getText(ERROR_MESSAGE);
     }
 
-    /** ACC-005: mesajin kirmizi gosterildigi dogrulanir (konum gorsel kriterdir, otomatize edilmez). */
     public String errorMessageColor() {
         return find(ERROR_MESSAGE).getCssValue("color");
     }
 
-    /**
-     * Username alaninin altinda gosterilen validasyon mesaji (zorunlu / maks 50 /
-     * bas-son bosluk). Alan "touched" olmadan mesaj render EDILMEZ, bu yuzden
-     * cagirmadan once alandan cikilmis olmalidir.
-     */
     public String usernameFieldError() {
         return fieldErrorText("username");
     }
 
-    /** Hata mesaji kaybolana kadar bekler (ACC-006). */
     public boolean errorMessageDisappears() {
         try {
             wait.until(AppConditions.absentFromDom(ERROR_WRAPPER));
@@ -136,9 +113,7 @@ public class LoginPage extends BasePage {
         }
     }
 
-    // --- Eylemler ---
 
-    /** Kimlik bilgilerini girer ve Login'e tiklar; sayfa gecisi dogrulanmaz. */
     public LoginPage submitCredentials(String username, String password) {
         enterUsername(username);
         enterPassword(password);
@@ -146,10 +121,6 @@ public class LoginPage extends BasePage {
         return this;
     }
 
-    /**
-     * ACC-004, ACC-009, ACC-010: basarili giris — Customer Search ekranina gecilir.
-     * Yanlis sayfaya gidilirse hata derleme degil, {@code PageNotLoadedException} ile ortaya cikar.
-     */
     public SearchCustomerPage loginAs(String username, String password) {
         submitCredentials(username, password);
         SearchCustomerPage searchPage = new SearchCustomerPage(driver);
@@ -157,7 +128,6 @@ public class LoginPage extends BasePage {
         return searchPage;
     }
 
-    /** ACC-007: hatali giris — Login ekraninda kalinir. */
     public LoginPage loginExpectingFailure(String username, String password) {
         submitCredentials(username, password);
         return this;
