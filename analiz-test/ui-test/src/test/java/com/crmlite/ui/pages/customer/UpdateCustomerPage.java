@@ -31,7 +31,7 @@ public class UpdateCustomerPage extends BasePage {
     private static final By MOTHER_NAME = By.id("motherName");
     private static final By NATIONAL_ID = By.id("nationalId");
 
-    private static final By SAVE_BUTTON = By.cssSelector(".update-actions .save-button");
+    private static final By SAVE_BUTTON = By.cssSelector(".update-actions .app-button-primary");
     private static final By PREVIOUS_BUTTON = By.cssSelector(".update-actions .previous-button");
     private static final By SAVE_ERROR = By.cssSelector(".update-card .identity-error-banner");
     private static final By STATUS_MESSAGE = By.cssSelector(".update-customer-page .status-message");

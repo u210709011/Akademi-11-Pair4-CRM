@@ -40,7 +40,7 @@ public class ReviewStepPage extends BasePage {
     private static final By SUCCESS_TITLE = By.cssSelector(".order-success-title");
     private static final By SUCCESS_SUBTITLE = By.cssSelector(".order-success-subtitle");
     private static final By GO_TO_BILLING_ACCOUNT =
-            By.cssSelector(".order-success-actions .cancel-button");
+            By.cssSelector(".order-success-actions .app-button-secondary");
 
     public ReviewStepPage(WebDriver driver) {
         super(driver);
@@ -154,7 +154,7 @@ public class ReviewStepPage extends BasePage {
 
     /** ACC-002: onay diyalogundaki "Yes, Submit Order" butonuna basar. */
     public ReviewStepPage confirmSubmit() {
-        click(By.cssSelector(".modal-actions .delete-confirm-button"));
+        click(By.cssSelector(".modal-actions .app-button-danger"));
         return this;
     }
 

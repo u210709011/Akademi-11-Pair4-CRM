@@ -56,13 +56,13 @@ public class ConfigurationStepPage extends BasePage {
     private static final By NEW_ADDRESS_STREET = By.id("new-addr-street");
     private static final By NEW_ADDRESS_HOUSE_NO = By.id("new-addr-houseNumber");
     private static final By NEW_ADDRESS_DESC = By.id("new-addr-description");
-    private static final By MODAL_SAVE_BUTTON = By.cssSelector(".modal-actions .save-button");
-    private static final By MODAL_CANCEL_BUTTON = By.cssSelector(".modal-actions .cancel-button");
+    private static final By MODAL_SAVE_BUTTON = By.cssSelector(".modal-actions .app-button-primary");
+    private static final By MODAL_CANCEL_BUTTON = By.cssSelector(".modal-actions .app-button-secondary");
     private static final By MODAL_CARD = By.cssSelector(".modal-card");
 
     // --- Vazgecme onayi (ACC-005) ---
     private static final By DISCARD_MESSAGE = By.cssSelector(".delete-confirm-message");
-    private static final By DISCARD_CONFIRM_BUTTON = By.cssSelector(".modal-actions .delete-confirm-button");
+    private static final By DISCARD_CONFIRM_BUTTON = By.cssSelector(".modal-actions .app-button-danger");
 
     private static final By SUCCESS_TOAST = By.cssSelector(".success-toast-message");
 

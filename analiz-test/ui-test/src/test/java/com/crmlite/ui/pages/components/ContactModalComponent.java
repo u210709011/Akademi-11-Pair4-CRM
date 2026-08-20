@@ -8,7 +8,7 @@ import org.openqa.selenium.WebDriver;
  * FR-006 — "Edit Contact Information" modal'i (musteri detayi > Contact Medium sekmesi).
  *
  * <p>Adres modal'i ile ayni kabuk yapisini paylasir ({@code .modal-backdrop .modal-card},
- * {@code .modal-actions .save-button}) ama alanlari farklidir; bu yuzden ayri bir bilesen.
+ * {@code .modal-actions .app-button-primary}) ama alanlari farklidir; bu yuzden ayri bir bilesen.
  * Alan id'leri tek bir ekranda kullanildigi icin {@link AddressModalComponent}'teki gibi
  * bir {@code Variant} ayrimina gerek yoktur.
  *
@@ -23,8 +23,8 @@ public class ContactModalComponent extends BaseComponent {
 
     private static final By TITLE = By.cssSelector(".modal-card .modal-title");
     private static final By CLOSE_BUTTON = By.cssSelector(".modal-card .modal-close");
-    private static final By CANCEL_BUTTON = By.cssSelector(".modal-card .modal-actions .cancel-button");
-    private static final By SAVE_BUTTON = By.cssSelector(".modal-card .modal-actions .save-button");
+    private static final By CANCEL_BUTTON = By.cssSelector(".modal-card .modal-actions .app-button-secondary");
+    private static final By SAVE_BUTTON = By.cssSelector(".modal-card .modal-actions .app-button-primary");
     private static final By SAVE_ERROR = By.cssSelector(".modal-card .address-save-error");
 
     /** Modal'daki alanlar; id'ler {@code detail-customer.component.html} ile birebir. */

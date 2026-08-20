@@ -91,11 +91,11 @@ public class OfferSelectionPage extends BasePage {
     private static final By TOAST_MESSAGE = By.cssSelector(".app-toast .app-toast-message");
 
     // --- FR-014: Cancel akisi (ACC-016) ---
-    // .cancel-button sinifi hem sihirbaz cubugunda hem onay modalinda kullaniliyor;
+    // .app-button-secondary sinifi hem sihirbaz cubugunda hem onay modalinda kullaniliyor;
     // kapsamlanmazsa sessizce yanlis butona tiklanir.
-    private static final By WIZARD_CANCEL_BUTTON = By.cssSelector(".wizard-actions .cancel-button");
+    private static final By WIZARD_CANCEL_BUTTON = By.cssSelector(".wizard-actions .app-button-secondary");
     private static final By CANCEL_CONFIRM_MESSAGE = By.cssSelector(".delete-confirm-message");
-    private static final By CANCEL_CONFIRM_ACCEPT = By.cssSelector(".modal-actions .delete-confirm-button");
+    private static final By CANCEL_CONFIRM_ACCEPT = By.cssSelector(".modal-actions .app-button-danger");
 
     /** Sekmeler, render sirasina gore. */
     public enum Tab {

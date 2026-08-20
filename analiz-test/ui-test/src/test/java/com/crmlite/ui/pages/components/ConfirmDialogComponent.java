@@ -18,8 +18,8 @@ public class ConfirmDialogComponent extends BaseComponent {
     private static final By TITLE = By.cssSelector(".delete-confirm-card .modal-title");
     private static final By MESSAGE = By.cssSelector(".delete-confirm-card .delete-confirm-message");
     private static final By ERROR = By.cssSelector(".delete-confirm-card .address-save-error");
-    private static final By CONFIRM_BUTTON = By.cssSelector(".delete-confirm-card .delete-confirm-button");
-    private static final By CANCEL_BUTTON = By.cssSelector(".delete-confirm-card .modal-actions .cancel-button");
+    private static final By CONFIRM_BUTTON = By.cssSelector(".delete-confirm-card .app-button-danger");
+    private static final By CANCEL_BUTTON = By.cssSelector(".delete-confirm-card .modal-actions .app-button-secondary");
     private static final By CLOSE_BUTTON = By.cssSelector(".delete-confirm-card .modal-close");
 
     public ConfirmDialogComponent(WebDriver driver) {

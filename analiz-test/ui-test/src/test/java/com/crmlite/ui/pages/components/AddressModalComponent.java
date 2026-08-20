@@ -21,8 +21,8 @@ public class AddressModalComponent extends BaseComponent {
 
     private static final By TITLE = By.cssSelector(".modal-card .modal-title");
     private static final By CLOSE_BUTTON = By.cssSelector(".modal-card .modal-close");
-    private static final By CANCEL_BUTTON = By.cssSelector(".modal-card .modal-actions .cancel-button");
-    private static final By SAVE_BUTTON = By.cssSelector(".modal-card .modal-actions .save-button");
+    private static final By CANCEL_BUTTON = By.cssSelector(".modal-card .modal-actions .app-button-secondary");
+    private static final By SAVE_BUTTON = By.cssSelector(".modal-card .modal-actions .app-button-primary");
     private static final By SAVE_ERROR = By.cssSelector(".modal-card .address-save-error");
 
     /** Sihirbazdaki ve detaydaki modal'in alan id'leri farkli oldugu icin. */

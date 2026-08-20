@@ -16,7 +16,7 @@ import org.openqa.selenium.WebDriver;
  * son adimda etiketi "Create" olur.
  *
  * <p><b>Dokuman notu:</b> FR-003 ACC-003 "Previous ile musteri arama ekranina donulur"
- * diyor; uygulamada bu butonun etiketi <b>Cancel</b> ({@code .cancel-button}) ve ayni
+ * diyor; uygulamada bu butonun etiketi <b>Cancel</b> ({@code .app-button-secondary}) ve ayni
  * islevi goruyor (arama ekranina doner, kayit olusturmaz).
  */
 public class CreateCustomerPage extends BasePage {
@@ -29,7 +29,7 @@ public class CreateCustomerPage extends BasePage {
     private static final By TAB_TITLE = By.cssSelector(".tab-content .tab-title");
 
     private static final By NEXT_BUTTON = By.cssSelector(".wizard-actions .next-button");
-    private static final By CANCEL_BUTTON = By.cssSelector(".wizard-actions .cancel-button");
+    private static final By CANCEL_BUTTON = By.cssSelector(".wizard-actions .app-button-secondary");
 
     // 10.08.2026: spinner sinifi .verifying-indicator -> .btn-spinner-wrap olarak degisti
     // (commit 6cce9c1). Bkz. AppConditions.identityVerificationFinished().
