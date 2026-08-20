@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { email, form, FormField, maxLength, pattern, required } from '@angular/forms/signals';
-import { ContactInfo } from '../../../../../core/customer';
-import { I18nService } from '../../../../../core/i18n';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ContactInfo } from '../../../data-access/customer';
 import { CreateCustomerFormStateService } from '../../create-customer.component';
 
 type PhoneFieldName = 'homePhone' | 'mobilePhone' | 'fax';
@@ -16,13 +16,12 @@ const DIGITS_ONLY_ERROR_TIMEOUT_MS = 2000;
 
 @Component({
   selector: 'app-contact-tab',
-  imports: [FormField],
+  imports: [FormField, TranslatePipe],
   templateUrl: './contact-tab.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './contact-tab.component.scss'
 })
 export class ContactTabComponent {
-  protected readonly i18n = inject(I18nService);
   private readonly formState = inject(CreateCustomerFormStateService);
 
   // harf/gecersiz karakter yazilmaya calisildiginda ilgili alanin altinda gecici uyari gostermek icin

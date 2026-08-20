@@ -12,11 +12,11 @@ import {
   CustomerDetailResponse,
   CustomerService,
   IndividualResponse
-} from '../../../core/customer';
-import { I18nService } from '../../../core/i18n';
+} from '../data-access/customer';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../core/lookup';
-import { OrderService } from '../../../core/order';
-import { ProductService } from '../../../core/product';
+import { OrderService } from '../data-access/order';
+import { ProductService } from '../data-access/product';
 import {
   AccountProduct,
   CustomerAccount,
@@ -113,12 +113,12 @@ const EMPTY_CUSTOMER_CONTACT: CustomerContact = {
 
 @Component({
   selector: 'app-detail-customer',
-  imports: [RouterLink, FormField, NgTemplateOutlet],
+  imports: [RouterLink, FormField, NgTemplateOutlet, TranslatePipe],
   templateUrl: './detail-customer.component.html',
   styleUrl: './detail-customer.component.scss',
 })
 export class DetailCustomerComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly customerService = inject(CustomerService);
@@ -304,7 +304,7 @@ export class DetailCustomerComponent {
     // ACC-016: create-customer basarili olusturma sonrasi buraya ?created=1 ile yonlendirir -
     // basari mesaji burada gosterilir (create ekraninda gostermenin bir anlami yok, hemen ayriliyor).
     if (this.route.snapshot.queryParamMap.get('created') === '1') {
-      this.showToast(this.i18n.t('detail.customerCreatedSuccess'));
+      this.showToast(this.translate.instant('detail.customerCreatedSuccess'));
       this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
     }
 
@@ -420,7 +420,7 @@ export class DetailCustomerComponent {
       error: (httpError: HttpErrorResponse) => {
         this.isDeletingCustomer.set(false);
         this.deleteError.set(
-          (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('detail.deleteError')
+          (httpError.error as { message?: string } | null)?.message ?? this.translate.instant('detail.deleteError')
         );
       }
     });
@@ -428,7 +428,7 @@ export class DetailCustomerComponent {
 
   protected genderLabel(genderId: number): string {
     const shrtCode = this.genders().find(gender => gender.gnlTpId === genderId)?.shrtCode;
-    return shrtCode === 'MALE' ? this.i18n.t('create.genderMale') : this.i18n.t('create.genderFemale');
+    return shrtCode === 'MALE' ? this.translate.instant('create.genderMale') : this.translate.instant('create.genderFemale');
   }
 
   protected cityName(cityId: number): string {
@@ -539,7 +539,7 @@ export class DetailCustomerComponent {
       next: () => {
         this.isSavingAccount.set(false);
         this.isCreateAccountModalOpen.set(false);
-        this.showToast(this.i18n.t(editing ? 'detail.updateAccountSuccess' : 'detail.createAccountSuccess'));
+        this.showToast(this.translate.instant(editing ? 'detail.updateAccountSuccess' : 'detail.createAccountSuccess'));
         if (!editing) {
           this.accountsPage.set(0);
         }
@@ -549,7 +549,7 @@ export class DetailCustomerComponent {
         this.isSavingAccount.set(false);
         this.createAccountError.set(
           (httpError.error as { message?: string } | null)?.message ??
-            this.i18n.t(editing ? 'detail.updateAccountError' : 'detail.createAccountError')
+            this.translate.instant(editing ? 'detail.updateAccountError' : 'detail.createAccountError')
         );
       }
     });
@@ -597,14 +597,14 @@ export class DetailCustomerComponent {
       next: () => {
         this.isDeletingAccount.set(false);
         this.accountToDelete.set(null);
-        this.showToast(this.i18n.t('detail.deleteAccountSuccess'));
+        this.showToast(this.translate.instant('detail.deleteAccountSuccess'));
         this.refreshAccounts();
       },
       error: (httpError: HttpErrorResponse) => {
         this.isDeletingAccount.set(false);
         this.accountToDelete.set(null);
         this.cannotDeleteAccountMessage.set(
-          (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('detail.deleteAccountError')
+          (httpError.error as { message?: string } | null)?.message ?? this.translate.instant('detail.deleteAccountError')
         );
       }
     });
@@ -683,7 +683,7 @@ export class DetailCustomerComponent {
   }
 
   protected linkedAccountLabel(addressId: number): string {
-    return this.i18n.t('detail.linkedToBillingAccount').replace('{count}', String(this.linkedAccountCount(addressId)));
+    return this.translate.instant('detail.linkedToBillingAccount', { count: this.linkedAccountCount(addressId) });
   }
 
   protected setAsPrimary(address: AddressResponse): void {
@@ -700,7 +700,7 @@ export class DetailCustomerComponent {
 
     this.customerService.updateAddress(this.custId, address.id, request).subscribe({
       next: () => this.refreshAddresses(),
-      error: () => this.addressActionError.set(this.i18n.t('detail.addressSaveError'))
+      error: () => this.addressActionError.set(this.translate.instant('detail.addressSaveError'))
     });
   }
 
@@ -732,7 +732,7 @@ export class DetailCustomerComponent {
       error: (httpError: HttpErrorResponse) => {
         this.isDeletingAddress.set(false);
         this.deleteAddressError.set(
-          (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('detail.addressSaveError')
+          (httpError.error as { message?: string } | null)?.message ?? this.translate.instant('detail.addressSaveError')
         );
       }
     });
@@ -783,14 +783,14 @@ export class DetailCustomerComponent {
       next: () => {
         this.isSavingAddress.set(false);
         this.isAddressModalOpen.set(false);
-        this.showToast(this.i18n.t(editingId ? 'detail.updateAddressSuccess' : 'detail.addAddressSuccess'));
+        this.showToast(this.translate.instant(editingId ? 'detail.updateAddressSuccess' : 'detail.addAddressSuccess'));
         this.refreshAddresses();
       },
       error: (httpError: HttpErrorResponse) => {
         this.isSavingAddress.set(false);
         this.addressSaveError.set(
           (httpError.error as { message?: string } | null)?.message ??
-            (httpError.status === 409 ? this.i18n.t('detail.maxAddressesReached') : this.i18n.t('detail.addressSaveError'))
+            (httpError.status === 409 ? this.translate.instant('detail.maxAddressesReached') : this.translate.instant('detail.addressSaveError'))
         );
       }
     });
@@ -838,12 +838,12 @@ export class DetailCustomerComponent {
         this.isContactModalOpen.set(false);
         this.contactResponse = response;
         this.contact.set(mapToCustomerContact(response));
-        this.showToast(this.i18n.t('detail.contactSaveSuccess'));
+        this.showToast(this.translate.instant('detail.contactSaveSuccess'));
       },
       error: (httpError: HttpErrorResponse) => {
         this.isSavingContact.set(false);
         this.contactSaveError.set(
-          (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('detail.contactSaveError')
+          (httpError.error as { message?: string } | null)?.message ?? this.translate.instant('detail.contactSaveError')
         );
       }
     });

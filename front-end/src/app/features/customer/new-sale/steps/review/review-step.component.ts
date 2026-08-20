@@ -1,7 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { AddressResponse } from '../../../../../core/customer';
-import { I18nService } from '../../../../../core/i18n';
+import { TranslatePipe } from '@ngx-translate/core';
+import { AddressResponse } from '../../../data-access/customer';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
 import { NewSaleFormStateService } from '../../new-sale.component';
 
@@ -9,13 +9,12 @@ const UNKNOWN = '—';
 
 @Component({
   selector: 'app-review-step',
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, TranslatePipe],
   templateUrl: './review-step.component.html',
   styleUrl: './review-step.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class ReviewStepComponent {
-  protected readonly i18n = inject(I18nService);
   protected readonly formState = inject(NewSaleFormStateService);
   private readonly lookupService = inject(LookupService);
 

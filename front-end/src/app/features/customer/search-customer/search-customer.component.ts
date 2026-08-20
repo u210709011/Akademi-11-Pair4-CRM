@@ -1,8 +1,8 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CustomerSearchCriteria, CustomerSearchResult, CustomerService } from '../../../core/customer';
-import { I18nService } from '../../../core/i18n';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { CustomerSearchCriteria, CustomerSearchResult, CustomerService } from '../data-access/customer';
 
 type DigitFieldName = 'natIdNumber' | 'customerId' | 'accountNumber' | 'gsmNumber' | 'orderNumber';
 type NameFieldName = 'firstName' | 'lastName';
@@ -15,13 +15,13 @@ const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-search-customer',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './search-customer.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './search-customer.component.scss'
 })
 export class SearchCustomerComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly customerService = inject(CustomerService);
   private readonly router = inject(Router);
@@ -39,7 +39,7 @@ export class SearchCustomerComponent {
   protected readonly rangeStart = computed(() => this.totalElements() === 0 ? 0 : this.currentPage() * this.pageSize + 1);
   protected readonly rangeEnd = computed(() => Math.min(this.totalElements(), (this.currentPage() + 1) * this.pageSize));
   protected readonly resultsCountLabel = computed(() =>
-    this.i18n.t('search.resultsCount').replace('{count}', `${this.totalElements()}`)
+    this.translate.instant('search.resultsCount', { count: this.totalElements() })
   );
   protected readonly rangeLabel = computed(() => `${this.rangeStart()}-${this.rangeEnd()} of ${this.totalElements()}`);
   protected readonly pageNumbers = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i));

@@ -1,9 +1,9 @@
 // customer-service is the single front door for customer detail data - it internally proxies
 // /individual to party-service and /contact to contact-info-service, so this file only
-// talks to core/customer types. This mapper just reshapes those responses into the flat
+// talks to data-access/customer types. This mapper just reshapes those responses into the flat
 // view-model the detail page renders, keeping that transformation out of the component.
-import { AddressResponse, ContactInfo, CustomerDetailResponse, IndividualResponse } from '../../../core/customer';
-import { CustOrdItemResponse } from '../../../core/order';
+import { AddressResponse, ContactInfo, CustomerDetailResponse, IndividualResponse } from '../data-access/customer';
+import { CustOrdItemResponse } from '../data-access/order';
 
 const UNKNOWN = '—';
 

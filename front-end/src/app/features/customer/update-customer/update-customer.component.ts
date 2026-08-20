@@ -5,8 +5,8 @@ import { form, FormField, maxDate, maxLength, minDate, minLength, required } fro
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { IndividualInfo, CustomerService } from '../../../core/customer';
-import { I18nService } from '../../../core/i18n';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { IndividualInfo, CustomerService } from '../data-access/customer';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../core/lookup';
 import { DatePickerHeaderComponent } from '../../../shared/components/date-picker-header/date-picker-header.component';
 
@@ -44,13 +44,13 @@ function parseBirthDate(value: string): Date {
 
 @Component({
   selector: 'app-update-customer',
-  imports: [FormField, RouterLink, MatDatepickerModule, MatFormFieldModule, MatInputModule],
+  imports: [FormField, RouterLink, MatDatepickerModule, MatFormFieldModule, MatInputModule, TranslatePipe],
   templateUrl: './update-customer.component.html',
   styleUrl: './update-customer.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class UpdateCustomerComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly customerService = inject(CustomerService);
@@ -142,7 +142,7 @@ export class UpdateCustomerComponent {
 
   // bkz. demographic-tab.component.ts'teki ayni yorum - id degil shrtCode'a gore secilir.
   protected genderLabel(shrtCode: string): string {
-    return shrtCode === 'MALE' ? this.i18n.t('create.genderMale') : this.i18n.t('create.genderFemale');
+    return shrtCode === 'MALE' ? this.translate.instant('create.genderMale') : this.translate.instant('create.genderFemale');
   }
 
   private sanitizeLetterField(field: LetterFieldName): void {
@@ -194,10 +194,10 @@ export class UpdateCustomerComponent {
         this.saveError.set(
           (httpError.error as { message?: string } | null)?.message ??
             (httpError.status === 409
-              ? this.i18n.t('create.identityDuplicate')
+              ? this.translate.instant('create.identityDuplicate')
               : httpError.status === 422
-                ? this.i18n.t('create.identityError')
-                : this.i18n.t('update.error'))
+                ? this.translate.instant('create.identityError')
+                : this.translate.instant('update.error'))
         );
       }
     });

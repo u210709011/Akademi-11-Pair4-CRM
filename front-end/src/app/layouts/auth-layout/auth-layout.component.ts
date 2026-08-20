@@ -1,16 +1,19 @@
 import { Component, ElementRef, HostListener, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { I18nService, Lang } from '../../core/i18n';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { persistLang } from '../../core/i18n/lang-storage';
+
+type Lang = 'en' | 'tr';
 
 @Component({
   selector: 'app-auth-layout',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, TranslatePipe],
   templateUrl: './auth-layout.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './auth-layout.component.scss'
 })
 export class AuthLayoutComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
 
   protected readonly langMenuOpen = signal(false);
@@ -25,7 +28,8 @@ export class AuthLayoutComponent {
   }
 
   protected selectLang(lang: Lang): void {
-    this.i18n.setLang(lang);
+    this.translate.use(lang);
+    persistLang(lang);
     this.langMenuOpen.set(false);
   }
 

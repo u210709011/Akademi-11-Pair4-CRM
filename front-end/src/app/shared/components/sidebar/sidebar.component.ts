@@ -1,7 +1,7 @@
 import { Component, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth';
-import { I18nService } from '../../../core/i18n';
 
 type SidebarItem = 'b2c' | 'b2b' | 'approvals';
 
@@ -13,13 +13,12 @@ const ROUTE_BY_ITEM: Record<SidebarItem, string> = {
 
 @Component({
   selector: 'app-sidebar',
-  imports: [],
+  imports: [TranslatePipe],
   templateUrl: './sidebar.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './sidebar.component.scss'
 })
 export class SidebarComponent {
-    protected readonly i18n = inject(I18nService);
     private readonly router = inject(Router);
     private readonly authService = inject(AuthService);
 

@@ -2,8 +2,8 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
-import { I18nService } from '../../../../../core/i18n';
-import { OrderService } from '../../../../../core/order';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { OrderService } from '../../../data-access/order';
 import {
   Campaign,
   CampaignOffering,
@@ -12,7 +12,7 @@ import {
   ProductOffering,
   ProductOfferingRelation,
   ProductService
-} from '../../../../../core/product';
+} from '../../../data-access/product';
 import { BasketLine, NewSaleFormStateService } from '../../new-sale.component';
 
 type OfferTab = 'catalog' | 'campaigns';
@@ -55,13 +55,13 @@ interface CampaignResultRow {
 // bu yuzden tum listeler bir kere cekilip Search butonuna basildiginda burada filtreleniyor.
 @Component({
   selector: 'app-offer-selection',
-  imports: [ReactiveFormsModule, DecimalPipe],
+  imports: [ReactiveFormsModule, DecimalPipe, TranslatePipe],
   templateUrl: './offer-selection.component.html',
   styleUrl: './offer-selection.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class OfferSelectionComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly productService = inject(ProductService);
   private readonly orderService = inject(OrderService);
@@ -440,7 +440,7 @@ export class OfferSelectionComponent {
 
   protected addOfferToBasket(offer: CatalogResultRow): void {
     if (this.conflictingBasketLine(offer.productOfferingId)) {
-      this.showToast(this.i18n.t('newSale.categoryConflictError'), 'error');
+      this.showToast(this.translate.instant('newSale.categoryConflictError'), 'error');
       return;
     }
 
@@ -464,7 +464,7 @@ export class OfferSelectionComponent {
   protected addCampaignToBasket(campaign: CampaignResultRow): void {
     const hasConflict = campaign.offerings.some(offering => this.conflictingBasketLine(offering.productOfferingId));
     if (hasConflict) {
-      this.showToast(this.i18n.t('newSale.categoryConflictError'), 'error');
+      this.showToast(this.translate.instant('newSale.categoryConflictError'), 'error');
       return;
     }
 
@@ -489,12 +489,9 @@ export class OfferSelectionComponent {
 
   private toastMessageFor(name: string, requiredCount: number): string {
     if (requiredCount === 0) {
-      return this.i18n.t('newSale.addedToBasket').replace('{name}', name);
+      return this.translate.instant('newSale.addedToBasket', { name });
     }
-    return this.i18n
-      .t('newSale.addedToBasketWithRequired')
-      .replace('{name}', name)
-      .replace('{count}', String(requiredCount));
+    return this.translate.instant('newSale.addedToBasketWithRequired', { name, count: requiredCount });
   }
 
   protected removeFromBasket(prodOfrId: number): void {

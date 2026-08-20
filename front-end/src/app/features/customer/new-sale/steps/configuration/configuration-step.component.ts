@@ -1,10 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
-import { AddressEditRequest, AddressResponse, CustomerService } from '../../../../../core/customer';
-import { I18nService } from '../../../../../core/i18n';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { AddressEditRequest, AddressResponse, CustomerService } from '../../../data-access/customer';
 import { CharacteristicValue, GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
-import { ProductService } from '../../../../../core/product';
+import { ProductService } from '../../../data-access/product';
 import { BasketLine, NewSaleFormStateService } from '../../new-sale.component';
 
 const UNKNOWN = '—';
@@ -36,13 +36,13 @@ interface CharacteristicField {
 
 @Component({
   selector: 'app-configuration-step',
-  imports: [FormField],
+  imports: [FormField, TranslatePipe],
   templateUrl: './configuration-step.component.html',
   styleUrl: './configuration-step.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class ConfigurationStepComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly customerService = inject(CustomerService);
   private readonly lookupService = inject(LookupService);
   private readonly productService = inject(ProductService);
@@ -258,13 +258,13 @@ export class ConfigurationStepComponent {
         this.formState.addresses.update(addresses => [...addresses, address]);
         this.formState.selectedAddressId.set(address.id);
         this.persistAddressToBillingAccount(address.id);
-        this.showToast(this.i18n.t('detail.addAddressSuccess'));
+        this.showToast(this.translate.instant('detail.addAddressSuccess'));
       },
       error: (httpError: HttpErrorResponse) => {
         this.isSavingAddress.set(false);
         this.addressSaveError.set(
           (httpError.error as { message?: string } | null)?.message ??
-            (httpError.status === 409 ? this.i18n.t('detail.maxAddressesReached') : this.i18n.t('detail.addressSaveError'))
+            (httpError.status === 409 ? this.translate.instant('detail.maxAddressesReached') : this.translate.instant('detail.addressSaveError'))
         );
       }
     });

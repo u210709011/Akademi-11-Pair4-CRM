@@ -2,11 +2,11 @@ import { NgComponentOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, Injectable, Type, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { BasketItemRequest, ItemCharValsRequest, OrderConfigurationRequest, OrderItemSummaryResponse, OrderService } from '../../../core/order';
-import { AddressResponse, CustomerService } from '../../../core/customer';
-import { I18nService } from '../../../core/i18n';
+import { BasketItemRequest, ItemCharValsRequest, OrderConfigurationRequest, OrderItemSummaryResponse, OrderService } from '../data-access/order';
+import { AddressResponse, CustomerService } from '../data-access/customer';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { LookupService } from '../../../core/lookup';
-import { ProductOfferingCharUse } from '../../../core/product';
+import { ProductOfferingCharUse } from '../data-access/product';
 import { ConfigurationStepComponent } from './steps/configuration/configuration-step.component';
 import { OfferSelectionComponent } from './steps/offer-selection/offer-selection.component';
 import { ReviewStepComponent } from './steps/review/review-step.component';
@@ -276,14 +276,14 @@ export class NewSaleFormStateService {
 
 @Component({
   selector: 'app-new-sale',
-  imports: [NgComponentOutlet, RouterLink],
+  imports: [NgComponentOutlet, RouterLink, TranslatePipe],
   templateUrl: './new-sale.component.html',
   styleUrl: './new-sale.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
   providers: [NewSaleFormStateService]
 })
 export class NewSaleComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly customerService = inject(CustomerService);
@@ -335,7 +335,7 @@ export class NewSaleComponent {
   );
 
   protected readonly nextButtonLabel = computed(() =>
-    this.activeStep() === 'review' ? this.i18n.t('newSale.submitBtn') : this.i18n.t('newSale.nextBtn')
+    this.activeStep() === 'review' ? this.translate.instant('newSale.submitBtn') : this.translate.instant('newSale.nextBtn')
   );
 
   constructor() {
@@ -486,7 +486,7 @@ export class NewSaleComponent {
   }
 
   private extractErrorMessage(httpError: HttpErrorResponse): string {
-    return (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('newSale.basketValidationError');
+    return (httpError.error as { message?: string } | null)?.message ?? this.translate.instant('newSale.basketValidationError');
   }
 
   private advanceStep(): void {

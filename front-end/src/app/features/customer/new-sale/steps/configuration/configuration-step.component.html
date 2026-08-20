@@ -5,7 +5,7 @@
             <path d="m8 12 3 3 5-6" />
         </svg>
         <span class="success-toast-message">{{ message }}</span>
-        <button type="button" class="success-toast-close" [attr.aria-label]="i18n.t('detail.dismiss')" (click)="dismissToast()">
+        <button type="button" class="success-toast-close" [attr.aria-label]="'detail.dismiss' | translate" (click)="dismissToast()">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
     </div>
@@ -47,16 +47,16 @@
                 @if (isConfigured(line)) {
                     <svg class="config-status-check" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m8 12 3 3 5-6" /></svg>
                 }
-                {{ isConfigured(line) ? i18n.t('newSale.configured') : i18n.t('newSale.notConfigured') }}
+                {{ (isConfigured(line) ? 'newSale.configured' : 'newSale.notConfigured') | translate }}
             </span>
-            <button type="button" class="config-collapse-toggle" (click)="toggleCollapsed(line.prodOfrId)" [attr.aria-label]="i18n.t('newSale.toggleConfiguration')">
+            <button type="button" class="config-collapse-toggle" (click)="toggleCollapsed(line.prodOfrId)" [attr.aria-label]="'newSale.toggleConfiguration' | translate">
                 <svg class="config-collapse-chevron" [class.collapsed]="isCollapsed(line.prodOfrId)" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
             </button>
         </div>
 
         @if (!isCollapsed(line.prodOfrId)) {
             @if (fieldsFor(line.prodOfrId).length === 0) {
-                <p class="config-product-note">{{ i18n.t('newSale.configurationFieldsPending') }}</p>
+                <p class="config-product-note">{{ 'newSale.configurationFieldsPending' | translate }}</p>
             } @else {
                 <div class="config-fields-grid">
                     @for (field of fieldsFor(line.prodOfrId); track field.key) {
@@ -74,7 +74,7 @@
                                         [value]="fieldValue(line.prodOfrId, field.key)"
                                         (change)="setFieldValue(line.prodOfrId, field.key, $any($event.target).value); checkAutoCollapse(line.prodOfrId)"
                                     >
-                                        <option value="">{{ i18n.t('create.selectPlaceholder') }}</option>
+                                        <option value="">{{ 'create.selectPlaceholder' | translate }}</option>
                                         @for (option of field.options; track option.value) {
                                             <option [value]="option.value">{{ option.label }}</option>
                                         }
@@ -105,7 +105,7 @@
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
         </svg>
-        <h3>{{ i18n.t('newSale.serviceAddress') }}</h3>
+        <h3>{{ 'newSale.serviceAddress' | translate }}</h3>
     </div>
 
     <div class="config-address-body">
@@ -115,12 +115,12 @@
                 <span class="config-address-value">{{ addressLine(address) }}</span>
             </div>
         } @else {
-            <span class="config-address-empty">{{ i18n.t('newSale.noAddressSelected') }}</span>
+            <span class="config-address-empty">{{ 'newSale.noAddressSelected' | translate }}</span>
         }
 
         <div class="config-address-actions">
-            <button type="button" class="secondary-button" (click)="openChangeAddressModal()">{{ i18n.t('newSale.changeAddress') }}</button>
-            <button type="button" class="secondary-button" (click)="openAddAddressModal()">{{ i18n.t('newSale.addNewAddress') }}</button>
+            <button type="button" class="secondary-button" (click)="openChangeAddressModal()">{{ 'newSale.changeAddress' | translate }}</button>
+            <button type="button" class="secondary-button" (click)="openAddAddressModal()">{{ 'newSale.addNewAddress' | translate }}</button>
         </div>
     </div>
 </div>
@@ -131,7 +131,7 @@
     <div class="modal-backdrop" (click)="closeChangeAddressModal()">
         <div class="modal-card" (click)="$event.stopPropagation()">
             <div class="modal-header">
-                <h3 class="modal-title">{{ i18n.t('newSale.changeAddress') }}</h3>
+                <h3 class="modal-title">{{ 'newSale.changeAddress' | translate }}</h3>
                 <button type="button" class="modal-close" (click)="closeChangeAddressModal()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -163,7 +163,7 @@
     <div class="modal-backdrop" (click)="promptDiscardAddress()">
         <div class="modal-card" (click)="$event.stopPropagation()">
             <div class="modal-header">
-                <h3 class="modal-title">{{ i18n.t('create.addNewAddress') }}</h3>
+                <h3 class="modal-title">{{ 'create.addNewAddress' | translate }}</h3>
                 <button type="button" class="modal-close" (click)="promptDiscardAddress()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -176,10 +176,10 @@
                 }
 
                 <div class="modal-field">
-                    <label for="new-addr-city">{{ i18n.t('create.city') }} <span class="required">*</span></label>
+                    <label for="new-addr-city">{{ 'create.city' | translate }} <span class="required">*</span></label>
                     <div class="select-wrapper">
                         <select id="new-addr-city" [formField]="addressForm.city">
-                            <option value="" disabled selected>{{ i18n.t('create.selectCity') }}</option>
+                            <option value="" disabled selected>{{ 'create.selectCity' | translate }}</option>
                             @for (city of cities(); track city.gnlTpId) {
                                 <option [value]="city.gnlTpId">{{ city.name }}</option>
                             }
@@ -187,46 +187,46 @@
                         <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
                     </div>
                     @if (addressForm.city().invalid() && addressForm.city().touched()) {
-                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                     }
                 </div>
 
                 <div class="modal-field">
-                    <label for="new-addr-street">{{ i18n.t('create.street') }} <span class="required">*</span></label>
-                    <input id="new-addr-street" type="text" [formField]="addressForm.street" [placeholder]="i18n.t('create.streetPlaceholder')">
+                    <label for="new-addr-street">{{ 'create.street' | translate }} <span class="required">*</span></label>
+                    <input id="new-addr-street" type="text" [formField]="addressForm.street" [placeholder]="'create.streetPlaceholder' | translate">
                     @if (addressForm.street().invalid() && addressForm.street().touched()) {
-                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                     }
                 </div>
 
                 <div class="modal-field">
-                    <label for="new-addr-houseNumber">{{ i18n.t('create.houseNumber') }} <span class="required">*</span></label>
-                    <input id="new-addr-houseNumber" type="text" [formField]="addressForm.houseNumber" [placeholder]="i18n.t('create.houseNumberPlaceholder')">
+                    <label for="new-addr-houseNumber">{{ 'create.houseNumber' | translate }} <span class="required">*</span></label>
+                    <input id="new-addr-houseNumber" type="text" [formField]="addressForm.houseNumber" [placeholder]="'create.houseNumberPlaceholder' | translate">
                     @if (addressForm.houseNumber().invalid() && addressForm.houseNumber().touched()) {
-                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                     }
                 </div>
 
                 <div class="modal-field">
-                    <label for="new-addr-description">{{ i18n.t('create.addressDescription') }} <span class="required">*</span></label>
-                    <input id="new-addr-description" type="text" [formField]="addressForm.description" [placeholder]="i18n.t('create.addressDescriptionPlaceholder')">
+                    <label for="new-addr-description">{{ 'create.addressDescription' | translate }} <span class="required">*</span></label>
+                    <input id="new-addr-description" type="text" [formField]="addressForm.description" [placeholder]="'create.addressDescriptionPlaceholder' | translate">
                     @if (addressForm.description().invalid() && addressForm.description().touched()) {
-                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                     }
                 </div>
 
             </form>
 
             <div class="modal-actions">
-                <button type="button" class="cancel-button" (click)="promptDiscardAddress()">{{ i18n.t('create.cancelBtn') }}</button>
+                <button type="button" class="cancel-button" (click)="promptDiscardAddress()">{{ 'create.cancelBtn' | translate }}</button>
                 <button type="button" class="save-button" [disabled]="addressForm().invalid() || isSavingAddress()" (click)="saveNewAddress()">
                     @if (isSavingAddress()) {
                         <span class="btn-spinner-wrap">
                             <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
-                            {{ i18n.t('create.saveBtn') }}
+                            {{ 'create.saveBtn' | translate }}
                         </span>
                     } @else {
-                        {{ i18n.t('create.saveBtn') }}
+                        {{ 'create.saveBtn' | translate }}
                     }
                 </button>
             </div>
@@ -240,7 +240,7 @@
         <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
 
             <div class="modal-header">
-                <h3 class="modal-title">{{ i18n.t('detail.discardChangesTitle') }}</h3>
+                <h3 class="modal-title">{{ 'detail.discardChangesTitle' | translate }}</h3>
                 <button type="button" class="modal-close" (click)="keepEditingAddress()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -254,12 +254,12 @@
                         <path d="M12 17h.01" />
                     </svg>
                 </span>
-                <p class="delete-confirm-message">{{ i18n.t('detail.discardChangesMessage') }}</p>
+                <p class="delete-confirm-message">{{ 'detail.discardChangesMessage' | translate }}</p>
             </div>
 
             <div class="modal-actions">
-                <button type="button" class="cancel-button" (click)="keepEditingAddress()">{{ i18n.t('detail.discardChangesCancelBtn') }}</button>
-                <button type="button" class="delete-confirm-button" (click)="discardAddress()">{{ i18n.t('detail.discardChangesConfirmBtn') }}</button>
+                <button type="button" class="cancel-button" (click)="keepEditingAddress()">{{ 'detail.discardChangesCancelBtn' | translate }}</button>
+                <button type="button" class="delete-confirm-button" (click)="discardAddress()">{{ 'detail.discardChangesConfirmBtn' | translate }}</button>
             </div>
 
         </div>
