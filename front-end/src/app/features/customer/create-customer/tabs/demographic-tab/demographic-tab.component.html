@@ -5,56 +5,56 @@
     }
 
     <div class="form-field">
-        <label for="firstName">{{ i18n.t('create.firstName') }} <span class="required">*</span></label>
+        <label for="firstName">{{ 'create.firstName' | translate }} <span class="required">*</span></label>
         <input
             id="firstName"
             type="text"
             [formField]="demographicForm.firstName"
-            [placeholder]="i18n.t('create.firstName')"
+            [placeholder]="'create.firstName' | translate"
             (keydown)="blockDigitKey($event, 'firstName')"
             (blur)="setLetterFieldError('firstName', false)"
         >
         @if (letterFieldErrors().firstName) {
-            <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+            <span class="field-error">{{ 'create.nameError' | translate }}</span>
         } @else if (demographicForm.firstName().invalid() && demographicForm.firstName().touched()) {
-            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+            <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
         }
     </div>
 
     <div class="form-field">
-        <label for="middleName">{{ i18n.t('create.middleName') }}</label>
+        <label for="middleName">{{ 'create.middleName' | translate }}</label>
         <input
             id="middleName"
             type="text"
             [formField]="demographicForm.middleName"
-            [placeholder]="i18n.t('create.middleName')"
+            [placeholder]="'create.middleName' | translate"
             (keydown)="blockDigitKey($event, 'middleName')"
             (blur)="setLetterFieldError('middleName', false)"
         >
         @if (letterFieldErrors().middleName) {
-            <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+            <span class="field-error">{{ 'create.nameError' | translate }}</span>
         }
     </div>
 
     <div class="form-field">
-        <label for="lastName">{{ i18n.t('create.lastName') }} <span class="required">*</span></label>
+        <label for="lastName">{{ 'create.lastName' | translate }} <span class="required">*</span></label>
         <input
             id="lastName"
             type="text"
             [formField]="demographicForm.lastName"
-            [placeholder]="i18n.t('create.lastName')"
+            [placeholder]="'create.lastName' | translate"
             (keydown)="blockDigitKey($event, 'lastName')"
             (blur)="setLetterFieldError('lastName', false)"
         >
         @if (letterFieldErrors().lastName) {
-            <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+            <span class="field-error">{{ 'create.nameError' | translate }}</span>
         } @else if (demographicForm.lastName().invalid() && demographicForm.lastName().touched()) {
-            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+            <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
         }
     </div>
 
     <div class="form-field">
-        <label for="birthDate">{{ i18n.t('create.birthDate') }} <span class="required">*</span></label>
+        <label for="birthDate">{{ 'create.birthDate' | translate }} <span class="required">*</span></label>
         <mat-form-field class="date-field" appearance="outline" subscriptSizing="dynamic">
             <input
                 matInput
@@ -75,70 +75,70 @@
             ></mat-datepicker>
         </mat-form-field>
         @if (demographicForm.birthDate().invalid() && demographicForm.birthDate().touched()) {
-            <span class="field-error">{{ demographicModel().birthDate ? i18n.t('create.birthDateError') : i18n.t('create.fieldRequired') }}</span>
+            <span class="field-error">{{ (demographicModel().birthDate ? 'create.birthDateError' : 'create.fieldRequired') | translate }}</span>
         }
     </div>
 
     <div class="form-field">
-        <label for="gender">{{ i18n.t('create.gender') }} <span class="required">*</span></label>
+        <label for="gender">{{ 'create.gender' | translate }} <span class="required">*</span></label>
         <select id="gender" [formField]="demographicForm.gender">
-            <option value="" disabled selected>{{ i18n.t('create.selectPlaceholder') }}</option>
+            <option value="" disabled selected>{{ 'create.selectPlaceholder' | translate }}</option>
             @for (gender of genders(); track gender.gnlTpId) {
                 <option [value]="gender.gnlTpId">{{ genderLabel(gender.shrtCode) }}</option>
             }
         </select>
         @if (demographicForm.gender().invalid() && demographicForm.gender().touched()) {
-            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+            <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
         }
     </div>
 
     <div class="form-field">
-        <label for="fatherName">{{ i18n.t('create.fatherName') }}</label>
+        <label for="fatherName">{{ 'create.fatherName' | translate }}</label>
         <input
             id="fatherName"
             type="text"
             [formField]="demographicForm.fatherName"
-            [placeholder]="i18n.t('create.fatherName')"
+            [placeholder]="'create.fatherName' | translate"
             (keydown)="blockDigitKey($event, 'fatherName')"
             (blur)="setLetterFieldError('fatherName', false)"
         >
         @if (letterFieldErrors().fatherName) {
-            <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+            <span class="field-error">{{ 'create.nameError' | translate }}</span>
         }
     </div>
 
     <div class="form-field">
-        <label for="motherName">{{ i18n.t('create.motherName') }}</label>
+        <label for="motherName">{{ 'create.motherName' | translate }}</label>
         <input
             id="motherName"
             type="text"
             [formField]="demographicForm.motherName"
-            [placeholder]="i18n.t('create.motherName')"
+            [placeholder]="'create.motherName' | translate"
             (keydown)="blockDigitKey($event, 'motherName')"
             (blur)="setLetterFieldError('motherName', false)"
         >
         @if (letterFieldErrors().motherName) {
-            <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+            <span class="field-error">{{ 'create.nameError' | translate }}</span>
         }
     </div>
 
     <div class="form-field">
-        <label for="nationalId">{{ i18n.t('create.nationalId') }} <span class="required">*</span></label>
+        <label for="nationalId">{{ 'create.nationalId' | translate }} <span class="required">*</span></label>
         <input
             id="nationalId"
             type="text"
             inputmode="numeric"
             [formField]="demographicForm.nationalId"
-            [placeholder]="i18n.t('create.nationalId')"
+            [placeholder]="'create.nationalId' | translate"
             (keydown)="blockNonDigitKey($event)"
             (blur)="nationalIdError.set(false)"
         >
         @if (nationalIdError()) {
-            <span class="field-error">{{ i18n.t('create.nationalIdError') }}</span>
+            <span class="field-error">{{ 'create.nationalIdError' | translate }}</span>
         } @else if (demographicForm.nationalId().touched() && demographicForm.nationalId().value().length > 0 && demographicForm.nationalId().value().length < 11) {
-            <span class="field-error">{{ i18n.t('create.nationalIdError') }}</span>
+            <span class="field-error">{{ 'create.nationalIdError' | translate }}</span>
         } @else if (demographicForm.nationalId().invalid() && demographicForm.nationalId().touched()) {
-            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+            <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
         }
     </div>
 

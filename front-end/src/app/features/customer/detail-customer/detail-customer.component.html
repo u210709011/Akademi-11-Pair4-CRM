@@ -5,7 +5,7 @@
             <path d="m8 12 3 3 5-6" />
         </svg>
         <span class="success-toast-message">{{ message }}</span>
-        <button type="button" class="success-toast-close" [attr.aria-label]="i18n.t('detail.dismiss')" (click)="dismissToast()">
+        <button type="button" class="success-toast-close" [attr.aria-label]="'detail.dismiss' | translate" (click)="dismissToast()">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
     </div>
@@ -24,7 +24,7 @@
         <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M9 6l6 6-6 6" />
         </svg>
-        <a class="breadcrumb-link" routerLink="/search-customer">{{ i18n.t('search.searchCustomer') }}</a>
+        <a class="breadcrumb-link" routerLink="/search-customer">{{ 'search.searchCustomer' | translate }}</a>
         <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M9 6l6 6-6 6" />
         </svg>
@@ -33,47 +33,47 @@
 
 
     @if (isLoading()) {
-        <p class="detail-status-message">{{ i18n.t('detail.loading') }}</p>
+        <p class="detail-status-message">{{ 'detail.loading' | translate }}</p>
     } @else if (loadError()) {
-        <p class="detail-status-message">{{ i18n.t('detail.loadError') }}</p>
+        <p class="detail-status-message">{{ 'detail.loadError' | translate }}</p>
     } @else {
 
     <div class="customer-title">
         <button type="button" class="back-to-search-button" (click)="backToSearch()">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
-            {{ i18n.t('detail.backToSearch') }}
+            {{ 'detail.backToSearch' | translate }}
         </button>
 
         <h1 class="customer-name">{{ customer().fullName }}</h1>
-        <span class="customer-badge">{{ i18n.t('detail.customerBadge') }}</span>
+        <span class="customer-badge">{{ 'detail.customerBadge' | translate }}</span>
     </div>
 
     <div class="customer-title-detail">
         <div class="summary-stat">
-            <span class="stat-label">{{ i18n.t('detail.customerId') }}</span>
+            <span class="stat-label">{{ 'detail.customerId' | translate }}</span>
             <span class="stat-value">{{ customer().customerId }}</span>
         </div>
 
         <div class="summary-stat">
-            <span class="stat-label">{{ i18n.t('detail.accounts') }}</span>
+            <span class="stat-label">{{ 'detail.accounts' | translate }}</span>
             <button type="button" class="stat-value stat-value-link" (click)="selectTab('accounts')">{{ customer().accountsCount }}</button>
         </div>
 
         <div class="summary-stat">
-            <span class="stat-label">{{ i18n.t('detail.accountStatus') }}</span>
+            <span class="stat-label">{{ 'detail.accountStatus' | translate }}</span>
             <span class="status-badge" [class.status-active]="customer().active" [class.status-inactive]="!customer().active">
                 <span class="status-dot"></span>
-                {{ customer().active ? i18n.t('detail.statusActive') : i18n.t('detail.statusInactive') }}
+                {{ customer().active ? ('detail.statusActive' | translate) : ('detail.statusInactive' | translate) }}
             </span>
         </div>
 
         <div class="summary-stat">
-            <span class="stat-label">{{ i18n.t('detail.addresses') }}</span>
+            <span class="stat-label">{{ 'detail.addresses' | translate }}</span>
             <span class="stat-value">{{ customer().addressCount }} / {{ customer().maxAddresses }}</span>
         </div>
 
         <div class="summary-stat">
-            <span class="stat-label">{{ i18n.t('detail.primaryCity') }}</span>
+            <span class="stat-label">{{ 'detail.primaryCity' | translate }}</span>
             <span class="stat-value">{{ customer().primaryCity }}</span>
         </div>
     </div>
@@ -88,7 +88,7 @@
                     [class.active]="tab.key === activeTab()"
                     (click)="selectTab(tab.key)"
                 >
-                    {{ i18n.t(tab.labelKey) }}
+                    {{ tab.labelKey | translate }}
                 </button>
             }
         </div>
@@ -96,7 +96,7 @@
         <div class="detail-tab-content">
             @if (activeTab() === 'information') {
                 <div class="info-panel-header">
-                    <h2 class="info-panel-title">{{ i18n.t('detail.tabInformation') }}</h2>
+                    <h2 class="info-panel-title">{{ 'detail.tabInformation' | translate }}</h2>
                     <div class="info-panel-actions">
                         <button type="button" class="icon-button" aria-label="Edit" (click)="goToUpdate()">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -104,7 +104,7 @@
                                 <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
                             </svg>
                         </button>
-                        <button type="button" class="icon-button icon-button-danger" [attr.aria-label]="i18n.t('detail.deleteCustomer')" (click)="openDeleteConfirm()">
+                        <button type="button" class="icon-button icon-button-danger" [attr.aria-label]="'detail.deleteCustomer' | translate" (click)="openDeleteConfirm()">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M3 6h18" />
                                 <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -118,75 +118,75 @@
 
                 <div class="info-grid">
                     <div class="info-row">
-                        <span class="info-label">{{ i18n.t('create.firstName') }}:</span>
+                        <span class="info-label">{{ 'create.firstName' | translate }}:</span>
                         <span class="info-value">{{ customer().firstName }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">{{ i18n.t('create.middleName') }}:</span>
+                        <span class="info-label">{{ 'create.middleName' | translate }}:</span>
                         <span class="info-value">{{ customer().middleName }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">{{ i18n.t('create.lastName') }}:</span>
+                        <span class="info-label">{{ 'create.lastName' | translate }}:</span>
                         <span class="info-value">{{ customer().lastName }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">{{ i18n.t('create.birthDate') }}:</span>
+                        <span class="info-label">{{ 'create.birthDate' | translate }}:</span>
                         <span class="info-value">{{ customer().dateOfBirth }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">{{ i18n.t('create.gender') }}:</span>
+                        <span class="info-label">{{ 'create.gender' | translate }}:</span>
                         <span class="info-value">{{ genderLabel(customer().genderId) }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">{{ i18n.t('create.fatherName') }}:</span>
+                        <span class="info-label">{{ 'create.fatherName' | translate }}:</span>
                         <span class="info-value">{{ customer().fatherName }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">{{ i18n.t('create.motherName') }}:</span>
+                        <span class="info-label">{{ 'create.motherName' | translate }}:</span>
                         <span class="info-value">{{ customer().motherName }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">{{ i18n.t('create.nationalId') }}:</span>
+                        <span class="info-label">{{ 'create.nationalId' | translate }}:</span>
                         <span class="info-value">{{ customer().nationalId }}</span>
                     </div>
                 </div>
             } @else if (activeTab() === 'accounts') {
                 <div class="info-panel-header">
-                    <h2 class="info-panel-title info-panel-title-dark">{{ i18n.t('detail.tabAccounts') }} ({{ accounts().length }})</h2>
+                    <h2 class="info-panel-title info-panel-title-dark">{{ 'detail.tabAccounts' | translate }} ({{ accounts().length }})</h2>
                     <div class="info-panel-actions">
                         <button type="button" class="add-address-button" (click)="openCreateAccountModal()">
-                            <span class="add-address-icon">+</span> {{ i18n.t('detail.createNewAccount') }}
+                            <span class="add-address-icon">+</span> {{ 'detail.createNewAccount' | translate }}
                         </button>
                     </div>
                 </div>
 
                 <div class="accounts-table-wrapper">
                     @if (accounts().length === 0) {
-                        <p class="account-no-products">{{ i18n.t('detail.noBillingAccounts') }}</p>
+                        <p class="account-no-products">{{ 'detail.noBillingAccounts' | translate }}</p>
                     } @else {
                     <table class="accounts-table">
                         <thead>
                             <tr>
                                 <th class="account-expand-header"></th>
-                                <th>{{ i18n.t('detail.accountStatus') }}</th>
-                                <th>{{ i18n.t('detail.accountNumber') }}</th>
-                                <th>{{ i18n.t('detail.accountName') }}</th>
-                                <th>{{ i18n.t('detail.accountType') }}</th>
-                                <th>{{ i18n.t('detail.action') }}</th>
+                                <th>{{ 'detail.accountStatus' | translate }}</th>
+                                <th>{{ 'detail.accountNumber' | translate }}</th>
+                                <th>{{ 'detail.accountName' | translate }}</th>
+                                <th>{{ 'detail.accountType' | translate }}</th>
+                                <th>{{ 'detail.action' | translate }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             @for (account of pagedAccounts(); track account.id) {
                                 <tr>
                                     <td class="account-expand-cell">
-                                        <button type="button" class="account-expand-toggle" [class.expanded]="expandedAccountId() === account.id" [attr.aria-label]="i18n.t('detail.expandAccount')" (click)="toggleAccountRow(account.id)">
+                                        <button type="button" class="account-expand-toggle" [class.expanded]="expandedAccountId() === account.id" [attr.aria-label]="'detail.expandAccount' | translate" (click)="toggleAccountRow(account.id)">
                                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
                                         </button>
                                     </td>
                                     <td>
                                         <span class="status-badge" [class.status-active]="account.active" [class.status-inactive]="!account.active">
                                             <span class="status-dot"></span>
-                                            {{ account.active ? i18n.t('detail.statusActive') : i18n.t('detail.statusInactive') }}
+                                            {{ account.active ? ('detail.statusActive' | translate) : ('detail.statusInactive' | translate) }}
                                         </span>
                                     </td>
                                     <td class="account-number-cell">{{ account.accountNumber }}</td>
@@ -194,13 +194,13 @@
                                     <td>{{ account.accountType }}</td>
                                     <td>
                                         <div class="account-row-actions">
-                                            <button type="button" class="icon-button" [attr.aria-label]="i18n.t('detail.editAccount')" (click)="openEditAccountModal(account)">
+                                            <button type="button" class="icon-button" [attr.aria-label]="'detail.editAccount' | translate" (click)="openEditAccountModal(account)">
                                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                                     <path d="M12 20h9" />
                                                     <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
                                                 </svg>
                                             </button>
-                                            <button type="button" class="icon-button icon-button-danger" [attr.aria-label]="i18n.t('detail.deleteAccount')" (click)="openDeleteAccountConfirm(account)">
+                                            <button type="button" class="icon-button icon-button-danger" [attr.aria-label]="'detail.deleteAccount' | translate" (click)="openDeleteAccountConfirm(account)">
                                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                                     <path d="M3 6h18" />
                                                     <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -221,25 +221,25 @@
                                                         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
                                                         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                                                     </svg>
-                                                    <span class="service-address-label">{{ i18n.t('detail.serviceAddress') }}</span>
+                                                    <span class="service-address-label">{{ 'detail.serviceAddress' | translate }}</span>
                                                     <span class="service-address-value">{{ serviceAddressLine(account.addressId) }}</span>
                                                     <span class="service-address-note">
                                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-                                                        {{ i18n.t('detail.serviceAddressNote') }}
+                                                        {{ 'detail.serviceAddressNote' | translate }}
                                                     </span>
                                                 </div>
 
                                                 @if (account.products.length === 0) {
-                                                    <p class="account-no-products">{{ i18n.t('detail.noProducts') }}</p>
+                                                    <p class="account-no-products">{{ 'detail.noProducts' | translate }}</p>
                                                 } @else {
                                                     <table class="products-table">
                                                         <thead>
                                                             <tr>
-                                                                <th>{{ i18n.t('detail.productId') }}</th>
-                                                                <th>{{ i18n.t('detail.productName') }}</th>
-                                                                <th>{{ i18n.t('detail.campaignName') }}</th>
-                                                                <th>{{ i18n.t('detail.campaignId') }}</th>
-                                                                <th>{{ i18n.t('detail.action') }}</th>
+                                                                <th>{{ 'detail.productId' | translate }}</th>
+                                                                <th>{{ 'detail.productName' | translate }}</th>
+                                                                <th>{{ 'detail.campaignName' | translate }}</th>
+                                                                <th>{{ 'detail.campaignId' | translate }}</th>
+                                                                <th>{{ 'detail.action' | translate }}</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -250,7 +250,7 @@
                                                                     <td>{{ product.campaignName }}</td>
                                                                     <td>{{ product.campaignId === '—' ? '—' : 'CMP-' + product.campaignNo }}</td>
                                                                     <td>
-                                                                        <button type="button" class="icon-button" [attr.aria-label]="i18n.t('detail.viewProduct')" (click)="openProductDetail(account, product)">
+                                                                        <button type="button" class="icon-button" [attr.aria-label]="'detail.viewProduct' | translate" (click)="openProductDetail(account, product)">
                                                                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                                                                 <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
                                                                                 <circle cx="12" cy="12" r="3" />
@@ -263,7 +263,7 @@
                                                     </table>
                                                 }
 
-                                                <button type="button" class="start-new-sale-button" (click)="startNewSale(account.id)">{{ i18n.t('detail.startNewSale') }}</button>
+                                                <button type="button" class="start-new-sale-button" (click)="startNewSale(account.id)">{{ 'detail.startNewSale' | translate }}</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -282,7 +282,7 @@
                                     class="pagination-arrow"
                                     [disabled]="accountsPage() === 0"
                                     (click)="goToAccountsPage(accountsPage() - 1)"
-                                    [attr.aria-label]="i18n.t('search.previousPage')"
+                                    [attr.aria-label]="'search.previousPage' | translate"
                                 >
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
                                 </button>
@@ -299,7 +299,7 @@
                                     class="pagination-arrow"
                                     [disabled]="accountsPage() >= accountsTotalPages() - 1"
                                     (click)="goToAccountsPage(accountsPage() + 1)"
-                                    [attr.aria-label]="i18n.t('search.nextPage')"
+                                    [attr.aria-label]="'search.nextPage' | translate"
                                 >
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
                                 </button>
@@ -309,10 +309,10 @@
                 </div>
             } @else if (activeTab() === 'address') {
                 <div class="info-panel-header">
-                    <h2 class="info-panel-title info-panel-title-dark">{{ i18n.t('create.myAddresses') }} ({{ addresses().length }}/{{ maxAddresses }})</h2>
+                    <h2 class="info-panel-title info-panel-title-dark">{{ 'create.myAddresses' | translate }} ({{ addresses().length }}/{{ maxAddresses }})</h2>
                     <div class="info-panel-actions">
                         <button type="button" class="add-address-button" (click)="openAddAddressModal()" [disabled]="addresses().length >= maxAddresses">
-                            <span class="add-address-icon">+</span> {{ i18n.t('create.addNewAddress') }}
+                            <span class="add-address-icon">+</span> {{ 'create.addNewAddress' | translate }}
                         </button>
                     </div>
                 </div>
@@ -329,8 +329,8 @@
                                 <circle cx="12" cy="10" r="2.5" />
                             </svg>
                         </span>
-                        <h4 class="address-empty-title">{{ i18n.t('create.noAddressTitle') }}</h4>
-                        <p class="address-empty-description">{{ i18n.t('create.noAddressDescription') }}</p>
+                        <h4 class="address-empty-title">{{ 'create.noAddressTitle' | translate }}</h4>
+                        <p class="address-empty-description">{{ 'create.noAddressDescription' | translate }}</p>
                     </div>
                 } @else {
                     <div class="address-list">
@@ -348,7 +348,7 @@
                                             {{ cityName(address.cityId) }}
                                         </span>
                                         <div class="address-card-menu">
-                                            <button type="button" class="menu-trigger" [attr.aria-label]="i18n.t('detail.editAddress')" (click)="toggleAddressMenu(address.id, $event)">
+                                            <button type="button" class="menu-trigger" [attr.aria-label]="'detail.editAddress' | translate" (click)="toggleAddressMenu(address.id, $event)">
                                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                                     <circle cx="12" cy="5" r="1.5" />
                                                     <circle cx="12" cy="12" r="1.5" />
@@ -362,7 +362,7 @@
                                                             <path d="M12 22s7-7.5 7-12A7 7 0 0 0 5 10c0 4.5 7 12 7 12Z" />
                                                             <circle cx="12" cy="10" r="2.5" />
                                                         </svg>
-                                                        {{ address.primary ? i18n.t('detail.setPrimaryAddress') : i18n.t('detail.setAsPrimary') }}
+                                                        {{ address.primary ? ('detail.setPrimaryAddress' | translate) : ('detail.setAsPrimary' | translate) }}
                                                     </button>
                                                     <div class="menu-divider"></div>
                                                     <button type="button" (click)="openEditAddressModal(address)">
@@ -370,14 +370,14 @@
                                                             <path d="M12 20h9" />
                                                             <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
                                                         </svg>
-                                                        {{ i18n.t('detail.editAddress') }}
+                                                        {{ 'detail.editAddress' | translate }}
                                                     </button>
                                                     <div class="menu-divider"></div>
                                                     <button
                                                         type="button"
                                                         class="menu-item-danger"
                                                         [disabled]="address.primary"
-                                                        [title]="address.primary ? i18n.t('detail.deleteAddressPrimaryHint') : null"
+                                                        [title]="address.primary ? translate.instant('detail.deleteAddressPrimaryHint') : null"
                                                         (click)="openDeleteAddressConfirm(address)"
                                                     >
                                                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -387,10 +387,10 @@
                                                             <path d="M10 11v6" />
                                                             <path d="M14 11v6" />
                                                         </svg>
-                                                        {{ i18n.t('detail.deleteAddress') }}
+                                                        {{ 'detail.deleteAddress' | translate }}
                                                     </button>
                                                     @if (address.primary) {
-                                                        <p class="menu-item-hint">{{ i18n.t('detail.deleteAddressPrimaryHint') }}</p>
+                                                        <p class="menu-item-hint">{{ 'detail.deleteAddressPrimaryHint' | translate }}</p>
                                                     }
                                                 </div>
                                             }
@@ -399,7 +399,7 @@
                                     <p class="address-card-line">{{ address.streetName }} {{ address.houseName }}</p>
                                     <p class="address-card-city-sub">{{ cityName(address.cityId) }}</p>
                                     <span class="address-card-tag">
-                                        {{ address.addrDesc }}{{ address.primary ? ' · ' + i18n.t('detail.primaryBadge') : '' }}
+                                        {{ address.addrDesc }}{{ address.primary ? ' · ' + ('detail.primaryBadge' | translate) : '' }}
                                     </span>
                                 </div>
                                 @if (linkedAccountCount(address.id) > 0) {
@@ -418,9 +418,9 @@
                 }
             } @else if (activeTab() === 'contact') {
                 <div class="info-panel-header">
-                    <h2 class="info-panel-title">{{ i18n.t('detail.tabContact') }}</h2>
+                    <h2 class="info-panel-title">{{ 'detail.tabContact' | translate }}</h2>
                     <div class="info-panel-actions">
-                        <button type="button" class="icon-button" [attr.aria-label]="i18n.t('detail.editContact')" (click)="openEditContactModal()">
+                        <button type="button" class="icon-button" [attr.aria-label]="'detail.editContact' | translate" (click)="openEditContactModal()">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M12 20h9" />
                                 <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
@@ -438,7 +438,7 @@
                             </svg>
                         </span>
                         <div class="contact-info-text">
-                            <span class="contact-info-label">{{ i18n.t('create.email') }}:</span>
+                            <span class="contact-info-label">{{ 'create.email' | translate }}:</span>
                             <span class="contact-info-value">{{ contact().email }}</span>
                         </div>
                     </div>
@@ -449,7 +449,7 @@
                             </svg>
                         </span>
                         <div class="contact-info-text">
-                            <span class="contact-info-label">{{ i18n.t('create.mobilePhone') }}:</span>
+                            <span class="contact-info-label">{{ 'create.mobilePhone' | translate }}:</span>
                             <span class="contact-info-value">{{ contact().mobilePhone }}</span>
                         </div>
                     </div>
@@ -461,7 +461,7 @@
                             </svg>
                         </span>
                         <div class="contact-info-text">
-                            <span class="contact-info-label">{{ i18n.t('create.homePhone') }}:</span>
+                            <span class="contact-info-label">{{ 'create.homePhone' | translate }}:</span>
                             <span class="contact-info-value">{{ contact().homePhone }}</span>
                         </div>
                     </div>
@@ -474,7 +474,7 @@
                             </svg>
                         </span>
                         <div class="contact-info-text">
-                            <span class="contact-info-label">{{ i18n.t('create.fax') }}:</span>
+                            <span class="contact-info-label">{{ 'create.fax' | translate }}:</span>
                             <span class="contact-info-value">{{ contact().fax }}</span>
                         </div>
                     </div>
@@ -493,7 +493,7 @@
         <div class="modal-card" (click)="$event.stopPropagation()">
 
             <div class="modal-header">
-                <h3 class="modal-title">{{ editingAddressId() ? i18n.t('detail.editAddress') : i18n.t('create.addNewAddress') }}</h3>
+                <h3 class="modal-title">{{ editingAddressId() ? ('detail.editAddress' | translate) : ('create.addNewAddress' | translate) }}</h3>
                 <button type="button" class="modal-close" (click)="closeAddressModal()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -506,10 +506,10 @@
                 }
 
                 <div class="modal-field">
-                    <label for="addr-city">{{ i18n.t('create.city') }} <span class="required">*</span></label>
+                    <label for="addr-city">{{ 'create.city' | translate }} <span class="required">*</span></label>
                     <div class="select-wrapper">
                         <select id="addr-city" [formField]="addressForm.city">
-                            <option value="" disabled selected>{{ i18n.t('create.selectCity') }}</option>
+                            <option value="" disabled selected>{{ 'create.selectCity' | translate }}</option>
                             @for (city of cities(); track city.gnlTpId) {
                                 <option [value]="city.gnlTpId">{{ city.name }}</option>
                             }
@@ -517,39 +517,39 @@
                         <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
                     </div>
                     @if (addressForm.city().invalid() && addressForm.city().touched()) {
-                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                     }
                 </div>
 
                 <div class="modal-field">
-                    <label for="addr-street">{{ i18n.t('create.street') }} <span class="required">*</span></label>
-                    <input id="addr-street" type="text" [formField]="addressForm.street" [placeholder]="i18n.t('create.streetPlaceholder')">
+                    <label for="addr-street">{{ 'create.street' | translate }} <span class="required">*</span></label>
+                    <input id="addr-street" type="text" [formField]="addressForm.street" [placeholder]="'create.streetPlaceholder' | translate">
                     @if (addressForm.street().invalid() && addressForm.street().touched()) {
-                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                     }
                 </div>
 
                 <div class="modal-field">
-                    <label for="addr-houseNumber">{{ i18n.t('create.houseNumber') }} <span class="required">*</span></label>
-                    <input id="addr-houseNumber" type="text" [formField]="addressForm.houseNumber" [placeholder]="i18n.t('create.houseNumberPlaceholder')">
+                    <label for="addr-houseNumber">{{ 'create.houseNumber' | translate }} <span class="required">*</span></label>
+                    <input id="addr-houseNumber" type="text" [formField]="addressForm.houseNumber" [placeholder]="'create.houseNumberPlaceholder' | translate">
                     @if (addressForm.houseNumber().invalid() && addressForm.houseNumber().touched()) {
-                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                     }
                 </div>
 
                 <div class="modal-field">
-                    <label for="addr-description">{{ i18n.t('create.addressDescription') }} <span class="required">*</span></label>
-                    <input id="addr-description" type="text" [formField]="addressForm.description" [placeholder]="i18n.t('create.addressDescriptionPlaceholder')">
+                    <label for="addr-description">{{ 'create.addressDescription' | translate }} <span class="required">*</span></label>
+                    <input id="addr-description" type="text" [formField]="addressForm.description" [placeholder]="'create.addressDescriptionPlaceholder' | translate">
                     @if (addressForm.description().invalid() && addressForm.description().touched()) {
-                        <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                        <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                     }
                 </div>
 
             </form>
 
             <div class="modal-actions">
-                <app-button variant="secondary" (buttonClick)="closeAddressModal()">{{ i18n.t('create.cancelBtn') }}</app-button>
-                <app-button [disabled]="addressForm().invalid()" [loading]="isSavingAddress()" (buttonClick)="saveAddress()">{{ i18n.t('create.saveBtn') }}</app-button>
+                <app-button variant="secondary" (buttonClick)="closeAddressModal()">{{ 'create.cancelBtn' | translate }}</app-button>
+                <app-button [disabled]="addressForm().invalid()" [loading]="isSavingAddress()" (buttonClick)="saveAddress()">{{ 'create.saveBtn' | translate }}</app-button>
             </div>
 
         </div>
@@ -561,7 +561,7 @@
         <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
 
             <div class="modal-header">
-                <h3 class="modal-title">{{ i18n.t('detail.deleteConfirmTitle') }}</h3>
+                <h3 class="modal-title">{{ 'detail.deleteConfirmTitle' | translate }}</h3>
                 <button type="button" class="modal-close" (click)="closeDeleteConfirm()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -578,7 +578,7 @@
                     </svg>
                 </span>
                 <p class="delete-confirm-message">
-                    {{ i18n.t('detail.deleteConfirmMessage').replace('{name}', customer().fullName) }}
+                    {{ 'detail.deleteConfirmMessage' | translate: { name: customer().fullName } }}
                 </p>
             </div>
 
@@ -587,8 +587,8 @@
             }
 
             <div class="modal-actions">
-                <app-button variant="secondary" (buttonClick)="closeDeleteConfirm()">{{ i18n.t('detail.deleteCancelBtn') }}</app-button>
-                <app-button variant="danger" [loading]="isDeletingCustomer()" [loadingLabel]="i18n.t('detail.deleting')" (buttonClick)="confirmDeleteCustomer()">{{ i18n.t('detail.deleteConfirmBtn') }}</app-button>
+                <app-button variant="secondary" (buttonClick)="closeDeleteConfirm()">{{ 'detail.deleteCancelBtn' | translate }}</app-button>
+                <app-button variant="danger" [loading]="isDeletingCustomer()" [loadingLabel]="translate.instant('detail.deleting')" (buttonClick)="confirmDeleteCustomer()">{{ 'detail.deleteConfirmBtn' | translate }}</app-button>
             </div>
 
         </div>
@@ -600,7 +600,7 @@
         <div class="modal-card" (click)="$event.stopPropagation()">
 
             <div class="modal-header">
-                <h3 class="modal-title">{{ i18n.t('detail.editContactTitle') }}</h3>
+                <h3 class="modal-title">{{ 'detail.editContactTitle' | translate }}</h3>
                 <button type="button" class="modal-close" (click)="closeContactModal()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -613,22 +613,22 @@
                 }
 
                 <div class="modal-field">
-                    <label for="contact-email">{{ i18n.t('create.email') }} <span class="required">*</span></label>
+                    <label for="contact-email">{{ 'create.email' | translate }} <span class="required">*</span></label>
                     <div class="input-with-icon">
-                        <input id="contact-email" type="email" [formField]="contactForm.email" [placeholder]="i18n.t('create.emailPlaceholder')">
+                        <input id="contact-email" type="email" [formField]="contactForm.email" [placeholder]="'create.emailPlaceholder' | translate">
                         <svg class="mail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="3" y="5" width="18" height="14" rx="2"></rect>
                             <path d="m3 7 9 6 9-6"></path>
                         </svg>
                     </div>
                     @if (contactForm.email().invalid() && contactForm.email().touched()) {
-                        <span class="field-error">{{ contactModel().email ? i18n.t('detail.emailFormatError') : i18n.t('create.fieldRequired') }}</span>
+                        <span class="field-error">{{ contactModel().email ? ('detail.emailFormatError' | translate) : ('create.fieldRequired' | translate) }}</span>
                     }
                 </div>
 
                 <div class="modal-field-row">
                     <div class="modal-field">
-                        <label for="contact-mobilePhone">{{ i18n.t('create.mobilePhone') }} <span class="required">*</span></label>
+                        <label for="contact-mobilePhone">{{ 'create.mobilePhone' | translate }} <span class="required">*</span></label>
                         <div class="phone-field">
                             <span class="phone-prefix">
                                 <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
@@ -642,14 +642,14 @@
                             <input id="contact-mobilePhone" type="text" inputmode="numeric" [formField]="contactForm.mobilePhone" (beforeinput)="blockContactPhoneInput($event, 'mobilePhone')" placeholder="5XX XXX XX XX">
                         </div>
                         @if (digitsOnlyErrorField() === 'mobilePhone') {
-                            <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+                            <span class="field-error">{{ 'create.digitsOnlyError' | translate }}</span>
                         } @else if (contactForm.mobilePhone().invalid() && contactForm.mobilePhone().touched()) {
-                            <span class="field-error">{{ contactModel().mobilePhone ? i18n.t('detail.mobilePhoneFormatError') : i18n.t('create.fieldRequired') }}</span>
+                            <span class="field-error">{{ contactModel().mobilePhone ? ('detail.mobilePhoneFormatError' | translate) : ('create.fieldRequired' | translate) }}</span>
                         }
                     </div>
 
                     <div class="modal-field">
-                        <label for="contact-homePhone">{{ i18n.t('create.homePhone') }} <span class="required required-hidden">*</span></label>
+                        <label for="contact-homePhone">{{ 'create.homePhone' | translate }} <span class="required required-hidden">*</span></label>
                         <div class="phone-field">
                             <span class="phone-prefix">
                                 <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
@@ -663,15 +663,15 @@
                             <input id="contact-homePhone" type="text" inputmode="numeric" [formField]="contactForm.homePhone" (beforeinput)="blockContactPhoneInput($event, 'homePhone')" placeholder="XXX XXX XX XX">
                         </div>
                         @if (digitsOnlyErrorField() === 'homePhone') {
-                            <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+                            <span class="field-error">{{ 'create.digitsOnlyError' | translate }}</span>
                         } @else if (contactForm.homePhone().invalid() && contactForm.homePhone().touched()) {
-                            <span class="field-error">{{ i18n.t('detail.homePhoneFormatError') }}</span>
+                            <span class="field-error">{{ 'detail.homePhoneFormatError' | translate }}</span>
                         }
                     </div>
                 </div>
 
                 <div class="modal-field">
-                    <label for="contact-fax">{{ i18n.t('create.fax') }}</label>
+                    <label for="contact-fax">{{ 'create.fax' | translate }}</label>
                     <div class="phone-field">
                         <span class="phone-prefix">
                             <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
@@ -685,17 +685,17 @@
                         <input id="contact-fax" type="text" inputmode="numeric" [formField]="contactForm.fax" (beforeinput)="blockContactPhoneInput($event, 'fax')" placeholder="XXX XXX XX XX">
                     </div>
                     @if (digitsOnlyErrorField() === 'fax') {
-                        <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+                        <span class="field-error">{{ 'create.digitsOnlyError' | translate }}</span>
                     } @else if (contactForm.fax().invalid() && contactForm.fax().touched()) {
-                        <span class="field-error">{{ i18n.t('detail.faxFormatError') }}</span>
+                        <span class="field-error">{{ 'detail.faxFormatError' | translate }}</span>
                     }
                 </div>
 
             </form>
 
             <div class="modal-actions">
-                <app-button variant="secondary" (buttonClick)="closeContactModal()">{{ i18n.t('create.cancelBtn') }}</app-button>
-                <app-button [disabled]="contactForm().invalid()" [loading]="isSavingContact()" (buttonClick)="saveContact()">{{ i18n.t('create.saveBtn') }}</app-button>
+                <app-button variant="secondary" (buttonClick)="closeContactModal()">{{ 'create.cancelBtn' | translate }}</app-button>
+                <app-button [disabled]="contactForm().invalid()" [loading]="isSavingContact()" (buttonClick)="saveContact()">{{ 'create.saveBtn' | translate }}</app-button>
             </div>
 
         </div>
@@ -707,7 +707,7 @@
         <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
 
             <div class="modal-header">
-                <h3 class="modal-title">{{ i18n.t('detail.discardChangesTitle') }}</h3>
+                <h3 class="modal-title">{{ 'detail.discardChangesTitle' | translate }}</h3>
                 <button type="button" class="modal-close" (click)="keepEditingContact()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -721,12 +721,12 @@
                         <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
                     </svg>
                 </span>
-                <p class="delete-confirm-message">{{ i18n.t('detail.discardChangesMessage') }}</p>
+                <p class="delete-confirm-message">{{ 'detail.discardChangesMessage' | translate }}</p>
             </div>
 
             <div class="modal-actions">
-                <app-button variant="secondary" (buttonClick)="keepEditingContact()">{{ i18n.t('detail.discardChangesCancelBtn') }}</app-button>
-                <app-button variant="danger" (buttonClick)="discardContactChanges()">{{ i18n.t('detail.discardChangesConfirmBtn') }}</app-button>
+                <app-button variant="secondary" (buttonClick)="keepEditingContact()">{{ 'detail.discardChangesCancelBtn' | translate }}</app-button>
+                <app-button variant="danger" (buttonClick)="discardContactChanges()">{{ 'detail.discardChangesConfirmBtn' | translate }}</app-button>
             </div>
 
         </div>
@@ -738,7 +738,7 @@
         <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
 
             <div class="modal-header">
-                <h3 class="modal-title">{{ i18n.t('detail.deleteAddressConfirmTitle') }}</h3>
+                <h3 class="modal-title">{{ 'detail.deleteAddressConfirmTitle' | translate }}</h3>
                 <button type="button" class="modal-close" (click)="closeDeleteAddressConfirm()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -755,7 +755,7 @@
                     </svg>
                 </span>
                 <p class="delete-confirm-message">
-                    {{ i18n.t('detail.deleteAddressConfirmMessage').replace('{address}', address.streetName + ' ' + address.houseName) }}
+                    {{ 'detail.deleteAddressConfirmMessage' | translate: { address: address.streetName + ' ' + address.houseName } }}
                 </p>
             </div>
 
@@ -764,8 +764,8 @@
             }
 
             <div class="modal-actions">
-                <app-button variant="secondary" (buttonClick)="closeDeleteAddressConfirm()">{{ i18n.t('detail.deleteCancelBtn') }}</app-button>
-                <app-button variant="danger" [loading]="isDeletingAddress()" [loadingLabel]="i18n.t('detail.deleting')" (buttonClick)="confirmDeleteAddress()">{{ i18n.t('detail.deleteConfirmBtn') }}</app-button>
+                <app-button variant="secondary" (buttonClick)="closeDeleteAddressConfirm()">{{ 'detail.deleteCancelBtn' | translate }}</app-button>
+                <app-button variant="danger" [loading]="isDeletingAddress()" [loadingLabel]="translate.instant('detail.deleting')" (buttonClick)="confirmDeleteAddress()">{{ 'detail.deleteConfirmBtn' | translate }}</app-button>
             </div>
 
         </div>
@@ -777,7 +777,7 @@
         <div class="modal-card" (click)="$event.stopPropagation()">
 
             <div class="modal-header">
-                <h3 class="modal-title">{{ editingAccount() ? i18n.t('detail.updateBillingAccountTitle') : i18n.t('detail.createBillingAccountTitle') }}</h3>
+                <h3 class="modal-title">{{ editingAccount() ? ('detail.updateBillingAccountTitle' | translate) : ('detail.createBillingAccountTitle' | translate) }}</h3>
                 <button type="button" class="modal-close" (click)="closeCreateAccountModal()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -792,29 +792,29 @@
                 @if (editingAccount(); as account) {
                     <!-- Update Billing Account mockup'i: Number/Type -> Name/Description -> Address -->
                     <div class="address-preview-row">
-                        <span class="address-preview-label">{{ i18n.t('detail.accountNumber') }}</span>
+                        <span class="address-preview-label">{{ 'detail.accountNumber' | translate }}</span>
                         <span class="address-preview-value">{{ account.accountNumber }}</span>
                     </div>
                     <div class="address-preview-row">
-                        <span class="address-preview-label">{{ i18n.t('detail.accountType') }}</span>
-                        <span class="address-preview-value">{{ i18n.t('detail.billingAccountLabel') }}</span>
+                        <span class="address-preview-label">{{ 'detail.accountType' | translate }}</span>
+                        <span class="address-preview-value">{{ 'detail.billingAccountLabel' | translate }}</span>
                     </div>
 
                     <hr class="modal-divider">
 
                     <div class="modal-field">
-                        <label for="account-name">{{ i18n.t('detail.accountName') }} <span class="required">*</span></label>
-                        <input id="account-name" type="text" [formField]="accountForm.accountName" (input)="markAccountNameTouched()" [placeholder]="i18n.t('detail.accountNamePlaceholder')">
+                        <label for="account-name">{{ 'detail.accountName' | translate }} <span class="required">*</span></label>
+                        <input id="account-name" type="text" [formField]="accountForm.accountName" (input)="markAccountNameTouched()" [placeholder]="'detail.accountNamePlaceholder' | translate">
                         @if (accountForm.accountName().invalid() && accountForm.accountName().touched()) {
-                            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                            <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                         }
                     </div>
 
                     <div class="modal-field">
-                        <label for="account-desc">{{ i18n.t('detail.accountDesc') }} <span class="required">*</span></label>
-                        <input id="account-desc" type="text" [formField]="accountForm.accountDesc" [placeholder]="i18n.t('detail.accountDescPlaceholder')">
+                        <label for="account-desc">{{ 'detail.accountDesc' | translate }} <span class="required">*</span></label>
+                        <input id="account-desc" type="text" [formField]="accountForm.accountDesc" [placeholder]="'detail.accountDescPlaceholder' | translate">
                         @if (accountForm.accountDesc().invalid() && accountForm.accountDesc().touched()) {
-                            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                            <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                         }
                     </div>
 
@@ -828,18 +828,18 @@
                     <hr class="modal-divider">
 
                     <div class="modal-field">
-                        <label for="account-name">{{ i18n.t('detail.accountName') }} <span class="required">*</span></label>
-                        <input id="account-name" type="text" [formField]="accountForm.accountName" (input)="markAccountNameTouched()" [placeholder]="i18n.t('detail.accountNamePlaceholder')">
+                        <label for="account-name">{{ 'detail.accountName' | translate }} <span class="required">*</span></label>
+                        <input id="account-name" type="text" [formField]="accountForm.accountName" (input)="markAccountNameTouched()" [placeholder]="'detail.accountNamePlaceholder' | translate">
                         @if (accountForm.accountName().invalid() && accountForm.accountName().touched()) {
-                            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                            <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                         }
                     </div>
 
                     <div class="modal-field">
-                        <label for="account-desc">{{ i18n.t('detail.accountDesc') }} <span class="required">*</span></label>
-                        <input id="account-desc" type="text" [formField]="accountForm.accountDesc" [placeholder]="i18n.t('detail.accountDescPlaceholder')">
+                        <label for="account-desc">{{ 'detail.accountDesc' | translate }} <span class="required">*</span></label>
+                        <input id="account-desc" type="text" [formField]="accountForm.accountDesc" [placeholder]="'detail.accountDescPlaceholder' | translate">
                         @if (accountForm.accountDesc().invalid() && accountForm.accountDesc().touched()) {
-                            <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                            <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                         }
                     </div>
                 }
@@ -847,8 +847,8 @@
             </form>
 
             <div class="modal-actions">
-                <app-button variant="secondary" (buttonClick)="closeCreateAccountModal()">{{ i18n.t('create.cancelBtn') }}</app-button>
-                <app-button [disabled]="!accountFormValid()" [loading]="isSavingAccount()" (buttonClick)="saveAccount()">{{ editingAccount() ? i18n.t('create.saveBtn') : i18n.t('create.createBtn') }}</app-button>
+                <app-button variant="secondary" (buttonClick)="closeCreateAccountModal()">{{ 'create.cancelBtn' | translate }}</app-button>
+                <app-button [disabled]="!accountFormValid()" [loading]="isSavingAccount()" (buttonClick)="saveAccount()">{{ editingAccount() ? ('create.saveBtn' | translate) : ('create.createBtn' | translate) }}</app-button>
             </div>
 
         </div>
@@ -860,7 +860,7 @@
         <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
 
             <div class="modal-header">
-                <h3 class="modal-title">{{ i18n.t('detail.discardChangesTitle') }}</h3>
+                <h3 class="modal-title">{{ 'detail.discardChangesTitle' | translate }}</h3>
                 <button type="button" class="modal-close" (click)="keepEditingAccount()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -874,12 +874,12 @@
                         <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
                     </svg>
                 </span>
-                <p class="delete-confirm-message">{{ i18n.t('detail.discardChangesMessage') }}</p>
+                <p class="delete-confirm-message">{{ 'detail.discardChangesMessage' | translate }}</p>
             </div>
 
             <div class="modal-actions">
-                <app-button variant="secondary" (buttonClick)="keepEditingAccount()">{{ i18n.t('detail.discardChangesCancelBtn') }}</app-button>
-                <app-button variant="danger" (buttonClick)="discardAccountChanges()">{{ i18n.t('detail.discardChangesConfirmBtn') }}</app-button>
+                <app-button variant="secondary" (buttonClick)="keepEditingAccount()">{{ 'detail.discardChangesCancelBtn' | translate }}</app-button>
+                <app-button variant="danger" (buttonClick)="discardAccountChanges()">{{ 'detail.discardChangesConfirmBtn' | translate }}</app-button>
             </div>
 
         </div>
@@ -889,10 +889,10 @@
 <ng-template #addressSection>
     @if (!isAddingNewAddressForAccount()) {
         <div class="modal-field">
-            <label for="account-address">{{ i18n.t('detail.serviceAddress') }} <span class="required">*</span></label>
+            <label for="account-address">{{ 'detail.serviceAddress' | translate }} <span class="required">*</span></label>
             <div class="select-wrapper">
                 <select id="account-address" [formField]="accountForm.addressId">
-                    <option value="" disabled selected>{{ i18n.t('detail.selectAddress') }}</option>
+                    <option value="" disabled selected>{{ 'detail.selectAddress' | translate }}</option>
                     @for (address of addresses(); track address.id) {
                         <option [value]="address.id">{{ serviceAddressLine(address.id) }}</option>
                     }
@@ -902,36 +902,36 @@
         </div>
 
         <button type="button" class="add-new-address-link" (click)="toggleAddNewAddressForAccount()">
-            <span class="add-address-icon">+</span> {{ i18n.t('create.addNewAddress') }}
+            <span class="add-address-icon">+</span> {{ 'create.addNewAddress' | translate }}
         </button>
 
         @if (selectedExistingAddress(); as previewAddress) {
             <div class="address-card address-preview-card">
-                <span class="service-address-label">{{ i18n.t('detail.addressPreviewTitle') }}</span>
+                <span class="service-address-label">{{ 'detail.addressPreviewTitle' | translate }}</span>
                 <div class="address-preview-row">
-                    <span class="address-preview-label">{{ i18n.t('detail.addressNameLabel') }}</span>
+                    <span class="address-preview-label">{{ 'detail.addressNameLabel' | translate }}</span>
                     <span class="address-preview-value">{{ previewAddress.addrDesc }}</span>
                 </div>
                 <div class="address-preview-row">
-                    <span class="address-preview-label">{{ i18n.t('detail.addressDetailsLabel') }}</span>
+                    <span class="address-preview-label">{{ 'detail.addressDetailsLabel' | translate }}</span>
                     <span class="address-preview-value">{{ previewAddress.addrDesc }}</span>
                 </div>
                 <div class="address-preview-row">
-                    <span class="address-preview-label">{{ i18n.t('detail.fullAddressLabel') }}</span>
+                    <span class="address-preview-label">{{ 'detail.fullAddressLabel' | translate }}</span>
                     <span class="address-preview-value">{{ fullAddressLine(previewAddress) }}</span>
                 </div>
                 <p class="service-address-note">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
-                    {{ i18n.t('detail.addressPreviewNote') }}
+                    {{ 'detail.addressPreviewNote' | translate }}
                 </p>
             </div>
         }
     } @else {
         <div class="modal-field">
-            <label for="account-new-city">{{ i18n.t('create.city') }} <span class="required">*</span></label>
+            <label for="account-new-city">{{ 'create.city' | translate }} <span class="required">*</span></label>
             <div class="select-wrapper">
                 <select id="account-new-city" [formField]="newAccountAddressForm.city">
-                    <option value="" disabled selected>{{ i18n.t('create.selectCity') }}</option>
+                    <option value="" disabled selected>{{ 'create.selectCity' | translate }}</option>
                     @for (city of cities(); track city.gnlTpId) {
                         <option [value]="city.gnlTpId">{{ city.name }}</option>
                     }
@@ -939,36 +939,36 @@
                 <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
             </div>
             @if (newAccountAddressForm.city().invalid() && newAccountAddressForm.city().touched()) {
-                <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
             }
         </div>
 
         <div class="modal-field">
-            <label for="account-new-street">{{ i18n.t('create.street') }} <span class="required">*</span></label>
-            <input id="account-new-street" type="text" [formField]="newAccountAddressForm.street" [placeholder]="i18n.t('create.streetPlaceholder')">
+            <label for="account-new-street">{{ 'create.street' | translate }} <span class="required">*</span></label>
+            <input id="account-new-street" type="text" [formField]="newAccountAddressForm.street" [placeholder]="'create.streetPlaceholder' | translate">
             @if (newAccountAddressForm.street().invalid() && newAccountAddressForm.street().touched()) {
-                <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
             }
         </div>
 
         <div class="modal-field">
-            <label for="account-new-houseNumber">{{ i18n.t('create.houseNumber') }} <span class="required">*</span></label>
-            <input id="account-new-houseNumber" type="text" [formField]="newAccountAddressForm.houseNumber" [placeholder]="i18n.t('create.houseNumberPlaceholder')">
+            <label for="account-new-houseNumber">{{ 'create.houseNumber' | translate }} <span class="required">*</span></label>
+            <input id="account-new-houseNumber" type="text" [formField]="newAccountAddressForm.houseNumber" [placeholder]="'create.houseNumberPlaceholder' | translate">
             @if (newAccountAddressForm.houseNumber().invalid() && newAccountAddressForm.houseNumber().touched()) {
-                <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
             }
         </div>
 
         <div class="modal-field">
-            <label for="account-new-description">{{ i18n.t('create.addressDescription') }} <span class="required">*</span></label>
-            <input id="account-new-description" type="text" [formField]="newAccountAddressForm.description" [placeholder]="i18n.t('create.addressDescriptionPlaceholder')">
+            <label for="account-new-description">{{ 'create.addressDescription' | translate }} <span class="required">*</span></label>
+            <input id="account-new-description" type="text" [formField]="newAccountAddressForm.description" [placeholder]="'create.addressDescriptionPlaceholder' | translate">
             @if (newAccountAddressForm.description().invalid() && newAccountAddressForm.description().touched()) {
-                <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
             }
         </div>
 
         <button type="button" class="add-new-address-link" (click)="toggleAddNewAddressForAccount()">
-            <span class="add-address-icon">‹</span> {{ i18n.t('detail.useExistingAddress') }}
+            <span class="add-address-icon">‹</span> {{ 'detail.useExistingAddress' | translate }}
         </button>
     }
 </ng-template>
@@ -978,7 +978,7 @@
         <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
 
             <div class="modal-header">
-                <h3 class="modal-title">{{ i18n.t('detail.deleteAccountConfirmTitle') }}</h3>
+                <h3 class="modal-title">{{ 'detail.deleteAccountConfirmTitle' | translate }}</h3>
                 <button type="button" class="modal-close" (click)="closeDeleteAccountConfirm()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -995,13 +995,13 @@
                     </svg>
                 </span>
                 <p class="delete-confirm-message">
-                    {{ i18n.t('detail.deleteAccountConfirmMessage').replace('{account}', account.accountName) }}
+                    {{ 'detail.deleteAccountConfirmMessage' | translate: { account: account.accountName } }}
                 </p>
             </div>
 
             <div class="modal-actions">
-                <app-button variant="secondary" (buttonClick)="closeDeleteAccountConfirm()">{{ i18n.t('detail.deleteCancelBtn') }}</app-button>
-                <app-button variant="danger" [loading]="isDeletingAccount()" [loadingLabel]="i18n.t('detail.deleting')" (buttonClick)="confirmDeleteAccount()">{{ i18n.t('detail.deleteConfirmBtn') }}</app-button>
+                <app-button variant="secondary" (buttonClick)="closeDeleteAccountConfirm()">{{ 'detail.deleteCancelBtn' | translate }}</app-button>
+                <app-button variant="danger" [loading]="isDeletingAccount()" [loadingLabel]="translate.instant('detail.deleting')" (buttonClick)="confirmDeleteAccount()">{{ 'detail.deleteConfirmBtn' | translate }}</app-button>
             </div>
 
         </div>
@@ -1013,7 +1013,7 @@
         <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
 
             <div class="modal-header">
-                <h3 class="modal-title">{{ i18n.t('detail.cannotDeleteAccountTitle') }}</h3>
+                <h3 class="modal-title">{{ 'detail.cannotDeleteAccountTitle' | translate }}</h3>
                 <button type="button" class="modal-close" (click)="closeCannotDeleteAccountDialog()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -1031,8 +1031,8 @@
             </div>
 
             <div class="modal-actions">
-                <app-button variant="secondary" (buttonClick)="closeCannotDeleteAccountDialog()">{{ i18n.t('detail.closeBtn') }}</app-button>
-                <app-button (buttonClick)="closeCannotDeleteAccountDialog()">{{ i18n.t('detail.okBtn') }}</app-button>
+                <app-button variant="secondary" (buttonClick)="closeCannotDeleteAccountDialog()">{{ 'detail.closeBtn' | translate }}</app-button>
+                <app-button (buttonClick)="closeCannotDeleteAccountDialog()">{{ 'detail.okBtn' | translate }}</app-button>
             </div>
 
         </div>
@@ -1044,7 +1044,7 @@
         <div class="modal-card product-detail-card" (click)="$event.stopPropagation()">
 
             <div class="modal-header">
-                <h3 class="modal-title">{{ i18n.t('detail.productOfferDetailsTitle') }}</h3>
+                <h3 class="modal-title">{{ 'detail.productOfferDetailsTitle' | translate }}</h3>
                 <button type="button" class="modal-close" (click)="closeProductDetail()">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>
@@ -1053,19 +1053,19 @@
             <div class="modal-form">
                 <div class="modal-field-row">
                     <div class="address-preview-row">
-                        <span class="address-preview-label">{{ i18n.t('detail.productOfferNameLabel') }}:</span>
+                        <span class="address-preview-label">{{ 'detail.productOfferNameLabel' | translate }}:</span>
                         <span class="address-preview-value">{{ detail.productName }}</span>
                     </div>
                     <div class="address-preview-row">
-                        <span class="address-preview-label">{{ i18n.t('detail.productOfferIdLabel') }}:</span>
+                        <span class="address-preview-label">{{ 'detail.productOfferIdLabel' | translate }}:</span>
                         <span class="address-preview-value">{{ detail.productOfferId }}</span>
                     </div>
                     <div class="address-preview-row">
-                        <span class="address-preview-label">{{ i18n.t('detail.productSpecIdLabel') }}:</span>
+                        <span class="address-preview-label">{{ 'detail.productSpecIdLabel' | translate }}:</span>
                         <span class="address-preview-value">{{ detail.productSpecId }}</span>
                     </div>
                     <div class="address-preview-row">
-                        <span class="address-preview-label">{{ i18n.t('detail.serviceStartDateLabel') }}:</span>
+                        <span class="address-preview-label">{{ 'detail.serviceStartDateLabel' | translate }}:</span>
                         <span class="address-preview-value">{{ detail.serviceStartDate }}</span>
                     </div>
                 </div>
@@ -1074,7 +1074,7 @@
 
                 <div class="modal-field-row">
                     <div class="address-preview-card">
-                        <span class="address-card-city">{{ i18n.t('detail.productCharacteristicsTitle') }}</span>
+                        <span class="address-card-city">{{ 'detail.productCharacteristicsTitle' | translate }}</span>
                         @for (item of detail.characteristics; track item.label) {
                             <div class="address-preview-row">
                                 <span class="address-preview-label">{{ item.label }}:</span>
@@ -1089,27 +1089,27 @@
                                 <path d="M12 22s7-7.5 7-12A7 7 0 0 0 5 10c0 4.5 7 12 7 12Z" />
                                 <circle cx="12" cy="10" r="2.5" />
                             </svg>
-                            {{ i18n.t('detail.serviceAddress') }}:
+                            {{ 'detail.serviceAddress' | translate }}:
                         </span>
                         @if (detail.address; as address) {
                             <div class="address-preview-row">
-                                <span class="address-preview-label">{{ i18n.t('detail.addressNameLabel') }}</span>
+                                <span class="address-preview-label">{{ 'detail.addressNameLabel' | translate }}</span>
                                 <span class="address-preview-value">{{ address.addrDesc }}</span>
                             </div>
                             <div class="address-preview-row">
-                                <span class="address-preview-label">{{ i18n.t('create.city') }}</span>
+                                <span class="address-preview-label">{{ 'create.city' | translate }}</span>
                                 <span class="address-preview-value">{{ cityName(address.cityId) }}</span>
                             </div>
                             <div class="address-preview-row">
-                                <span class="address-preview-label">{{ i18n.t('detail.streetNameLabel') }}</span>
+                                <span class="address-preview-label">{{ 'detail.streetNameLabel' | translate }}</span>
                                 <span class="address-preview-value">{{ address.streetName }}</span>
                             </div>
                             <div class="address-preview-row">
-                                <span class="address-preview-label">{{ i18n.t('detail.houseFlatNumberLabel') }}</span>
+                                <span class="address-preview-label">{{ 'detail.houseFlatNumberLabel' | translate }}</span>
                                 <span class="address-preview-value">{{ address.houseName }}</span>
                             </div>
                             <div class="address-preview-row">
-                                <span class="address-preview-label">{{ i18n.t('detail.addressDescriptionLabel') }}</span>
+                                <span class="address-preview-label">{{ 'detail.addressDescriptionLabel' | translate }}</span>
                                 <span class="address-preview-value">{{ address.addrDesc }}</span>
                             </div>
                         }
@@ -1118,7 +1118,7 @@
             </div>
 
             <div class="modal-actions">
-                <app-button variant="secondary" (buttonClick)="closeProductDetail()">{{ i18n.t('detail.closeBtn') }}</app-button>
+                <app-button variant="secondary" (buttonClick)="closeProductDetail()">{{ 'detail.closeBtn' | translate }}</app-button>
             </div>
 
         </div>

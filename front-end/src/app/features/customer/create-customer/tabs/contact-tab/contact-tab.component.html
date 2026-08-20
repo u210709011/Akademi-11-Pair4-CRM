@@ -1,13 +1,13 @@
 <form class="contact-form">
 
     <div class="form-field">
-        <label for="email">{{ i18n.t('create.email') }} <span class="required">*</span></label>
+        <label for="email">{{ 'create.email' | translate }} <span class="required">*</span></label>
         <div class="input-with-icon">
             <input
                 id="email"
                 type="email"
                 [formField]="contactForm.email"
-                [placeholder]="i18n.t('create.emailPlaceholder')"
+                [placeholder]="'create.emailPlaceholder' | translate"
             >
             <svg class="mail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="3" y="5" width="18" height="14" rx="2"></rect>
@@ -15,12 +15,12 @@
             </svg>
         </div>
         @if (contactForm.email().invalid() && contactForm.email().touched()) {
-            <span class="field-error">{{ contactModel().email ? i18n.t('create.emailFormatError') : i18n.t('create.fieldRequired') }}</span>
+            <span class="field-error">{{ (contactModel().email ? 'create.emailFormatError' : 'create.fieldRequired') | translate }}</span>
         }
     </div>
 
     <div class="form-field">
-        <label for="homePhone">{{ i18n.t('create.homePhone') }}</label>
+        <label for="homePhone">{{ 'create.homePhone' | translate }}</label>
         <div class="phone-field">
             <span class="phone-prefix">
                 <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
@@ -41,14 +41,14 @@
             >
         </div>
         @if (digitsOnlyErrorField() === 'homePhone') {
-            <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+            <span class="field-error">{{ 'create.digitsOnlyError' | translate }}</span>
         } @else if (contactForm.homePhone().invalid() && contactForm.homePhone().touched()) {
-            <span class="field-error">{{ i18n.t('create.homePhoneFormatError') }}</span>
+            <span class="field-error">{{ 'create.homePhoneFormatError' | translate }}</span>
         }
     </div>
 
     <div class="form-field">
-        <label for="mobilePhone">{{ i18n.t('create.mobilePhone') }} <span class="required">*</span></label>
+        <label for="mobilePhone">{{ 'create.mobilePhone' | translate }} <span class="required">*</span></label>
         <div class="phone-field">
             <span class="phone-prefix">
                 <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
@@ -69,14 +69,14 @@
             >
         </div>
         @if (digitsOnlyErrorField() === 'mobilePhone') {
-            <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+            <span class="field-error">{{ 'create.digitsOnlyError' | translate }}</span>
         } @else if (contactForm.mobilePhone().invalid() && contactForm.mobilePhone().touched()) {
-            <span class="field-error">{{ contactModel().mobilePhone ? i18n.t('create.mobilePhoneFormatError') : i18n.t('create.fieldRequired') }}</span>
+            <span class="field-error">{{ (contactModel().mobilePhone ? 'create.mobilePhoneFormatError' : 'create.fieldRequired') | translate }}</span>
         }
     </div>
 
     <div class="form-field">
-        <label for="fax">{{ i18n.t('create.fax') }}</label>
+        <label for="fax">{{ 'create.fax' | translate }}</label>
         <div class="phone-field">
             <span class="phone-prefix">
                 <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
@@ -97,9 +97,9 @@
             >
         </div>
         @if (digitsOnlyErrorField() === 'fax') {
-            <span class="field-error">{{ i18n.t('create.digitsOnlyError') }}</span>
+            <span class="field-error">{{ 'create.digitsOnlyError' | translate }}</span>
         } @else if (contactForm.fax().invalid() && contactForm.fax().touched()) {
-            <span class="field-error">{{ i18n.t('create.faxFormatError') }}</span>
+            <span class="field-error">{{ 'create.faxFormatError' | translate }}</span>
         }
     </div>
 

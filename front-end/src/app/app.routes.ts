@@ -50,8 +50,7 @@ export const routes: Routes = [
       },
       {
         path: 'new-sale/:custId/:custAcctId',
-        loadComponent: () =>
-          import('./features/customer/new-sale/new-sale.component').then(m => m.NewSaleComponent)
+        loadComponent: () => import('./features/customer/new-sale/new-sale.component').then(m => m.NewSaleComponent)
       },
       {
         path: 'approvals',

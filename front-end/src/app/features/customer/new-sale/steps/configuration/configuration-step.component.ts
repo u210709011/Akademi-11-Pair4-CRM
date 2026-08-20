@@ -1,10 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
-import { AddressEditRequest, AddressResponse, CustomerService } from '../../../../../core/customer';
-import { I18nService } from '../../../../../core/i18n';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { AddressEditRequest, AddressResponse, CustomerService } from '../../../data-access/customer';
 import { CharacteristicValue, GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
-import { ProductOfferingCharUse, ProductService } from '../../../../../core/product';
+import { ProductOfferingCharUse, ProductService } from '../../../data-access/product';
 import { BasketLine, NewSaleFormStateService } from '../../new-sale.component';
 import { ButtonComponent } from '../../../../../shared/components/button/button.component';
 
@@ -37,13 +37,13 @@ interface CharacteristicField {
 
 @Component({
   selector: 'app-configuration-step',
-  imports: [FormField, ButtonComponent],
+  imports: [FormField, ButtonComponent, TranslatePipe],
   templateUrl: './configuration-step.component.html',
   styleUrl: './configuration-step.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class ConfigurationStepComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly customerService = inject(CustomerService);
   private readonly lookupService = inject(LookupService);
   private readonly productService = inject(ProductService);
@@ -59,11 +59,11 @@ export class ConfigurationStepComponent {
   private readonly charUseCache = new Map<string, ProductOfferingCharUse[]>();
 
   constructor() {
-    // city/characteristic degerleri backend-driven ve dile gore cevrilir - i18n.lang() burada
+    // city/characteristic degerleri backend-driven ve dile gore cevrilir - currentLang() burada
     // dogrudan okunarak effect'in bagimliligi yapilir, dil degistiginde yeniden cekilir.
     // lookupService zaten dile gore cache'liyor (bkz. lookup.service.ts), burada ekstra guard gerekmez.
     effect(() => {
-      this.i18n.lang();
+      this.translate.currentLang();
       this.lookupService.getTypesByGroup(LOOKUP_GROUPS.CITY).subscribe(cities => this.cities.set(cities));
       this.lookupService.getCharacteristicValues().subscribe(values => this.characteristicValues.set(values));
     });
@@ -73,7 +73,7 @@ export class ConfigurationStepComponent {
     // dile gore cevrildigi icin cache key'i (dil, offering) ciftidir - dil degisince yeniden cekilir,
     // ama daha once cekilmis bir dile donulunce agdan beklemeden cache'ten aninda uygulanir.
     effect(() => {
-      const lang = this.i18n.lang();
+      const lang = this.translate.currentLang();
       for (const line of this.configurableLines()) {
         const key = `${lang}:${line.prodOfrId}`;
         const cached = this.charUseCache.get(key);
@@ -308,13 +308,13 @@ export class ConfigurationStepComponent {
         this.formState.addresses.update(addresses => [...addresses, address]);
         this.formState.selectedAddressId.set(address.id);
         this.persistAddressToBillingAccount(address.id);
-        this.showToast(this.i18n.t('detail.addAddressSuccess'));
+        this.showToast(this.translate.instant('detail.addAddressSuccess'));
       },
       error: (httpError: HttpErrorResponse) => {
         this.isSavingAddress.set(false);
         this.addressSaveError.set(
           (httpError.error as { message?: string } | null)?.message ??
-            (httpError.status === 409 ? this.i18n.t('detail.maxAddressesReached') : this.i18n.t('detail.addressSaveError'))
+            (httpError.status === 409 ? this.translate.instant('detail.maxAddressesReached') : this.translate.instant('detail.addressSaveError'))
         );
       }
     });

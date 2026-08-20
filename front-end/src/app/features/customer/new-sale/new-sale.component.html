@@ -11,7 +11,7 @@
         <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M9 6l6 6-6 6" />
         </svg>
-        <a class="breadcrumb-link" routerLink="/search-customer">{{ i18n.t('search.searchCustomer') }}</a>
+        <a class="breadcrumb-link" routerLink="/search-customer">{{ 'search.searchCustomer' | translate }}</a>
         <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M9 6l6 6-6 6" />
         </svg>
@@ -19,12 +19,12 @@
         <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M9 6l6 6-6 6" />
         </svg>
-        <span class="breadcrumb-current">{{ i18n.t('newSale.pageTitle') }}</span>
+        <span class="breadcrumb-current">{{ 'newSale.pageTitle' | translate }}</span>
     </nav>
 
     <div class="new-sale-header">
-        <h1 class="page-title">{{ i18n.t('newSale.pageTitle') }}</h1>
-        <span class="billing-account-label">{{ i18n.t('newSale.billingAccount') }}</span>
+        <h1 class="page-title">{{ 'newSale.pageTitle' | translate }}</h1>
+        <span class="billing-account-label">{{ 'newSale.billingAccount' | translate }}</span>
         <span class="billing-account-value">{{ formState.billingAccountNo() }}</span>
     </div>
 
@@ -38,7 +38,7 @@
                         {{ i + 1 }}
                     }
                 </span>
-                <span class="stepper-label">{{ i18n.t(step.labelKey) }}</span>
+                <span class="stepper-label">{{ step.labelKey | translate }}</span>
             </div>
             @if (i < steps.length - 1) {
                 <div class="stepper-connector" [class.done]="stepState(step.key) === 'done'"></div>
@@ -74,9 +74,9 @@
     <div class="wizard-actions">
         <div class="wizard-buttons-group">
             @if (activeStepIndex() === 0) {
-                <app-button variant="secondary" (buttonClick)="openCancelConfirm()">{{ i18n.t('newSale.cancelBtn') }}</app-button>
+                <app-button variant="secondary" (buttonClick)="openCancelConfirm()">{{ 'newSale.cancelBtn' | translate }}</app-button>
             } @else {
-                <app-button variant="secondary" (buttonClick)="previous()">{{ i18n.t('newSale.previousBtn') }}</app-button>
+                <app-button variant="secondary" (buttonClick)="previous()">{{ 'newSale.previousBtn' | translate }}</app-button>
             }
 
             <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="next()">
@@ -97,7 +97,7 @@
             <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
 
                 <div class="modal-header">
-                    <h3 class="modal-title">{{ i18n.t('newSale.cancelConfirmTitle') }}</h3>
+                    <h3 class="modal-title">{{ 'newSale.cancelConfirmTitle' | translate }}</h3>
                     <button type="button" class="modal-close" (click)="closeCancelConfirm()">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                     </button>
@@ -111,12 +111,12 @@
                             <path d="M12 17h.01" />
                         </svg>
                     </span>
-                    <p class="delete-confirm-message">{{ i18n.t('newSale.cancelConfirmMessage') }}</p>
+                    <p class="delete-confirm-message">{{ 'newSale.cancelConfirmMessage' | translate }}</p>
                 </div>
 
                 <div class="modal-actions">
-                    <app-button variant="secondary" (buttonClick)="closeCancelConfirm()">{{ i18n.t('newSale.cancelConfirmKeepBtn') }}</app-button>
-                    <app-button variant="danger" (buttonClick)="confirmCancel()">{{ i18n.t('newSale.cancelConfirmConfirmBtn') }}</app-button>
+                    <app-button variant="secondary" (buttonClick)="closeCancelConfirm()">{{ 'newSale.cancelConfirmKeepBtn' | translate }}</app-button>
+                    <app-button variant="danger" (buttonClick)="confirmCancel()">{{ 'newSale.cancelConfirmConfirmBtn' | translate }}</app-button>
                 </div>
 
             </div>
@@ -128,7 +128,7 @@
             <div class="modal-card delete-confirm-card" (click)="$event.stopPropagation()">
 
                 <div class="modal-header">
-                    <h3 class="modal-title">{{ i18n.t('newSale.submitConfirmTitle') }}</h3>
+                    <h3 class="modal-title">{{ 'newSale.submitConfirmTitle' | translate }}</h3>
                     <button type="button" class="modal-close" (click)="closeSubmitConfirm()">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                     </button>
@@ -142,12 +142,12 @@
                             <path d="M12 17h.01" />
                         </svg>
                     </span>
-                    <p class="delete-confirm-message">{{ i18n.t('newSale.submitConfirmMessage') }}</p>
+                    <p class="delete-confirm-message">{{ 'newSale.submitConfirmMessage' | translate }}</p>
                 </div>
 
                 <div class="modal-actions">
-                    <app-button variant="secondary" (buttonClick)="closeSubmitConfirm()">{{ i18n.t('newSale.submitConfirmKeepBtn') }}</app-button>
-                    <app-button variant="danger" (buttonClick)="confirmSubmit()">{{ i18n.t('newSale.submitConfirmConfirmBtn') }}</app-button>
+                    <app-button variant="secondary" (buttonClick)="closeSubmitConfirm()">{{ 'newSale.submitConfirmKeepBtn' | translate }}</app-button>
+                    <app-button variant="danger" (buttonClick)="confirmSubmit()">{{ 'newSale.submitConfirmConfirmBtn' | translate }}</app-button>
                 </div>
 
             </div>
@@ -165,23 +165,23 @@
                     </svg>
                 </span>
 
-                <h3 class="order-success-title">{{ i18n.t('newSale.orderSuccessTitle') }}</h3>
-                <p class="order-success-subtitle">{{ i18n.t('newSale.orderSuccessMessage') }}</p>
+                <h3 class="order-success-title">{{ 'newSale.orderSuccessTitle' | translate }}</h3>
+                <p class="order-success-subtitle">{{ 'newSale.orderSuccessMessage' | translate }}</p>
 
                 <div class="order-success-details">
                     <div class="order-success-detail-row">
-                        <span class="order-success-detail-label">{{ i18n.t('newSale.orderId') }}:</span>
+                        <span class="order-success-detail-label">{{ 'newSale.orderId' | translate }}:</span>
                         <span class="order-success-detail-value">ORD-{{ formState.custOrdId() }}</span>
                     </div>
                     <div class="order-success-detail-row">
-                        <span class="order-success-detail-label">{{ i18n.t('newSale.businessInteractionId') }}:</span>
+                        <span class="order-success-detail-label">{{ 'newSale.businessInteractionId' | translate }}:</span>
                         <span class="order-success-detail-value">BI-{{ formState.bsnInterId() }}</span>
                     </div>
                 </div>
 
                 <div class="order-success-actions">
-                    <app-button variant="secondary" (buttonClick)="goToBillingAccount()">{{ i18n.t('newSale.goToBillingAccount') }}</app-button>
-                    <app-button (buttonClick)="startNewOrderForSameAccount()">{{ i18n.t('newSale.addNewProductBtn') }}</app-button>
+                    <app-button variant="secondary" (buttonClick)="goToBillingAccount()">{{ 'newSale.goToBillingAccount' | translate }}</app-button>
+                    <app-button (buttonClick)="startNewOrderForSameAccount()">{{ 'newSale.addNewProductBtn' | translate }}</app-button>
                 </div>
 
             </div>

@@ -2,11 +2,11 @@ import { NgComponentOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, Injectable, Type, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { BasketItemRequest, ItemCharValsRequest, OrderConfigurationRequest, OrderItemSummaryResponse, OrderService } from '../../../core/order';
-import { AddressResponse, CustomerService } from '../../../core/customer';
-import { I18nService } from '../../../core/i18n';
+import { BasketItemRequest, ItemCharValsRequest, OrderConfigurationRequest, OrderItemSummaryResponse, OrderService } from '../data-access/order';
+import { AddressResponse, CustomerService } from '../data-access/customer';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { LookupService } from '../../../core/lookup';
-import { ProductOfferingCharUse, ProductService } from '../../../core/product';
+import { ProductOfferingCharUse, ProductService } from '../data-access/product';
 import { ConfigurationStepComponent } from './steps/configuration/configuration-step.component';
 import { OfferSelectionComponent } from './steps/offer-selection/offer-selection.component';
 import { ReviewStepComponent } from './steps/review/review-step.component';
@@ -63,7 +63,7 @@ export interface BasketGroup {
 export class NewSaleFormStateService {
   private readonly lookupService = inject(LookupService);
   private readonly productService = inject(ProductService);
-  private readonly i18n = inject(I18nService);
+  private readonly translate = inject(TranslateService);
   // Hangi charId'lerin secim listesi (GNL_CHAR_VAL) oldugunu belirler - saveConfiguration
   // isteginde charValId mi yoksa serbest metin (val) mi gonderilecegine karar vermek icin.
   private readonly selectableCharIds = signal<ReadonlySet<number>>(new Set());
@@ -77,10 +77,10 @@ export class NewSaleFormStateService {
     // dil degistiginde Basket paneli VE Configuration'daki urun basligi ayni satiri gosterdigi
     // icin burada, tek yerde, guncellenirse ikisi de dogru dile gecer. untracked(): basket() hem
     // okunuyor hem (subscribe icinde) yaziliyor - untracked olmadan bu effect'in kendi yazdigi
-    // degeri tekrar okuyup sonsuz dongu tetiklemesi riski var, o yuzden sadece i18n.lang()
+    // degeri tekrar okuyup sonsuz dongu tetiklemesi riski var, o yuzden sadece currentLang()
     // izlenen bagimlilik.
     effect(() => {
-      this.i18n.lang();
+      this.translate.currentLang();
       untracked(() => this.retranslateBasketLines());
     });
   }
@@ -320,14 +320,14 @@ export class NewSaleFormStateService {
 
 @Component({
   selector: 'app-new-sale',
-  imports: [NgComponentOutlet, RouterLink, ButtonComponent],
+  imports: [NgComponentOutlet, RouterLink, ButtonComponent, TranslatePipe],
   templateUrl: './new-sale.component.html',
   styleUrl: './new-sale.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
   providers: [NewSaleFormStateService]
 })
 export class NewSaleComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly customerService = inject(CustomerService);
@@ -382,7 +382,7 @@ export class NewSaleComponent {
   );
 
   protected readonly nextButtonLabel = computed(() =>
-    this.activeStep() === 'review' ? this.i18n.t('newSale.submitBtn') : this.i18n.t('newSale.nextBtn')
+    this.activeStep() === 'review' ? this.translate.instant('newSale.submitBtn') : this.translate.instant('newSale.nextBtn')
   );
 
   constructor() {
@@ -558,7 +558,7 @@ export class NewSaleComponent {
   }
 
   private extractErrorMessage(httpError: HttpErrorResponse): string {
-    return (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('newSale.basketValidationError');
+    return (httpError.error as { message?: string } | null)?.message ?? this.translate.instant('newSale.basketValidationError');
   }
 
   private advanceStep(): void {

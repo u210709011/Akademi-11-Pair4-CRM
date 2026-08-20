@@ -11,24 +11,24 @@
         <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M9 6l6 6-6 6" />
         </svg>
-        <a class="breadcrumb-link" href="#">{{ i18n.t('search.b2c') }}</a>
+        <a class="breadcrumb-link" href="#">{{ 'search.b2c' | translate }}</a>
         <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M9 6l6 6-6 6" />
         </svg>
-        <span class="breadcrumb-current">{{ i18n.t('search.searchCustomer') }}</span>
+        <span class="breadcrumb-current">{{ 'search.searchCustomer' | translate }}</span>
     </nav>
 
-    <h1 class="page-title">{{ i18n.t('search.searchCustomer') }}</h1>
+    <h1 class="page-title">{{ 'search.searchCustomer' | translate }}</h1>
 
     <div class="search-customer-layout">
 
         <section class="filters-panel">
-            <h2 class="panel-title">{{ i18n.t('search.searchFilters') }}</h2>
+            <h2 class="panel-title">{{ 'search.searchFilters' | translate }}</h2>
 
             <form class="filters-form" [formGroup]="searchForm">
 
                 <div class="filter-field">
-                    <label for="natIdNumber">{{ i18n.t('search.natId') }}</label>
+                    <label for="natIdNumber">{{ 'search.natId' | translate }}</label>
                     <input
                         id="natIdNumber"
                         type="text"
@@ -40,12 +40,12 @@
                         (blur)="onNatIdBlur()"
                     >
                     @if (fieldErrors().natIdNumber) {
-                        <span class="field-error">{{ i18n.t('search.natIdError') }}</span>
+                        <span class="field-error">{{ 'search.natIdError' | translate }}</span>
                     }
                 </div>
 
                 <div class="filter-field">
-                    <label for="customerId">{{ i18n.t('search.custId') }}</label>
+                    <label for="customerId">{{ 'search.custId' | translate }}</label>
                     <div class="customer-id-field">
                         <span class="customer-id-prefix">CUST-</span>
                         <input
@@ -58,12 +58,12 @@
                         >
                     </div>
                     @if (fieldErrors().customerId) {
-                        <span class="field-error">{{ i18n.t('search.customerIdError') }}</span>
+                        <span class="field-error">{{ 'search.customerIdError' | translate }}</span>
                     }
                 </div>
 
                 <div class="filter-field">
-                    <label for="accountNumber">{{ i18n.t('search.accNum') }}</label>
+                    <label for="accountNumber">{{ 'search.accNum' | translate }}</label>
                     <div class="accountNumber-id-field">
                     <input
                         id="accountNumber"
@@ -76,12 +76,12 @@
                     >
                    </div>
                 @if (fieldErrors().accountNumber) {
-                        <span class="field-error">{{ i18n.t('search.accountNumberError') }}</span>
+                        <span class="field-error">{{ 'search.accountNumberError' | translate }}</span>
                     }
                 </div>
 
                 <div class="filter-field">
-                    <label for="gsmNumber">{{ i18n.t('search.gsm') }}</label>
+                    <label for="gsmNumber">{{ 'search.gsm' | translate }}</label>
                     <div class="gsm-field">
                         <span class="gsm-country-code">
                             <svg class="flag-icon" width="22" height="16" viewBox="0 0 28 20" aria-hidden="true" style="display: block; border-radius: 2px;">
@@ -104,12 +104,12 @@
                         >
                     </div>
                     @if (fieldErrors().gsmNumber) {
-                        <span class="field-error">{{ i18n.t('search.gsmError') }}</span>
+                        <span class="field-error">{{ 'search.gsmError' | translate }}</span>
                     }
                 </div>
 
                 <div class="filter-field">
-                    <label for="firstName">{{ i18n.t('search.firstName') }}</label>
+                    <label for="firstName">{{ 'search.firstName' | translate }}</label>
                     <input
                         id="firstName"
                         type="text"
@@ -120,12 +120,12 @@
                         (blur)="onNameBlur('firstName')"
                     >
                     @if (fieldErrors().firstName) {
-                        <span class="field-error">{{ i18n.t('search.firstNameError') }}</span>
+                        <span class="field-error">{{ 'search.firstNameError' | translate }}</span>
                     }
                 </div>
 
                 <div class="filter-field">
-                    <label for="lastName">{{ i18n.t('search.lastName') }}</label>
+                    <label for="lastName">{{ 'search.lastName' | translate }}</label>
                     <input
                         id="lastName"
                         type="text"
@@ -136,12 +136,12 @@
                         (blur)="onNameBlur('lastName')"
                     >
                     @if (fieldErrors().lastName) {
-                        <span class="field-error">{{ i18n.t('search.lastNameError') }}</span>
+                        <span class="field-error">{{ 'search.lastNameError' | translate }}</span>
                     }
                 </div>
 
                 <div class="filter-field">
-                    <label for="orderNumber">{{ i18n.t('search.ordNum') }}</label>
+                    <label for="orderNumber">{{ 'search.ordNum' | translate }}</label>
                     <input
                         id="orderNumber"
                         type="text"
@@ -153,14 +153,14 @@
                     >
                     
                     @if (fieldErrors().orderNumber) {
-                        <span class="field-error">{{ i18n.t('search.orderNumberError') }}</span>
+                        <span class="field-error">{{ 'search.orderNumberError' | translate }}</span>
                     }
                 </div>
 
             </form>
 
             <div class="filters-actions">
-                <button type="button" class="clear-button" (click)="clearFilters()">{{ i18n.t('search.clearBtn') }}</button>
+                <button type="button" class="clear-button" (click)="clearFilters()">{{ 'search.clearBtn' | translate }}</button>
                 <button
                     type="button"
                     class="search-button"
@@ -170,10 +170,10 @@
                     @if (isSearching()) {
                         <span class="btn-spinner-wrap">
                             <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
-                            {{ i18n.t('search.searchBtn') }}
+                            {{ 'search.searchBtn' | translate }}
                         </span>
                     } @else {
-                        {{ i18n.t('search.searchBtn') }}
+                        {{ 'search.searchBtn' | translate }}
                     }
                 </button>
             </div>
@@ -182,23 +182,23 @@
         <section class="results-panel">
             <div class="results-panel-header">
                 <h2 class="panel-title">
-                    {{ i18n.t('search.results') }}
+                    {{ 'search.results' | translate }}
                     @if (hasSearched() && !searchError() && totalElements() > 0) {
                         <span class="results-count">{{ resultsCountLabel() }}</span>
                     }
                 </h2>
                 <button type="button" class="create-customer-button-header" (click)="goToCreateCustomer()">
-                    <span class="create-customer-icon">+</span> {{ i18n.t('search.createCustomerBtn') }}
+                    <span class="create-customer-icon">+</span> {{ 'search.createCustomerBtn' | translate }}
                 </button>
             </div>
 
             @if (isSearching()) {
                 <div class="results-empty-state">
-                    <p class="results-empty-description">{{ i18n.t('search.loading') }}</p>
+                    <p class="results-empty-description">{{ 'search.loading' | translate }}</p>
                 </div>
             } @else if (searchError()) {
                 <div class="results-empty-state">
-                    <p class="results-empty-description">{{ i18n.t('search.error') }}</p>
+                    <p class="results-empty-description">{{ 'search.error' | translate }}</p>
                 </div>
             } @else if (!hasSearched()) {
                 <div class="results-empty-state">
@@ -211,8 +211,8 @@
                             <path d="M19.5 19.5 22 22" />
                         </svg>
                     </span>
-                    <h3 class="results-empty-title">{{ i18n.t('search.title') }}</h3>
-                    <p class="results-empty-description">{{ i18n.t('search.subTitle') }}</p>
+                    <h3 class="results-empty-title">{{ 'search.title' | translate }}</h3>
+                    <p class="results-empty-description">{{ 'search.subTitle' | translate }}</p>
                 </div>
             } @else if (searchResults().length === 0) {
                 <div class="results-empty-state">
@@ -225,8 +225,8 @@
                             <path d="M19.5 19.5 22 22" />
                         </svg>
                     </span>
-                    <h3 class="results-empty-title">{{ i18n.t('search.noResults') }}</h3>
-                    <p class="results-empty-description">{{ i18n.t('search.noResultsSubtitle') }}</p>
+                    <h3 class="results-empty-title">{{ 'search.noResults' | translate }}</h3>
+                    <p class="results-empty-description">{{ 'search.noResultsSubtitle' | translate }}</p>
                 </div>
             } @else {
                 <div class="results-table-wrap">
@@ -234,7 +234,7 @@
                     <thead>
                         <tr>
                             <th class="sortable" [class.active]="sortColumn() === 'custId'" (click)="toggleSort('custId')">
-                                {{ i18n.t('search.custId') }}
+                                {{ 'search.custId' | translate }}
                                 <span class="sort-indicator" [class.active]="sortColumn() === 'custId'">
                                     @if (sortColumn() === 'custId' && sortDirection() === 'asc') {
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
@@ -246,7 +246,7 @@
                                 </span>
                             </th>
                             <th class="sortable" [class.active]="sortColumn() === 'firstName'" (click)="toggleSort('firstName')">
-                                {{ i18n.t('search.firstName') }}
+                                {{ 'search.firstName' | translate }}
                                 <span class="sort-indicator" [class.active]="sortColumn() === 'firstName'">
                                     @if (sortColumn() === 'firstName' && sortDirection() === 'asc') {
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
@@ -258,7 +258,7 @@
                                 </span>
                             </th>
                             <th class="sortable" [class.active]="sortColumn() === 'middleName'" (click)="toggleSort('middleName')">
-                                {{ i18n.t('search.middleName') }}
+                                {{ 'search.middleName' | translate }}
                                 <span class="sort-indicator" [class.active]="sortColumn() === 'middleName'">
                                     @if (sortColumn() === 'middleName' && sortDirection() === 'asc') {
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
@@ -270,7 +270,7 @@
                                 </span>
                             </th>
                             <th class="sortable" [class.active]="sortColumn() === 'lastName'" (click)="toggleSort('lastName')">
-                                {{ i18n.t('search.lastName') }}
+                                {{ 'search.lastName' | translate }}
                                 <span class="sort-indicator" [class.active]="sortColumn() === 'lastName'">
                                     @if (sortColumn() === 'lastName' && sortDirection() === 'asc') {
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
@@ -282,7 +282,7 @@
                                 </span>
                             </th>
                             <th class="sortable" [class.active]="sortColumn() === 'role'" (click)="toggleSort('role')">
-                                {{ i18n.t('search.role') }}
+                                {{ 'search.role' | translate }}
                                 <span class="sort-indicator" [class.active]="sortColumn() === 'role'">
                                     @if (sortColumn() === 'role' && sortDirection() === 'asc') {
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
@@ -294,7 +294,7 @@
                                 </span>
                             </th>
                             <th class="sortable" [class.active]="sortColumn() === 'tcNo'" (click)="toggleSort('tcNo')">
-                                {{ i18n.t('search.natId') }}
+                                {{ 'search.natId' | translate }}
                                 <span class="sort-indicator" [class.active]="sortColumn() === 'tcNo'">
                                     @if (sortColumn() === 'tcNo' && sortDirection() === 'asc') {
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
@@ -333,7 +333,7 @@
                                 class="pagination-arrow"
                                 [disabled]="currentPage() === 0"
                                 (click)="goToPage(currentPage() - 1)"
-                                [attr.aria-label]="i18n.t('search.previousPage')"
+                                [attr.aria-label]="'search.previousPage' | translate"
                             >
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
                             </button>
@@ -350,7 +350,7 @@
                                 class="pagination-arrow"
                                 [disabled]="currentPage() >= totalPages() - 1"
                                 (click)="goToPage(currentPage() + 1)"
-                                [attr.aria-label]="i18n.t('search.nextPage')"
+                                [attr.aria-label]="'search.nextPage' | translate"
                             >
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
                             </button>

@@ -1,13 +1,14 @@
 import { Component, ElementRef, EventEmitter, HostListener, Output, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth';
-import { I18nService } from '../../../core/i18n';
+import { persistLang } from '../../../core/i18n/lang-storage';
 
 const DEFAULT_JOB_TITLE_KEY = 'navbar.jobTitle.default';
 
 @Component({
   selector: 'app-navbar',
-  imports: [],
+  imports: [TranslatePipe],
   templateUrl: './navbar.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './navbar.component.scss'
@@ -15,7 +16,7 @@ const DEFAULT_JOB_TITLE_KEY = 'navbar.jobTitle.default';
 export class NavbarComponent {
   @Output() readonly menuToggle = new EventEmitter<void>();
 
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
@@ -24,17 +25,19 @@ export class NavbarComponent {
 
   protected readonly profileMenuOpen = signal(false);
 
-  protected readonly userName = computed(() => this.currentUser?.name || this.i18n.t('navbar.unknownUser'));
+  protected readonly userName = computed(() => this.currentUser?.name || this.translate.instant('navbar.unknownUser'));
 
   protected readonly userTitle = computed(() => {
     const role = this.currentUser?.roles[0];
     const key = role ? `navbar.jobTitle.${role}` : DEFAULT_JOB_TITLE_KEY;
-    const translated = this.i18n.t(key);
-    return translated === key ? this.i18n.t(DEFAULT_JOB_TITLE_KEY) : translated;
+    const translated = this.translate.instant(key);
+    return translated === key ? this.translate.instant(DEFAULT_JOB_TITLE_KEY) : translated;
   });
 
   protected toggleLangMenu(): void {
-    this.i18n.setLang(this.i18n.lang() === 'en' ? 'tr' : 'en');
+    const next = this.translate.currentLang() === 'en' ? 'tr' : 'en';
+    this.translate.use(next);
+    persistLang(next);
   }
 
   protected toggleProfileMenu(): void {

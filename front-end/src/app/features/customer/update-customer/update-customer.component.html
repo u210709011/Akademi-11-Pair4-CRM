@@ -9,23 +9,23 @@
             </svg>
         </a>
         <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-        <a class="breadcrumb-link" routerLink="/search-customer">{{ i18n.t('search.searchCustomer') }}</a>
+        <a class="breadcrumb-link" routerLink="/search-customer">{{ 'search.searchCustomer' | translate }}</a>
         <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
         <a class="breadcrumb-link" [routerLink]="['/detail-customer', custId]">{{ customerName() }}</a>
         <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-        <span class="breadcrumb-current">{{ i18n.t('update.breadcrumb') }}</span>
+        <span class="breadcrumb-current">{{ 'update.breadcrumb' | translate }}</span>
     </nav>
 
-    <h1 class="page-title">{{ i18n.t('update.pageTitle') }}</h1>
+    <h1 class="page-title">{{ 'update.pageTitle' | translate }}</h1>
 
     @if (isLoading()) {
-        <p class="status-message">{{ i18n.t('detail.loading') }}</p>
+        <p class="status-message">{{ 'detail.loading' | translate }}</p>
     } @else if (loadError()) {
-        <p class="status-message">{{ i18n.t('detail.loadError') }}</p>
+        <p class="status-message">{{ 'detail.loadError' | translate }}</p>
     } @else {
 
     <div class="update-card">
-        <h2 class="section-title">{{ i18n.t('create.tabDemographic') }}</h2>
+        <h2 class="section-title">{{ 'create.tabDemographic' | translate }}</h2>
 
         @if (saveError()) {
             <div class="identity-error-banner">{{ saveError() }}</div>
@@ -35,7 +35,7 @@
 
             <div class="form-field">
                 <div class="field-label-row">
-                    <label for="firstName">{{ i18n.t('create.firstName') }} <span class="required">*</span></label>
+                    <label for="firstName">{{ 'create.firstName' | translate }} <span class="required">*</span></label>
                     <span class="char-counter">{{ updateModel().firstName.length }}/50</span>
                 </div>
                 <input
@@ -45,15 +45,15 @@
                     (blur)="setLetterFieldError('firstName', false)"
                 >
                 @if (letterFieldErrors().firstName) {
-                    <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                    <span class="field-error">{{ 'create.nameError' | translate }}</span>
                 } @else if (updateForm.firstName().invalid() && updateForm.firstName().touched()) {
-                    <span class="field-error">{{ updateModel().firstName ? i18n.t('update.maxLengthError') : i18n.t('create.fieldRequired') }}</span>
+                    <span class="field-error">{{ updateModel().firstName ? ('update.maxLengthError' | translate) : ('create.fieldRequired' | translate) }}</span>
                 }
             </div>
 
             <div class="form-field">
                 <div class="field-label-row">
-                    <label for="middleName">{{ i18n.t('create.middleName') }}</label>
+                    <label for="middleName">{{ 'create.middleName' | translate }}</label>
                     <span class="char-counter">{{ updateModel().middleName.length }}/50</span>
                 </div>
                 <input
@@ -63,15 +63,15 @@
                     (blur)="setLetterFieldError('middleName', false)"
                 >
                 @if (letterFieldErrors().middleName) {
-                    <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                    <span class="field-error">{{ 'create.nameError' | translate }}</span>
                 } @else if (updateForm.middleName().invalid() && updateForm.middleName().touched()) {
-                    <span class="field-error">{{ i18n.t('update.maxLengthError') }}</span>
+                    <span class="field-error">{{ 'update.maxLengthError' | translate }}</span>
                 }
             </div>
 
             <div class="form-field">
                 <div class="field-label-row">
-                    <label for="lastName">{{ i18n.t('create.lastName') }} <span class="required">*</span></label>
+                    <label for="lastName">{{ 'create.lastName' | translate }} <span class="required">*</span></label>
                     <span class="char-counter">{{ updateModel().lastName.length }}/50</span>
                 </div>
                 <input
@@ -81,14 +81,14 @@
                     (blur)="setLetterFieldError('lastName', false)"
                 >
                 @if (letterFieldErrors().lastName) {
-                    <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                    <span class="field-error">{{ 'create.nameError' | translate }}</span>
                 } @else if (updateForm.lastName().invalid() && updateForm.lastName().touched()) {
-                    <span class="field-error">{{ updateModel().lastName ? i18n.t('update.maxLengthError') : i18n.t('create.fieldRequired') }}</span>
+                    <span class="field-error">{{ updateModel().lastName ? ('update.maxLengthError' | translate) : ('create.fieldRequired' | translate) }}</span>
                 }
             </div>
 
             <div class="form-field">
-                <label for="birthDate">{{ i18n.t('create.birthDate') }} <span class="required">*</span></label>
+                <label for="birthDate">{{ 'create.birthDate' | translate }} <span class="required">*</span></label>
                 <mat-form-field class="date-field" appearance="outline" subscriptSizing="dynamic">
                     <input
                         matInput
@@ -109,25 +109,25 @@
                     ></mat-datepicker>
                 </mat-form-field>
                 @if (birthDateErrorKey(); as errorKey) {
-                    <span class="field-error">{{ i18n.t(errorKey) }}</span>
+                    <span class="field-error">{{ errorKey | translate }}</span>
                 }
             </div>
 
             <div class="form-field">
-                <label for="gender">{{ i18n.t('create.gender') }} <span class="required">*</span></label>
+                <label for="gender">{{ 'create.gender' | translate }} <span class="required">*</span></label>
                 <select id="gender" [formField]="updateForm.gender">
-                    <option value="" disabled>{{ i18n.t('create.selectPlaceholder') }}</option>
+                    <option value="" disabled>{{ 'create.selectPlaceholder' | translate }}</option>
                     @for (gender of genders(); track gender.gnlTpId) {
                         <option [value]="gender.gnlTpId">{{ genderLabel(gender.shrtCode) }}</option>
                     }
                 </select>
                 @if (updateForm.gender().invalid() && updateForm.gender().touched()) {
-                    <span class="field-error">{{ i18n.t('create.fieldRequired') }}</span>
+                    <span class="field-error">{{ 'create.fieldRequired' | translate }}</span>
                 }
             </div>
 
             <div class="form-field">
-                <label for="fatherName">{{ i18n.t('create.fatherName') }}</label>
+                <label for="fatherName">{{ 'create.fatherName' | translate }}</label>
                 <input
                     id="fatherName"
                     type="text"
@@ -135,14 +135,14 @@
                     (blur)="setLetterFieldError('fatherName', false)"
                 >
                 @if (letterFieldErrors().fatherName) {
-                    <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                    <span class="field-error">{{ 'create.nameError' | translate }}</span>
                 } @else if (updateForm.fatherName().invalid() && updateForm.fatherName().touched()) {
-                    <span class="field-error">{{ i18n.t('update.maxLengthError') }}</span>
+                    <span class="field-error">{{ 'update.maxLengthError' | translate }}</span>
                 }
             </div>
 
             <div class="form-field">
-                <label for="motherName">{{ i18n.t('create.motherName') }}</label>
+                <label for="motherName">{{ 'create.motherName' | translate }}</label>
                 <input
                     id="motherName"
                     type="text"
@@ -150,14 +150,14 @@
                     (blur)="setLetterFieldError('motherName', false)"
                 >
                 @if (letterFieldErrors().motherName) {
-                    <span class="field-error">{{ i18n.t('create.nameError') }}</span>
+                    <span class="field-error">{{ 'create.nameError' | translate }}</span>
                 } @else if (updateForm.motherName().invalid() && updateForm.motherName().touched()) {
-                    <span class="field-error">{{ i18n.t('update.maxLengthError') }}</span>
+                    <span class="field-error">{{ 'update.maxLengthError' | translate }}</span>
                 }
             </div>
 
             <div class="form-field">
-                <label for="nationalId">{{ i18n.t('create.nationalId') }} <span class="required">*</span></label>
+                <label for="nationalId">{{ 'create.nationalId' | translate }} <span class="required">*</span></label>
                 <input
                     id="nationalId"
                     type="text"
@@ -166,17 +166,17 @@
                     (blur)="nationalIdError.set(false)"
                 >
                 @if (nationalIdError()) {
-                    <span class="field-error">{{ i18n.t('update.nationalIdError') }}</span>
+                    <span class="field-error">{{ 'update.nationalIdError' | translate }}</span>
                 } @else if (updateForm.nationalId().touched() && updateForm.nationalId().value().length > 0 && updateForm.nationalId().value().length < 11) {
-                    <span class="field-error">{{ i18n.t('update.nationalIdError') }}</span>
+                    <span class="field-error">{{ 'update.nationalIdError' | translate }}</span>
                 }
             </div>
 
         </form>
 
         <div class="update-actions">
-            <button type="button" class="previous-button" (click)="previous()">{{ i18n.t('update.previousBtn') }}</button>
-            <app-button [disabled]="updateForm().invalid()" [loading]="isSaving()" [loadingLabel]="i18n.t('create.submitting')" (buttonClick)="save()">{{ i18n.t('create.saveBtn') }}</app-button>
+            <button type="button" class="previous-button" (click)="previous()">{{ 'update.previousBtn' | translate }}</button>
+            <app-button [disabled]="updateForm().invalid()" [loading]="isSaving()" [loadingLabel]="translate.instant('create.submitting')" (buttonClick)="save()">{{ 'create.saveBtn' | translate }}</app-button>
         </div>
     </div>
 

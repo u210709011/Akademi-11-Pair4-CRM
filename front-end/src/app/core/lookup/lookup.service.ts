@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Observable, shareReplay } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { I18nService } from '../i18n';
 import { Characteristic, CharacteristicValue, GnlType } from './lookup.model';
 
 // Grup basina bir kere cekilip (shareReplay) tum caller'lar arasinda paylasilir - dropdown'lari
@@ -12,13 +12,13 @@ import { Characteristic, CharacteristicValue, GnlType } from './lookup.model';
 @Injectable({ providedIn: 'root' })
 export class LookupService {
   private readonly http = inject(HttpClient);
-  private readonly i18n = inject(I18nService);
+  private readonly translate = inject(TranslateService);
   private readonly cache = new Map<string, Observable<GnlType[]>>();
   private readonly characteristicsCache = new Map<string, Observable<Characteristic[]>>();
   private readonly characteristicValuesCache = new Map<string, Observable<CharacteristicValue[]>>();
 
   getTypesByGroup(entCodeName: string): Observable<GnlType[]> {
-    const key = `${this.i18n.lang()}:${entCodeName}`;
+    const key = `${this.translate.currentLang() ?? this.translate.fallbackLang() ?? 'en'}:${entCodeName}`;
     let cached = this.cache.get(key);
     if (!cached) {
       cached = this.http
@@ -30,7 +30,7 @@ export class LookupService {
   }
 
   getCharacteristics(): Observable<Characteristic[]> {
-    const key = this.i18n.lang();
+    const key = this.translate.currentLang() ?? this.translate.fallbackLang() ?? 'en';
     let cached = this.characteristicsCache.get(key);
     if (!cached) {
       cached = this.http
@@ -42,7 +42,7 @@ export class LookupService {
   }
 
   getCharacteristicValues(): Observable<CharacteristicValue[]> {
-    const key = this.i18n.lang();
+    const key = this.translate.currentLang() ?? this.translate.fallbackLang() ?? 'en';
     let cached = this.characteristicValuesCache.get(key);
     if (!cached) {
       cached = this.http

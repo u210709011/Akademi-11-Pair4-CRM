@@ -3,10 +3,12 @@ import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_NATIVE_DATE_FORMATS, NativeDateAdapter } from '@angular/material/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter } from '@angular/router';
+import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth';
-import { languageInterceptor } from './core/i18n';
+import { languageInterceptor, LANG_STORAGE_KEY } from './core/i18n';
 
 //for datepicker input format
 class AppDateAdapter extends NativeDateAdapter {
@@ -17,6 +19,10 @@ class AppDateAdapter extends NativeDateAdapter {
   }
 }
 
+function readStoredLang(): 'en' | 'tr' {
+  return localStorage.getItem(LANG_STORAGE_KEY) === 'tr' ? 'tr' : 'en';
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
@@ -24,6 +30,11 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withXhr(), withInterceptors([authInterceptor, languageInterceptor])),
     provideAnimationsAsync(),
     { provide: DateAdapter, useClass: AppDateAdapter },
-    { provide: MAT_DATE_FORMATS, useValue: MAT_NATIVE_DATE_FORMATS }
+    { provide: MAT_DATE_FORMATS, useValue: MAT_NATIVE_DATE_FORMATS },
+    provideTranslateService({
+      lang: readStoredLang(),
+      fallbackLang: 'en',
+      loader: provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' })
+    })
   ]
 };

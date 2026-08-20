@@ -2,8 +2,8 @@ import { NgComponentOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Injectable, Type, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
-import { AddressInfo, ContactInfo, CustomerService, IndividualInfo } from '../../../core/customer';
-import { I18nService } from '../../../core/i18n';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { AddressInfo, ContactInfo, CustomerService, IndividualInfo } from '../data-access/customer';
 import { AddressTabComponent } from './tabs/address-tab/address-tab.component';
 import { ContactTabComponent } from './tabs/contact-tab/contact-tab.component';
 import { DemographicTabComponent } from './tabs/demographic-tab/demographic-tab.component';
@@ -80,14 +80,14 @@ export class CreateCustomerFormStateService {
 
 @Component({
   selector: 'app-create-customer',
-  imports: [NgComponentOutlet, ButtonComponent],
+  imports: [NgComponentOutlet, ButtonComponent, TranslatePipe],
   templateUrl: './create-customer.component.html',
   styleUrl: './create-customer.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
   providers: [CreateCustomerFormStateService]
 })
 export class CreateCustomerComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
   private readonly customerService = inject(CustomerService);
   protected readonly formState = inject(CreateCustomerFormStateService);
@@ -106,7 +106,7 @@ export class CreateCustomerComponent {
 
   protected readonly activeTabLabel = computed(() => {
     const labelKey = this.tabs.find(tab => tab.key === this.activeTab())?.labelKey;
-    return labelKey ? this.i18n.t(labelKey) : '';
+    return labelKey ? this.translate.instant(labelKey) : '';
   });
 
   protected readonly activeTabComponent = computed(
@@ -128,7 +128,7 @@ export class CreateCustomerComponent {
   });
 
   protected readonly nextButtonLabel = computed(() =>
-    this.activeTab() === 'contact' ? this.i18n.t('create.createBtn') : this.i18n.t('create.nextBtn')
+    this.activeTab() === 'contact' ? this.translate.instant('create.createBtn') : this.translate.instant('create.nextBtn')
   );
 
   protected isTabLocked(tab: CreateCustomerTab): boolean {
@@ -177,8 +177,8 @@ export class CreateCustomerComponent {
         this.formState.identityVerificationError.set(
           (httpError.error as { message?: string } | null)?.message ??
             (httpError.status === 409
-              ? this.i18n.t('create.identityDuplicate')
-              : this.i18n.t('create.identityError'))
+              ? this.translate.instant('create.identityDuplicate')
+              : this.translate.instant('create.identityError'))
         );
       }
     });
@@ -208,8 +208,8 @@ export class CreateCustomerComponent {
         this.formState.submitError.set(
           (httpError.error as { message?: string } | null)?.message ??
             (httpError.status === 409
-              ? this.i18n.t('create.identityDuplicate')
-              : this.i18n.t('create.submitError'))
+              ? this.translate.instant('create.identityDuplicate')
+              : this.translate.instant('create.submitError'))
         );
       }
     });
