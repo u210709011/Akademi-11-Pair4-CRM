@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class OutboxEventPublisher {
 
+	private static final String SERIALIZATION_FAILED_MESSAGE = "Failed to serialize outbox payload for event %s";
+
 	private final OutboxEventRepository outboxEventRepository;
 	private final ObjectMapper objectMapper;
 
@@ -24,7 +26,7 @@ public class OutboxEventPublisher {
 			String json = objectMapper.writeValueAsString(payload);
 			outboxEventRepository.save(OutboxEvent.of(aggregateType, aggregateId, eventType, json));
 		} catch (JsonProcessingException e) {
-			throw new IllegalStateException("Failed to serialize outbox payload for event " + eventType, e);
+			throw new IllegalStateException(SERIALIZATION_FAILED_MESSAGE.formatted(eventType), e);
 		}
 	}
 }

@@ -1,42 +1,71 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Injectable, inject, signal } from '@angular/core';
+import { Observable, catchError, map, of, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  tokenType: string;
-  expiresIn: number;
-}
-
 export type LoginResult = 'success' | 'invalidCredentials' | 'accountLocked';
+
+export interface CurrentUser {
+  name: string;
+  roles: string[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly currentUserSignal = signal<CurrentUser | null>(null);
+  private sessionChecked = false;
 
   login(username: string, password: string): Observable<LoginResult> {
-    return this.http.post<TokenResponse>(`${environment.authApiUrl}/login`, { username, password }).pipe(
-      map(response => {
-        localStorage.setItem('accessToken', response.accessToken);
-        localStorage.setItem('refreshToken', response.refreshToken);
-        return 'success' as const;
-      }),
-      // Backend returns 423 Locked only when Keycloak's real brute-force protection
-      // (crm-realm.json: 5 attempts / 15 min) has actually kicked in - any other error
-      // (wrong password, etc.) is treated as plain invalid credentials.
+    return this.http.post<void>(`${environment.authApiUrl}/login`, { username, password }).pipe(
+      switchMap(() => this.fetchCurrentUser()),
+      map(() => 'success' as const),
+
       catchError((err: HttpErrorResponse) =>
         of(err.status === 423 ? ('accountLocked' as const) : ('invalidCredentials' as const)))
     );
   }
 
-  isAuthenticated(): boolean {
-    return !!localStorage.getItem('accessToken');
+
+  ensureAuthenticated(): Observable<boolean> {
+    if (this.sessionChecked) {
+      return of(!!this.currentUserSignal());
+    }
+    return this.fetchCurrentUser().pipe(
+      map(() => true),
+      catchError(() => {
+        this.currentUserSignal.set(null);
+        this.sessionChecked = true;
+        return of(false);
+      })
+    );
+  }
+
+  getCurrentUser(): CurrentUser | null {
+    return this.currentUserSignal();
   }
 
   clearSession(): void {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    this.currentUserSignal.set(null);
+    this.sessionChecked = true;
+  }
+
+
+  logout(): Observable<void> {
+    this.clearSession();
+    return this.http.post<void>(`${environment.authApiUrl}/logout`, {}).pipe(
+      map(() => undefined),
+      catchError(() => of(undefined))
+    );
+  }
+
+  private fetchCurrentUser(): Observable<CurrentUser> {
+    return this.http.get<CurrentUser>(`${environment.authApiUrl}/me`).pipe(
+      map(user => {
+        this.currentUserSignal.set(user);
+        this.sessionChecked = true;
+        return user;
+      })
+    );
   }
 }

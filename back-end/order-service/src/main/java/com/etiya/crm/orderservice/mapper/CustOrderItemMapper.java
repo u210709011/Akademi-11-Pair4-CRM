@@ -9,6 +9,7 @@ import com.etiya.crm.orderservice.business.dtos.requests.BasketItemRequest;
 import com.etiya.crm.orderservice.business.dtos.responses.CustOrdItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderItemSummaryResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.ProdCharValResponse;
+import com.etiya.crm.orderservice.constants.OrderServiceDefaults;
 import com.etiya.crm.orderservice.entities.concretes.CustOrdItem;
 
 @Mapper(componentModel = "spring")
@@ -22,6 +23,11 @@ public interface CustOrderItemMapper {
     @Mapping(target = "serviceStartDate", source = "item.cdate")
     OrderItemSummaryResponse toSummaryResponse(CustOrdItem item, List<ProdCharValResponse> charVals);
     //getItemsByCustAcctId
+    //custOrdId: modalin ihtiyaci olan diger alanlari (ofrName/prodSpecId/serviceStartDate/charVals/
+    //serviceAddress) tasiyan GET /orders/{custOrdId}'ye arayuzun ulasabilmesi icin (bkz. FR-009 ACC-006/007)
+    @Mapping(target = "custOrdId", source = "item.custOrd.custOrdId")
+    @Mapping(target = "prodNo", expression = "java(formatNo(item.getProdId()))")
+    @Mapping(target = "cmpgNo", expression = "java(formatNo(item.getCmpgId()))")
     CustOrdItemResponse toItemResponse(CustOrdItem item);
 
     //bu alanlar requestte yok managerda set edeceğiz o nedenle ignore = true
@@ -49,4 +55,8 @@ public interface CustOrderItemMapper {
     @Mapping(target = "isNeedShpmt", ignore = true)
     @Mapping(target = "price", ignore = true)
     CustOrdItem toEntity(BasketItemRequest request);
+
+    default String formatNo(Long prodId) {
+        return prodId == null ? null : OrderServiceDefaults.formatNo(prodId);
+    }
 }

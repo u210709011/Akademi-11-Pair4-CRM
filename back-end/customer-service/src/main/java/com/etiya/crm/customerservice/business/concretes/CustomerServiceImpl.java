@@ -14,6 +14,7 @@ import com.etiya.crm.customerservice.business.abstracts.BillingAccountService;
 import com.etiya.crm.customerservice.business.abstracts.CustomerFinder;
 import com.etiya.crm.customerservice.business.abstracts.CustomerLookupResolver;
 import com.etiya.crm.customerservice.business.abstracts.CustomerService;
+import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.business.dtos.requests.CustomerSearchRequest;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerResponse;
 import com.etiya.crm.customerservice.business.dtos.responses.CustomerSearchResponse;
@@ -25,6 +26,7 @@ import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchSpecific
 import com.etiya.crm.customerservice.dataAccess.abstracts.CustomerSearchViewRepository;
 import com.etiya.crm.customerservice.entities.concretes.Customer;
 import com.etiya.crm.customerservice.entities.concretes.CustomerAccount;
+import com.etiya.crm.customerservice.entities.concretes.CustomerSearchView;
 import com.etiya.crm.customerservice.mapper.CustomerMapper;
 import com.etiya.crm.shared.events.KafkaTopics;
 import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
@@ -33,16 +35,10 @@ import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * "Customer" kaynaginin front-door'u (bkz. CustomerController). Kendisi sadece
- * Customer aggregate'inin oz yasam donguсunu (arama, okuma, soft-delete) tutar;
- * onboarding saga'si, adres/contact/billing-account yonetimi ve lookup-service ID
- * cozumleme her biri kendi arayuzu arkasindaki ayri bir collaborator'a
- * devredilir - boylece bu sinifin degisme sebebi tek kalir: "Customer aggregate'i
- * nasil aranir/okunur/silinir".
- */
+
 @Service
 @RequiredArgsConstructor
+/** Müşteri arama, görüntüleme ve silme işlemlerini yürütür. */
 public class CustomerServiceImpl implements CustomerService {
 
 	private final CustomerRepository customerRepository;
@@ -54,20 +50,36 @@ public class CustomerServiceImpl implements CustomerService {
 	private final CustomerFinder customerFinder;
 	private final BillingAccountService billingAccountService;
 	private final CustomerBusinessRules rules;
+	private final LookupCacheService lookupCacheService;
 
 	@Override
 	@Transactional(readOnly = true)
+	/** Filtreli arama sonucunu yerelleştirilmiş rol bilgisiyle döner. */
 	public Page<CustomerSearchResponse> search(CustomerSearchRequest request, Pageable pageable) {
 		rules.ensureAtLeastOneFilterProvided(request);
 		return customerSearchViewRepository
 				.findAll(CustomerSearchSpecifications.search(request.firstName(), request.lastName(),
 						request.tcNo(), request.acctNo(), request.custId(), request.gsm()), pageable)
-				.map(customerMapper::toResponse);
+				.map(this::toTranslatedSearchResponse);
+	}
+
+
+	private CustomerSearchResponse toTranslatedSearchResponse(CustomerSearchView searchView) {
+		CustomerSearchResponse response = customerMapper.toResponse(searchView);
+		if (searchView.getPartyRoleTypeId() == null) {
+			return response;
+		}
+		String translatedRole = lookupCacheService.resolveTypeValue(searchView.getPartyRoleTypeId());
+		String roleShrtCode = lookupCacheService.resolveTypeShrtCode(searchView.getPartyRoleTypeId());
+		return new CustomerSearchResponse(response.custId(), response.firstName(), response.middleName(),
+				response.lastName(), response.tcNo(), response.acctNo(), translatedRole, roleShrtCode,
+				response.gsm(), response.status());
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	@Cacheable(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
+	/** Aktif müşteriyi hesaplarıyla birlikte getirir. */
 	public CustomerResponse getById(Long custId) {
 		Customer customer = customerFinder.getActiveCustomerOrThrow(custId);
 		List<CustomerAccount> accounts = customerAccountRepository
@@ -78,6 +90,7 @@ public class CustomerServiceImpl implements CustomerService {
 	@Override
 	@Transactional
 	@CacheEvict(cacheManager = CacheNames.REDIS_CACHE_MANAGER, cacheNames = CacheNames.CUSTOMERS, key = "#custId")
+	/** Müşteriyi, hesaplarını ve arama görünümünü pasifleştirir. */
 	public void softDelete(Long custId) {
 		Customer customer = customerFinder.getActiveCustomerOrThrow(custId);
 		List<CustomerAccount> accounts = customerAccountRepository

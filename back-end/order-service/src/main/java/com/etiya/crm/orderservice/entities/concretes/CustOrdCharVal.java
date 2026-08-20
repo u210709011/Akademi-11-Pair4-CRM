@@ -33,7 +33,8 @@ public class CustOrdCharVal extends BaseEntity {
 	@Column(name = "char_id", nullable = false)
 	private Long charId;
 
-	@Column(name = "char_val_id", nullable = false)
+	/** Opsiyonel: serbest metin karakteristigi (val doldurulur) icin bos kalabilir - bkz. B-20. */
+	@Column(name = "char_val_id")
 	private Long charValId;
 
 	@Column(name = "val")

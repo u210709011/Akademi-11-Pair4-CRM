@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 
-@Schema(description = "Genel durum grubu.")
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
+@Schema(description = SwaggerText.GNL_ST_RESPONSE_DESCRIPTION)
 public record GnlStResponse(
 
         Long gnlStId,

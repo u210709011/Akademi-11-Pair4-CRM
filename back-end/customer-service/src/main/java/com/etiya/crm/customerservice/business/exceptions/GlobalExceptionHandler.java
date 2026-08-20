@@ -11,7 +11,6 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.etiya.crm.customerservice.constants.LogMessages;
 import com.etiya.crm.customerservice.constants.MessageKeys;
@@ -22,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestControllerAdvice
+/** Customer servisindeki hataları ortak API formatına çevirir. */
 public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
 	private final MessageSource messageSource;
@@ -39,6 +39,31 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 	@Override
 	protected String downstreamUnavailableMessage() {
 		return resolve(MessageKeys.DOWNSTREAM_UNAVAILABLE);
+	}
+
+	@Override
+	protected String parameterTypeMismatchMessage(String parameterName) {
+		return resolve(MessageKeys.PARAMETER_TYPE_MISMATCH, parameterName);
+	}
+
+	@Override
+	protected String invalidRequestParameterMessage() {
+		return resolve(MessageKeys.INVALID_REQUEST_PARAMETER);
+	}
+
+	@Override
+	protected String missingParameterMessage(String parameterName) {
+		return resolve(MessageKeys.MISSING_REQUEST_PARAMETER, parameterName);
+	}
+
+	@Override
+	protected String methodNotSupportedMessage(String httpMethod) {
+		return resolve(MessageKeys.METHOD_NOT_SUPPORTED, httpMethod);
+	}
+
+	@Override
+	protected String routeNotFoundMessage() {
+		return resolve(MessageKeys.ROUTE_NOT_FOUND);
 	}
 
 	@ExceptionHandler(CustomerNotFoundException.class)
@@ -88,8 +113,8 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 
 	@ExceptionHandler({ PrimaryAddressCannotBeDeletedException.class, AddressLinkedToAccountException.class,
 			BillingAccountActiveCannotBeDeletedException.class, CustomerHasActiveBillingAccountException.class,
-			DefaultAccountCannotBeDeletedException.class, BillingAccountHasActiveProductsException.class,
-			AccountNumberCollisionException.class })
+			DefaultAccountCannotBeDeletedException.class, DefaultAccountCannotBeChangedException.class,
+			BillingAccountHasActiveProductsException.class, AccountNumberCollisionException.class })
 	public ResponseEntity<ErrorResponse> handleGuardViolation(BusinessException ex, HttpServletRequest request) {
 		return build(HttpStatus.CONFLICT, ex, request);
 	}
@@ -118,11 +143,7 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 						message, request.getRequestURI()));
 	}
 
-	/**
-	 * FR-002: CustomerController.search() alanlarindaki @Size/@Pattern @RequestParam
-	 * uzerinde oldugu icin (govde degil), ihlaller MethodArgumentNotValidException degil
-	 * ConstraintViolationException olarak gelir - @Validated sinif seviyesinde bunu tetikler.
-	 */
+	/** Request parametrelerindeki bean validation hatalarını karşılar. */
 	@ExceptionHandler(ConstraintViolationException.class)
 	public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex,
 			HttpServletRequest request) {
@@ -133,23 +154,7 @@ public class GlobalExceptionHandler extends AbstractDownstreamExceptionHandler {
 		return build(HttpStatus.BAD_REQUEST, message, request);
 	}
 
-	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
-	public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
-			HttpServletRequest request) {
-		return build(HttpStatus.BAD_REQUEST, resolve(MessageKeys.PARAMETER_TYPE_MISMATCH, ex.getName()), request);
-	}
-
-	/**
-	 * B-10: PageRequest.of(page, size) (CustomerAccountController.getAccounts,
-	 * CustomerController.search) negatif sayfa/sifir boyut icin IllegalArgumentException
-	 * firlatir - onceden hicbir handler'i olmadigi icin genel Exception dalina duşup 500'e
-	 * siziyordu. IllegalArgumentException baska yerlerden de gelebilir ama bu API katmaninda
-	 * anlami hep ayni: caller gecersiz bir deger gonderdi, bu da 500 degil 400'dur.
-	 */
-	@ExceptionHandler(IllegalArgumentException.class)
-	public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
-		return build(HttpStatus.BAD_REQUEST, resolve(MessageKeys.INVALID_REQUEST_PARAMETER), request);
-	}
+	// Ortak parametre ve downstream hataları üst sınıftan yönetilir.
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {

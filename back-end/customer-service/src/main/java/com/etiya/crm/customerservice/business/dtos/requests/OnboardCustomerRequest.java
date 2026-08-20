@@ -3,6 +3,7 @@ package com.etiya.crm.customerservice.business.dtos.requests;
 import java.util.List;
 
 import com.etiya.crm.customerservice.constants.MessageKeys;
+import com.etiya.crm.customerservice.constants.SwaggerText;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -20,15 +21,14 @@ import jakarta.validation.constraints.Size;
  * istekten once genellikle POST /onboarding/verify-identity ile ayni
  * individual bilgisi dogrulanir (UI akisinda ayri bir adim).
  */
-@Schema(description = "POST /api/v1/customers/onboarding istek govdesi - party + customer(+hesap) + "
-		+ "contact/adres tek istekte, tek transaction'da yazilir (saga: bir adim basarisiz olursa oncekiler geri alinir).")
+@Schema(description = SwaggerText.ONBOARD_CUSTOMER_REQUEST_SCHEMA_DESCRIPTION)
 public record OnboardCustomerRequest(
 
 		@Valid
 		@NotNull(message = "{" + MessageKeys.FIELD_REQUIRED + "}")
 		IndividualInfo individual,
 
-		@Schema(description = "1 ile 5 arasi adres. Listedeki ILK adres otomatik primary sayilir (UI'da secim yok).")
+		@Schema(description = SwaggerText.ONBOARD_CUSTOMER_REQUEST_ADDRESSES_DESCRIPTION)
 		@Valid
 		@NotEmpty(message = "{" + MessageKeys.ADDRESS_MIN_REQUIRED + "}")
 		@Size(max = 5, message = "{" + MessageKeys.ADDRESS_MAX_EXCEEDED + "}")

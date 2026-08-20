@@ -15,24 +15,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-/**
- * customer-service bir OAuth2 resource server'dir; gelen JWT'yi Keycloak
- * (issuer-uri config'ten gelir) uzerinden dogrular. Rol bazli koruma
- * controller'larda @PreAuthorize ile yapilir (bkz. @EnableMethodSecurity).
- */
+
 @Configuration
 @EnableMethodSecurity
+/** Customer servisinin HTTP ve method güvenlik kurallarını tanımlar. */
 public class SecurityConfig {
 
 	private static final String ACTUATOR_PATH = "/actuator/**";
 
-	// Swagger UI/OpenAPI JSON'un kendisi acik: dokumani gormek icin token
-	// gerekmez, "Try it out" ile yapilan gercek API cagrilari yine JWT ister.
 	private static final String[] SWAGGER_PATHS = {
 			"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**"
 	};
 
 	@Bean
+	/** JWT doğrulamasını ve korunan endpoint kuralını etkinleştirir. */
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
 				.csrf(csrf -> csrf.disable())
@@ -45,10 +41,11 @@ public class SecurityConfig {
 	}
 
 	@Bean
+	/** Keycloak realm rollerini Spring Security yetkilerine dönüştürür. */
 	public JwtAuthenticationConverter jwtAuthenticationConverter() {
 		JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
 		authoritiesConverter.setAuthorityPrefix("ROLE_");
-		authoritiesConverter.setAuthoritiesClaimName("realm_access.roles"); // this alone is not enough for nested claims
+		authoritiesConverter.setAuthoritiesClaimName("realm_access.roles");
 
 		JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
 		converter.setJwtGrantedAuthoritiesConverter(jwt -> {

@@ -50,6 +50,18 @@
 			<artifactId>spring-web</artifactId>
 		</dependency>
 		<dependency>
+			<!-- B-15: NoHandlerFoundException/servlet-only framework exceptions burada. "provided" olarak
+			     eklendi cunku transitive degil - api-gateway (WebFlux) shared-contracts'a bagimli ama
+			     spring-webmvc'yi classpath'ine almamali (aksi halde WebApplicationType.deduceFromClasspath
+			     onu servlet uygulamasi sanip reactive Netty yerine yanlis calisma modunu secebilir).
+			     Butun servlet tabanli servisler (customer/party/order/product/contact-info-service) zaten
+			     kendi pom'larinda spring-boot-starter-web'i dogrudan getirdigi icin runtime'da bu siniflar
+			     onlarin kendi classpath'inden gelir. -->
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>jakarta.servlet</groupId>
 			<artifactId>jakarta.servlet-api</artifactId>
 			<scope>provided</scope>
@@ -87,5 +99,29 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.15</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 
 </project>

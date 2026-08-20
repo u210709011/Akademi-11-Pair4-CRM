@@ -4,20 +4,22 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
 /** tableName/fieldName kasten yok - immutable kimlik alanlari (bkz. eski seed'in "VALUE_ID'nin
  * anlamini asla degistirme" kurali; ayni prensip TYPE_VALUE_ID'nin ait oldugu tablo icin de gecerli). */
-@Schema(description = "lookup-service PUT /api/v1/type-values/{id} istek govdesi.")
+@Schema(description = SwaggerText.UPDATE_TYPE_VALUE_REQUEST_DESCRIPTION)
 public record UpdateTypeValueRequest(
 
-        @Schema(description = "Gosterim metni.", example = "Standart Hesap")
+        @Schema(description = SwaggerText.UPDATE_TYPE_VALUE_DESCRIPTION_FIELD_DESCRIPTION, example = "Standart Hesap")
         @NotBlank @Size(max = 200)
         String description,
 
-        @Schema(description = "Kisa kod.", example = "STANDARD")
+        @Schema(description = SwaggerText.UPDATE_TYPE_VALUE_VALUE_DESCRIPTION, example = "STANDARD")
         @Size(max = 50)
         String value,
 
-        @Schema(description = "Bu degeri kullanan servis/modul (bilgi amacli).", example = "customer-service")
+        @Schema(description = SwaggerText.TYPE_VALUE_USING_MODULE_NAME_DESCRIPTION, example = "customer-service")
         @Size(max = 50)
         String usingModuleName) {
 }

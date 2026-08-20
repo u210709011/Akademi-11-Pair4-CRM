@@ -8,12 +8,7 @@ import com.etiya.crm.customerservice.constants.LogMessages;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * KPS entegrasyonu henuz yapilmadi (tamamen fake). Gercek KPS servisi devreye
- * girdiginde bu sinif bir Feign client (clients/KpsClient) cagiran gercek bir
- * implementasyonla degistirilmeli; IdentityVerificationService arayuzu ve
- * cagiran taraf (CustomerService) degismeden kalir.
- */
+/** KPS entegrasyonunu simüle eden sahte bir implementasyondur. */
 @Slf4j
 @Service
 public class FakeIdentityVerificationServiceImpl implements IdentityVerificationService {

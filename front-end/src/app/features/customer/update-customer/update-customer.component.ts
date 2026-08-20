@@ -1,14 +1,16 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { form, FormField, maxLength, minDate, minLength, required } from '@angular/forms/signals';
+import { form, FormField, maxDate, maxLength, minDate, minLength, required } from '@angular/forms/signals';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { IndividualInfo, CustomerService } from '../../../core/customer';
-import { I18nService } from '../../../core/i18n';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { IndividualInfo, CustomerService } from '../data-access/customer';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../core/lookup';
 import { DatePickerHeaderComponent } from '../../../shared/components/date-picker-header/date-picker-header.component';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
+import { DateInputDirective } from '../../../shared/directives/date-input.directive';
 
 type LetterFieldName = 'firstName' | 'middleName' | 'lastName' | 'fatherName' | 'motherName';
 
@@ -44,13 +46,13 @@ function parseBirthDate(value: string): Date {
 
 @Component({
   selector: 'app-update-customer',
-  imports: [FormField, RouterLink, MatDatepickerModule, MatFormFieldModule, MatInputModule],
+  imports: [FormField, RouterLink, MatDatepickerModule, MatFormFieldModule, MatInputModule, ButtonComponent, DateInputDirective, TranslatePipe],
   templateUrl: './update-customer.component.html',
   styleUrl: './update-customer.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager
 })
 export class UpdateCustomerComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly customerService = inject(CustomerService);
@@ -90,6 +92,7 @@ export class UpdateCustomerComponent {
     maxLength(path.lastName, 50);
     required(path.birthDate);
     minDate(path.birthDate, this.minBirthDate);
+    maxDate(path.birthDate, this.today);
     required(path.gender);
     maxLength(path.fatherName, 50);
     maxLength(path.motherName, 50);
@@ -141,7 +144,7 @@ export class UpdateCustomerComponent {
 
   // bkz. demographic-tab.component.ts'teki ayni yorum - id degil shrtCode'a gore secilir.
   protected genderLabel(shrtCode: string): string {
-    return shrtCode === 'MALE' ? this.i18n.t('create.genderMale') : this.i18n.t('create.genderFemale');
+    return shrtCode === 'MALE' ? this.translate.instant('create.genderMale') : this.translate.instant('create.genderFemale');
   }
 
   private sanitizeLetterField(field: LetterFieldName): void {
@@ -155,6 +158,24 @@ export class UpdateCustomerComponent {
 
   protected setLetterFieldError(field: LetterFieldName, hasError: boolean): void {
     this.letterFieldErrors.update(errors => ({ ...errors, [field]: hasError }));
+  }
+
+  // UC-EACRML-004 validasyon tablosu: bos/format, gelecek tarih ve 1900 oncesi icin ayri metinler ister.
+  protected birthDateErrorKey(): string | null {
+    if (!this.updateForm.birthDate().invalid() || !this.updateForm.birthDate().touched()) {
+      return null;
+    }
+    const value = this.updateModel().birthDate;
+    if (!value) {
+      return 'update.birthDateFormatError';
+    }
+    if (value > this.today) {
+      return 'update.birthDateFutureError';
+    }
+    if (value < this.minBirthDate) {
+      return 'update.birthDateMinError';
+    }
+    return 'update.birthDateFormatError';
   }
 
   protected save(): void {
@@ -173,7 +194,12 @@ export class UpdateCustomerComponent {
       error: (httpError: HttpErrorResponse) => {
         this.isSaving.set(false);
         this.saveError.set(
-          httpError.status === 409 ? this.i18n.t('create.identityDuplicate') : this.i18n.t('update.error')
+          (httpError.error as { message?: string } | null)?.message ??
+            (httpError.status === 409
+              ? this.translate.instant('create.identityDuplicate')
+              : httpError.status === 422
+                ? this.translate.instant('create.identityError')
+                : this.translate.instant('update.error'))
         );
       }
     });

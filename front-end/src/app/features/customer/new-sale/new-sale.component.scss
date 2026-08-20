@@ -163,15 +163,34 @@
   overflow-y: auto;
 }
 
-.basket-error-banner {
-  padding: 12px 16px;
-  margin-top: 16px;
+.basket-error-toast {
+  position: fixed;
+  top: 92px;
+  right: 24px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 480px;
+  padding: 14px 18px;
   font-size: 14px;
   font-weight: 600;
   color: var(--error);
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 8px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(16, 24, 40, 0.12);
+
+  svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: var(--error);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 }
 
 .wizard-actions {
@@ -190,19 +209,95 @@
   gap: 12px;
 }
 
-.cancel-button {
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #374151;
-  cursor: pointer;
-  background: var(--surface-card);
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  transition: background 0.2s ease;
+// FR-017 ACC-004: Submit basarili oldugunda gosterilen basari modali (mockup: ortalanmis
+// ikon+baslik+detay karti+iki esit genislikli aksiyon butonu).
+.order-success-card {
+  max-width: 460px;
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+}
 
-  &:hover {
-    background: #f9fafb;
+.order-success-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  color: var(--success);
+  background: rgba(31, 138, 91, 0.08);
+  border-radius: 50%;
+
+  svg {
+    width: 32px;
+    height: 32px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+.order-success-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--fs-modal-title);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.order-success-subtitle {
+  margin: -12px 0 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.order-success-details {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  background: var(--surface-muted);
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.order-success-detail-row {
+  display: flex;
+  gap: 8px;
+}
+
+.order-success-detail-label {
+  font-family: var(--font-ui);
+  font-size: var(--fs-info);
+  font-weight: var(--fw-semibold);
+  color: var(--text-body);
+  white-space: nowrap;
+}
+
+.order-success-detail-value {
+  font-family: var(--font-ui);
+  font-size: var(--fs-info);
+  font-weight: var(--fw-regular);
+  color: var(--text-body);
+}
+
+.order-success-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+
+  button {
+    flex: 1;
+    min-width: 0;
   }
 }
 

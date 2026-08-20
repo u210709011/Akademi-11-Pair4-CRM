@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTranslateService } from '@ngx-translate/core';
 
 import { AuthLayoutComponent } from './auth-layout.component';
 
@@ -8,7 +9,8 @@ describe('AuthLayoutComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AuthLayoutComponent]
+      imports: [AuthLayoutComponent],
+      providers: [provideTranslateService()]
     })
     .compileComponents();
 

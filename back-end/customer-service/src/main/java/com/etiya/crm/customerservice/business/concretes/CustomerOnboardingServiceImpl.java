@@ -46,6 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/** Müşteri, hesap ve iletişim bilgilerinin birlikte oluşturulmasını yönetir. */
 public class CustomerOnboardingServiceImpl implements CustomerOnboardingService {
 
 	private final CustomerRepository customerRepository;
@@ -63,17 +64,19 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 	private final LookupCacheService lookupCacheService;
 
 	@Override
+	/** Önce doğum tarihi, kimlik doğrulama ve tekillik kontrollerini yapar. */
 	public IdentityVerificationResponse verifyIdentity(IndividualInfo individual) {
 		identityRules.validateBirthDate(individual.birthDate());
-		identityVerificationService.verify(individual); // ACC-009/010 (fake KPS)
-		identityRules.ensureUniqueNationalId(partyClient.existsByNationalId(individual.nationalId())); // ACC-011/012
+		identityVerificationService.verify(individual); 
+		identityRules.ensureUniqueNationalId(partyClient.existsByNationalId(individual.nationalId()));
 		return IdentityVerificationResponse.ok();
 	}
 
 	@Override
 	@Transactional
+	/** Dağıtık oluşturma akışını yürütür ve başarısız adımları telafi eder. */
 	public CustomerResponse onboard(OnboardCustomerRequest request) {
-		// ACC-023: Create'e basildiginda ayni dogrulamalar tekrar calisir (defense in depth).
+		
 		verifyIdentity(request.individual());
 
 		PartyRoleResponse partyRole = partyClient.createIndividualWithRole(toIndividualCommand(request.individual()));
@@ -87,9 +90,7 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 				contactAddressClient.createContact(toContactCommand(customer.getCustId(), request));
 			} catch (Exception ex) {
 				log.error(LogMessages.ONBOARDING_CONTACT_FAILED, customer.getCustId(), ex);
-				// Local customer/account/search-view yazimlari icin ayrica bir telafi GEREKMEZ:
-				// throw ex bu metodun @Transactional sinirini asip tum transaction'i rollback
-				// ettirir. Sadece contact-info-service (ayri DB, ayri transaction) icin telafi gerekli.
+
 				compensateContactInfo(customer.getCustId());
 				throw ex;
 			}
@@ -112,23 +113,18 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 	}
 
 	private Customer createCustomerWithDefaultAccount(Long partyRoleId) {
+		// Hesap numarası, veritabanı kimliği oluştuktan sonra üretilir.
 		Customer customer = new Customer();
 		customer.setPartyRoleId(partyRoleId);
-		// onboard() sadece bireysel musteri akisidir (party-service'e createIndividualWithRole
-		// cagrilir) - kurumsal onboarding henuz yok, bu yuzden CORPORATE_CUSTOMER burada hic
-		// kullanilmaz.
-		customer.setCustTpId(lookupResolver.resolveIndividualCustomerTypeId());
-		customer = customerRepository.save(customer); // IDENTITY: save sonrasi custId dolu gelir.
 
-		// ACC-025: musteri olusturulurken otomatik olarak varsayilan tipte tek bir hesap acilir.
+		customer.setCustTpId(lookupResolver.resolveIndividualCustomerTypeId());
+		customer = customerRepository.save(customer); 
+
 		CustomerAccount account = new CustomerAccount();
 		account.setCustomer(customer);
 		account.setAccountTpId(lookupResolver.resolveCustomerAccountTypeId());
 		account.setAcctStId(lookupResolver.resolveActiveAccountStatusId());
-		// acct_no NOT NULL+UNIQUE oldugu icin gecici bir deger ile ilk kayit yapilir, IDENTITY'den
-		// donen custAcctId ile asil numara ikinci kayitta yazilir - B-06: onceden burada custId
-		// kullaniliyordu, cust_acct ile ayni sequence olmadigi icin billing account'larla (custAcctId
-		// kullanan) cakisip acct_no UNIQUE constraint'ini kirabiliyordu (bkz. AccountNumberGenerator).
+
 		account.setAccountNo(UUID.randomUUID().toString());
 		account = customerAccountRepository.save(account);
 		account.setAccountNo(accountNumberGenerator.generate(account.getCustAcctId()));
@@ -138,14 +134,9 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 		return customer;
 	}
 
-	/**
-	 * createContact basarisiz olsa bile contact-info-service tarafinda kismen commit edilmis
-	 * olabilir (orn. adresler yazildi ama yanit deserialize edilirken/timeout'ta hata olustu) -
-	 * bu satirlar aksi halde hic temizlenmezdi (ContactAddressClient.deleteByCustomerId tam da
-	 * bunun icin var ama onboarding hicbir zaman cagirmiyordu). Best-effort: bu cagri basarisiz
-	 * olsa da asil onboarding hatasini maskelememesi icin sadece loglanir, yeniden firlatilmaz.
-	 */
+
 	private void compensateContactInfo(Long custId) {
+		// Contact servisindeki kısmi kaydı onboarding'i geri alırken temizler.
 		try {
 			contactAddressClient.deleteByCustomerId(custId, lookupResolver.resolveCustomerDataTypeId());
 		} catch (Exception ex) {
@@ -153,21 +144,10 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 		}
 	}
 
-	/**
-	 * firstName/middleName/lastName/tcNo/gsm burada senkron yazilir: hepsi bu
-	 * istekte customer-service'e caller tarafindan verilen degerlerdir, baska
-	 * bir servisin karari degildir. role de artik burada senkron yazilir -
-	 * onceden SADECE PartyEventListener'in async tuketecegi IndividualPartyCreated
-	 * event'i ile dolduruluyordu; event kaybolursa/lookup-service cagrisi basarisiz
-	 * olup 4 denemeden sonra DLQ'ya duserse role kalici olarak null kaliyordu, hicbir
-	 * hata da gorunmuyordu. onboard() sadece bireysel akis oldugundan ve party-service
-	 * her bireysel musteriye SABIT olarak ayni rolu (CUSTOMER_ROLE) atadigindan
-	 * (bkz. party-service IndividualManager), bu deger onboarding aninda zaten
-	 * biliniyor - async event'i beklemeye gerek yok. PartyEventListener, gelecekte
-	 * rol degisirse diye (INDIVIDUAL_UPDATED) hala calismaya devam ediyor.
-	 */
+
 	private void createSearchView(Customer customer, IndividualInfo individual, ContactInfo contact,
 			String accountNo) {
+		// Arama ekranı için gerekli alanları yerel read-model'e kopyalar.
 		CustomerSearchView view = new CustomerSearchView();
 		view.setCustId(customer.getCustId());
 		view.setPartyRoleId(customer.getPartyRoleId());
@@ -177,7 +157,9 @@ public class CustomerOnboardingServiceImpl implements CustomerOnboardingService 
 		view.setTcNo(individual.nationalId());
 		view.setGsm(contact.mobilePhone());
 		view.setAcctNo(accountNo);
-		view.setRole(lookupCacheService.resolveTypeValue(lookupResolver.resolveCustomerRoleTypeId()));
+		Long customerRoleTypeId = lookupResolver.resolveCustomerRoleTypeId();
+		view.setRole(lookupCacheService.resolveTypeValue(customerRoleTypeId));
+		view.setPartyRoleTypeId(customerRoleTypeId);
 		view.setStatus("ACTIVE");
 		view.setDeleted(false);
 		customerSearchViewRepository.save(view);

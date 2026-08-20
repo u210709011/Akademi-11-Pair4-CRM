@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
-import { form, FormField, maxLength, minDate, minLength, required } from '@angular/forms/signals';
+import { form, FormField, maxDate, maxLength, minDate, minLength, required } from '@angular/forms/signals';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { IndividualInfo } from '../../../../../core/customer';
-import { I18nService } from '../../../../../core/i18n';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { IndividualInfo } from '../../../data-access/customer';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
 import { DatePickerHeaderComponent } from '../../../../../shared/components/date-picker-header/date-picker-header.component';
 import { CreateCustomerFormStateService } from '../../create-customer.component';
+import { DateInputDirective } from '../../../../../shared/directives/date-input.directive';
 
 type LetterFieldName = 'firstName' | 'middleName' | 'lastName' | 'fatherName' | 'motherName';
 
@@ -15,13 +16,13 @@ const LETTER_FIELDS: LetterFieldName[] = ['firstName', 'middleName', 'lastName',
 
 @Component({
   selector: 'app-demographic-tab',
-  imports: [FormField, MatDatepickerModule, MatFormFieldModule, MatInputModule],
+  imports: [FormField, MatDatepickerModule, MatFormFieldModule, MatInputModule, DateInputDirective, TranslatePipe],
   templateUrl: './demographic-tab.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './demographic-tab.component.scss'
 })
 export class DemographicTabComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   protected readonly formState = inject(CreateCustomerFormStateService);
   private readonly lookupService = inject(LookupService);
 
@@ -46,10 +47,16 @@ export class DemographicTabComponent {
 
   protected readonly demographicForm = form(this.demographicModel, path => {
     required(path.firstName);
+    maxLength(path.firstName, 50);
+    maxLength(path.middleName, 50);
     required(path.lastName);
+    maxLength(path.lastName, 50);
     required(path.birthDate);
     minDate(path.birthDate, this.minBirthDate);
+    maxDate(path.birthDate, this.today);
     required(path.gender);
+    maxLength(path.fatherName, 50);
+    maxLength(path.motherName, 50);
     required(path.nationalId);
     minLength(path.nationalId, 11);
     maxLength(path.nationalId, 11);
@@ -106,7 +113,7 @@ export class DemographicTabComponent {
   // olabilir (bkz. CITY'deki ayni sorun), shrtCode ise resolve/{entCodeName}/{shrtCode} ile ayni
   // sekilde sabit/is-anlamli bir kod.
   protected genderLabel(shrtCode: string): string {
-    return shrtCode === 'MALE' ? this.i18n.t('create.genderMale') : this.i18n.t('create.genderFemale');
+    return shrtCode === 'MALE' ? this.translate.instant('create.genderMale') : this.translate.instant('create.genderFemale');
   }
 
   protected setLetterFieldError(field: LetterFieldName, hasError: boolean): void {

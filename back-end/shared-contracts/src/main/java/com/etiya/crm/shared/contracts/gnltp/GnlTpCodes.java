@@ -48,6 +48,7 @@ public final class GnlTpCodes {
 
 	public static final String MANDATORY = "MANDATORY";
 	public static final String OPTIONAL = "OPTIONAL";
+	public static final String EXCL = "EXCL";
 
 	private GnlTpCodes() {
 	}

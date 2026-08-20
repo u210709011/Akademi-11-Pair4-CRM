@@ -1,6 +1,7 @@
 package com.etiya.crm.contactinfoservice.api.controllers;
 
 import com.etiya.crm.contactinfoservice.business.abstracts.AddressService;
+import com.etiya.crm.contactinfoservice.constants.SwaggerText;
 import com.etiya.crm.shared.contracts.address.AddressResponse;
 import com.etiya.crm.shared.contracts.address.CreateAddressRequest;
 import com.etiya.crm.shared.contracts.address.UpdateAddressRequest;
@@ -28,7 +29,7 @@ import java.util.List;
  * bir sey oldugunu bilmez. Ana caller customer-service'tir (bkz.
  * back-end/CUSTOMER_EDIT_INTEGRATION.md).
  */
-@Tag(name = "Addresses", description = "Adres (ADDR) CRUD - polimorfik, rowId+dataTypeId ile sahiplenilir")
+@Tag(name = SwaggerText.ADDRESS_TAG_NAME, description = SwaggerText.ADDRESS_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/addresses")
 public class AddressController {
@@ -39,14 +40,13 @@ public class AddressController {
         this.addressService = addressService;
     }
 
-    @Operation(summary = "Adresleri listele",
-            description = "rowId VE dataTypeId ikisi de verilirse sadece o sahibe ait adresler doner "
-                    + "(ornegin bir musterinin tum adresleri); ikisi de verilmezse TUM adresler doner.")
+    @Operation(summary = SwaggerText.GET_ALL_ADDRESSES_SUMMARY,
+            description = SwaggerText.GET_ALL_ADDRESSES_DESCRIPTION)
     @GetMapping
     public ResponseEntity<List<AddressResponse>> getAll(
-            @Parameter(description = "Adresin sahibinin id'si (ornegin custId). dataTypeId ile birlikte kullanilir.", example = "1")
+            @Parameter(description = SwaggerText.ADDRESS_ROW_ID_PARAM_DESCRIPTION, example = "1")
             @RequestParam(required = false) Long rowId,
-            @Parameter(description = "lookup-service TYPE_VALUE tablosundaki polimorfik tip etiketi (musteri icin CUST=12, dinamik cozulur). rowId ile birlikte kullanilir.", example = "12")
+            @Parameter(description = SwaggerText.DATA_TYPE_ID_PARAM_DESCRIPTION, example = "12")
             @RequestParam(required = false) Long dataTypeId) {
         if (rowId != null && dataTypeId != null) {
             return ResponseEntity.ok(addressService.getByRowIdAndDataTypeId(rowId, dataTypeId));
@@ -54,27 +54,26 @@ public class AddressController {
         return ResponseEntity.ok(addressService.getAll());
     }
 
-    @Operation(summary = "Adresi id ile getir")
+    @Operation(summary = SwaggerText.GET_ADDRESS_BY_ID_SUMMARY)
     @GetMapping("/{id}")
     public ResponseEntity<AddressResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(addressService.getById(id));
     }
 
-    @Operation(summary = "Yeni adres ekle",
-            description = "primary=true gonderilirse ayni rowId+dataTypeId'ye ait diger adreslerin "
-                    + "primary'si otomatik false yapilir (tek primary kurali).")
+    @Operation(summary = SwaggerText.CREATE_ADDRESS_SUMMARY,
+            description = SwaggerText.CREATE_ADDRESS_DESCRIPTION)
     @PostMapping
     public ResponseEntity<AddressResponse> add(@Valid @RequestBody CreateAddressRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(addressService.add(request));
     }
 
-    @Operation(summary = "Var olan adresi guncelle (primary yapma dahil)")
+    @Operation(summary = SwaggerText.UPDATE_ADDRESS_SUMMARY)
     @PutMapping("/{id}")
     public ResponseEntity<AddressResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateAddressRequest request) {
         return ResponseEntity.ok(addressService.update(id, request));
     }
 
-    @Operation(summary = "Adresi sil (soft-delete)")
+    @Operation(summary = SwaggerText.DELETE_ADDRESS_SUMMARY)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         addressService.delete(id);

@@ -1,0 +1,50 @@
+[
+  {
+    "case": "First Name bos",
+    "field": "FIRST_NAME",
+    "value": "",
+    "nextEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-003 ACC-002"
+  },
+  {
+    "case": "Last Name bos",
+    "field": "LAST_NAME",
+    "value": "",
+    "nextEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-003 ACC-002"
+  },
+  {
+    "case": "Nationality ID bos",
+    "field": "NATIONAL_ID",
+    "value": "",
+    "nextEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-003 ACC-002"
+  },
+  {
+    "case": "Nationality ID 10 haneli (eksik)",
+    "field": "NATIONAL_ID",
+    "value": "1234567890",
+    "nextEnabled": false,
+    "expectedMessageKey": "create.nationalIdError",
+    "acc": "FR-003 Validasyon"
+  },
+  {
+    "case": "Birth Date bos",
+    "field": "BIRTH_DATE",
+    "value": "",
+    "nextEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-003 ACC-002"
+  },
+  {
+    "case": "Gender secilmemis",
+    "field": "GENDER",
+    "value": "",
+    "nextEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-003 ACC-002"
+  }
+]

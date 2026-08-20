@@ -4,15 +4,9 @@ import { authGuard } from './core/auth';
 import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 
-import { LoginComponent } from './features/auth/login/login.component';
-import { SearchCustomerComponent } from './features/customer/search-customer/search-customer.component';
-import { CreateCustomerComponent } from './features/customer/create-customer/create-customer.component';
-import { DetailCustomerComponent } from './features/customer/detail-customer/detail-customer.component';
-import { UpdateCustomerComponent } from './features/customer/update-customer/update-customer.component';
-import { ApprovalsComponent } from './features/approvals/approvals.component';
-import { B2bComponent } from './features/b2b/b2b.component';
-import { NewSaleComponent } from './features/customer/new-sale/new-sale.component';
-
+// Layout'lar (shell) eager kalir - app her zaman hemen ihtiyac duyar. Icindeki her sayfa
+// component'i ise loadComponent ile lazy: ilk bundle'a girmez, sadece o route'a gidildiginde
+// ayri bir chunk olarak indirilir (bkz. angular.json budget - initial bundle bunun sayesinde kucalir).
 export const routes: Routes = [
   {
     path: '',
@@ -25,7 +19,7 @@ export const routes: Routes = [
       },
       {
         path: 'login',
-        component: LoginComponent
+        loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent)
       }
     ]
   },
@@ -36,31 +30,35 @@ export const routes: Routes = [
     children: [
       {
         path: 'search-customer',
-        component: SearchCustomerComponent
+        loadComponent: () =>
+          import('./features/customer/search-customer/search-customer.component').then(m => m.SearchCustomerComponent)
       },
       {
         path: 'create-customer',
-        component: CreateCustomerComponent
+        loadComponent: () =>
+          import('./features/customer/create-customer/create-customer.component').then(m => m.CreateCustomerComponent)
       },
       {
         path: 'detail-customer/:custId',
-        component: DetailCustomerComponent
+        loadComponent: () =>
+          import('./features/customer/detail-customer/detail-customer.component').then(m => m.DetailCustomerComponent)
       },
       {
         path: 'detail-customer/:custId/update',
-        component: UpdateCustomerComponent
+        loadComponent: () =>
+          import('./features/customer/update-customer/update-customer.component').then(m => m.UpdateCustomerComponent)
       },
       {
         path: 'new-sale/:custId/:custAcctId',
-        component: NewSaleComponent
+        loadComponent: () => import('./features/customer/new-sale/new-sale.component').then(m => m.NewSaleComponent)
       },
       {
         path: 'approvals',
-        component: ApprovalsComponent
+        loadComponent: () => import('./features/approvals/approvals.component').then(m => m.ApprovalsComponent)
       },
       {
         path: 'b2b',
-        component: B2bComponent
+        loadComponent: () => import('./features/b2b/b2b.component').then(m => m.B2bComponent)
       }
     ]
   }

@@ -1,9 +1,12 @@
 server:
   port: 8888
+  shutdown: graceful
 
 spring:
   application:
     name: config-server
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   cloud:
     config:
       server:
@@ -17,4 +20,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${TEMPO_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

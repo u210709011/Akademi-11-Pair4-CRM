@@ -1,9 +1,9 @@
 // customer-service is the single front door for customer detail data - it internally proxies
 // /individual to party-service and /contact to contact-info-service, so this file only
-// talks to core/customer types. This mapper just reshapes those responses into the flat
+// talks to data-access/customer types. This mapper just reshapes those responses into the flat
 // view-model the detail page renders, keeping that transformation out of the component.
-import { AddressResponse, ContactInfo, CustomerDetailResponse, IndividualResponse } from '../../../core/customer';
-import { CustOrdItemResponse } from '../../../core/order';
+import { AddressResponse, ContactInfo, CustomerDetailResponse, IndividualResponse } from '../data-access/customer';
+import { CustOrdItemResponse } from '../data-access/order';
 
 const UNKNOWN = '—';
 
@@ -27,9 +27,13 @@ export interface CustomerDetail {
 
 export interface AccountProduct {
   productId: string;
+  // Backend'de sifirla soldan 6 haneye doldurulmus (CUST_ACCT.ACCT_NO ile ayni kural) - PRD-
+  // prefix'i sadece gosterimde eklenir; iliski/routing icin hala productId (gercek PK) kullanilir.
+  productNo: string;
   productName: string;
   campaignName: string;
   campaignId: string;
+  campaignNo: string;
 }
 
 export interface CustomerAccount {
@@ -48,9 +52,11 @@ export interface CustomerAccount {
 export function mapToAccountProducts(items: CustOrdItemResponse[]): AccountProduct[] {
   return items.map(item => ({
     productId: String(item.prodId),
+    productNo: item.prodNo,
     productName: item.prodName,
     campaignName: item.cmpgName ?? UNKNOWN,
-    campaignId: item.cmpgId !== null ? String(item.cmpgId) : UNKNOWN
+    campaignId: item.cmpgId !== null ? String(item.cmpgId) : UNKNOWN,
+    campaignNo: item.cmpgNo ?? UNKNOWN
   }));
 }
 

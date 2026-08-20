@@ -1,11 +1,11 @@
-# İzlenebilirlik Matrisi — FR-001 … FR-005
+# İzlenebilirlik Matrisi — FR-001 … FR-011
 
 | | |
 |---|---|
 | Kaynak doküman | `analiz-test/CRM Lite — Functional Requirements & Acceptance Criteria1 (2).docx` |
-| Test takımı | `analiz-test/postman/CRM-Lite-FR001-FR005.postman_collection.json` |
-| Kod referansı | `c9348dd` (sprint-4 merge) |
-| Son koşum | 29.07.2026 — **150 Allure test case · 144 geçti · 6 kaldı · 617 assertion** |
+| Test takımı | `analiz-test/postman/CRM-Lite-FR001-FR011.postman_collection.json` |
+| Kod referansı | `05c6c3f` (sprint-5 düzeltmeleri sonrası) |
+| Son koşum | 05.08.2026 — **264 istek · 1157 assertion · 1153 geçti · 4 kaldı** (4 hatanın tamamı B-10'dan) |
 
 ## Gösterim
 
@@ -208,10 +208,161 @@ Validasyon tablosu: NAT ID/GSM format kuralları ⚠ (`TC-002-22/23/25`), Custom
 
 **Orta katmanda test edilmeyen ACC sayısı:** FR-001…FR-005 içinde ~30 madde saf UI davranışıdır (buton durumu, ikon, mesaj rengi, ekran geçişi). Bunlar bilinçli olarak API testine dönüştürülmedi.
 
-**FR-006 … FR-018:** Bu fazın kapsamı dışında. İlgili testler `archive/CRM-Lite-TUM-FR.postman_collection.json` içinde korunuyor (şu an bakımda değil) ve şu bulguları üretmişti:
+**FR-006 … FR-011:** Sprint-6'da bu matrise eklendi — bkz. bölüm 11…16.
+
+**FR-012 … FR-018:** Bu fazın kapsamı dışında. İlgili testler `archive/CRM-Lite-TUM-FR.postman_collection.json` içinde korunuyor (şu an bakımda değil) ve şu bulguları üretmişti:
 
 - **B-04** — `POST /api/v1/orders/submit` HTTP 200 dönüp gövdede `status:500` yazıyor
 - **B-05** — `/api/v1/product-procutOfferings` uç adresinde yazım hatası
-- FR-011 ACC-004/005 — fatura hesabını pasifleştiren uç yok, ürün guard'ı kodda `TODO`
 - FR-013 — katalog/kampanya uçları sprint-4'te eklendi ama kriterli arama, sayfalama ve bundled offers hâlâ yok
 - FR-018 ACC-006 — hata mesajları yalnızca İngilizce (`messages_tr.properties` yok)
+
+---
+
+# 11. FR-006 — İletişim Bilgileri Yönetimi
+
+**Fixture:** Müşteri E · **Uçlar:** `GET|PUT /api/v1/customers/{custId}/contact`
+
+| ACC | Özet | Durum | Test |
+|---|---|---|---|
+| 001 | Contact Medium tabında bilgiler görüntülenir | ✅ | `TC-006-01` |
+| 002 | Kalem ikonu → update ekranı | ℹ | `TC-006-02` (veri ucu) |
+| 003 | Mevcut bilgiler dolu gelir | ✅ | `TC-006-02` |
+| 004 | Alanlar güncellenebilir | ✅ | `TC-006-03` |
+| 005 | Zorunlu/format eksikse Save pasif | ℹ | `TC-006-06` … `TC-006-22` |
+| 006 | Cancel uyarısı | 🖥 | — |
+| 007 | Save → başarı mesajı + dönüş | ✅ | `TC-006-03`, `TC-006-04` (kalıcılık) |
+
+**Validasyon tablosu karşılıkları**
+
+| Alan | Kural | Test | Durum |
+|---|---|---|---|
+| E-mail | Geçerli e-posta formatı | `TC-006-07`, `TC-006-08`, `TC-006-09` | ✅ |
+| E-mail | Doküman mesajı "Email must be a valid email address." | `TC-006-10` | ⚠ **B-13c** — API "Invalid email format" |
+| Mobile Phone | 10 hane, 5 ile başlar | `TC-006-11` … `TC-006-16` | ✅ |
+| Home Phone | 10–11 hane, opsiyonel | `TC-006-17` … `TC-006-20` | ✅ |
+| Home Phone | Boş string opsiyonel sayılmalı | `TC-006-21` | ⚠ boş string 400 döner (null gönderilmeli) |
+| Fax | Geçerli faks formatı | `TC-006-22` | ✅ |
+| Fax | Doküman mesajı "Invalid fax number." | `TC-006-23` | ⚠ **B-13c** |
+
+**BVA:** `TC-006-13` (GSM 9 hane → 400), `TC-006-14` (11 hane → 400), `TC-006-15` (10 hane → 200), `TC-006-17/18` (ev tel. 10/11 hane → 200), `TC-006-19/20` (9/12 hane → 400).
+**Güvenlik / hata yolları:** `TC-006-24` olmayan müşteri 404 · `TC-006-25` pasif müşteri 404 · `TC-006-26` geçersiz tip 400 · `TC-006-27` tokensiz 401.
+
+# 12. FR-007 — Müşteri Silme
+
+**Fixture:** Müşteri G (uçtan uca senaryo) · **Uç:** `DELETE /api/v1/customers/{custId}`
+
+| ACC | Özet | Durum | Test |
+|---|---|---|---|
+| 001 | Silme onayı istenir | 🖥 | — |
+| 002 | Hesaplar ve bağlı ürünler kontrol edilir | ✅ | `TC-007-03` (hesap), `TC-007-06` (ürün) |
+| 003 | Aktif fatura hesabı varsa silinemez + mesaj | ✅ | `TC-007-03`, `TC-007-04` (yan etki yok) |
+| 004 | Pasif hesaba bağlı ürün varsa silinemez | ⚠ | `TC-007-06` — guard etkisiz (`NoOpBillingAccountProductGuard`) |
+| 005 | Uygunsa soft delete | ✅ | `TC-007-07`, `TC-007-08` |
+| 006 | Silme sonrası arama ekranına dönüş | ✅ | `TC-007-09` (silinen müşteri aramada yok) |
+
+**Ek kontroller:** `TC-007-10` silinen müşterinin hesap listesi (⚠ **B-11**) · `TC-007-11` tekrar silme 404 · `TC-007-12` olmayan müşteri 404 · `TC-007-13` geçersiz tip 400 · `TC-007-14` tokensiz 401.
+
+`TC-007-09` arama görünümünün asenkron güncellenmesini yeniden deneme (poll) ile doğrular — `TC-004-04` ile aynı desen.
+
+# 13. FR-008 — Fatura Hesabı Oluşturma
+
+**Fixture:** Müşteri F · **Uç:** `POST /api/v1/customers/{custId}/accounts`
+
+| ACC | Özet | Durum | Test |
+|---|---|---|---|
+| 001 | Customer Account tabı açılır | ✅ | `TC-008-01` |
+| 002 | Create New Account → ekran | 🖥 | — |
+| 003 | Account Name / Description alanları | ✅ | `TC-008-02` |
+| 004 | Yeni adres oluşturulabilir **veya** mevcut seçilebilir | ✅ | `TC-008-02` (mevcut), `TC-008-04` (yeni) |
+| 005 | Yeni adres alanları (City/Street/No/Açıklama) | ✅ | `TC-008-15` … `TC-008-18` |
+| 006 | Adres ekranında Cancel uyarısı | 🖥 | — |
+| 007 | Adres kaydedilir ve döner | ✅ | `TC-008-04`, `TC-008-05` |
+| 008 | Seçilen adres ekranda listelenir | ✅ | `TC-008-05` |
+| 009 | Ad + açıklama + adres olmadan Create pasif | ℹ / ⚠ | `TC-008-07/08` (ad ✅), `TC-008-13` (adres ✅), `TC-008-12` (açıklama ⚠ **B-12**) |
+| 010 | Cancel uyarısı | 🖥 | — |
+| 011 | Create → hesap yaratılır | ✅ | `TC-008-02` |
+| 012 | Hesap **224** tipinde açılır | ✅ | `TC-008-03` |
+| 013 | Başarı mesajı + dönüş | ℹ | `TC-008-02` (API 201) |
+| 014 | Yeni hesap tabloda listelenir | ✅ | `TC-008-06` |
+
+**Validasyon:** `TC-008-09` ad 50 karakter → 201 (BVA) · `TC-008-10` 51 karakter → 400 (BVA) · `TC-008-11` uzunluk mesajı ⚠ **B-13a** · `TC-008-19` street 201 karakter → 400 · `TC-008-20` geçersiz `cityId` ⚠ **B-14**.
+**XOR kuralı:** `TC-008-13` (hiçbiri → 400), `TC-008-14` (ikisi birden → 400).
+**Güvenlik:** `TC-008-21` IDOR başka müşterinin adresi 404 · `TC-008-22` olmayan adres 404 · `TC-008-23` olmayan müşteri 404 · `TC-008-24` pasif müşteri 404 · `TC-008-25` tokensiz 401.
+
+# 14. FR-009 — Fatura Hesabı ve Bağlı Ürün Görüntüleme
+
+**Uçlar:** `GET /api/v1/customers/{custId}/accounts` · `GET /api/v1/orders?custAcctId={id}`
+
+| ACC | Özet | Durum | Test |
+|---|---|---|---|
+| 001 | Hesap varsa tablo, yoksa "There are no billing accounts yet." | ℹ / ⚠ | `TC-009-01` — boş durum API'de oluşamaz (onboarding varsayılan hesap açar); olmayan müşteri de boş sayfa döner ⚠ **B-11** (`TC-009-11`) |
+| 002 | Tablo kolonları (Status/Number/Name/Type/Action) | ✅ | `TC-009-02` |
+| 003 | Satır genişletme oku | 🖥 | — |
+| 004 | Bağlı ürünler tablosu | ✅ | `TC-009-08` |
+| 005 | Ürün tablosu kolonları | ✅ | `TC-009-09` (liste boşsa açıkça raporlanır) |
+| 006 | Göz ikonu → ürün detay modalı | ⚠ | `TC-009-10` — uç yok |
+| 007 | Modal alanları (Offer Name/ID, Spec ID, Start Date, Prod Chars, Service Address) | ⚠ | `TC-009-10` — `CustOrdItemResponse` bu alanları taşımıyor |
+| 008 | Modal kapatma | 🖥 | — |
+| 009 | İlk 5 kayıt + sayfalama | ✅ | `TC-009-03` (boyut 5), `TC-009-04` (6 hesaba tamamlar), `TC-009-05`, `TC-009-06`, `TC-009-07` |
+
+**Kusurlar:** `TC-009-12` negatif sayfa → ❌ **B-10** (500) · `TC-009-13` `size=0` → ❌ **B-10** (500) · `TC-009-11` olmayan müşteri ⚠ **B-11**.
+**Güvenlik:** `TC-009-14` IDOR · `TC-009-15` geçersiz tip 400 · `TC-009-16` tokensiz 401.
+
+# 15. FR-010 — Fatura Hesabı Güncelleme
+
+**Uç:** `PUT /api/v1/customers/{custId}/accounts/{accountId}`
+
+| ACC | Özet | Durum | Test |
+|---|---|---|---|
+| 001 | Edit → Update ekranı | 🖥 | — |
+| 002 | Alanlar mevcut bilgilerle dolu | ✅ | `TC-010-01` |
+| 003 | Yeni adres **veya** mevcut adres | ✅ | `TC-010-06`, `TC-010-07` |
+| 004 | Yeni adres alanları | ✅ | `TC-008-15` … `TC-008-18` ile aynı kurallar |
+| 005 | Adres ekranında Cancel uyarısı | 🖥 | — |
+| 006 | Adres kaydedilir ve döner | ✅ | `TC-010-07` |
+| 007 | Adres ekranda listelenir | ✅ | `TC-010-06` |
+| 008 | Ad + açıklama + adres olmadan Save pasif | ℹ / ⚠ | `TC-010-08` (ad ✅), `TC-010-12` (adres ✅), `TC-010-11` (açıklama ⚠ **B-12**) |
+| 009 | Cancel uyarısı | 🖥 | — |
+| 010 | Save → güncellenir | ✅ | `TC-010-02` |
+| 011 | Başarı mesajı + dönüş | ℹ | `TC-010-02` (API 200) |
+| 012 | Tabloda güncel görünür | ✅ | `TC-010-03` |
+
+**Değişmezlik regresyonu (dokümanda yok, sözleşme gereği):** `TC-010-04` `accountNo` değişmez · `TC-010-05` `accountTpId` değişmez.
+**BVA / validasyon:** `TC-010-09` (50 → 200), `TC-010-10` (51 → 400), `TC-010-13` (XOR).
+**Güvenlik:** `TC-010-14` olmayan hesap 404 · `TC-010-15` IDOR 404 · `TC-010-16` olmayan müşteri 404 · `TC-010-17` geçersiz tip 400 · `TC-010-18` tokensiz 401.
+
+# 16. FR-011 — Fatura Hesabı Silme
+
+**Uçlar:** `DELETE .../accounts/{accountId}` · `PATCH .../accounts/{accountId}/status`
+
+| ACC | Özet | Durum | Test |
+|---|---|---|---|
+| 001 | Silme onay diyaloğu | 🖥 | — |
+| 002 | Aktiflik ve bağlı ürün kontrolü | ✅ | `TC-011-01`, `TC-011-10` |
+| 003 | Aktif hesap silinemez + mesaj | ✅ | `TC-011-01`, `TC-011-02` (yan etki yok) |
+| 004 | Pasif olsa da bağlı ürün varsa silinemez | ⚠ | `TC-011-10` — guard etkisiz (`NoOpBillingAccountProductGuard`) |
+| 005 | Pasif + ürünsüz hesap soft delete + mesaj | ✅ | `TC-011-11`, `TC-011-12` |
+
+**Durum yönetimi (`PATCH .../status` — sprint-5'te eklendi, FR-011 ACC-005'i test edilebilir kıldı):**
+`TC-011-06` PASSIVE → 200 · `TC-011-07` listede pasif görünür · `TC-011-08` yeniden ACTIVE → 200 · `TC-011-09` yeniden PASSIVE · `TC-011-15` geçersiz durum 400 · `TC-011-16` boş durum 400.
+
+**Varsayılan (CUST_ACCT) hesap koruması:** `TC-011-03` silinemez 409 · `TC-011-04` durumu değiştirilemez 409 · `TC-011-05` hata mesajı yanıltıcı ⚠ **B-13b**.
+
+**Çapraz kural:** `TC-011-19` — fatura hesabına bağlı adres silinemez (FR-005 ACC-011). Sprint-4'te arşiv koleksiyonunda kapsanamamıştı, artık doğrulanıyor. ✅
+
+**Güvenlik / hata yolları:** `TC-011-13` tekrar silme 404 · `TC-011-14` silinen hesap güncellenemez 404 · `TC-011-17` IDOR 404 · `TC-011-18` olmayan hesap 404 · `TC-011-20` tokensiz 401.
+
+---
+
+# 17. Sprint-6 bulguları (FR-006…FR-011)
+
+Ayrıntılı kök neden analizi, log alıntıları ve düzeltme önerileri: **`analiz-test/bulgular/BULGULAR-sprint6.md`**
+
+| # | Başlık | Şiddet | Test |
+|---|---|---|---|
+| **B-10** | Geçersiz sayfalama parametresi (`page=-1`, `size=0`) 500 döndürüyor. `PageRequest.of` `IllegalArgumentException` fırlatıyor, `GlobalExceptionHandler`'da karşılığı yok. B-09 ile aynı aile. | **Yüksek** | `TC-009-12`, `TC-009-13` |
+| **B-11** | `GET /accounts` var olmayan/silinmiş müşteri için 404 yerine 200 + boş sayfa dönüyor. `getAccounts`, diğer metotların aksine `getActiveCustomerOrThrow` çağırmıyor. | Orta | `TC-009-11`, `TC-007-10` |
+| **B-12** | `accountDesc` dokümanda zorunlu, request record'larında hiçbir kısıt yok. ACC-009/ACC-008 yalnızca front-end'de karşılanıyor. | Orta | `TC-008-12`, `TC-010-11` |
+| **B-13** | Yanıltıcı mesajlar: (a) uzunluk ihlali "This field is required." diyor, (b) durum değiştirme "cannot be deleted" diyor, (c) faks/e-posta mesajları dokümandan farklı. | Düşük | `TC-008-11`, `TC-011-05`, `TC-006-10`, `TC-006-23` |
+| **B-14** | Fatura adresinde de `cityId` lookup doğrulaması yok — B-07'nin ikinci giriş yolu. | Düşük | `TC-008-20` |

@@ -50,6 +50,44 @@ class ContactMediumServiceImplTest {
     }
 
     @Test
+    void getAll_returnsAllActiveContactMediumsMapped() {
+        ContactMedium contactMedium = new ContactMedium();
+        contactMedium.setId(1L);
+        when(contactMediumRepository.findAllByActiveTrue()).thenReturn(List.of(contactMedium));
+
+        var responses = contactMediumService.getAll();
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).id()).isEqualTo(1L);
+    }
+
+    @Test
+    void getById_returnsMappedContactMedium() {
+        ContactMedium contactMedium = new ContactMedium();
+        contactMedium.setId(1L);
+        when(contactMediumBusinessRules.checkIfContactMediumExists(1L)).thenReturn(contactMedium);
+
+        var response = contactMediumService.getById(1L);
+
+        assertThat(response.id()).isEqualTo(1L);
+    }
+
+    @Test
+    void getByRowIdAndDataTypeId_returnsMappedContactMediums() {
+        ContactMedium contactMedium = new ContactMedium();
+        contactMedium.setId(1L);
+        contactMedium.setRowId(10L);
+        contactMedium.setDataTypeId(1L);
+        when(contactMediumRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(10L, 1L))
+                .thenReturn(List.of(contactMedium));
+
+        var responses = contactMediumService.getByRowIdAndDataTypeId(10L, 1L);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).rowId()).isEqualTo(10L);
+    }
+
+    @Test
     void add_savesContactMedium_whenFormatIsValid() {
         CreateContactMediumRequest request = new CreateContactMediumRequest(10L, 1L, "user@example.com", 1L);
         when(lookupClient.getById(1L)).thenReturn(gnlTp(1L, "EML"));

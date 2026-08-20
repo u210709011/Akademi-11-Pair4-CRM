@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTranslateService } from '@ngx-translate/core';
 
 import { SearchCustomerComponent } from './search-customer.component';
 
@@ -8,7 +9,8 @@ describe('SearchCustomerComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SearchCustomerComponent]
+      imports: [SearchCustomerComponent],
+      providers: [provideTranslateService()]
     })
     .compileComponents();
 

@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: data-seeder
+  main:
+    web-application-type: none
+
+seeder:
+  gateway-base-url: http://localhost:8080
+  keycloak-token-url: http://localhost:8180/realms/crm/protocol/openid-connect/token
+  keycloak-client-id: crm-client
+  keycloak-client-secret: crm-client-secret
+  keycloak-username: salesperson
+  keycloak-password: password
+  customer-count: 30
+  extra-billing-account-ratio: 0.3
+  order-attempt-ratio: 0.85
+  order-finish-ratio: 0.75
+  order-cancel-ratio: 0.15
+  second-offering-ratio: 0.4

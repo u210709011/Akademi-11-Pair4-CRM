@@ -1,6 +1,7 @@
 package com.etiya.crm.productservice.business.concretes;
 
 import com.etiya.crm.productservice.business.abstracts.CampaignOfferingService;
+import com.etiya.crm.productservice.business.abstracts.TranslationService;
 import com.etiya.crm.productservice.business.dtos.requests.CampaignOffering.CreateCampaignOfferingRequest;
 import com.etiya.crm.productservice.business.dtos.requests.CampaignOffering.UpdateCampaignOfferingRequest;
 import com.etiya.crm.productservice.business.dtos.responses.CampaignOffering.CreatedCampaignOfferingResponse;
@@ -17,26 +18,37 @@ import com.etiya.crm.productservice.entities.concretes.Campaign;
 import com.etiya.crm.productservice.entities.concretes.CampaignOffering;
 import com.etiya.crm.productservice.entities.concretes.ProductOffering;
 import com.etiya.crm.productservice.mapper.CampaignOfferingMapper;
+import com.etiya.crm.productservice.utils.DiscountPriceCalculator;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
 public class CampaignOfferingManager implements CampaignOfferingService {
 
+    // productOfferingName write-time'da donduruldugu icin (bkz. create/update - productOffering.getName()
+    // o anin degeriyle kopyalanir), gnl_tp'deki role ile ayni sorun: PROD_OFR ceviri satirlarini
+    // (V21) read-time'da yeniden uygulamazsak, kampanyalardaki teklif adi katalog sekmesindeki
+    // (canli cevrilen) adla senkron kalmaz.
+    private static final String PRODUCT_OFFERING_ENTITY_NAME = "PROD_OFR";
+
     private final CampaignOfferingRepository campaignOfferingRepository;
     private final CampaignRepository campaignRepository;
     private final ProductOfferingRepository productOfferingRepository;
     private final CampaignOfferingMapper campaignOfferingMapper;
+    private final DiscountPriceCalculator discountPriceCalculator;
+    private final TranslationService translationService;
 
-    public CampaignOfferingManager(CampaignOfferingRepository campaignOfferingRepository, CampaignRepository campaignRepository, ProductOfferingRepository productOfferingRepository, CampaignOfferingMapper campaignOfferingMapper) {
+    public CampaignOfferingManager(CampaignOfferingRepository campaignOfferingRepository, CampaignRepository campaignRepository, ProductOfferingRepository productOfferingRepository, CampaignOfferingMapper campaignOfferingMapper, DiscountPriceCalculator discountPriceCalculator, TranslationService translationService) {
         this.campaignOfferingRepository = campaignOfferingRepository;
         this.campaignRepository = campaignRepository;
         this.productOfferingRepository = productOfferingRepository;
         this.campaignOfferingMapper = campaignOfferingMapper;
+        this.discountPriceCalculator = discountPriceCalculator;
+        this.translationService = translationService;
     }
 
 
@@ -58,7 +70,7 @@ public class CampaignOfferingManager implements CampaignOfferingService {
         CampaignOffering saved = campaignOfferingRepository.save(campaignOffering);
 
         CreatedCampaignOfferingResponse response = campaignOfferingMapper.toCreatedResponse(saved);
-        response.setDiscountedPrice(calculateDiscountedPrice(productOffering.getTotalPrice(), saved.getDiscountPct()));
+        response.setDiscountedPrice(discountPriceCalculator.calculate(productOffering.getTotalPrice(), saved.getDiscountPct()));
         return response;
 
     }
@@ -82,7 +94,7 @@ public class CampaignOfferingManager implements CampaignOfferingService {
 
         CampaignOffering saved = campaignOfferingRepository.save(campaignOffering);
         UpdatedCampaignOfferingResponse response = campaignOfferingMapper.toUpdatedResponse(saved);
-        response.setDiscountedPrice(calculateDiscountedPrice(productOffering.getTotalPrice(), saved.getDiscountPct()));
+        response.setDiscountedPrice(discountPriceCalculator.calculate(productOffering.getTotalPrice(), saved.getDiscountPct()));
         return response;
     }
 
@@ -93,8 +105,9 @@ public class CampaignOfferingManager implements CampaignOfferingService {
                 .orElseThrow(() -> new CampaignOfferingNotFoundException(campaignOfferingId));
 
         GetCampaignOfferingResponse response = campaignOfferingMapper.toGetResponse(campaignOffering);
-        response.setDiscountedPrice(calculateDiscountedPrice(
+        response.setDiscountedPrice(discountPriceCalculator.calculate(
                 campaignOffering.getProductOffering().getTotalPrice(), campaignOffering.getDiscountPct()));
+        applyProductOfferingNameTranslation(response);
         return response;
     }
 
@@ -105,30 +118,52 @@ public class CampaignOfferingManager implements CampaignOfferingService {
         List<GetAllCampaignOfferingResponse> responses = campaignOfferingMapper.toGetAllResponseList(campaignOfferings);
 
         for (int i = 0; i < campaignOfferings.size(); i++) {
-            BigDecimal discountedPrice = calculateDiscountedPrice(
+            BigDecimal discountedPrice = discountPriceCalculator.calculate(
                     campaignOfferings.get(i).getProductOffering().getTotalPrice(),
                     campaignOfferings.get(i).getDiscountPct());
             responses.get(i).setDiscountedPrice(discountedPrice);
+            applyProductOfferingNameTranslation(responses.get(i));
         }
         return responses;
     }
 
+    /**
+     * FR-013: Offer Selection'da hangi kampanyalarin bir teklife uygulanabilir oldugunu
+     * gostermek icin (ve order-service'in resolveCampaignPrice ile fiyat cozmesi icin) kullanilir
+     * - pasif (is_actv=false) ya da suresi dolmus (endDate gecmis) satirlar hicbir zaman gercekten
+     * uygulanamayacagi icin burada filtrelenir. getAll() (admin/katalog yonetim listesi) kasitli
+     * olarak filtresiz birakildi - orada pasif kayitlarin da gorunmesi/yonetilmesi gerekiyor.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<GetAllCampaignOfferingResponse> getByCampaignId(Long campaignId) {
         campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new CampaignNotFoundException(campaignId));
 
-        List<CampaignOffering> campaignOfferings = campaignOfferingRepository.findByCampaign_CampaignId(campaignId);
+        List<CampaignOffering> campaignOfferings = campaignOfferingRepository.findByCampaign_CampaignId(campaignId)
+                .stream()
+                .filter(co -> co.isActive() && (co.getEndDate() == null || !co.getEndDate().isBefore(LocalDate.now())))
+                .toList();
         List<GetAllCampaignOfferingResponse> responses = campaignOfferingMapper.toGetAllResponseList(campaignOfferings);
 
         for (int i = 0; i < campaignOfferings.size(); i++) {
-            BigDecimal discountedPrice = calculateDiscountedPrice(
+            BigDecimal discountedPrice = discountPriceCalculator.calculate(
                     campaignOfferings.get(i).getProductOffering().getTotalPrice(),
                     campaignOfferings.get(i).getDiscountPct());
             responses.get(i).setDiscountedPrice(discountedPrice);
+            applyProductOfferingNameTranslation(responses.get(i));
         }
         return responses;
+    }
+
+    private void applyProductOfferingNameTranslation(GetCampaignOfferingResponse response) {
+        response.setProductOfferingName(translationService.translate(
+                PRODUCT_OFFERING_ENTITY_NAME, response.getProductOfferingId(), "NAME", response.getProductOfferingName()));
+    }
+
+    private void applyProductOfferingNameTranslation(GetAllCampaignOfferingResponse response) {
+        response.setProductOfferingName(translationService.translate(
+                PRODUCT_OFFERING_ENTITY_NAME, response.getProductOfferingId(), "NAME", response.getProductOfferingName()));
     }
 
     @Override
@@ -138,11 +173,5 @@ public class CampaignOfferingManager implements CampaignOfferingService {
 
         campaignOffering.setActive(false);
         campaignOfferingRepository.save(campaignOffering);
-    }
-
-    private BigDecimal calculateDiscountedPrice(BigDecimal totalPrice, BigDecimal discountPct) {
-        BigDecimal multiplier = BigDecimal.ONE.subtract(
-                discountPct.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
-        return totalPrice.multiply(multiplier).setScale(2, RoundingMode.HALF_UP);
     }
 }

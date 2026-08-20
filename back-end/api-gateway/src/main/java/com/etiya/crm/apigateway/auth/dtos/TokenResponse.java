@@ -4,5 +4,6 @@ public record TokenResponse(
 		String accessToken,
 		String refreshToken,
 		String tokenType,
-		Long expiresIn) {
+		Long expiresIn,
+		Long refreshExpiresIn) {
 }

@@ -1,0 +1,42 @@
+[
+  {
+    "case": "NAT ID 10 haneli (eksik)",
+    "filter": "NAT_ID_NUMBER",
+    "value": "1234567890",
+    "expectError": true,
+    "expectedMessageKey": "search.natIdError",
+    "acc": "FR-002 Validasyon"
+  },
+  {
+    "case": "NAT ID 11 haneli (gecerli)",
+    "filter": "NAT_ID_NUMBER",
+    "value": "12345678901",
+    "expectError": false,
+    "expectedMessageKey": null,
+    "acc": "FR-002 Validasyon"
+  },
+  {
+    "case": "GSM 5 ile baslamiyor",
+    "filter": "GSM_NUMBER",
+    "value": "4321234567",
+    "expectError": true,
+    "expectedMessageKey": "search.gsmError",
+    "acc": "FR-002 Validasyon"
+  },
+  {
+    "case": "GSM 9 haneli (eksik)",
+    "filter": "GSM_NUMBER",
+    "value": "532123456",
+    "expectError": true,
+    "expectedMessageKey": "search.gsmError",
+    "acc": "FR-002 Validasyon"
+  },
+  {
+    "case": "GSM 10 haneli ve 5 ile basliyor (gecerli)",
+    "filter": "GSM_NUMBER",
+    "value": "5321234567",
+    "expectError": false,
+    "expectedMessageKey": null,
+    "acc": "FR-002 Validasyon"
+  }
+]

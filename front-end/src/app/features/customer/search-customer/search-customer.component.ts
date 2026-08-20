@@ -1,10 +1,12 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CustomerSearchCriteria, CustomerSearchResult, CustomerService } from '../../../core/customer';
-import { I18nService } from '../../../core/i18n';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { CustomerSearchCriteria, CustomerSearchResult, CustomerService } from '../data-access/customer';
 
 type DigitFieldName = 'natIdNumber' | 'customerId' | 'accountNumber' | 'gsmNumber' | 'orderNumber';
+type NameFieldName = 'firstName' | 'lastName';
+type ValidatedFieldName = DigitFieldName | NameFieldName;
 
 type SortColumn = 'custId' | 'firstName' | 'middleName' | 'lastName' | 'tcNo' | 'role';
 type SortDirection = 'asc' | 'desc';
@@ -13,13 +15,13 @@ const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-search-customer',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './search-customer.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './search-customer.component.scss'
 })
 export class SearchCustomerComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly customerService = inject(CustomerService);
   private readonly router = inject(Router);
@@ -37,7 +39,7 @@ export class SearchCustomerComponent {
   protected readonly rangeStart = computed(() => this.totalElements() === 0 ? 0 : this.currentPage() * this.pageSize + 1);
   protected readonly rangeEnd = computed(() => Math.min(this.totalElements(), (this.currentPage() + 1) * this.pageSize));
   protected readonly resultsCountLabel = computed(() =>
-    this.i18n.t('search.resultsCount').replace('{count}', `${this.totalElements()}`)
+    this.translate.instant('search.resultsCount', { count: this.totalElements() })
   );
   protected readonly rangeLabel = computed(() => `${this.rangeStart()}-${this.rangeEnd()} of ${this.totalElements()}`);
   protected readonly pageNumbers = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i));
@@ -49,12 +51,14 @@ export class SearchCustomerComponent {
   protected readonly sortColumn = signal<SortColumn | null>(null);
   protected readonly sortDirection = signal<SortDirection>('asc');
 
-  protected readonly fieldErrors = signal<Record<DigitFieldName, boolean>>({
+  protected readonly fieldErrors = signal<Record<ValidatedFieldName, boolean>>({
     natIdNumber: false,
     customerId: false,
     accountNumber: false,
     gsmNumber: false,
-    orderNumber: false
+    orderNumber: false,
+    firstName: false,
+    lastName: false
   });
   // Search butonu, herhangi bir alanda gecerli bir hata gosterilirken de aktif olmamali
   // (ör. NAT ID 11 haneden az girilip alandan cikildiginda).
@@ -74,6 +78,16 @@ export class SearchCustomerComponent {
     this.searchForm.valueChanges.subscribe(value => {
       const anyFilled = Object.values(value).some(fieldValue => !!fieldValue?.trim());
       this.hasFilledFilter.set(anyFilled);
+    });
+
+    // role gibi backend-driven alanlar dile gore cevrilir (bkz. Accept-Language interceptor) -
+    // ama SPA'da sayfa yenilenmedigi icin dil degistiginde eldeki sonuclar eski dilde kalirdi.
+    // runSearch() untracked cagrilir ki currentPage/sortColumn gibi ic okumalari bu effect'i
+    // fazladan tetiklemesin (o degisiklikler zaten kendi handler'larinda runSearch() cagiriyor);
+    // effect SADECE i18n.lang() degisince tekrar calisir. lastCriteria yoksa runSearch() no-op'tur.
+    effect(() => {
+      this.translate.currentLang();
+      untracked(() => this.runSearch());
     });
   }
 
@@ -135,6 +149,18 @@ export class SearchCustomerComponent {
       });
   }
 
+  // isim yerine shrtCode'a gore secilir - bkz. demographic-tab.component.ts genderLabel ile ayni
+  // desen. Backend'in cevirdigi role/name yazim hatasi tasiyabilir (ör. GNL_TP seed verisindeki
+  // "Musteri"), o yuzden sadece shrtCode taniniyorsa sozlukten okunur; taninmayan/eslesmeyen bir
+  // kod gelirse (yeni bir rol eklendi ama arayuz henuz guncellenmedi) backend'in name'ine dusulur.
+  protected roleLabel(customer: CustomerSearchResult): string {
+    switch (customer.roleShrtCode) {
+      case 'CUSTOMER': return this.translate.instant('search.roleCustomer');
+      case 'PARTNER': return this.translate.instant('search.rolePartner');
+      default: return customer.role ?? '-';
+    }
+  }
+
   protected viewCustomerDetail(customer: CustomerSearchResult): void {
     this.router.navigate(['/detail-customer', customer.custId], { state: { customer } });
   }
@@ -157,7 +183,7 @@ export class SearchCustomerComponent {
     this.runSearch();
   }
 
-  protected setFieldError(field: DigitFieldName, hasError: boolean): void {
+  protected setFieldError(field: ValidatedFieldName, hasError: boolean): void {
     this.fieldErrors.update(errors => ({ ...errors, [field]: hasError }));
   }
 
@@ -198,9 +224,16 @@ export class SearchCustomerComponent {
     this.setFieldError('gsmNumber', raw.length > 0 && raw.length !== 10);
   }
 
-  protected sanitizeLetters(event: Event, controlName: 'firstName' | 'lastName'): void {
+  protected sanitizeLetters(event: Event, controlName: NameFieldName): void {
     const input = event.target as HTMLInputElement;
-    const lettersOnly = input.value.replace(/[^a-zA-ZçÇğĞıİöÖşŞüÜ\s]/g, '');
+    const lettersOnly = input.value.replace(/[^a-zA-ZçÇğĞıİöÖşŞüÜ\s]/g, '').slice(0, 50);
+    this.setFieldError(controlName, input.value !== lettersOnly);
     this.searchForm.controls[controlName].setValue(lettersOnly);
+  }
+
+  // First/Last Name: "Text, max 50" - yalnizca uzunluk kurali var, harf-disi karakterler zaten
+  // yazarken sanitizeLetters ile siliniyor. NAT ID/GSM ile ayni desen: blur'da kalan hata temizlenir.
+  protected onNameBlur(controlName: NameFieldName): void {
+    this.setFieldError(controlName, false);
   }
 }

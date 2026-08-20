@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.etiya.crm.customerservice.business.abstracts.CustomerIndividualService;
 import com.etiya.crm.customerservice.business.dtos.requests.UpdateIndividualInfo;
 import com.etiya.crm.customerservice.constants.Roles;
+import com.etiya.crm.customerservice.constants.SwaggerText;
 import com.etiya.crm.shared.contracts.individual.IndividualResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,7 +21,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /** Musterinin kisisel bilgisi (party-service'e proxy) uc noktalari. */
-@Tag(name = "Customers", description = "Musteri kisisel bilgi yonetimi")
+@Tag(name = SwaggerText.CUSTOMER_TAG_NAME, description = SwaggerText.CUSTOMER_INDIVIDUAL_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/customers")
 @RequiredArgsConstructor
@@ -29,15 +30,13 @@ public class CustomerIndividualController {
 
 	private final CustomerIndividualService individualService;
 
-	@Operation(summary = "Kisisel bilgiyi getir", description = "party-service'e proxy. birthDate/nationalId de doner (salt-okunur, edit formunda gosterilir).")
+	@Operation(summary = SwaggerText.GET_INDIVIDUAL_SUMMARY, description = SwaggerText.GET_INDIVIDUAL_DESCRIPTION)
 	@GetMapping("/{custId}/individual")
 	public ResponseEntity<IndividualResponse> getIndividual(@PathVariable Long custId) {
 		return ResponseEntity.ok(individualService.getIndividual(custId));
 	}
 
-	@Operation(summary = "Kisisel bilgiyi guncelle",
-			description = "party-service'e proxy. nationalId/birthDate de guncellenebilir; nationalId "
-					+ "baska bir musteriyle cakisirsa 409 doner.")
+	@Operation(summary = SwaggerText.UPDATE_INDIVIDUAL_SUMMARY, description = SwaggerText.UPDATE_INDIVIDUAL_DESCRIPTION)
 	@PutMapping("/{custId}/individual")
 	public ResponseEntity<IndividualResponse> updateIndividual(@PathVariable Long custId,
 			@Valid @RequestBody UpdateIndividualInfo request) {

@@ -13,7 +13,7 @@
             </svg>
         }
         <span class="app-toast-message">{{ message }}</span>
-        <button type="button" class="app-toast-close" [attr.aria-label]="i18n.t('detail.dismiss')" (click)="dismissToast()">
+        <button type="button" class="app-toast-close" [attr.aria-label]="'detail.dismiss' | translate" (click)="dismissToast()">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
     </div>
@@ -25,20 +25,20 @@
 
         <div class="offer-tabs">
             <button type="button" class="offer-tab" [class.active]="activeTab() === 'catalog'" (click)="selectTab('catalog')">
-                {{ i18n.t('newSale.catalogTab') }}
+                {{ 'newSale.catalogTab' | translate }}
             </button>
             <button type="button" class="offer-tab" [class.active]="activeTab() === 'campaigns'" (click)="selectTab('campaigns')">
-                {{ i18n.t('newSale.campaignsTab') }}
+                {{ 'newSale.campaignsTab' | translate }}
             </button>
         </div>
 
         @if (activeTab() === 'catalog') {
             <form class="offer-search-form" [formGroup]="catalogForm">
                 <div class="offer-search-field">
-                    <label for="catalogId">{{ i18n.t('newSale.catalogSelection') }}</label>
+                    <label for="catalogId">{{ 'newSale.catalogSelection' | translate }}</label>
                     <div class="select-wrapper">
                         <select id="catalogId" formControlName="catalogId" (change)="onCatalogSelected()">
-                            <option value="">{{ i18n.t('newSale.selectCatalog') }}</option>
+                            <option value="">{{ 'newSale.selectCatalog' | translate }}</option>
                             @for (catalog of catalogOptions; track catalog.productCatalogId) {
                                 <option [value]="catalog.productCatalogId">{{ catalog.name }}</option>
                             }
@@ -48,54 +48,62 @@
                 </div>
 
                 <div class="offer-search-field">
-                    <label for="offerId">{{ i18n.t('newSale.prodOfferId') }}</label>
+                    <label for="offerId">{{ 'newSale.prodOfferId' | translate }}</label>
                     <div class="prefixed-field">
                         <span class="prefixed-field-prefix">OFR-</span>
-                        <input id="offerId" type="text" formControlName="offerId" placeholder="70010">
+                        <input id="offerId" type="text" formControlName="offerId" placeholder="70010" (input)="sanitizeOfferId($event)">
                     </div>
+                    @if (catalogFieldErrors().offerId) {
+                        <span class="field-error">{{ 'newSale.numericOnlyError' | translate }}</span>
+                    }
                 </div>
 
                 <div class="offer-search-field">
-                    <label for="offerName">{{ i18n.t('newSale.prodOfferName') }}</label>
-                    <input id="offerName" type="text" formControlName="offerName" [placeholder]="i18n.t('newSale.prodOfferNamePlaceholder')">
+                    <label for="offerName">{{ 'newSale.prodOfferName' | translate }}</label>
+                    <input id="offerName" type="text" formControlName="offerName" [placeholder]="'newSale.prodOfferNamePlaceholder' | translate" (input)="sanitizeOfferName($event)">
+                    @if (catalogFieldErrors().offerName) {
+                        <span class="field-error">{{ 'newSale.maxLengthError' | translate }}</span>
+                    }
                 </div>
 
-                <button type="button" class="offer-search-button" (click)="searchCatalog()">{{ i18n.t('newSale.searchBtn') }}</button>
+                <button type="button" class="offer-search-button" [disabled]="isCatalogSearchDisabled()" (click)="searchCatalog()">{{ 'newSale.searchBtn' | translate }}</button>
             </form>
 
             <div class="offer-results-scroll">
             <table class="offer-results-table">
                 <thead>
                     <tr>
-                        <th>{{ i18n.t('newSale.prodOfferId') }}</th>
-                        <th>{{ i18n.t('newSale.prodOfferName') }}</th>
-                        <th>{{ i18n.t('newSale.price') }}</th>
-                        <th>{{ i18n.t('newSale.actions') }}</th>
+                        <th>{{ 'newSale.prodOfferId' | translate }}</th>
+                        <th>{{ 'newSale.prodOfferName' | translate }}</th>
+                        <th>{{ 'newSale.price' | translate }}</th>
+                        <th>{{ 'newSale.actions' | translate }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!hasSearchedCatalog()) {
                         <tr class="offer-results-empty-row">
-                            <td colspan="4">{{ i18n.t('newSale.searchHint') }}</td>
+                            <td colspan="4">{{ 'newSale.searchHint' | translate }}</td>
                         </tr>
                     } @else if (catalogResults().length === 0) {
                         <tr class="offer-results-empty-row">
-                            <td colspan="4">{{ i18n.t('newSale.noResults') }}</td>
+                            <td colspan="4">{{ 'newSale.noResults' | translate }}</td>
                         </tr>
                     } @else {
-                        @for (offer of catalogResults(); track offer.productOfferingId) {
+                        @for (offer of pagedCatalogResults(); track offer.productOfferingId) {
                             <tr [class.selected-row]="isInBasket(offer.productOfferingId)">
-                                <td class="offer-id-cell">OFR-{{ offer.productOfferingId }}</td>
+                                <td class="offer-id-cell">OFR-{{ offer.productOfferingNo }}</td>
                                 <td>
                                     <div class="offer-name">{{ offer.name }}</div>
                                     <div class="offer-descr">{{ offer.descr }}</div>
                                 </td>
-                                <td class="offer-price-cell">{{ offer.price | number: '1.2-2' }} {{ i18n.t('newSale.currency') }} / {{ i18n.t('newSale.perMonth') }}</td>
+                                <td class="offer-price-cell">{{ offer.price | number: '1.2-2' }} {{ 'newSale.currency' | translate }} / {{ 'newSale.perMonth' | translate }}</td>
                                 <td>
-                                    @if (isInBasket(offer.productOfferingId)) {
-                                        <button type="button" class="offer-add-button" disabled>{{ i18n.t('newSale.alreadyInBasket') }}</button>
+                                    @if (isOfferingAlreadyActive(offer.productOfferingId)) {
+                                        <button type="button" class="offer-add-button" disabled>{{ 'newSale.alreadyActive' | translate }}</button>
+                                    } @else if (isInBasket(offer.productOfferingId)) {
+                                        <button type="button" class="offer-add-button" disabled>{{ 'newSale.alreadyInBasket' | translate }}</button>
                                     } @else {
-                                        <button type="button" class="offer-add-button" (click)="addOfferToBasket(offer)">{{ i18n.t('newSale.addToBasket') }}</button>
+                                        <button type="button" class="offer-add-button" (click)="addOfferToBasket(offer)">{{ 'newSale.addToBasket' | translate }}</button>
                                     }
                                 </td>
                             </tr>
@@ -104,15 +112,49 @@
                 </tbody>
             </table>
             </div>
+
+            @if (catalogTotalPages() > 1) {
+                <div class="pagination">
+                    <span class="pagination-range">{{ catalogRangeLabel() }}</span>
+                    <div class="pagination-controls">
+                        <button
+                            type="button"
+                            class="pagination-arrow"
+                            [disabled]="catalogPage() === 0"
+                            (click)="goToCatalogPage(catalogPage() - 1)"
+                            [attr.aria-label]="'search.previousPage' | translate"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+                        </button>
+                        @for (page of catalogPageNumbers(); track page) {
+                            <button
+                                type="button"
+                                class="pagination-page"
+                                [class.active]="page === catalogPage()"
+                                (click)="goToCatalogPage(page)"
+                            >{{ page + 1 }}</button>
+                        }
+                        <button
+                            type="button"
+                            class="pagination-arrow"
+                            [disabled]="catalogPage() >= catalogTotalPages() - 1"
+                            (click)="goToCatalogPage(catalogPage() + 1)"
+                            [attr.aria-label]="'search.nextPage' | translate"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+                        </button>
+                    </div>
+                </div>
+            }
         } @else {
             <form class="offer-search-form" [formGroup]="campaignForm">
                 <div class="offer-search-field">
-                    <label for="campaignCategory">{{ i18n.t('newSale.campaignSelection') }}</label>
+                    <label for="campaignCategory">{{ 'newSale.campaignSelection' | translate }}</label>
                     <div class="select-wrapper">
-                        <select id="campaignCategory" formControlName="campaignId" (change)="onCampaignCategorySelected()">
-                            <option value="">{{ i18n.t('newSale.selectCampaignCategory') }}</option>
-                            @for (campaign of campaignOptions; track campaign.campaignId) {
-                                <option [value]="campaign.campaignId">{{ campaign.name }}</option>
+                        <select id="campaignCategory" formControlName="catalogId" (change)="onCampaignCategorySelected()">
+                            <option value="">{{ 'newSale.selectCampaignCategory' | translate }}</option>
+                            @for (catalog of catalogOptions; track catalog.productCatalogId) {
+                                <option [value]="catalog.productCatalogId">{{ catalog.name }}</option>
                             }
                         </select>
                         <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
@@ -120,58 +162,71 @@
                 </div>
 
                 <div class="offer-search-field">
-                    <label for="campaignRef">{{ i18n.t('newSale.campaignId') }}</label>
+                    <label for="campaignRef">{{ 'newSale.campaignId' | translate }}</label>
                     <div class="prefixed-field">
                         <span class="prefixed-field-prefix">CMP-</span>
-                        <input id="campaignRef" type="text" formControlName="campaignRef" placeholder="9010">
+                        <input id="campaignRef" type="text" formControlName="campaignRef" placeholder="9010" (input)="sanitizeCampaignRef($event)">
                     </div>
+                    @if (campaignFieldErrors().campaignRef) {
+                        <span class="field-error">{{ 'newSale.numericOnlyError' | translate }}</span>
+                    }
                 </div>
 
                 <div class="offer-search-field">
-                    <label for="campaignName">{{ i18n.t('newSale.campaignName') }}</label>
-                    <input id="campaignName" type="text" formControlName="campaignName" [placeholder]="i18n.t('newSale.campaignNamePlaceholder')">
+                    <label for="campaignName">{{ 'newSale.campaignName' | translate }}</label>
+                    <input id="campaignName" type="text" formControlName="campaignName" [placeholder]="'newSale.campaignNamePlaceholder' | translate" (input)="sanitizeCampaignName($event)">
+                    @if (campaignFieldErrors().campaignName) {
+                        <span class="field-error">{{ 'newSale.maxLengthError' | translate }}</span>
+                    }
                 </div>
 
-                <button type="button" class="offer-search-button" (click)="searchCampaigns()">{{ i18n.t('newSale.searchBtn') }}</button>
+                <button type="button" class="offer-search-button" [disabled]="isCampaignSearchDisabled()" (click)="searchCampaigns()">{{ 'newSale.searchBtn' | translate }}</button>
             </form>
 
             <div class="offer-results-scroll">
             <table class="offer-results-table">
                 <thead>
                     <tr>
-                        <th>{{ i18n.t('newSale.campaignId') }}</th>
-                        <th>{{ i18n.t('newSale.campaignName') }}</th>
-                        <th>{{ i18n.t('newSale.bundledOffers') }}</th>
-                        <th>{{ i18n.t('newSale.price') }}</th>
-                        <th>{{ i18n.t('newSale.actions') }}</th>
+                        <th>{{ 'newSale.campaignId' | translate }}</th>
+                        <th>{{ 'newSale.campaignName' | translate }}</th>
+                        <th>{{ 'newSale.bundledOffers' | translate }}</th>
+                        <th>{{ 'newSale.price' | translate }}</th>
+                        <th>{{ 'newSale.actions' | translate }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!hasSearchedCampaign()) {
                         <tr class="offer-results-empty-row">
-                            <td colspan="5">{{ i18n.t('newSale.searchHint') }}</td>
+                            <td colspan="5">{{ 'newSale.searchHint' | translate }}</td>
                         </tr>
                     } @else if (campaignResults().length === 0) {
                         <tr class="offer-results-empty-row">
-                            <td colspan="5">{{ i18n.t('newSale.noResults') }}</td>
+                            <td colspan="5">{{ 'newSale.noResults' | translate }}</td>
                         </tr>
                     } @else {
-                        @for (campaign of campaignResults(); track campaign.campaignId) {
+                        @for (campaign of pagedCampaignResults(); track campaign.campaignId) {
                             <tr [class.selected-row]="isCampaignInBasket(campaign)">
-                                <td class="offer-id-cell">CMP-{{ campaign.campaignId }}</td>
+                                <td class="offer-id-cell">CMP-{{ campaign.campaignNo }}</td>
                                 <td><div class="offer-name">{{ campaign.name }}</div></td>
                                 <td>
                                     <button type="button" class="bundled-offers-toggle" (click)="toggleCampaignExpanded(campaign.campaignId)">
                                         <svg class="bundled-offers-chevron" [class.expanded]="expandedCampaignId() === campaign.campaignId" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-                                        {{ campaign.offerings.length }} {{ i18n.t('newSale.offersCount') }}
+                                        {{ campaign.offerings.length }} {{ 'newSale.offersCount' | translate }}
                                     </button>
                                 </td>
-                                <td class="offer-price-cell">{{ campaign.totalPrice | number: '1.2-2' }} {{ i18n.t('newSale.currency') }} / {{ i18n.t('newSale.perMonth') }}</td>
+                                <td class="offer-price-cell">
+                                    @if (campaign.totalOriginalPrice > campaign.totalPrice) {
+                                        <span class="original-price">{{ campaign.totalOriginalPrice | number: '1.2-2' }} {{ 'newSale.currency' | translate }}</span>
+                                    }
+                                    {{ campaign.totalPrice | number: '1.2-2' }} {{ 'newSale.currency' | translate }} / {{ 'newSale.perMonth' | translate }}
+                                </td>
                                 <td>
-                                    @if (isCampaignInBasket(campaign)) {
-                                        <button type="button" class="offer-add-button" disabled>{{ i18n.t('newSale.alreadyInBasket') }}</button>
+                                    @if (isCampaignAlreadyActive(campaign)) {
+                                        <button type="button" class="offer-add-button" disabled>{{ 'newSale.alreadyActive' | translate }}</button>
+                                    } @else if (isCampaignInBasket(campaign)) {
+                                        <button type="button" class="offer-add-button" disabled>{{ 'newSale.alreadyInBasket' | translate }}</button>
                                     } @else {
-                                        <button type="button" class="offer-add-button campaign-add-button" (click)="addCampaignToBasket(campaign)">{{ i18n.t('newSale.addCampaignToBasket') }}</button>
+                                        <button type="button" class="offer-add-button campaign-add-button" (click)="addCampaignToBasket(campaign)">{{ 'newSale.addCampaignToBasket' | translate }}</button>
                                     }
                                 </td>
                             </tr>
@@ -181,19 +236,28 @@
                                         <table class="bundled-offers-table">
                                             <thead>
                                                 <tr>
-                                                    <th>{{ i18n.t('newSale.prodOfferId') }}</th>
-                                                    <th>{{ i18n.t('newSale.prodOfferName') }}</th>
+                                                    <th>{{ 'newSale.prodOfferId' | translate }}</th>
+                                                    <th>{{ 'newSale.prodOfferName' | translate }}</th>
+                                                    <th>{{ 'newSale.price' | translate }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @for (offering of campaign.offerings; track offering.productOfferingId) {
                                                     <tr>
-                                                        <td class="offer-id-cell" [class.in-basket]="isInBasket(offering.productOfferingId)">OFR-{{ offering.productOfferingId }}</td>
+                                                        <td class="offer-id-cell" [class.in-basket]="isInBasket(offering.productOfferingId)">OFR-{{ offering.productOfferingNo }}</td>
                                                         <td>
                                                             <span [class.in-basket]="isInBasket(offering.productOfferingId)">{{ offering.name }}</span>
                                                             @if (isInBasket(offering.productOfferingId)) {
-                                                                <span class="in-basket-badge">{{ i18n.t('newSale.inBasket') }}</span>
+                                                                <span class="in-basket-badge">{{ 'newSale.inBasket' | translate }}</span>
                                                             }
+                                                        </td>
+                                                        <td>
+                                                            @if (offering.discountPct > 0) {
+                                                                <span class="original-price">{{ offering.originalPrice | number: '1.2-2' }} {{ 'newSale.currency' | translate }}</span>
+                                                                <span class="discount-badge">-{{ offering.discountPct }}%</span>
+                                                                <br>
+                                                            }
+                                                            {{ offering.price | number: '1.2-2' }} {{ 'newSale.currency' | translate }}
                                                         </td>
                                                     </tr>
                                                 }
@@ -207,45 +271,108 @@
                 </tbody>
             </table>
             </div>
+
+            @if (campaignTotalPages() > 1) {
+                <div class="pagination">
+                    <span class="pagination-range">{{ campaignRangeLabel() }}</span>
+                    <div class="pagination-controls">
+                        <button
+                            type="button"
+                            class="pagination-arrow"
+                            [disabled]="campaignPage() === 0"
+                            (click)="goToCampaignPage(campaignPage() - 1)"
+                            [attr.aria-label]="'search.previousPage' | translate"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+                        </button>
+                        @for (page of campaignPageNumbers(); track page) {
+                            <button
+                                type="button"
+                                class="pagination-page"
+                                [class.active]="page === campaignPage()"
+                                (click)="goToCampaignPage(page)"
+                            >{{ page + 1 }}</button>
+                        }
+                        <button
+                            type="button"
+                            class="pagination-arrow"
+                            [disabled]="campaignPage() >= campaignTotalPages() - 1"
+                            (click)="goToCampaignPage(campaignPage() + 1)"
+                            [attr.aria-label]="'search.nextPage' | translate"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+                        </button>
+                    </div>
+                </div>
+            }
         }
 
     </div>
 
     <aside class="basket-panel">
         <div class="basket-panel-header">
-            <h3>{{ i18n.t('newSale.basket') }}</h3>
+            <h3>{{ 'newSale.basket' | translate }}</h3>
             <span class="basket-quantity-badge">{{ basketQuantity() }}</span>
         </div>
 
         @if (formState.basket().length === 0) {
-            <p class="basket-empty-text">{{ i18n.t('newSale.basketEmpty') }}</p>
+            <p class="basket-empty-text">{{ 'newSale.basketEmpty' | translate }}</p>
         } @else {
-            @if (selectedLines().length > 0) {
-                <div class="basket-section-label">{{ i18n.t('newSale.selectedByCustomer') }}</div>
+            @if (formState.selectedLines().length > 0) {
+                <div class="basket-section-label">{{ 'newSale.selectedByCustomer' | translate }}</div>
                 <ul class="basket-item-list">
-                    @for (line of selectedLines(); track line.prodOfrId) {
-                        <li class="basket-item">
-                            <div class="basket-item-info">
-                                <span class="basket-item-name">{{ line.offerName }}</span>
-                                @if (line.cmpgName) {
-                                    <span class="basket-item-campaign">{{ line.cmpgName }}</span>
-                                }
-                            </div>
-                            <button type="button" class="basket-item-remove" [attr.aria-label]="i18n.t('newSale.removeFromBasket')" (click)="removeFromBasket(line.prodOfrId)">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M3 6h18" />
-                                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                </svg>
-                            </button>
-                            <span class="basket-item-price">{{ line.price | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
-                        </li>
+                    @for (group of formState.selectedGroups(); track group.cmpgId ?? group.lines[0].prodOfrId) {
+                        @if (group.cmpgId === null) {
+                            <li class="basket-item">
+                                <div class="basket-item-info">
+                                    <span class="basket-item-name">{{ group.lines[0].offerName }}</span>
+                                </div>
+                                <button type="button" class="basket-item-remove" [attr.aria-label]="'newSale.removeFromBasket' | translate" (click)="removeFromBasket(group.lines[0].prodOfrId)">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M3 6h18" />
+                                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                    </svg>
+                                </button>
+                                <span class="basket-item-price">{{ group.lines[0].price | number: '1.2-2' }} {{ 'newSale.currency' | translate }}</span>
+                            </li>
+                        } @else {
+                            <li class="basket-campaign-group">
+                                <div class="basket-campaign-header">
+                                    <div class="basket-item-info">
+                                        <span class="basket-item-name">{{ group.cmpgName }}</span>
+                                        <span class="basket-item-campaign">{{ 'newSale.campaignsTab' | translate }}</span>
+                                    </div>
+                                    <button type="button" class="basket-item-remove" [attr.aria-label]="'newSale.removeFromBasket' | translate" (click)="removeCampaignFromBasket(group.cmpgId)">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M3 6h18" />
+                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                        </svg>
+                                    </button>
+                                    <span class="basket-item-price">{{ group.totalPrice | number: '1.2-2' }} {{ 'newSale.currency' | translate }}</span>
+                                </div>
+                                <ul class="basket-campaign-offerings">
+                                    @for (line of group.lines; track line.prodOfrId) {
+                                        <li class="basket-campaign-offering-row">
+                                            <span class="basket-campaign-offering-name">{{ line.offerName }}</span>
+                                            <span class="basket-campaign-offering-price">
+                                                @if (line.originalPrice && line.originalPrice > line.price) {
+                                                    <span class="original-price">{{ line.originalPrice | number: '1.2-2' }} {{ 'newSale.currency' | translate }}</span>
+                                                }
+                                                {{ line.price | number: '1.2-2' }} {{ 'newSale.currency' | translate }}
+                                            </span>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+                        }
                     }
                 </ul>
             }
 
             @if (autoAddedLines().length > 0) {
-                <div class="basket-section-label">{{ i18n.t('newSale.automaticallyAdded') }}</div>
+                <div class="basket-section-label">{{ 'newSale.automaticallyAdded' | translate }}</div>
                 <ul class="basket-item-list">
                     @for (line of autoAddedLines(); track line.prodOfrId) {
                         <li class="basket-item basket-item-locked">
@@ -256,14 +383,14 @@
                                         <rect x="4" y="10" width="16" height="10" rx="2" />
                                         <path d="M8 10V7a4 4 0 0 1 8 0v3" />
                                     </svg>
-                                    {{ i18n.t('newSale.requiredProduct') }}
+                                    {{ 'newSale.requiredProduct' | translate }}
                                 </span>
                             </div>
                             <svg class="basket-item-lock-icon" viewBox="0 0 24 24" aria-hidden="true">
                                 <rect x="4" y="10" width="16" height="10" rx="2" />
                                 <path d="M8 10V7a4 4 0 0 1 8 0v3" />
                             </svg>
-                            <span class="basket-item-price">{{ line.price | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
+                            <span class="basket-item-price">{{ line.price | number: '1.2-2' }} {{ 'newSale.currency' | translate }}</span>
                         </li>
                     }
                 </ul>
@@ -271,16 +398,16 @@
         }
 
         <div class="basket-summary-row">
-            <span>{{ i18n.t('newSale.basketQuantity') }}</span>
+            <span>{{ 'newSale.basketQuantity' | translate }}</span>
             <span>{{ basketQuantity() }}</span>
         </div>
         <div class="basket-summary-row basket-total-row">
-            <span>{{ i18n.t('newSale.totalAmount') }}</span>
-            <span>{{ basketTotal() | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
+            <span>{{ 'newSale.totalAmount' | translate }}</span>
+            <span>{{ basketTotal() | number: '1.2-2' }} {{ 'newSale.currency' | translate }}</span>
         </div>
 
         <button type="button" class="clear-basket-button" [disabled]="formState.basket().length === 0" (click)="clearBasket()">
-            {{ i18n.t('newSale.clearBasket') }}
+            {{ 'newSale.clearBasket' | translate }}
         </button>
     </aside>
 

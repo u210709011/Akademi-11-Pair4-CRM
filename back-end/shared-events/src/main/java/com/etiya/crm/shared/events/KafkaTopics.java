@@ -1,24 +1,19 @@
 package com.etiya.crm.shared.events;
 
-/**
- * Debezium outbox EventRouter, her servisin outbox tablosundaki
- * aggregate_type degerini "<aggregate_type>-events" topic adina cevirir
- * (bkz. infra/debezium/*-connector.json, transforms.outbox.route.topic.replacement).
- * Bu yuzden asagidaki topic ve aggregate_type sabitleri birbirine bagli:
- * aggregate_type degistirilirse topic adi da degisir.
- */
+
+/** Servisler arası Kafka topic ve aggregate adlarını merkezi tutar. */
 public final class KafkaTopics {
 
 	/** party-service'in yayinladigi, customer-service'in dinledigi topic. */
 	public static final String PARTY_EVENTS = "party-events";
 
-	/** customer-service'in yayinladigi, party-service'in (ve ilerde contact-info-service'in) dinledigi topic. */
+	/** customer-service'in yayinladigi, party-service'in ve contact-info-service'i dinledigi topic. */
 	public static final String CUSTOMER_EVENTS = "customer-events";
 
-	/** contact-info-service'in yayinladigi, customer-service'in (CUSTOMER_SEARCH_VIEW.gsm) dinledigi topic. */
+	/** contact-info-service'in yayinladigi, customer-service'in dinledigi topic. */
 	public static final String CONTACT_MEDIUM_EVENTS = "contact-medium-events";
 
-	/** order-service'in yayinladigi topic (henuz tuketen yok). */
+	/** order-service'in yayinladigi topic */
 	public static final String ORDER_EVENTS = "order-events";
 
 	/** party-service outbox.aggregate_type degeri. */

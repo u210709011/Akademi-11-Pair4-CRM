@@ -1,49 +1,57 @@
 <div class="review-content-wrap">
 
 <div class="review-summary-card">
-    <h3>{{ i18n.t('newSale.orderSummary') }}</h3>
+    <h3>{{ 'newSale.orderSummary' | translate }}</h3>
 
     <div class="review-summary-grid">
         <div class="review-summary-field">
-            <span class="review-summary-label">{{ i18n.t('newSale.orderId') }}</span>
+            <span class="review-summary-label">{{ 'newSale.orderId' | translate }}</span>
             <span class="review-summary-value">ORD-{{ formState.custOrdId() }}</span>
         </div>
         <div class="review-summary-field">
-            <span class="review-summary-label">{{ i18n.t('newSale.customerName') }}</span>
+            <span class="review-summary-label">{{ 'newSale.customerName' | translate }}</span>
             <span class="review-summary-value">{{ formState.customerName() }}</span>
         </div>
         <div class="review-summary-field">
-            <span class="review-summary-label">{{ i18n.t('newSale.billingAccount') }}</span>
-            <span class="review-summary-value">{{ formState.billingAccountNo() }}</span>
+            <span class="review-summary-label">{{ 'newSale.billingAccountLabel' | translate }}</span>
+            <span class="review-summary-value">ACC-{{ formState.billingAccountNo() }}</span>
         </div>
         <div class="review-summary-field">
-            <span class="review-summary-label">{{ i18n.t('newSale.orderDate') }}</span>
+            <span class="review-summary-label">{{ 'newSale.orderDate' | translate }}</span>
             <span class="review-summary-value">{{ orderDate }}</span>
         </div>
         <div class="review-summary-field">
-            <span class="review-summary-label">{{ i18n.t('newSale.orderStatus') }}</span>
-            <span class="review-status-badge">{{ i18n.t('newSale.readyToSubmit') }}</span>
+            <span class="review-summary-label">{{ 'newSale.orderStatus' | translate }}</span>
+            <span class="review-status-badge">{{ 'newSale.readyToSubmit' | translate }}</span>
         </div>
     </div>
 </div>
 
 <div class="review-products-card">
-    <h3>{{ i18n.t('newSale.customerSelectedProducts') }}</h3>
+    <h3>{{ 'newSale.customerSelectedProducts' | translate }}</h3>
 
     <table class="review-products-table">
         <thead>
             <tr>
-                <th>{{ i18n.t('newSale.prodOfferId') }}</th>
-                <th>{{ i18n.t('newSale.prodOfferName') }}</th>
-                <th>{{ i18n.t('newSale.catalogTab') }}</th>
-                <th>{{ i18n.t('newSale.price') }}</th>
-                <th>{{ i18n.t('newSale.status') }}</th>
+                <th>{{ 'newSale.prodOfferId' | translate }}</th>
+                <th>{{ 'newSale.prodOfferName' | translate }}</th>
+                <th>{{ 'newSale.catalogTab' | translate }}</th>
+                <th>{{ 'newSale.price' | translate }}</th>
+                <th>{{ 'newSale.status' | translate }}</th>
             </tr>
         </thead>
         <tbody>
-            @for (line of selectedLines(); track line.prodOfrId) {
+            @for (line of formState.selectedLines(); track line.prodOfrId; let i = $index) {
+                @if (isFirstInCampaignGroup(i)) {
+                    <tr class="review-campaign-group-row">
+                        <td colspan="5">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z" /><circle cx="7" cy="7" r="1" /></svg>
+                            {{ line.cmpgName }}
+                        </td>
+                    </tr>
+                }
                 <tr>
-                    <td class="offer-id-cell">OFR-{{ line.prodOfrId }}</td>
+                    <td class="offer-id-cell">OFR-{{ line.prodOfrNo }}</td>
                     <td>{{ line.offerName }}</td>
                     <td>
                         <span class="catalog-cell">
@@ -61,15 +69,15 @@
                             {{ line.catalogName ?? '—' }}
                         </span>
                     </td>
-                    <td>{{ line.price | number: '1.2-2' }} {{ i18n.t('newSale.currency') }} / {{ i18n.t('newSale.perMonth') }}</td>
+                    <td>{{ line.price | number: '1.2-2' }} {{ 'newSale.currency' | translate }} / {{ 'newSale.perMonth' | translate }}</td>
                     <td>
                         @if (isConfigured(line.prodOfrId)) {
                             <span class="review-status review-status-done">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m8 12 3 3 5-6" /></svg>
-                                {{ i18n.t('newSale.configured') }}
+                                {{ 'newSale.configured' | translate }}
                             </span>
                         } @else {
-                            <span class="review-status">{{ i18n.t('newSale.notConfigured') }}</span>
+                            <span class="review-status">{{ 'newSale.notConfigured' | translate }}</span>
                         }
                     </td>
                 </tr>
@@ -82,23 +90,23 @@
     <div class="review-products-card">
         <h3 class="review-required-title">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
-            {{ i18n.t('newSale.automaticallyAddedRequiredProducts') }}
+            {{ 'newSale.automaticallyAddedRequiredProducts' | translate }}
         </h3>
 
         <table class="review-products-table">
             <thead>
                 <tr>
-                    <th>{{ i18n.t('newSale.prodOfferId') }}</th>
-                    <th>{{ i18n.t('newSale.prodOfferName') }}</th>
-                    <th>{{ i18n.t('newSale.catalogTab') }}</th>
-                    <th>{{ i18n.t('newSale.price') }}</th>
-                    <th>{{ i18n.t('newSale.status') }}</th>
+                    <th>{{ 'newSale.prodOfferId' | translate }}</th>
+                    <th>{{ 'newSale.prodOfferName' | translate }}</th>
+                    <th>{{ 'newSale.catalogTab' | translate }}</th>
+                    <th>{{ 'newSale.price' | translate }}</th>
+                    <th>{{ 'newSale.status' | translate }}</th>
                 </tr>
             </thead>
             <tbody>
                 @for (line of autoAddedLines(); track line.prodOfrId) {
                     <tr>
-                        <td class="offer-id-cell">OFR-{{ line.prodOfrId }}</td>
+                        <td class="offer-id-cell">OFR-{{ line.prodOfrNo }}</td>
                         <td>{{ line.offerName }}</td>
                         <td>
                         <span class="catalog-cell">
@@ -116,11 +124,11 @@
                             {{ line.catalogName ?? '—' }}
                         </span>
                     </td>
-                        <td>{{ line.price | number: '1.2-2' }} {{ i18n.t('newSale.currency') }} / {{ i18n.t('newSale.perMonth') }}</td>
+                        <td>{{ line.price | number: '1.2-2' }} {{ 'newSale.currency' | translate }} / {{ 'newSale.perMonth' | translate }}</td>
                         <td>
                             <span class="review-status">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
-                                {{ i18n.t('newSale.automaticallyAdded') }}
+                                {{ 'newSale.automaticallyAdded' | translate }}
                             </span>
                         </td>
                     </tr>
@@ -132,8 +140,8 @@
 
 <div class="review-address-card">
     <div class="review-address-header">
-        <h3>{{ i18n.t('newSale.serviceAddress') }}</h3>
-        <button type="button" class="review-address-edit" (click)="editServiceAddress()" [attr.aria-label]="i18n.t('newSale.changeAddress')">
+        <h3>{{ 'newSale.serviceAddress' | translate }}</h3>
+        <button type="button" class="review-address-edit" (click)="editServiceAddress()" [attr.aria-label]="'newSale.changeAddress' | translate">
             <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 20h9" />
                 <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
@@ -144,41 +152,42 @@
     @if (selectedAddress(); as address) {
         <div class="review-address-grid">
             <div class="review-summary-field">
-                <span class="review-summary-label">{{ i18n.t('newSale.addressCity') }}</span>
+                <span class="review-summary-label">{{ 'newSale.addressCity' | translate }}</span>
                 <span class="review-summary-value">{{ cityName(address.cityId) }}</span>
             </div>
             <div class="review-summary-field">
-                <span class="review-summary-label">{{ i18n.t('newSale.addressDistrict') }}</span>
-                <span class="review-summary-value">—</span>
-            </div>
-            <div class="review-summary-field">
-                <span class="review-summary-label">{{ i18n.t('create.street') }}</span>
+                <span class="review-summary-label">{{ 'create.street' | translate }}</span>
                 <span class="review-summary-value">{{ address.streetName }}</span>
             </div>
             <div class="review-summary-field">
-                <span class="review-summary-label">{{ i18n.t('create.houseNumber') }}</span>
+                <span class="review-summary-label">{{ 'create.houseNumber' | translate }}</span>
                 <span class="review-summary-value">{{ address.houseName }}</span>
             </div>
             <div class="review-summary-field">
-                <span class="review-summary-label">{{ i18n.t('newSale.addressApartmentNo') }}</span>
-                <span class="review-summary-value">—</span>
-            </div>
-            <div class="review-summary-field">
-                <span class="review-summary-label">{{ i18n.t('create.addressDescription') }}</span>
+                <span class="review-summary-label">{{ 'create.addressDescription' | translate }}</span>
                 <span class="review-summary-value">{{ address.addrDesc }}</span>
             </div>
         </div>
     } @else {
-        <span class="review-address-empty">{{ i18n.t('newSale.noAddressSelected') }}</span>
+        <span class="review-address-empty">{{ 'newSale.noAddressSelected' | translate }}</span>
     }
 </div>
 
 <div class="review-price-card">
-    <h3>{{ i18n.t('newSale.priceSummary') }}</h3>
+    <h3>{{ 'newSale.priceSummary' | translate }}</h3>
+
+    <div class="review-price-row">
+        <span>{{ 'newSale.monthlyCharges' | translate }}</span>
+        <span>{{ totalBeforeDiscount() | number: '1.2-2' }} {{ 'newSale.currency' | translate }}</span>
+    </div>
+    <div class="review-price-row review-discount-row">
+        <span>{{ 'newSale.discounts' | translate }}</span>
+        <span>{{ totalDiscount() > 0 ? '-' : '' }}{{ totalDiscount() | number: '1.2-2' }} {{ 'newSale.currency' | translate }}</span>
+    </div>
 
     <div class="review-total-row">
-        <span>{{ i18n.t('newSale.grandTotal') }}</span>
-        <span>{{ grandTotal() | number: '1.2-2' }} {{ i18n.t('newSale.currency') }}</span>
+        <span>{{ 'newSale.totalAmount' | translate }}</span>
+        <span>{{ grandTotal() | number: '1.2-2' }} {{ 'newSale.currency' | translate }}</span>
     </div>
 </div>
 

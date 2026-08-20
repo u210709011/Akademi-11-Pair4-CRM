@@ -6,8 +6,10 @@ import com.etiya.crm.orderservice.business.dtos.requests.BasketItemRequest;
 import com.etiya.crm.orderservice.business.exceptions.AccountNotBelongToCustomerException;
 import com.etiya.crm.orderservice.business.exceptions.AddressNotBelongToCustomerException;
 import com.etiya.crm.orderservice.business.exceptions.AddressSelectionInvalidException;
+import com.etiya.crm.orderservice.business.exceptions.ConflictingBasketItemException;
 import com.etiya.crm.orderservice.business.exceptions.DuplicateBasketItemException;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingRelationResponse;
 import com.etiya.crm.orderservice.entities.concretes.CustOrdItem;
 import com.etiya.crm.shared.contracts.address.AddressResponse;
 
@@ -36,8 +38,9 @@ public class BasketValidationRules {
         }
 
         // FR-017/BR-02 (varsayim): ayni prodOfrId+cmpgId kombinasyonu sepette birden fazla
-        // kez olamaz. "Already Active" (BR-03) ve hizmet cakismasi (BR-04) product-service
-        // olmadan kontrol edilemiyor - bkz. FR-014 ACC-007/ACC-008.
+        // kez olamaz. "Already Active" (BR-03, bkz. CustOrdManager.ensureOfferNotAlreadyActive)
+        // ve hizmet cakismasi (BR-04, bkz. ensureNoConflictingItems/ensureItemNotConflicting
+        // asagida) artik ayri yerlerde kontrol ediliyor.
         public void ensureNoDuplicateItems(List<BasketItemRequest> items) {
                 Set<String> seen = new HashSet<>();
                 for (BasketItemRequest item : items) {
@@ -56,6 +59,36 @@ public class BasketValidationRules {
                 if (duplicate) {
                         throw new DuplicateBasketItemException(newItem.prodOfrId());
                 }
+        }
+
+        // FR-014 ACC-012/BR-04: validateBasket/createOrder - gonderilen sepetin kendi icinde
+        // birbiriyle cakisan (EXCL) iki teklif var mi kontrol eder.
+        public void ensureNoConflictingItems(List<BasketItemRequest> items, List<ProductOfferingRelationResponse> relations) {
+                for (int i = 0; i < items.size(); i++) {
+                        for (int j = i + 1; j < items.size(); j++) {
+                                Long prodOfrId1 = items.get(i).prodOfrId();
+                                Long prodOfrId2 = items.get(j).prodOfrId();
+                                if (isExclusive(prodOfrId1, prodOfrId2, relations)) {
+                                        throw new ConflictingBasketItemException(prodOfrId1, prodOfrId2);
+                                }
+                        }
+                }
+        }
+
+        // addItem: yeni item, siparise zaten eklenmis item'lardan biriyle cakisiyor mu kontrol eder.
+        public void ensureItemNotConflicting(BasketItemRequest newItem, List<CustOrdItem> existingItems,
+                        List<ProductOfferingRelationResponse> relations) {
+                for (CustOrdItem existing : existingItems) {
+                        if (isExclusive(newItem.prodOfrId(), existing.getProdOfrId(), relations)) {
+                                throw new ConflictingBasketItemException(newItem.prodOfrId(), existing.getProdOfrId());
+                        }
+                }
+        }
+
+        private boolean isExclusive(Long prodOfrId1, Long prodOfrId2, List<ProductOfferingRelationResponse> relations) {
+                return relations.stream().anyMatch(r -> Boolean.TRUE.equals(r.exclusive()) && Boolean.TRUE.equals(r.active())
+                                && ((prodOfrId1.equals(r.productOfferingId1()) && prodOfrId2.equals(r.productOfferingId2()))
+                                        || (prodOfrId1.equals(r.productOfferingId2()) && prodOfrId2.equals(r.productOfferingId1()))));
         }
 
         // saveConfiguration: var olan bir adres secildiginde, o adresin gercekten bu musteriye

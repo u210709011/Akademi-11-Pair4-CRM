@@ -1,6 +1,7 @@
 package com.etiya.crm.lookupservice.api.controllers;
 
 import com.etiya.crm.lookupservice.business.abstracts.SrvcSpecService;
+import com.etiya.crm.lookupservice.constants.SwaggerText;
 import com.etiya.crm.shared.contracts.srvcspec.CreateSrvcSpecRequest;
 import com.etiya.crm.shared.contracts.srvcspec.UpdateSrvcSpecRequest;
 import com.etiya.crm.shared.contracts.srvcspec.SrvcSpecResponse;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Service Specs (SRVC_SPEC)", description = "Servis spesifikasyonlari CRUD")
+@Tag(name = SwaggerText.SRVC_SPEC_TAG_NAME, description = SwaggerText.SRVC_SPEC_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/service-specs")
 @RequiredArgsConstructor
@@ -29,31 +30,31 @@ public class SrvcSpecController {
 
     private final SrvcSpecService srvcSpecService;
 
-    @Operation(summary = "Tum servis speclerini listele")
+    @Operation(summary = SwaggerText.SRVC_SPEC_GET_ALL_SUMMARY)
     @GetMapping
     public ResponseEntity<List<SrvcSpecResponse>> getAll() {
         return ResponseEntity.ok(srvcSpecService.getAll());
     }
 
-    @Operation(summary = "Servis specini id ile getir")
+    @Operation(summary = SwaggerText.SRVC_SPEC_GET_BY_ID_SUMMARY)
     @GetMapping("/{id}")
     public ResponseEntity<SrvcSpecResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(srvcSpecService.getById(id));
     }
 
-    @Operation(summary = "Yeni servis speci ekle", description = "stId var olan bir GNL_ST satirina ait olmali.")
+    @Operation(summary = SwaggerText.SRVC_SPEC_ADD_SUMMARY, description = SwaggerText.SPEC_ADD_ST_ID_DESCRIPTION)
     @PostMapping
     public ResponseEntity<SrvcSpecResponse> add(@Valid @RequestBody CreateSrvcSpecRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(srvcSpecService.add(request));
     }
 
-    @Operation(summary = "Servis specini guncelle")
+    @Operation(summary = SwaggerText.SRVC_SPEC_UPDATE_SUMMARY)
     @PutMapping("/{id}")
     public ResponseEntity<SrvcSpecResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateSrvcSpecRequest request) {
         return ResponseEntity.ok(srvcSpecService.update(id, request));
     }
 
-    @Operation(summary = "Servis specini sil")
+    @Operation(summary = SwaggerText.SRVC_SPEC_DELETE_SUMMARY)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         srvcSpecService.delete(id);
