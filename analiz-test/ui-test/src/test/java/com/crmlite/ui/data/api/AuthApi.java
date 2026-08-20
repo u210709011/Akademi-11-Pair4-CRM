@@ -60,7 +60,10 @@ public final class AuthApi {
                 .body(Map.of("username", config.username(), "password", config.password()))
                 .post(LOGIN_PATH);
 
-        if (response.statusCode() != 200) {
+        // 20.08.2026: uc, token'i YANIT GOVDESINDE dondurmekten HttpOnly CEREZE gecti
+        // ("JWT cookie" degisikligi). Basari kodu da 200 yerine 204 oldu. Iki bicim de
+        // desteklenir: ortamlar farkli surumlerde olabilir ve degisiklik geri alinabilir.
+        if (response.statusCode() != 200 && response.statusCode() != 204) {
             throw new TestDataSetupException(String.format(
                     "API login basarisiz (HTTP %d). Kullanici='%s', adres='%s'. "
                             + "Ortamin ayakta ve kimlik bilgilerinin dogru oldugunu kontrol edin. Yanit: %s",
@@ -68,15 +71,44 @@ public final class AuthApi {
                     response.getBody().asString()));
         }
 
-        cachedAccessToken = response.jsonPath().getString("accessToken");
-        cachedRefreshToken = response.jsonPath().getString("refreshToken");
+        // Once cerez okunur. Govde YALNIZCA cerez yoksa ayristirilir: 204 yanitinin govdesi
+        // bostur ve bos govdede jsonPath() JsonPathException firlatir.
+        cachedAccessToken = response.getCookie("access_token");
+        cachedRefreshToken = response.getCookie("refresh_token");
 
         if (cachedAccessToken == null || cachedAccessToken.isBlank()) {
-            throw new TestDataSetupException("Login yaniti accessToken icermiyor: " + response.getBody().asString());
+            cachedAccessToken = bodyValue(response, "accessToken");
+            cachedRefreshToken = bodyValue(response, "refreshToken");
         }
 
-        log.info("API token alindi (kullanici={}, gecerlilik={} sn)",
-                config.username(), response.jsonPath().getString("expiresIn"));
+        if (cachedAccessToken == null || cachedAccessToken.isBlank()) {
+            throw new TestDataSetupException(String.format(
+                    "Login yaniti token icermiyor. HTTP %d, cerezler=%s, govde=%s",
+                    response.statusCode(), response.getCookies().keySet(),
+                    response.getBody().asString()));
+        }
+
+        log.info("API token alindi (kullanici={}, kaynak={})",
+                config.username(),
+                response.getCookie("access_token") != null ? "cerez" : "govde");
+    }
+
+    /**
+     * Govdeden alan okur; govde bos veya JSON degilse {@code null} doner.
+     *
+     * <p>Ayristirma hatasi yutulur ÇUNKU bu yol yalnizca eski (govde tabanli) bicim icin
+     * bir yedektir; gercek hata "token bulunamadi" olarak cagiran tarafta bildirilir.
+     */
+    private static String bodyValue(Response response, String field) {
+        String raw = response.getBody() == null ? null : response.getBody().asString();
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return response.jsonPath().getString(field);
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     /** Ortamin erisilebilir olup olmadigini hizlica kontrol eder. */
