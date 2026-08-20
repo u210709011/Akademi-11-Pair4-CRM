@@ -116,12 +116,15 @@ public class UpdateCustomerPage extends BasePage {
     }
 
     /**
-     * Parametre gereksinimdeki gibi {@code DD/MM/YYYY}; donusum
-     * {@link com.crmlite.ui.core.utils.DateUtil#toDatepickerInput} icinde yapilir
-     * (bkz. oradaki urun bulgusu notu — datepicker {@code parse()} ezilmemis).
+     * Parametre gereksinimdeki gibi {@code DD/MM/YYYY}.
+     *
+     * <p>Alan {@code appDateInput} direktifiyle yonetilir (bkz. date-input.directive.ts):
+     * direktif her tus basimindaki rakami sirayla alip DD/MM/YYYY'yi kendisi kurar, "/"
+     * karakterleri goz ardi edilir - bu yuzden ham string oldugu gibi yazilir, gun/ay
+     * takasi (eski NativeDateAdapter/Date.parse bulgusunun telafisi) artik gerekmiyor.
      */
     public UpdateCustomerPage enterBirthDate(String ddMMyyyy) {
-        type(BIRTH_DATE, com.crmlite.ui.core.utils.DateUtil.toDatepickerInput(ddMMyyyy));
+        type(BIRTH_DATE, ddMMyyyy);
         return this;
     }
 

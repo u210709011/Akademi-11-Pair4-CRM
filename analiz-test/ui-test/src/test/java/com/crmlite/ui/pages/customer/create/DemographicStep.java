@@ -1,6 +1,5 @@
 package com.crmlite.ui.pages.customer.create;
 
-import com.crmlite.ui.core.utils.DateUtil;
 import com.crmlite.ui.pages.BasePage;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -61,11 +60,15 @@ public class DemographicStep extends BasePage {
     }
 
     /**
-     * Dogum tarihi girer. Parametre gereksinimdeki gibi {@code DD/MM/YYYY} formatindadir;
-     * donusum {@link DateUtil#toDatepickerInput} icinde yapilir (bkz. oradaki urun bulgusu notu).
+     * Dogum tarihi girer. Parametre gereksinimdeki gibi {@code DD/MM/YYYY} formatindadir.
+     *
+     * <p>Alan {@code appDateInput} direktifiyle yonetilir (bkz. date-input.directive.ts):
+     * direktif her tus basimindaki rakami sirayla alip DD/MM/YYYY'yi kendisi kurar, "/"
+     * karakterleri goz ardi edilir - bu yuzden ham string oldugu gibi yazilir, gun/ay
+     * takasi (eski NativeDateAdapter/Date.parse bulgusunun telafisi) artik gerekmiyor.
      */
     public DemographicStep enterBirthDate(String ddMMyyyy) {
-        type(BIRTH_DATE, DateUtil.toDatepickerInput(ddMMyyyy));
+        type(BIRTH_DATE, ddMMyyyy);
         return this;
     }
 

@@ -24,31 +24,6 @@ public final class DateUtil {
         return date.format(UI_DATE);
     }
 
-    /**
-     * Dogum tarihi alanina <b>yazarak</b> giris icin formati donusturur (DD/MM/YYYY -&gt; MM/DD/YYYY).
-     *
-     * <p><b>URUN BULGUSU:</b> Uygulamanin {@code AppDateAdapter} sinifi
-     * ({@code app.config.ts}) yalnizca {@code format()} metodunu ezip ekranda
-     * {@code DD / MM / YYYY} gosteriyor; {@code parse()} ezilmedigi icin
-     * {@code NativeDateAdapter} yazilan metni hala {@code Date.parse()} ile,
-     * yani <b>MM/DD/YYYY</b> olarak cozumluyor.
-     *
-     * <p>Sonuc: placeholder "DD/MM/YYYY" dese de kullanici bu formatta yazdiginda
-     * tarih gecersiz sayiliyor ve Next/Save aktiflesmiyor. Testler gereksinimi
-     * DD/MM/YYYY olarak ifade etmeye devam eder; bu donusum, hatayi tek noktada
-     * soğurmak icin buradadir. Uygulamada {@code parse()} de ezildiginde bu metot silinmelidir.
-     */
-    public static String toDatepickerInput(String ddMMyyyy) {
-        if (ddMMyyyy == null || ddMMyyyy.isBlank()) {
-            return ddMMyyyy;
-        }
-        String[] parts = ddMMyyyy.split("/");
-        if (parts.length != 3) {
-            return ddMMyyyy;
-        }
-        return parts[1] + "/" + parts[0] + "/" + parts[2];
-    }
-
     public static LocalDate parse(String value) {
         return LocalDate.parse(value, UI_DATE);
     }
