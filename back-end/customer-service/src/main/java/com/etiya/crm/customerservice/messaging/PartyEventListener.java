@@ -9,8 +9,11 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
+import com.etiya.crm.customerservice.constants.AlertTags;
 import com.etiya.crm.customerservice.constants.KafkaConsumerGroups;
 import com.etiya.crm.customerservice.constants.LogMessages;
+import com.etiya.crm.shared.contracts.messaging.DltAlertNotifier;
+import com.etiya.crm.shared.contracts.messaging.DltMetrics;
 import com.etiya.crm.shared.events.KafkaTopics;
 import com.etiya.crm.shared.events.messaging.NonRetryableEventException;
 import com.etiya.crm.shared.events.party.PartyEvent;
@@ -26,6 +29,7 @@ public class PartyEventListener {
 
 	private final PartyEventHandler partyEventHandler;
 	private final MeterRegistry meterRegistry;
+	private final DltAlertNotifier dltAlertNotifier;
 
 	@RetryableTopic(
 			attempts = "4",
@@ -44,6 +48,9 @@ public class PartyEventListener {
 			@Header(value = KafkaHeaders.EXCEPTION_FQCN, required = false) String exceptionType,
 			@Header(value = KafkaHeaders.EXCEPTION_MESSAGE, required = false) String exceptionMessage) {
 		log.error(LogMessages.PARTY_EVENT_DLT, event.eventId(), event.type(), exceptionType, exceptionMessage);
-		meterRegistry.counter("kafka.dlt.events", "eventType", event.type(), "listener", "PartyEventListener").increment();
+		meterRegistry.counter(DltMetrics.DLT_EVENTS_COUNTER, DltMetrics.TAG_EVENT_TYPE, event.type(),
+				DltMetrics.TAG_LISTENER, AlertTags.PARTY_EVENT_LISTENER).increment();
+		dltAlertNotifier.alert(KafkaConsumerGroups.CUSTOMER_SERVICE, AlertTags.PARTY_EVENT_LISTENER, event.type(),
+				exceptionType, exceptionMessage);
 	}
 }

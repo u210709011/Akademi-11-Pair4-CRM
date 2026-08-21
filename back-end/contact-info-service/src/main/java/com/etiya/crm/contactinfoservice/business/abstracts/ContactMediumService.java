@@ -22,4 +22,7 @@ public interface ContactMediumService {
 
     void deactivateAllForRow(Long rowId, Long dataTypeId);
 
+    /** Saga compensation'i tarafindan cagrilir - deactivateAllForRow'un tersi, idempotent. */
+    void reactivateAllForRow(Long rowId, Long dataTypeId);
+
 }

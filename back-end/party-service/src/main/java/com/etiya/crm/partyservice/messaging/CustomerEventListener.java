@@ -1,9 +1,17 @@
 package com.etiya.crm.partyservice.messaging;
 
+import com.etiya.crm.partyservice.constants.AlertTags;
 import com.etiya.crm.partyservice.constants.LogMessages;
+import com.etiya.crm.shared.contracts.messaging.DltAlertNotifier;
+import com.etiya.crm.shared.contracts.messaging.DltMetrics;
 import com.etiya.crm.shared.events.KafkaTopics;
 import com.etiya.crm.shared.events.customer.CustomerDeletedEvent;
+import com.etiya.crm.shared.events.customer.CustomerEventTypes;
 import com.etiya.crm.shared.events.messaging.NonRetryableEventException;
+import com.etiya.crm.shared.events.outbox.OutboxEventPublisher;
+import com.etiya.crm.shared.events.saga.SagaEventTypes;
+import com.etiya.crm.shared.events.saga.SagaStepNames;
+import com.etiya.crm.shared.events.saga.SagaStepResultEvent;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +22,8 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 /**
  * "customer-events" topic'ini (Debezium outbox, yayinci customer-service)
@@ -37,6 +47,8 @@ public class CustomerEventListener {
 
 	private final CustomerDeletedEventHandler customerDeletedEventHandler;
 	private final MeterRegistry meterRegistry;
+	private final OutboxEventPublisher outboxEventPublisher;
+	private final DltAlertNotifier dltAlertNotifier;
 
 	@RetryableTopic(
 			attempts = "4",
@@ -45,7 +57,7 @@ public class CustomerEventListener {
 			dltTopicSuffix = "-dlt-party",
 			exclude = NonRetryableEventException.class,
 			traversingCauses = "true")
-	@KafkaListener(topics = KafkaTopics.CUSTOMER_EVENTS, groupId = "party-service")
+	@KafkaListener(topics = KafkaTopics.CUSTOMER_EVENTS, groupId = AlertTags.SERVICE_NAME)
 	public void onMessage(CustomerDeletedEvent event) {
 		customerDeletedEventHandler.handle(event);
 	}
@@ -55,6 +67,16 @@ public class CustomerEventListener {
 			@Header(value = KafkaHeaders.EXCEPTION_FQCN, required = false) String exceptionType,
 			@Header(value = KafkaHeaders.EXCEPTION_MESSAGE, required = false) String exceptionMessage) {
 		log.error(LogMessages.CUSTOMER_EVENT_DLT, event.eventId(), event.type(), exceptionType, exceptionMessage);
-		meterRegistry.counter("kafka.dlt.events", "eventType", event.type(), "listener", "PartyServiceCustomerEventListener").increment();
+		meterRegistry.counter(DltMetrics.DLT_EVENTS_COUNTER, DltMetrics.TAG_EVENT_TYPE, event.type(),
+				DltMetrics.TAG_LISTENER, AlertTags.CUSTOMER_EVENT_LISTENER).increment();
+		dltAlertNotifier.alert(AlertTags.SERVICE_NAME, AlertTags.CUSTOMER_EVENT_LISTENER, event.type(), exceptionType,
+				exceptionMessage);
+
+		if (CustomerEventTypes.CUSTOMER_DELETED.equals(event.type())) {
+			outboxEventPublisher.publish(KafkaTopics.CUSTOMER_DELETION_SAGA_AGGREGATE_TYPE, event.custId().toString(),
+					SagaEventTypes.STEP_FAILED,
+					new SagaStepResultEvent(UUID.randomUUID(), SagaEventTypes.STEP_FAILED, event.custId(),
+							SagaStepNames.PARTY_DEACTIVATION, false, exceptionType + ": " + exceptionMessage));
+		}
 	}
 }

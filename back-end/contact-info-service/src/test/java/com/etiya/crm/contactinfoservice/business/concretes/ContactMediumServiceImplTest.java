@@ -160,4 +160,21 @@ class ContactMediumServiceImplTest {
         verify(contactMediumRepository).saveAll(List.of(first, second));
     }
 
+    @Test
+    void reactivateAllForRow_reactivatesAllInactiveContactMediumsForRow() {
+        ContactMedium first = new ContactMedium();
+        first.setActive(false);
+        ContactMedium second = new ContactMedium();
+        second.setActive(false);
+
+        when(contactMediumRepository.findAllByRowIdAndDataTypeIdAndActiveFalse(10L, 1L))
+                .thenReturn(List.of(first, second));
+
+        contactMediumService.reactivateAllForRow(10L, 1L);
+
+        assertThat(first.isActive()).isTrue();
+        assertThat(second.isActive()).isTrue();
+        verify(contactMediumRepository).saveAll(List.of(first, second));
+    }
+
 }

@@ -22,7 +22,8 @@ import com.etiya.crm.shared.contracts.feign.DefaultFeignRetryConfig;
 @EntityScan(basePackages = { "com.etiya.crm.partyservice.entities", "com.etiya.crm.shared.events" })
 @EnableJpaRepositories(basePackages = { "com.etiya.crm.partyservice.dataAccess.abstracts",
 		"com.etiya.crm.shared.events" })
-@SpringBootApplication(scanBasePackages = { "com.etiya.crm.partyservice", "com.etiya.crm.shared.events" })
+@SpringBootApplication(scanBasePackages = { "com.etiya.crm.partyservice", "com.etiya.crm.shared.events",
+		"com.etiya.crm.shared.contracts.messaging" })
 public class PartyServiceApplication {
 
 	public static void main(String[] args) {

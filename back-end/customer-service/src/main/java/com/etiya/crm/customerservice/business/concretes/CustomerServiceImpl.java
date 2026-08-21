@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.etiya.crm.customerservice.business.abstracts.BillingAccountService;
+import com.etiya.crm.customerservice.business.abstracts.CustomerDeletionSagaOrchestrator;
 import com.etiya.crm.customerservice.business.abstracts.CustomerFinder;
 import com.etiya.crm.customerservice.business.abstracts.CustomerLookupResolver;
 import com.etiya.crm.customerservice.business.abstracts.CustomerService;
@@ -51,6 +52,7 @@ public class CustomerServiceImpl implements CustomerService {
 	private final BillingAccountService billingAccountService;
 	private final CustomerBusinessRules rules;
 	private final LookupCacheService lookupCacheService;
+	private final CustomerDeletionSagaOrchestrator deletionSagaOrchestrator;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -110,5 +112,7 @@ public class CustomerServiceImpl implements CustomerService {
 				CustomerEventTypes.CUSTOMER_DELETED,
 				new CustomerDeletedEvent(UUID.randomUUID(), CustomerEventTypes.CUSTOMER_DELETED, custId,
 						customer.getPartyRoleId(), lookupResolver.resolveCustomerDataTypeId()));
+
+		deletionSagaOrchestrator.start(custId);
 	}
 }

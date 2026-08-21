@@ -13,6 +13,12 @@ public final class LogMessages {
 
 	public static final String DOWNSTREAM_ERROR_BODY_PARSE_FAILED = "Downstream Feign hata govdesi coz(ul)emedi: {}";
 
+	public static final String SAGA_STEP_RESULT_PUBLISH_FAILED =
+			"Saga step result event yayinlanamadi (custId={}, step={}, success={}) - orchestrator bu adimi timeout'a kadar bekleyecek";
+
+	public static final String CUSTOMER_EVENT_DLT_PAYLOAD_UNPARSEABLE =
+			"customer-events DLT'ye dustu ama payload da parse edilemedi, saga step result yayinlanamiyor: key={}";
+
 	public static final String UNEXPECTED_ERROR = "Unexpected error";
 
 	private LogMessages() {

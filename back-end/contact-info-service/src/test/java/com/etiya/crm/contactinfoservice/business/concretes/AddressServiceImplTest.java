@@ -222,4 +222,21 @@ class AddressServiceImplTest {
         verify(addressRepository).saveAll(List.of(first, second));
     }
 
+    @Test
+    void reactivateAllForRow_reactivatesAllInactiveAddressesForRow() {
+        Address first = new Address();
+        first.setActive(false);
+        Address second = new Address();
+        second.setActive(false);
+
+        when(addressRepository.findAllByRowIdAndDataTypeIdAndActiveFalse(10L, 1L))
+                .thenReturn(List.of(first, second));
+
+        addressService.reactivateAllForRow(10L, 1L);
+
+        assertThat(first.isActive()).isTrue();
+        assertThat(second.isActive()).isTrue();
+        verify(addressRepository).saveAll(List.of(first, second));
+    }
+
 }

@@ -40,4 +40,22 @@ class PartyRoleManagerTest {
 
 		manager.deactivatePartyRole(99L);
 	}
+
+	@Test
+	void reactivatePartyRole_setsActive_whenFound() {
+		PartyRole role = new PartyRole();
+		role.setActive(false);
+		when(partyRoleRepository.findById(10L)).thenReturn(Optional.of(role));
+
+		manager.reactivatePartyRole(10L);
+
+		assertThat(role.isActive()).isTrue();
+	}
+
+	@Test
+	void reactivatePartyRole_logsWarning_doesNotThrow_whenNotFound() {
+		when(partyRoleRepository.findById(99L)).thenReturn(Optional.empty());
+
+		manager.reactivatePartyRole(99L);
+	}
 }

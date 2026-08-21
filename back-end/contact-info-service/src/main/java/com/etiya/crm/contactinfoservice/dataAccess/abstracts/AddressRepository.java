@@ -16,4 +16,6 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
 
     List<Address> findAllByRowIdAndDataTypeIdAndActiveTrue(Long rowId, Long dataTypeId);
 
+    List<Address> findAllByRowIdAndDataTypeIdAndActiveFalse(Long rowId, Long dataTypeId);
+
 }

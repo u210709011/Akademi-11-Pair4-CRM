@@ -98,6 +98,13 @@ public class ContactMediumServiceImpl implements ContactMediumService {
         contactMediumRepository.saveAll(contactMediums);
     }
 
+    @Override
+    public void reactivateAllForRow(Long rowId, Long dataTypeId) {
+        List<ContactMedium> contactMediums = contactMediumRepository.findAllByRowIdAndDataTypeIdAndActiveFalse(rowId, dataTypeId);
+        contactMediums.forEach(contactMedium -> contactMedium.setActive(true));
+        contactMediumRepository.saveAll(contactMediums);
+    }
+
     /**
      * Ayni transaction icinde outbox tablosuna insert eder; Debezium bu satiri
      * WAL'den okuyup "contact-medium-events" topic'ine yayinlar. rowId'nin
