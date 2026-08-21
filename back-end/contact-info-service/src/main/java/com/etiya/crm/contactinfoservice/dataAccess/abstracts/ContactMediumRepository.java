@@ -16,4 +16,6 @@ public interface ContactMediumRepository extends JpaRepository<ContactMedium, Lo
 
     List<ContactMedium> findAllByRowIdAndDataTypeIdAndActiveTrue(Long rowId, Long dataTypeId);
 
+    List<ContactMedium> findAllByRowIdAndDataTypeIdAndActiveFalse(Long rowId, Long dataTypeId);
+
 }

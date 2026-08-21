@@ -55,4 +55,9 @@ public interface CustomerAccountRepository extends JpaRepository<CustomerAccount
 	@Modifying
 	@Query("update CustomerAccount a set a.acctStId = :deletedStatusId where a.customer.custId = :custId")
 	void softDeleteByCustId(@Param("custId") Long custId, @Param("deletedStatusId") Long deletedStatusId);
+
+	/** softDeleteByCustId'nin tersi - saga compensation'i tarafindan kullanilir. */
+	@Modifying
+	@Query("update CustomerAccount a set a.acctStId = :activeStatusId where a.customer.custId = :custId")
+	void restoreByCustId(@Param("custId") Long custId, @Param("activeStatusId") Long activeStatusId);
 }

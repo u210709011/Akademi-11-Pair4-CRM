@@ -46,6 +46,28 @@ public final class LogMessages {
 	public static final String CACHE_EVICT_FAILED = "Cache '{}' temizlenemedi (key={}): {}";
 	public static final String CACHE_CLEAR_FAILED = "Cache '{}' tumuyle temizlenemedi: {}";
 
+	public static final String SAGA_STARTED = "Customer deletion saga started: custId={}";
+
+	public static final String SAGA_STEP_RESULT_RECEIVED =
+			"Saga step result received: custId={}, step={}, success={}, reason={}";
+
+	public static final String SAGA_NOT_FOUND =
+			"No CustomerDeletionSaga found for custId={}, ignoring step result (step={})";
+
+	public static final String SAGA_ALREADY_RESOLVED =
+			"CustomerDeletionSaga for custId={} already resolved (status={}), ignoring late step result (step={})";
+
+	public static final String SAGA_COMPLETED = "Customer deletion saga completed successfully: custId={}";
+
+	public static final String SAGA_COMPENSATING =
+			"Customer deletion saga step failed (step={}, reason={}), triggering compensation for custId={}";
+
+	public static final String SAGA_COMPENSATED =
+			"Customer deletion saga compensated (customer reactivated locally, compensate command broadcast): custId={}";
+
+	public static final String SAGA_STEP_RESULT_EVENT_DLT =
+			"customer-deletion-saga-events DLT'ye dustu (tum retry denemeleri tukendi): eventId={}, custId={}, step={}, exception={}: {}";
+
 	private LogMessages() {
 	}
 }

@@ -8,4 +8,7 @@ public interface PartyRoleService {
      * rolleri olabilir.
      */
     void deactivatePartyRole(Long partyRoleId);
+
+    /** Saga compensation'i tarafindan cagrilir - deactivatePartyRole'un tersi, idempotent. */
+    void reactivatePartyRole(Long partyRoleId);
 }

@@ -103,6 +103,13 @@ public class AddressServiceImpl implements AddressService {
         addressRepository.saveAll(addresses);
     }
 
+    @Override
+    public void reactivateAllForRow(Long rowId, Long dataTypeId) {
+        List<Address> addresses = addressRepository.findAllByRowIdAndDataTypeIdAndActiveFalse(rowId, dataTypeId);
+        addresses.forEach(address -> address.setActive(true));
+        addressRepository.saveAll(addresses);
+    }
+
     private void unsetOtherPrimaryAddresses(Long rowId, Long dataTypeId, Long excludeId) {
         List<Address> addresses = addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(rowId, dataTypeId);
         List<Address> toUpdate = addresses.stream()

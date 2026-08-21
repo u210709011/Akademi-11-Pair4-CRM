@@ -26,7 +26,7 @@ import com.etiya.crm.shared.contracts.feign.DefaultFeignRetryConfig;
 @EnableJpaRepositories(basePackages = { "com.etiya.crm.customerservice.dataAccess.abstracts",
 		"com.etiya.crm.shared.events" })
 @ComponentScan(basePackages = { "com.etiya.crm.customerservice", "com.etiya.crm.shared.events",
-		"com.etiya.crm.shared.contracts.validation" })
+		"com.etiya.crm.shared.contracts.validation", "com.etiya.crm.shared.contracts.messaging" })
 @SpringBootApplication
 public class CustomerServiceApplication {
 

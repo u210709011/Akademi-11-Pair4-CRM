@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.etiya.crm.customerservice.business.abstracts.BillingAccountService;
+import com.etiya.crm.customerservice.business.abstracts.CustomerDeletionSagaOrchestrator;
 import com.etiya.crm.customerservice.business.abstracts.CustomerFinder;
 import com.etiya.crm.customerservice.business.abstracts.CustomerLookupResolver;
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
@@ -73,6 +74,9 @@ class CustomerServiceImplTest {
 
 	@Mock
 	private LookupCacheService lookupCacheService;
+
+	@Mock
+	private CustomerDeletionSagaOrchestrator deletionSagaOrchestrator;
 
 	@InjectMocks
 	private CustomerServiceImpl service;
@@ -167,6 +171,7 @@ class CustomerServiceImplTest {
 		assertThat(view.isDeleted()).isTrue();
 		verify(customerSearchViewRepository).save(view);
 		verify(outboxEventPublisher, times(1)).publish(any(), eq("10"), any(), any());
+		verify(deletionSagaOrchestrator).start(10L);
 	}
 
 	@Test

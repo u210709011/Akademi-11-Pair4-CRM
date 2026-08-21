@@ -16,6 +16,9 @@ public final class KafkaTopics {
 	/** order-service'in yayinladigi topic */
 	public static final String ORDER_EVENTS = "order-events";
 
+	/** Saga adim sonuclarini tasir - party/contact-info-service yayinlar, customer-service dinler. */
+	public static final String CUSTOMER_DELETION_SAGA_EVENTS = "customer-deletion-saga-events";
+
 	/** party-service outbox.aggregate_type degeri. */
 	public static final String PARTY_AGGREGATE_TYPE = "party";
 
@@ -27,6 +30,9 @@ public final class KafkaTopics {
 
 	/** order-service outbox.aggregate_type degeri. */
 	public static final String ORDER_AGGREGATE_TYPE = "order";
+
+	/** party-service ve contact-info-service'in saga adim sonucu icin kullandigi outbox.aggregate_type degeri. */
+	public static final String CUSTOMER_DELETION_SAGA_AGGREGATE_TYPE = "customer-deletion-saga";
 
 	private KafkaTopics() {
 	}

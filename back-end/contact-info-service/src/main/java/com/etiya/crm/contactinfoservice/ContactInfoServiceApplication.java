@@ -27,7 +27,7 @@ import com.etiya.crm.shared.contracts.feign.DefaultFeignRetryConfig;
 @EnableJpaRepositories(basePackages = { "com.etiya.crm.contactinfoservice", "com.etiya.crm.shared.events.outbox",
 		"com.etiya.crm.shared.events.inbox" })
 @ComponentScan(basePackages = { "com.etiya.crm.contactinfoservice", "com.etiya.crm.shared.events.outbox",
-		"com.etiya.crm.shared.events.inbox" })
+		"com.etiya.crm.shared.events.inbox", "com.etiya.crm.shared.contracts.messaging" })
 @SpringBootApplication
 public class ContactInfoServiceApplication {
 
