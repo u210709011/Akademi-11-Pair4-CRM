@@ -3,6 +3,7 @@ package com.etiya.crm.orderservice.business.concretes;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import com.etiya.crm.orderservice.business.dtos.requests.CreateOrderRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ItemCharValsRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.OrderConfigurationRequest;
 import com.etiya.crm.orderservice.business.dtos.requests.ProdCharValRequest;
+import com.etiya.crm.orderservice.business.dtos.requests.ValidateBasketRequest;
 import com.etiya.crm.orderservice.business.dtos.responses.ActiveOfferResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderListItemResponse;
 import com.etiya.crm.orderservice.business.dtos.responses.OrderSummaryResponse;
@@ -27,6 +29,7 @@ import com.etiya.crm.orderservice.business.exceptions.AddressSelectionInvalidExc
 import com.etiya.crm.orderservice.business.exceptions.CampaignNotAppliedToOfferingException;
 import com.etiya.crm.orderservice.business.exceptions.CharacteristicValueMismatchException;
 import com.etiya.crm.orderservice.business.exceptions.DuplicateBasketItemException;
+import com.etiya.crm.orderservice.business.exceptions.MandatoryCharacteristicMissingException;
 import com.etiya.crm.orderservice.business.exceptions.OfferAlreadyActiveException;
 import com.etiya.crm.orderservice.business.exceptions.OrderItemNotFoundException;
 import com.etiya.crm.orderservice.business.exceptions.OrderNotEditableException;
@@ -43,6 +46,8 @@ import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountPageResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingCharUseResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingRelationResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingResponse;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterRepository;
@@ -89,6 +94,7 @@ class CustOrdManagerTest {
 	private static final Long CUST_ACCT_ID = 10L;
 	private static final Long CUST_ORD_ID = 100L;
 	private static final Long WAIT_STATUS_ID = 51L;
+	private static final Long BSN_INTER_ID = 500L;
 	private static final Long PROCESSING_STATUS_ID = 52L;
 	private static final Long FINISHED_STATUS_ID = 54L;
 
@@ -138,6 +144,39 @@ class CustOrdManagerTest {
 				.thenReturn(PROCESSING_STATUS_ID);
 		lenient().when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.FINISHED))
 				.thenReturn(FINISHED_STATUS_ID);
+	}
+
+	// ---- validateBasket ----
+
+	// FR-014: validateBasket onceden prodOfrId'nin product-service'te gercekten var oldugunu
+	// hic kontrol etmiyordu - var olmayan bir id ile 200 donup hata ancak createOrder'da ortaya
+	// cikiyordu. Artik createOrder'daki applyProductOffering ile ayni kontrolu (productClient.getById)
+	// erken yapiyor.
+	@Test
+	void validateBasket_throws_whenOfferingDoesNotExist() {
+		stubCustomerAndAccount();
+		when(productClient.getById(999999999L)).thenThrow(new RuntimeException("offering not found"));
+
+		ValidateBasketRequest request = new ValidateBasketRequest(CUST_ID, CUST_ACCT_ID,
+				List.of(new BasketItemRequest(999999999L, null, null)));
+
+		assertThatThrownBy(() -> custOrdManager.validateBasket(request))
+				.isInstanceOf(RuntimeException.class)
+				.hasMessage("offering not found");
+	}
+
+	@Test
+	void validateBasket_passes_whenOfferingExists() {
+		stubCustomerAndAccount();
+		when(productClient.getById(200L)).thenReturn(
+				new ProductOfferingResponse(200L, 9L, "Mobile Prepaid 5GB", "descr", null, 1L, new BigDecimal("89.90")));
+
+		ValidateBasketRequest request = new ValidateBasketRequest(CUST_ID, CUST_ACCT_ID,
+				List.of(new BasketItemRequest(200L, null, null)));
+
+		custOrdManager.validateBasket(request);
+
+		verify(productClient).getById(200L);
 	}
 
 	// ---- createOrder ----
@@ -194,6 +233,69 @@ class CustOrdManagerTest {
 
 		assertThatThrownBy(() -> custOrdManager.createOrder(request))
 				.isInstanceOf(AccountNotBelongToCustomerException.class);
+	}
+
+	// FR-014 ACC-003/004: onceden sadece front-end (offer-selection.component.ts) zorunlu
+	// urunleri sepete ekliyordu - dogrudan API'ye istek atan bir istemci bu korumayi
+	// atlayabiliyordu. Artik createOrder, gonderilen her item icin mandatory=true/active=true
+	// iliskileri kendisi cozup eksik companion'lari otomatik ekliyor.
+	@Test
+	void createOrder_autoAddsMandatoryCompanionOffering_whenNotSubmittedByCaller() {
+		stubCustomerAndAccount();
+		stubBsnInterSpec();
+		stubBsnInterSave();
+		stubCustOrdSave();
+		AtomicLong idGen = new AtomicLong(900L);
+		when(custOrdItemRepository.save(any(CustOrdItem.class))).thenAnswer(inv -> {
+			CustOrdItem item = inv.getArgument(0);
+			item.setCustOrdItemId(idGen.getAndIncrement());
+			return item;
+		});
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(productClient.getOfferingRelations()).thenReturn(List.of(
+				new ProductOfferingRelationResponse(1L, 18L, true, false, true)));
+		when(productClient.getById(1L)).thenReturn(
+				new ProductOfferingResponse(1L, 9L, "Home Fiber 100Mbps", "descr", null, 1L, new BigDecimal("299.90")));
+		when(productClient.getById(18L)).thenReturn(
+				new ProductOfferingResponse(18L, 2L, "Broadband Modem", "descr", null, 1L, new BigDecimal("1199.90")));
+
+		CreateOrderRequest request = new CreateOrderRequest(CUST_ID, CUST_ACCT_ID,
+				List.of(new BasketItemRequest(1L, null, null)));
+
+		OrderSummaryResponse response = custOrdManager.createOrder(request);
+
+		assertThat(response.items()).hasSize(2);
+		assertThat(response.items()).extracting(i -> i.prodOfrId()).containsExactlyInAnyOrder(1L, 18L);
+		assertThat(response.totalAmount()).isEqualByComparingTo("1499.80");
+	}
+
+	@Test
+	void createOrder_doesNotDuplicateMandatoryCompanion_whenAlreadySubmittedByCaller() {
+		stubCustomerAndAccount();
+		stubBsnInterSpec();
+		stubBsnInterSave();
+		stubCustOrdSave();
+		AtomicLong idGen = new AtomicLong(900L);
+		when(custOrdItemRepository.save(any(CustOrdItem.class))).thenAnswer(inv -> {
+			CustOrdItem item = inv.getArgument(0);
+			item.setCustOrdItemId(idGen.getAndIncrement());
+			return item;
+		});
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(productClient.getOfferingRelations()).thenReturn(List.of(
+				new ProductOfferingRelationResponse(1L, 18L, true, false, true)));
+		when(productClient.getById(1L)).thenReturn(
+				new ProductOfferingResponse(1L, 9L, "Home Fiber 100Mbps", "descr", null, 1L, new BigDecimal("299.90")));
+		when(productClient.getById(18L)).thenReturn(
+				new ProductOfferingResponse(18L, 2L, "Broadband Modem", "descr", null, 1L, new BigDecimal("1199.90")));
+
+		// front-end zaten ikisini birden gondermis - backend ikinci bir modem satiri eklememeli.
+		CreateOrderRequest request = new CreateOrderRequest(CUST_ID, CUST_ACCT_ID,
+				List.of(new BasketItemRequest(1L, null, null), new BasketItemRequest(18L, null, null)));
+
+		OrderSummaryResponse response = custOrdManager.createOrder(request);
+
+		assertThat(response.items()).hasSize(2);
 	}
 
 	// ---- addItem ----
@@ -282,6 +384,39 @@ class CustOrdManagerTest {
 
 		assertThat(response.items().get(1).cmpgName()).isEqualTo("Summer Discount");
 		assertThat(response.items().get(1).price()).isEqualByComparingTo("134.91");
+	}
+
+	// FR-014 ACC-003/004: bkz. createOrder_autoAddsMandatoryCompanionOffering... - addItem
+	// icin de ayni koruma gecerli, WAIT durumundaki siparise sonradan eklenen item icin de.
+	@Test
+	void addItem_autoAddsMandatoryCompanionOffering_whenNotAlreadyInOrder() {
+		CustOrd custOrd = waitingOrder();
+		CustOrdItem existingItem = new CustOrdItem();
+		existingItem.setCustOrdItemId(900L);
+		existingItem.setCustOrd(custOrd);
+		existingItem.setCustAcctId(CUST_ACCT_ID);
+		existingItem.setProdOfrId(200L);
+		custOrd.getItems().add(existingItem);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(productClient.getOfferingRelations()).thenReturn(List.of(
+				new ProductOfferingRelationResponse(1L, 18L, true, false, true)));
+		when(productClient.getById(1L)).thenReturn(
+				new ProductOfferingResponse(1L, 9L, "Home Fiber 100Mbps", "descr", null, 1L, new BigDecimal("299.90")));
+		when(productClient.getById(18L)).thenReturn(
+				new ProductOfferingResponse(18L, 2L, "Broadband Modem", "descr", null, 1L, new BigDecimal("1199.90")));
+		AtomicLong idGen = new AtomicLong(901L);
+		when(custOrdItemRepository.save(any(CustOrdItem.class))).thenAnswer(inv -> {
+			CustOrdItem item = inv.getArgument(0);
+			item.setCustOrdItemId(idGen.getAndIncrement());
+			return item;
+		});
+
+		OrderSummaryResponse response = custOrdManager.addItem(CUST_ORD_ID, new BasketItemRequest(1L, null, null));
+
+		assertThat(response.items()).hasSize(3); // existing(200) + fiber(1) + auto-added modem(18)
+		assertThat(response.items()).extracting(i -> i.prodOfrId()).contains(1L, 18L);
 	}
 
 	@Test
@@ -584,6 +719,32 @@ class CustOrdManagerTest {
 		verify(outboxEventPublisher, never()).publish(any(), any(), any(), any());
 	}
 
+	// TC-015-44/FR-015 ACC-009: servis adresi icin yapilan kontrolun karakteristik ayagi.
+	@Test
+	void finishOrder_throws_whenMandatoryCharacteristicMissing() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setAddressId(77L);
+		CustOrdItem item = new CustOrdItem();
+		item.setCustOrdItemId(900L);
+		item.setCustOrd(custOrd);
+		item.setCustAcctId(CUST_ACCT_ID);
+		item.setProdOfrId(200L);
+		item.setProdSpecId(9L);
+		custOrd.getItems().add(item);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(productClient.getOfferingCharUsesByOfferingId(200L)).thenReturn(List.of(
+				new ProductOfferingCharUseResponse(1L, 200L, 1L, "Hiz", true, true)));
+		when(custOrdCharValRepository.findByCustOrdItem_CustOrdItemId(900L)).thenReturn(List.of());
+
+		assertThatThrownBy(() -> custOrdManager.finishOrder(CUST_ORD_ID))
+				.isInstanceOf(MandatoryCharacteristicMissingException.class);
+
+		verify(outboxEventPublisher, never()).publish(any(), any(), any(), any());
+		verify(productClient, never()).createProduct(any());
+	}
+
 	@Test
 	void finishOrder_throws_whenOrderNotInWaitStatus() {
 		CustOrd custOrd = waitingOrder();
@@ -713,6 +874,48 @@ class CustOrdManagerTest {
 		verify(productClient).createProductCharacteristicValue(
 				new com.etiya.crm.orderservice.clients.requests.CreateProductCharacteristicValueRequest(
 						500L, 1L, 2L, "200Mbps", null));
+	}
+
+	// TC-015-44/FR-015 ACC-009: mandatory karakteristik doldurulmussa finish normal ilerler.
+	@Test
+	void finishOrder_succeeds_whenMandatoryCharacteristicProvided() {
+		CustOrd custOrd = waitingOrder();
+		custOrd.setAddressId(77L);
+		CustOrdItem item = new CustOrdItem();
+		item.setCustOrdItemId(900L);
+		item.setCustOrd(custOrd);
+		item.setCustAcctId(CUST_ACCT_ID);
+		item.setProdOfrId(200L);
+		item.setProdSpecId(9L);
+		custOrd.getItems().add(item);
+
+		when(custOrdRepository.findById(CUST_ORD_ID)).thenReturn(Optional.of(custOrd));
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING)).thenReturn(WAIT_STATUS_ID);
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING))
+				.thenReturn(PROCESSING_STATUS_ID);
+		when(lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.FINISHED))
+				.thenReturn(FINISHED_STATUS_ID);
+		when(custOrdRepository.save(custOrd)).thenReturn(custOrd);
+		AddressResponse address = new AddressResponse(77L, CUST_ORD_ID, 21L, 5L, "Street", "12", "Desc", true, null,
+				null, null, null);
+		when(contactAddressClient.getById(77L)).thenReturn(address);
+		when(addressMapper.toSummaryResponse(address))
+				.thenReturn(new com.etiya.crm.orderservice.business.dtos.responses.AddressSummaryResponse(77L, 5L,
+						null, "Street", "12", "Desc"));
+		when(lookupCacheService.getGeneralType(5L)).thenReturn(new com.etiya.crm.shared.contracts.gnltp.GnlTpResponse(
+				5L, "Ankara", null, "ANKARA", "CITY", "CITY", true, null, null, null, null));
+		when(productClient.createProduct(any()))
+				.thenReturn(new CreatedProductResponse(500L, null, 200L, 9L, "Mobile Prepaid 5GB", null, null, 1L));
+		when(productClient.getOfferingCharUsesByOfferingId(200L)).thenReturn(List.of(
+				new ProductOfferingCharUseResponse(1L, 200L, 1L, "Hiz", true, true)));
+		CustOrdCharVal charVal = new CustOrdCharVal();
+		charVal.setCharId(1L);
+		charVal.setCharValId(2L);
+		when(custOrdCharValRepository.findByCustOrdItem_CustOrdItemId(900L)).thenReturn(List.of(charVal));
+
+		OrderSummaryResponse response = custOrdManager.finishOrder(CUST_ORD_ID);
+
+		assertThat(response.ordStId()).isEqualTo(FINISHED_STATUS_ID);
 	}
 
 	// ---- cancelOrder ----
@@ -902,6 +1105,11 @@ class CustOrdManagerTest {
 		custOrd.setCustOrdId(CUST_ORD_ID);
 		custOrd.setCustId(CUST_ID);
 		custOrd.setOrdStId(WAIT_STATUS_ID);
+		// createOrder akisinda her siparise bir BsnInter atanir (bkz. CustOrdManager.createOrder);
+		// buildSummary bunu kosulsuz dereference ettigi icin fixture'da da dolu olmasi gerekir.
+		BsnInter bsnInter = new BsnInter();
+		bsnInter.setBsnInterId(BSN_INTER_ID);
+		custOrd.setBsnInter(bsnInter);
 		return custOrd;
 	}
 }

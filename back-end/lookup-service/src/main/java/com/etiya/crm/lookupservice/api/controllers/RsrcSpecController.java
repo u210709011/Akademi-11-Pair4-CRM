@@ -1,6 +1,7 @@
 package com.etiya.crm.lookupservice.api.controllers;
 
 import com.etiya.crm.lookupservice.business.abstracts.RsrcSpecService;
+import com.etiya.crm.lookupservice.constants.SwaggerText;
 import com.etiya.crm.shared.contracts.rsrcspec.CreateRsrcSpecRequest;
 import com.etiya.crm.shared.contracts.rsrcspec.UpdateRsrcSpecRequest;
 import com.etiya.crm.shared.contracts.rsrcspec.RsrcSpecResponse;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Resource Specs (RSRC_SPEC)", description = "Kaynak spesifikasyonlari CRUD")
+@Tag(name = SwaggerText.RSRC_SPEC_TAG_NAME, description = SwaggerText.RSRC_SPEC_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/resource-specs")
 @RequiredArgsConstructor
@@ -29,31 +30,31 @@ public class RsrcSpecController {
 
     private final RsrcSpecService rsrcSpecService;
 
-    @Operation(summary = "Tum kaynak speclerini listele")
+    @Operation(summary = SwaggerText.RSRC_SPEC_GET_ALL_SUMMARY)
     @GetMapping
     public ResponseEntity<List<RsrcSpecResponse>> getAll() {
         return ResponseEntity.ok(rsrcSpecService.getAll());
     }
 
-    @Operation(summary = "Kaynak specini id ile getir")
+    @Operation(summary = SwaggerText.RSRC_SPEC_GET_BY_ID_SUMMARY)
     @GetMapping("/{id}")
     public ResponseEntity<RsrcSpecResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(rsrcSpecService.getById(id));
     }
 
-    @Operation(summary = "Yeni kaynak speci ekle", description = "stId var olan bir GNL_ST satirina ait olmali.")
+    @Operation(summary = SwaggerText.RSRC_SPEC_ADD_SUMMARY, description = SwaggerText.SPEC_ADD_ST_ID_DESCRIPTION)
     @PostMapping
     public ResponseEntity<RsrcSpecResponse> add(@Valid @RequestBody CreateRsrcSpecRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(rsrcSpecService.add(request));
     }
 
-    @Operation(summary = "Kaynak specini guncelle")
+    @Operation(summary = SwaggerText.RSRC_SPEC_UPDATE_SUMMARY)
     @PutMapping("/{id}")
     public ResponseEntity<RsrcSpecResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateRsrcSpecRequest request) {
         return ResponseEntity.ok(rsrcSpecService.update(id, request));
     }
 
-    @Operation(summary = "Kaynak specini sil")
+    @Operation(summary = SwaggerText.RSRC_SPEC_DELETE_SUMMARY)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         rsrcSpecService.delete(id);

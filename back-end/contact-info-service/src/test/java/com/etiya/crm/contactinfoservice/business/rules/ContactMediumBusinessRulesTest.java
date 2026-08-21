@@ -49,4 +49,44 @@ class ContactMediumBusinessRulesTest {
                 .isInstanceOf(InvalidContactMediumFormatException.class);
     }
 
+    @Test
+    void checkDataFormat_passes_forValidLandline() {
+        contactMediumBusinessRules = new ContactMediumBusinessRules(contactMediumRepository);
+
+        contactMediumBusinessRules.checkDataFormat("2125550000", "PSTN");
+        // no exception thrown
+    }
+
+    @Test
+    void checkDataFormat_throws_forInvalidLandline() {
+        contactMediumBusinessRules = new ContactMediumBusinessRules(contactMediumRepository);
+
+        assertThatThrownBy(() -> contactMediumBusinessRules.checkDataFormat("abc", "PSTN"))
+                .isInstanceOf(InvalidContactMediumFormatException.class);
+    }
+
+    @Test
+    void checkDataFormat_passes_forValidFax() {
+        contactMediumBusinessRules = new ContactMediumBusinessRules(contactMediumRepository);
+
+        contactMediumBusinessRules.checkDataFormat("2125550000", "FAX");
+        // no exception thrown
+    }
+
+    @Test
+    void checkDataFormat_throws_forInvalidFax() {
+        contactMediumBusinessRules = new ContactMediumBusinessRules(contactMediumRepository);
+
+        assertThatThrownBy(() -> contactMediumBusinessRules.checkDataFormat("abc", "FAX"))
+                .isInstanceOf(InvalidContactMediumFormatException.class);
+    }
+
+    @Test
+    void checkDataFormat_passesSilently_forUnknownTypeCode() {
+        contactMediumBusinessRules = new ContactMediumBusinessRules(contactMediumRepository);
+
+        contactMediumBusinessRules.checkDataFormat("anything-goes-here", "UNKNOWN");
+        // no exception thrown - no format rule applies to unrecognized type codes
+    }
+
 }

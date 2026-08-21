@@ -5,22 +5,24 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-@Schema(description = "lookup-service PUT /api/v1/service-specs/{id} istek govdesi.")
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
+@Schema(description = SwaggerText.SRVC_SPEC_UPDATE_REQUEST_DESCRIPTION)
 public record UpdateSrvcSpecRequest(
 
-        @Schema(description = "Servis spec adi.", example = "Mobil Hat Aktivasyonu")
+        @Schema(description = SwaggerText.SRVC_SPEC_NAME_DESCRIPTION, example = "Mobil Hat Aktivasyonu")
         @NotBlank @Size(max = 100)
         String name,
 
-        @Schema(description = "Aciklama.", example = "Yeni mobil hat aktivasyon servisi")
+        @Schema(description = SwaggerText.SRVC_SPEC_DESCR_DESCRIPTION, example = "Yeni mobil hat aktivasyon servisi")
         @NotBlank @Size(max = 100)
         String descr,
 
-        @Schema(description = "Kisa kod.", example = "MOBILE_ACTIVATION")
+        @Schema(description = SwaggerText.SRVC_SPEC_SRVC_CODE_DESCRIPTION, example = "MOBILE_ACTIVATION")
         @NotBlank @Size(max = 100)
         String srvcCode,
 
-        @Schema(description = "GNL_ST grubundaki durum id'si (gnl_st_id).", example = "1")
+        @Schema(description = SwaggerText.SPEC_ST_ID_DESCRIPTION, example = "1")
         @NotNull
         Long stId) {
 }

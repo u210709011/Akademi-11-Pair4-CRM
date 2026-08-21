@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  KARANTINA suite — CI'da ASLA calistirilmamalidir.
+
+  Icerigi: FR-001 ACC-008 (5 hatali deneme -> 15 dakika hesap kilidi).
+  Keycloak realm ayari: bruteForceProtected=true, failureFactor=5, waitIncrementSeconds=900.
+
+  Bu test kullandigi hesabi 15 dakika kilitler. Paylasilan 'salesperson' kullanicisi
+  ile calistirilirsa sonraki TUM testler bloke olur. Bu yuzden:
+    - ayri ve adanmis bir test kullanicisi ile calistirilmalidir
+      (-Dui.username=<kilitlenebilir-kullanici> -Dui.password=...)
+    - yalnizca manuel / haftalik tetikle kosulmalidir.
+
+  Faz 4'te AccountLockTests bu suite'e eklenecek.
+-->
+<!-- configfailurepolicy=continue: tek bir @BeforeMethod hatasi, sinifin geri kalan
+     testlerinin config metotlarinin da atlanmasina (ciglama) yol acmamalidir. -->
+<suite name="CRM Lite UI - Quarantine" verbose="1" parallel="false" configfailurepolicy="continue">
+
+    <listeners>
+        <listener class-name="com.crmlite.ui.core.listeners.SuiteListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.TestListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
+    <test name="FR-001 ACC-008 Hesap Kilitleme">
+        <classes>
+            <!-- Faz 4: <class name="com.crmlite.ui.tests.fr001login.AccountLockTests"/> -->
+            <class name="com.crmlite.ui.tests.SmokeSelfCheckTest"/>
+        </classes>
+    </test>
+
+</suite>

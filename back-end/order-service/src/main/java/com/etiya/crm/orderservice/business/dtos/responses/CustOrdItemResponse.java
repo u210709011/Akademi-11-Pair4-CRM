@@ -5,9 +5,12 @@ package com.etiya.crm.orderservice.business.dtos.responses;
 public record CustOrdItemResponse(
 
     Long custOrdItemId,
+    Long custOrdId,
     Long prodId,
+    String prodNo,
     String prodName,
     Long cmpgId,
+    String cmpgNo,
     String cmpgName,
     Long custAcctId
 ) {

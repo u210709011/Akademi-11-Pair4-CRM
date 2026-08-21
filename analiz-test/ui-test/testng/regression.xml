@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  Regression suite — FR-001..FR-018'in tamami.
+  Calistirma: ./mvnw test -Dsuite=regression
+
+  12.08.2026: ACIK BULGU KALMADI. Daha once "documented-gap" ile bilerek kirmizi
+  birakilan ve regresyondan dislanan testlerin tamami, ozellikleri uygulandikca acildi
+  ve regresyona alindi (FR-005/006/007/008/011/017). Grup dislamasi ileride ayni ihtiyac
+  dogarsa diye yerinde birakildi, ancak su an dislanan test YOKTUR.
+
+  Kapsam disinda kalan tek test: AccountLockTests (karantina - gercek hesabi 15 dakika
+  kilitler, quarantine.xml uzerinden -DlockoutTestEnabled=true ile kosulur).
+  OrderApiSelfCheckTest de disaridadir; bir cerceve oz-kontrolu olup gercek siparis
+  olusturdugu icin regresyona dahil edilmemistir.
+
+  parallel="false" — SERI kosum. 10.08.2026'da paralel (parallel="classes",
+  thread-count="3") iki kez denendi ve her ikisinde de kararsizlik uretti:
+  WebDriver oturumu is parcaciklarindan dusuyor ("Bu thread icin WebDriver yok"),
+  yuk altinda tiklamalar zaman asimina ugruyor ve HER KOSUMDA FARKLI testler
+  kirmizi oluyordu. Bu, gercek urun hatalarini gurultuye gomdugu icin suite
+  seri kosuma alindi: daha uzun surer ama sonucu guvenilir ve tekrarlanabilir.
+
+  Paralellige donulecekse once thread-count="2" denenmeli ve su iki nokta
+  gozlenmelidir:
+    1) es zamanli Chrome + backend yuku altinda renderer timeout artiyor mu,
+    2) NationalIdUniquenessTests gibi tekillik senaryolari birbirinin verisini
+       goruyor mu (TestRunId + sequence bunu onlemeli, ama kanit yok).
+
+-->
+<!-- configfailurepolicy=continue: tek bir @BeforeMethod hatasi, sinifin geri kalan
+     testlerinin config metotlarinin da atlanmasina (ciglama) yol acmamalidir. -->
+<suite name="CRM Lite UI - Regression" verbose="1" parallel="false" configfailurepolicy="continue">
+
+    <listeners>
+        <listener class-name="com.crmlite.ui.core.listeners.SuiteListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.TestListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
+    <groups>
+        <run>
+            <exclude name="documented-gap"/>
+        </run>
+    </groups>
+
+    <test name="Cerceve Self-Check">
+        <classes>
+            <class name="com.crmlite.ui.tests.SmokeSelfCheckTest"/>
+            <class name="com.crmlite.ui.tests.LocatorSanityTest"/>
+            <class name="com.crmlite.ui.tests.DataLayerSelfCheckTest"/>
+        </classes>
+    </test>
+
+    <test name="FR-001 Sistem Girisi">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr001login.LoginTests"/>
+            <class name="com.crmlite.ui.tests.fr001login.LoginValidationTests"/>
+            <class name="com.crmlite.ui.tests.fr001login.SessionTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-002 Musteri Arama">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr002search.CustomerSearchTests"/>
+            <class name="com.crmlite.ui.tests.fr002search.SearchFilterValidationTests"/>
+            <class name="com.crmlite.ui.tests.fr002search.SearchPaginationSortTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-003 Musteri Olusturma">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr003create.CreateCustomerHappyPathTests"/>
+            <class name="com.crmlite.ui.tests.fr003create.CreateCustomerValidationTests"/>
+            <class name="com.crmlite.ui.tests.fr003create.NationalIdUniquenessTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-004 Musteri Guncelleme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr004update.UpdateCustomerTests"/>
+            <class name="com.crmlite.ui.tests.fr004update.UpdateValidationTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-005 Adres Yonetimi">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr005address.AddressCrudTests"/>
+            <class name="com.crmlite.ui.tests.fr005address.PrimaryAddressTests"/>
+            <class name="com.crmlite.ui.tests.fr005address.AddressLimitTests"/>
+        </classes>
+    </test>
+
+    <!--
+      12.08.2026: ContactCancelConfirmationTests daha once disaridaydi (ACC-006 onay
+      mesaji uygulamada yoktu). Ozellik uygulandi ve test geciyor, regresyona alindi.
+    -->
+    <test name="FR-006 Iletisim Bilgileri Yonetimi">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr006contact.ContactMediumTests"/>
+            <class name="com.crmlite.ui.tests.fr006contact.ContactMediumValidationTests"/>
+            <class name="com.crmlite.ui.tests.fr006contact.ContactCancelConfirmationTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-007 Musteri Silme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr007delete.DeleteCustomerTests"/>
+            <class name="com.crmlite.ui.tests.fr007delete.DeleteCustomerLinkedProductTests"/>
+        </classes>
+    </test>
+
+    <!--
+      12.08.2026: BillingAccountCancelTests daha once disaridaydi (ACC-006/ACC-010 uyari
+      adimlari uygulamada yoktu, modal tasmasi da acik bir hataydi). Dordu de geciyor,
+      regresyona alindi.
+    -->
+    <test name="FR-008 Fatura Hesabi Olusturma">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr008account.CreateBillingAccountTests"/>
+            <class name="com.crmlite.ui.tests.fr008account.BillingAccountValidationTests"/>
+            <class name="com.crmlite.ui.tests.fr008account.BillingAccountCancelTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-009 Fatura Hesabi ve Bagli Urun Goruntuleme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr009accountproduct.AccountProductViewTests"/>
+            <class name="com.crmlite.ui.tests.fr009accountproduct.AccountPaginationAndGapTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-010 Fatura Hesabi Guncelleme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr010accountupdate.UpdateBillingAccountTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-011 Fatura Hesabi Silme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr011accountdelete.DeleteBillingAccountTests"/>
+        </classes>
+    </test>
+
+    <!--
+      FR-012 ON KOSUL: product-service ve order-service ayakta olmalidir - Offer Selection
+      ekrani katalog/kampanya verisini bu servislerden ceker.
+    -->
+    <test name="FR-012 Yeni Satis Surecini Baslatma">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr012newsale.StartNewSaleTests"/>
+        </classes>
+    </test>
+
+    <!--
+      FR-013..FR-018 ON KOSUL: product-service ve order-service ayakta olmalidir.
+      FR-017 GERCEK SIPARIS olusturur; FR-018 dili localStorage'da degistirir ve her
+      test sonunda EN'e geri alir.
+    -->
+    <test name="FR-013 Katalog ve Kampanya Listeleme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr013catalog.CatalogCampaignSearchTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-014 Sepet Yonetimi">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr014basket.BasketManagementTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-015 Urun Konfigurasyonu">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr015configuration.ProductConfigurationTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-016 Siparis Ozeti Goruntuleme">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr016review.OrderSummaryTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-017 Siparisi Tamamlama">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr017submit.SubmitOrderTests"/>
+        </classes>
+    </test>
+
+    <test name="FR-018 Dil Destegi">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr018language.LanguageSupportTests"/>
+        </classes>
+    </test>
+
+</suite>

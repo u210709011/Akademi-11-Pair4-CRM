@@ -42,6 +42,45 @@ class AddressServiceImplTest {
     private AddressServiceImpl addressService;
 
     @Test
+    void getAll_returnsAllActiveAddressesMapped() {
+        Address address = new Address();
+        address.setId(1L);
+        address.setRowId(10L);
+        address.setDataTypeId(1L);
+        when(addressRepository.findAllByActiveTrue()).thenReturn(List.of(address));
+
+        List<AddressResponse> responses = addressService.getAll();
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).id()).isEqualTo(1L);
+    }
+
+    @Test
+    void getById_returnsMappedAddress() {
+        Address address = new Address();
+        address.setId(1L);
+        when(addressBusinessRules.checkIfAddressExists(1L)).thenReturn(address);
+
+        AddressResponse response = addressService.getById(1L);
+
+        assertThat(response.id()).isEqualTo(1L);
+    }
+
+    @Test
+    void getByRowIdAndDataTypeId_returnsMappedAddresses() {
+        Address address = new Address();
+        address.setId(1L);
+        address.setRowId(10L);
+        address.setDataTypeId(1L);
+        when(addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(10L, 1L)).thenReturn(List.of(address));
+
+        List<AddressResponse> responses = addressService.getByRowIdAndDataTypeId(10L, 1L);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).rowId()).isEqualTo(10L);
+    }
+
+    @Test
     void add_setsPrimaryTrue_whenItIsTheFirstAddressForRow() {
         CreateAddressRequest request = new CreateAddressRequest(10L, 1L, 5L, "Street", "12", "Desc", false);
         when(addressRepository.findAllByRowIdAndDataTypeIdAndActiveTrue(10L, 1L)).thenReturn(List.of());
@@ -180,6 +219,23 @@ class AddressServiceImplTest {
 
         assertThat(first.isActive()).isFalse();
         assertThat(second.isActive()).isFalse();
+        verify(addressRepository).saveAll(List.of(first, second));
+    }
+
+    @Test
+    void reactivateAllForRow_reactivatesAllInactiveAddressesForRow() {
+        Address first = new Address();
+        first.setActive(false);
+        Address second = new Address();
+        second.setActive(false);
+
+        when(addressRepository.findAllByRowIdAndDataTypeIdAndActiveFalse(10L, 1L))
+                .thenReturn(List.of(first, second));
+
+        addressService.reactivateAllForRow(10L, 1L);
+
+        assertThat(first.isActive()).isTrue();
+        assertThat(second.isActive()).isTrue();
         verify(addressRepository).saveAll(List.of(first, second));
     }
 

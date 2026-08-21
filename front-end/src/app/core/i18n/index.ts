@@ -1,2 +1,2 @@
-export * from './i18n.service';
-export * from './translations';
+export * from './language.interceptor';
+export * from './lang-storage';

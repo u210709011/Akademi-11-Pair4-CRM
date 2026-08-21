@@ -7,6 +7,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.etiya.crm.partyservice.constants.CacheNames;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 
@@ -17,7 +18,7 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("lookups");
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager(CacheNames.LOOKUPS);
         cacheManager.setCaffeine(Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofMinutes(30))
                 .maximumSize(500));

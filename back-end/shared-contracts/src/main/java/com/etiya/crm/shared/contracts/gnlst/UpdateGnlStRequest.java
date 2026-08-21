@@ -5,30 +5,32 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-@Schema(description = "lookup-service PUT /api/v1/general-statuses/{id} istek govdesi.")
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
+@Schema(description = SwaggerText.GNL_ST_UPDATE_REQUEST_DESCRIPTION)
 public record UpdateGnlStRequest(
 
-        @Schema(description = "Bu degerin gosterim adi.", example = "Aktif")
+        @Schema(description = SwaggerText.GNL_ST_NAME_DESCRIPTION, example = "Aktif")
         @NotBlank @Size(max = 100)
         String name,
 
-        @Schema(description = "Aciklama.", example = "Aktif")
+        @Schema(description = SwaggerText.GNL_ST_DESCR_DESCRIPTION, example = "Aktif")
         @NotBlank @Size(max = 100)
         String descr,
 
-        @Schema(description = "Bu degerin kendi kisa kodu (ent_code_name ile birlikte benzersiz olmali).", example = "ACTIVE")
+        @Schema(description = SwaggerText.GNL_ST_SHRT_CODE_DESCRIPTION, example = "ACTIVE")
         @NotBlank @Size(max = 15)
         String shrtCode,
 
-        @Schema(description = "Aktif mi.", example = "true")
+        @Schema(description = SwaggerText.GNL_ST_ACTIVE_DESCRIPTION, example = "true")
         @NotNull
         Boolean active,
 
-        @Schema(description = "Grup anahtari - bu degerin ait oldugu grup.", example = "CUST_STATUS")
+        @Schema(description = SwaggerText.GNL_ST_ENT_CODE_NAME_DESCRIPTION, example = "CUST_STATUS")
         @NotBlank @Size(max = 100)
         String entCodeName,
 
-        @Schema(description = "Pratikte entCodeName ile ayni deger girilir.", example = "CUST_STATUS")
+        @Schema(description = SwaggerText.GNL_ST_ENT_NAME_DESCRIPTION, example = "CUST_STATUS")
         @Size(max = 100)
         String entName) {
 }

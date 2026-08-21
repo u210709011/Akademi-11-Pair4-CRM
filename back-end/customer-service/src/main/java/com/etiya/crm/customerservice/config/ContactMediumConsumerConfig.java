@@ -15,16 +15,11 @@ import com.etiya.crm.shared.events.contactmedium.ContactMediumEvent;
 import lombok.RequiredArgsConstructor;
 
 /**
- * spring.kafka.consumer.properties.spring.json.value.default.type (bkz. yaml)
- * TEK bir statik hedef tipe ("PartyEvent") sabitlenmis - PartyEventListener'in
- * dinledigi "party-events" icin dogru, ama ContactMediumEventListener'in
- * dinledigi "contact-medium-events" farkli bir govde (ContactMediumEvent).
- * Boot'un auto-configure ettigi varsayilan ConsumerFactory'yi TUM listener'lar
- * paylastigindan, ikinci bir govde tipi icin ayri bir ConsumerFactory +
- * ContainerFactory gerekir - bkz. ContactMediumEventListener'daki containerFactory.
- * Diger tum tuketici ayarlari (bootstrap-servers, group-id, error-handling
- * deserializer, trusted packages, vb.) KafkaProperties uzerinden aynen miras
- * alinir, sadece VALUE_DEFAULT_TYPE degistirilir.
+ * ContactMediumEventListener'in dinledigi "contact-medium-events" icin ConsumerFactory +
+ * ContainerFactory - PartyConsumerConfig ile ayni desen: her event tipi kendi tuketici
+ * yapilandirmasini tasir, ortak/varsayilan bir hedef tipe guvenilmez. Diger tum tuketici
+ * ayarlari (bootstrap-servers, group-id, error-handling deserializer, trusted packages, vb.)
+ * KafkaProperties uzerinden aynen miras alinir, sadece VALUE_DEFAULT_TYPE degistirilir.
  */
 @Configuration
 @RequiredArgsConstructor

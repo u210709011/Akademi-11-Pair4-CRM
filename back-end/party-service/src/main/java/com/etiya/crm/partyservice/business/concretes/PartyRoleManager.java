@@ -22,4 +22,12 @@ public class PartyRoleManager implements PartyRoleService {
                 role -> role.setActive(false),
                 () -> log.warn(LogMessages.CUSTOMER_DELETED_PARTY_ROLE_NOT_FOUND, partyRoleId));
     }
+
+    @Override
+    @Transactional
+    public void reactivatePartyRole(Long partyRoleId) {
+        partyRoleRepository.findById(partyRoleId).ifPresentOrElse(
+                role -> role.setActive(true),
+                () -> log.warn(LogMessages.CUSTOMER_DELETED_PARTY_ROLE_REACTIVATE_NOT_FOUND, partyRoleId));
+    }
 }

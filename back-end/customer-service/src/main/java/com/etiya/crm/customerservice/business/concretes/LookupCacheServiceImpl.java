@@ -1,24 +1,31 @@
 package com.etiya.crm.customerservice.business.concretes;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.etiya.crm.customerservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.customerservice.clients.controllers.LookupClient;
 import com.etiya.crm.customerservice.constants.CacheNames;
+import com.etiya.crm.customerservice.constants.LogMessages;
 
 import lombok.RequiredArgsConstructor;
 
-/** lookup-service her istekte cagrilmaz; Caffeine (local) ile cache'lenir. */
+/** Lookup sonuçlarını Caffeine ile yerel olarak cache'ler. */
 @Service
 @RequiredArgsConstructor
 public class LookupCacheServiceImpl implements LookupCacheService {
 
+	private static final Logger log = LoggerFactory.getLogger(LookupCacheServiceImpl.class);
+
 	private final LookupClient lookupClient;
+	private final LookupTypeByIdCache typeByIdCache;
 
 	@Override
 	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
 			key = "'type_' + #entCodeName + '_' + #shrtCode")
+	/** Kısa koddan lookup type kimliğini çözer. */
 	public Long resolveTypeId(String entCodeName, String shrtCode) {
 		return lookupClient.resolveType(entCodeName, shrtCode).gnlTpId();
 	}
@@ -39,26 +46,29 @@ public class LookupCacheServiceImpl implements LookupCacheService {
 
 	@Override
 	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
-			key = "'value_' + #id")
+			key = "'value_' + #id + '_' + T(org.springframework.context.i18n.LocaleContextHolder).getLocale().toLanguageTag()")
+	/** Lookup type adını mevcut dile göre çözer. */
 	public String resolveTypeValue(Long id) {
 		return lookupClient.getTypeById(id).name();
 	}
 
+
 	@Override
-	@Cacheable(cacheManager = CacheNames.CAFFEINE_CACHE_MANAGER, cacheNames = CacheNames.LOOKUPS,
-			key = "'exists_' + #entCodeName + '_' + #id")
+	public String resolveTypeShrtCode(Long id) {
+		return typeByIdCache.getTypeById(id).shrtCode();
+	}
+
+	@Override
 	public boolean existsInGroup(Long id, String entCodeName) {
 		if (id == null) {
 			return false;
 		}
 		try {
-			var type = lookupClient.getTypeById(id);
+			var type = typeByIdCache.getTypeById(id);
 			return type.active() && entCodeName.equals(type.entCodeName());
 		} catch (RuntimeException ex) {
-			// id yok (404) ya da downstream baska bir sekilde basarisiz oldu (feign.circuitbreaker.enabled=true
-			// oldugunda ham FeignException degil NoFallbackAvailableException gelir, bkz.
-			// AbstractDownstreamExceptionHandler'daki B-03 notu) - hangisi olursa olsun cityId
-			// dogrulanamadi demektir, "gecersiz" sayilir.
+
+			log.warn(LogMessages.LOOKUP_EXISTS_IN_GROUP_FAILED, id, entCodeName, ex.toString());
 			return false;
 		}
 	}

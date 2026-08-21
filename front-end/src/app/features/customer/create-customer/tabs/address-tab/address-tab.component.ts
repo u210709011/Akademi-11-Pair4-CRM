@@ -1,21 +1,21 @@
 import { Component, HostListener, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { form, FormField, maxLength, required } from '@angular/forms/signals';
-import { AddressInfo } from '../../../../../core/customer';
-import { I18nService } from '../../../../../core/i18n';
+import { TranslatePipe } from '@ngx-translate/core';
+import { AddressInfo } from '../../../data-access/customer';
 import { GnlType, LOOKUP_GROUPS, LookupService } from '../../../../../core/lookup';
 import { AddressFormModel, CreateCustomerFormStateService } from '../../create-customer.component';
+import { ButtonComponent } from '../../../../../shared/components/button/button.component';
 
 const EMPTY_ADDRESS: AddressFormModel = { city: '', street: '', houseNumber: '', description: '' };
 
 @Component({
   selector: 'app-address-tab',
-  imports: [FormField],
+  imports: [FormField, ButtonComponent, TranslatePipe],
   templateUrl: './address-tab.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './address-tab.component.scss'
 })
 export class AddressTabComponent {
-  protected readonly i18n = inject(I18nService);
   private readonly formState = inject(CreateCustomerFormStateService);
   private readonly lookupService = inject(LookupService);
 

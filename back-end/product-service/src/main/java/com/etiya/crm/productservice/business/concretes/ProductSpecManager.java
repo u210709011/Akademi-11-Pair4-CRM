@@ -2,6 +2,7 @@ package com.etiya.crm.productservice.business.concretes;
 
 import com.etiya.crm.productservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.productservice.business.abstracts.ProductSpecService;
+import com.etiya.crm.productservice.business.abstracts.TranslationService;
 import com.etiya.crm.productservice.business.dtos.requests.ProductSpec.CreateProductSpecRequest;
 import com.etiya.crm.productservice.business.dtos.requests.ProductSpec.UpdateProductSpecRequest;
 import com.etiya.crm.productservice.business.dtos.responses.ProductSpec.CreatedProductSpecResponse;
@@ -21,14 +22,18 @@ import java.util.List;
 @Service
 public class ProductSpecManager implements ProductSpecService {
 
+    private static final String ENTITY_NAME = "PROD_SPEC";
+
     private final ProductSpecRepository productSpecRepository;
     private final ProductSpecMapper productSpecMapper;
     private final LookupCacheService lookupCacheService;
+    private final TranslationService translationService;
 
-    public ProductSpecManager(ProductSpecRepository productSpecRepository, ProductSpecMapper productSpecMapper, LookupCacheService lookupCacheService) {
+    public ProductSpecManager(ProductSpecRepository productSpecRepository, ProductSpecMapper productSpecMapper, LookupCacheService lookupCacheService, TranslationService translationService) {
         this.productSpecRepository = productSpecRepository;
         this.productSpecMapper = productSpecMapper;
         this.lookupCacheService = lookupCacheService;
+        this.translationService = translationService;
     }
 
     @Override
@@ -57,13 +62,28 @@ public class ProductSpecManager implements ProductSpecService {
     public GetProductSpecResponse getById(Long productSpecId) {
         ProductSpec productSpec = productSpecRepository.findById(productSpecId)
                 .orElseThrow(() -> new ProductSpecNotFoundException(productSpecId));
-        return productSpecMapper.toGetResponse(productSpec);
+        GetProductSpecResponse response = productSpecMapper.toGetResponse(productSpec);
+        applyTranslation(response);
+        return response;
     }
 
     @Override
     public List<GetAllProductSpecResponse> getAll() {
         List<ProductSpec> productSpecs = productSpecRepository.findAll();
-        return productSpecMapper.toGetAllResponseList(productSpecs);
+        List<GetAllProductSpecResponse> responses = productSpecMapper.toGetAllResponseList(productSpecs);
+        responses.forEach(this::applyTranslation);
+        return responses;
+    }
+
+    /** name/descr taban degerleri Ingilizce'dir - bkz. lookup-service GnlTpManager (ayni desen). */
+    private void applyTranslation(GetProductSpecResponse response) {
+        response.setName(translationService.translate(ENTITY_NAME, response.getProductSpecId(), "NAME", response.getName()));
+        response.setDescr(translationService.translate(ENTITY_NAME, response.getProductSpecId(), "DESCR", response.getDescr()));
+    }
+
+    private void applyTranslation(GetAllProductSpecResponse response) {
+        response.setName(translationService.translate(ENTITY_NAME, response.getProductSpecId(), "NAME", response.getName()));
+        response.setDescr(translationService.translate(ENTITY_NAME, response.getProductSpecId(), "DESCR", response.getDescr()));
     }
 
     //(TODO) bağlı olduğu offer'lar varsa silme işlemi kontrolü ayarlanacak

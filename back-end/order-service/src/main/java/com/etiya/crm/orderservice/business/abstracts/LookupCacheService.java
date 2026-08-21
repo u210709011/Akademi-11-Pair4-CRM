@@ -3,8 +3,14 @@ package com.etiya.crm.orderservice.business.abstracts;
 import com.etiya.crm.shared.contracts.gnlchar.GnlCharResponse;
 import com.etiya.crm.shared.contracts.gnlcharval.GnlCharValResponse;
 import com.etiya.crm.shared.contracts.gnltp.GnlTpResponse;
+import com.etiya.crm.shared.contracts.validation.LookupExistenceChecker;
 
-public interface LookupCacheService {
+/**
+ * LookupExistenceChecker'i extend eder ki bu servisin LookupCacheServiceImpl'i,
+ * shared-contracts'teki ExistsInLookupGroupValidator'in ihtiyac duydugu bean'i otomatik saglasin
+ * (bkz. B-21: AddressInfoRequest.cityId dogrulanmiyordu).
+ */
+public interface LookupCacheService extends LookupExistenceChecker {
 
 	/** general-statuses/resolve/{entCodeName}/{shrtCode} - GNL_ST id'sini doner. */
 	Long resolveStatusId(String entCodeName, String shrtCode);

@@ -11,6 +11,9 @@ import com.etiya.crm.orderservice.clients.requests.CreateProductRequest;
 import com.etiya.crm.orderservice.clients.responses.CampaignOfferingResponse;
 import com.etiya.crm.orderservice.clients.responses.CampaignResponse;
 import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductCatalogOfferingResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingCharUseResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingRelationResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingResponse;
 
 import java.util.List;
@@ -33,6 +36,17 @@ public interface ProductClient {
     @PostMapping("/api/v1/products")
     CreatedProductResponse createProduct(@RequestBody CreateProductRequest request);
 
+    // FR-014 ACC-012/BR-04: sepetteki tekliflerin birbiriyle cakisip cakismadigini (EXCL)
+    // kontrol etmek icin - product-service'te filtreli bir endpoint olmadigindan tum
+    // iliskiler bir kerede cekilip BasketValidationRules'ta filtrelenir.
+    @GetMapping("/api/v1/product-offering-relations")
+    List<ProductOfferingRelationResponse> getOfferingRelations();
+
+    // BR-05 (genisletilmis): bir teklifin katalog kategorisini (Internet/Mobile/TV) cozmek icin -
+    // hesapta o kategoriden farkli bir teklif zaten aktifse yenisi eklenemez.
+    @GetMapping("/api/v1/product-catalog-offerings")
+    List<ProductCatalogOfferingResponse> getCatalogOfferings();
+
     // cmpgId secilen bir item'in fiyatini indirimli hesaplamak icin: campaign'in hangi
     // offering'lere uygulandigini ve indirimli fiyatini (discountedPrice) doner.
     @GetMapping("/api/v1/campaign-offerings/by-campaign/{campaignId}")
@@ -42,5 +56,11 @@ public interface ProductClient {
     // karakteristikleri (CustOrdCharVal) islemek icin.
     @PostMapping("/api/v1/product-characteristic-values")
     void createProductCharacteristicValue(@RequestBody CreateProductCharacteristicValueRequest request);
+
+    // FR-015 ACC-002/TC-015-44: finishOrder'da bir item'in teklifi hangi karakteristiklerin
+    // zorunlu (mandatory) oldugunu bildirmek icin - bkz. ensureMandatoryCharacteristicsProvided.
+    @GetMapping("/api/v1/product-offering-char-uses/by-offering/{productOfferingId}")
+    List<ProductOfferingCharUseResponse> getOfferingCharUsesByOfferingId(
+            @PathVariable("productOfferingId") Long productOfferingId);
 
 }

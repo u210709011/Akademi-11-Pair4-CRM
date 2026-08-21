@@ -10,7 +10,7 @@
         <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M9 6l6 6-6 6" />
         </svg>
-        <a class="breadcrumb-link" href="#">{{ i18n.t('search.b2c') }}</a>
+        <a class="breadcrumb-link" href="#">{{ 'search.b2c' | translate }}</a>
         <svg class="breadcrumb-separator" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M9 6l6 6-6 6" />
         </svg>
@@ -31,7 +31,7 @@
                 [disabled]="isTabLocked(tab.key)"
                 (click)="selectTab(tab.key)"
             >
-                {{ i18n.t(tab.labelKey) }}
+                {{ tab.labelKey | translate }}
             </button>
         }
     </div>
@@ -47,27 +47,23 @@
   }
 
   <div class="wizard-actions">
-      <button type="button" class="cancel-button" (click)="cancel()">{{ i18n.t('create.cancelBtn') }}</button>
+      <app-button variant="secondary" (buttonClick)="cancel()">{{ 'create.cancelBtn' | translate }}</app-button>
 
-      <div class="next-button-group">
+      <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="nextTab()">
           @if (formState.isVerifyingIdentity()) {
-              <span class="verifying-indicator">
-                  <svg class="verifying-spinner" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 2a10 10 0 0 1 10 10" />
-                  </svg>
-                  {{ i18n.t('create.verifyingIdentity') }}
+              <span class="btn-spinner-wrap">
+                  <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                  {{ 'create.verifyingIdentity' | translate }}
               </span>
           } @else if (formState.isSubmitting()) {
-              <span class="verifying-indicator">
-                  <svg class="verifying-spinner" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 2a10 10 0 0 1 10 10" />
-                  </svg>
-                  {{ i18n.t('create.submitting') }}
+              <span class="btn-spinner-wrap">
+                  <svg class="btn-spinner" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10" /></svg>
+                  {{ 'create.submitting' | translate }}
               </span>
+          } @else {
+              {{ nextButtonLabel() }}
           }
-
-          <button type="button" class="next-button" [disabled]="isNextDisabled()" (click)="nextTab()">{{ nextButtonLabel() }}</button>
-      </div>
+      </button>
   </div>
 
 </div>

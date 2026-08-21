@@ -8,6 +8,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +28,11 @@ public class FeignConfig {
 	@Bean
 	public RequestInterceptor jwtTokenPropagationInterceptor() {
 		return new JwtTokenPropagationInterceptor(machineTokenService);
+	}
+
+	@Bean
+	public RequestInterceptor acceptLanguagePropagationInterceptor() {
+		return new AcceptLanguagePropagationInterceptor();
 	}
 
 	/**
@@ -53,6 +60,28 @@ public class FeignConfig {
 				template.header(AUTHORIZATION_HEADER, BEARER_PREFIX + jwt.getTokenValue());
 			} else {
 				template.header(AUTHORIZATION_HEADER, BEARER_PREFIX + machineTokenService.getAccessToken());
+			}
+		}
+	}
+
+	/**
+	 * Gelen istegin ham Accept-Language header'ini downstream Feign cagrilarina tasir - SADECE
+	 * gercek bir HTTP istegi baglami varsa (RequestContextHolder). Kafka listener'larin istek
+	 * baglami olmadigindan buraya hicbir header eklenmez. customer/product-service'teki ayni
+	 * isimli interceptor'la birebir ayni desen (bkz. o servislerdeki FeignConfig).
+	 */
+	public static class AcceptLanguagePropagationInterceptor implements RequestInterceptor {
+
+		private static final String ACCEPT_LANGUAGE_HEADER = "Accept-Language";
+
+		@Override
+		public void apply(RequestTemplate template) {
+			if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)) {
+				return;
+			}
+			String acceptLanguage = attributes.getRequest().getHeader(ACCEPT_LANGUAGE_HEADER);
+			if (acceptLanguage != null) {
+				template.header(ACCEPT_LANGUAGE_HEADER, acceptLanguage);
 			}
 		}
 	}

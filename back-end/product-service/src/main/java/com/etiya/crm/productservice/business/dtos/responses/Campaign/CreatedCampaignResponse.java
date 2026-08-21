@@ -13,6 +13,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class CreatedCampaignResponse {
     private Long campaignId;
+    private String campaignNo;
     private String name;
     private String descr;
     private String campaignCode;

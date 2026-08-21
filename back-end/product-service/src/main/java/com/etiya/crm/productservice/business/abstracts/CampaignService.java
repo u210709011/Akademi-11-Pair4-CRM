@@ -13,7 +13,8 @@ import com.etiya.crm.productservice.business.dtos.responses.ProductCatalog.GetAl
 import com.etiya.crm.productservice.business.dtos.responses.ProductCatalog.GetProductCatalogResponse;
 import com.etiya.crm.productservice.business.dtos.responses.ProductCatalog.UpdatedProductCatalogResponse;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface CampaignService {
     CreatedCampaignResponse create(CreateCampaignRequest request);
@@ -22,7 +23,7 @@ public interface CampaignService {
 
     GetCampaignResponse getById(Long campaignId);
 
-    List<GetAllCampaignResponse> getAll();
+    Page<GetAllCampaignResponse> getAll(Long campaignId, String name, Pageable pageable);
 
     void delete(Long campaignId);
 }

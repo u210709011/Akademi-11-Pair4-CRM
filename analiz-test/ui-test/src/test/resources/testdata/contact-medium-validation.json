@@ -1,0 +1,93 @@
+[
+  {
+    "case": "E-posta formati gecersiz (@ yok)",
+    "field": "EMAIL",
+    "value": "gecersiz-eposta",
+    "saveEnabled": false,
+    "expectedMessageKey": "contact.emailFormatError",
+    "acc": "FR-006 ACC-005"
+  },
+  {
+    "case": "E-posta bos (zorunlu alan)",
+    "field": "EMAIL",
+    "value": "",
+    "saveEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-006 ACC-005"
+  },
+  {
+    "case": "Mobile Phone 5 ile baslamiyor",
+    "field": "MOBILE_PHONE",
+    "value": "4321234567",
+    "saveEnabled": false,
+    "expectedMessageKey": "contact.mobilePhoneFormatError",
+    "acc": "FR-006 Validasyon"
+  },
+  {
+    "case": "Mobile Phone 9 haneli (eksik)",
+    "field": "MOBILE_PHONE",
+    "value": "532123456",
+    "saveEnabled": false,
+    "expectedMessageKey": "contact.mobilePhoneFormatError",
+    "acc": "FR-006 Validasyon"
+  },
+  {
+    "case": "Mobile Phone bos (zorunlu alan)",
+    "field": "MOBILE_PHONE",
+    "value": "",
+    "saveEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-006 ACC-005"
+  },
+  {
+    "case": "Home Phone 9 haneli (alt sinir alti)",
+    "field": "HOME_PHONE",
+    "value": "212123456",
+    "saveEnabled": false,
+    "expectedMessageKey": "contact.homePhoneFormatError",
+    "acc": "FR-006 Validasyon"
+  },
+  {
+    "case": "Home Phone 10 haneli (alt sinir - gecerli)",
+    "field": "HOME_PHONE",
+    "value": "2121234567",
+    "saveEnabled": true,
+    "acc": "FR-006 Validasyon"
+  },
+  {
+    "case": "Home Phone 11 haneli (ust sinir - gecerli)",
+    "field": "HOME_PHONE",
+    "value": "21212345678",
+    "saveEnabled": true,
+    "acc": "FR-006 Validasyon"
+  },
+  {
+    "case": "Home Phone bos (zorunlu degil)",
+    "field": "HOME_PHONE",
+    "value": "",
+    "saveEnabled": true,
+    "acc": "FR-006 Validasyon"
+  },
+  {
+    "case": "Fax 9 haneli (alt sinir alti)",
+    "field": "FAX",
+    "value": "212123456",
+    "saveEnabled": false,
+    "expectedMessageKey": "contact.faxFormatError",
+    "acc": "FR-006 Validasyon"
+  },
+  {
+    "case": "Fax 11 haneli (gecerli)",
+    "field": "FAX",
+    "value": "02121234567",
+    "saveEnabled": true,
+    "acc": "FR-006 Validasyon"
+  },
+  {
+    "case": "Fax bos (zorunlu degil)",
+    "field": "FAX",
+    "value": "",
+    "saveEnabled": true,
+    "acc": "FR-006 Validasyon"
+  }
+]

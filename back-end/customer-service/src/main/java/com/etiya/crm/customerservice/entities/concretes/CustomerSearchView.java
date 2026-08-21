@@ -7,11 +7,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * Arama, kisi bilgisi (party-service) ile musteri bilgisini (bu servis)
- * birlikte gerektirir. party-service event'leriyle guncel tutulan
- * denormalize edilmis read-model.
- */
+/** Event'lerle güncellenen, arama için denormalize edilmiş read-modeldir. */
 @Getter
 @Setter
 @Entity
@@ -36,11 +32,15 @@ public class CustomerSearchView {
 	private String acctNo;
 	private String status;
 
-	/** party-service'in karari (PartyRole.partyRoleTypeId'nin gosterim degeri); sadece PartyEventListener yazar. */
+	// party-service
 	private String role;
 
-	/** contact-info-service'in karari (CUSTOMER + MOBILE_PHONE); sadece ContactMediumEventListener yazar. */
+	private Long partyRoleTypeId;
+
+	// contact-info-service
 	private String gsm;
+
+
 
 	private boolean deleted;
 }

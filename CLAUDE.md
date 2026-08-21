@@ -25,7 +25,14 @@ FE (Angular) --HTTPS--> api-gateway --JWT--> Keycloak
 ```
 
 - **api-gateway**: single entry point, Keycloak JWT validation, routing, aggregated Swagger UI
-  (currently only customer/contact-info/lookup are aggregated — see `SwaggerAggregatorConfig`).
+  (both the route proxying AND the Swagger UI's service dropdown are driven by one list —
+  `SwaggerAggregatorConfig.AGGREGATED_SERVICES` — covering all 6 business services, plus the
+  gateway's own `AuthController` docs added separately since those aren't proxied. The dropdown
+  is populated by `SwaggerUiDropdownCustomizer`, a `BeanPostProcessor` that overwrites springdoc's
+  auto-configured `SwaggerUiConfigProperties.urls` at startup, so a stale/missing entry in the
+  external config-server `springdoc.swagger-ui.urls` property can no longer cause a service to be
+  silently missing from the dropdown — add a new service to `AGGREGATED_SERVICES` and both the
+  route and the tab appear).
 - **config-server**: serves centralized config pulled from a *separate* git repo (not in this
   repo — see `spring.cloud.config.server.git.uri` in `config-server/application.yml`). Every
   other service's own `application.yml` only sets `spring.application.name` +
@@ -100,7 +107,6 @@ gap, not a bug to silently "fix" without discussion.
 
 - `infra/postgres-init` creates `billing_db`/`notification_db` but no corresponding service
   exists yet.
-- Swagger UI aggregation in api-gateway only covers customer/contact-info/lookup.
 - No cross-service correlation/trace ID (`X-Request-Id`/MDC) — debugging a request across
   services means checking timestamps across separate logs.
 
@@ -162,7 +168,7 @@ cd infra && podman compose -f docker-compose.yml up -d postgres kafka kafka-ui d
 | Config Server | http://localhost:8888 | `curl http://localhost:8888/customer-service/dev` to verify |
 | Eureka | http://localhost:8761 | dashboard shows registered services |
 | API Gateway | http://localhost:8080 | `curl -i http://localhost:8080/api/test` → 401 without token |
-| Swagger UI (aggregated) | http://localhost:8080/swagger-ui.html | customer/contact-info/lookup only |
+| Swagger UI (aggregated) | http://localhost:8080/swagger-ui.html | route proxying: customer/contact-info/lookup/order/product |
 | Kafka UI | http://localhost:8090 | |
 | Redis Commander | http://localhost:8081 | |
 | Keycloak | http://localhost:8180 | admin/admin, `crm` realm auto-imported |

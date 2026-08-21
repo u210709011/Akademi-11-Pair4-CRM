@@ -1,0 +1,42 @@
+[
+  {
+    "case": "City secilmemis",
+    "field": "CITY",
+    "value": "",
+    "saveEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-005 ACC-003"
+  },
+  {
+    "case": "Street bos",
+    "field": "STREET",
+    "value": "",
+    "saveEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-005 ACC-003"
+  },
+  {
+    "case": "House/Flat Number bos",
+    "field": "HOUSE_NUMBER",
+    "value": "",
+    "saveEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-005 ACC-003"
+  },
+  {
+    "case": "Address Description bos",
+    "field": "DESCRIPTION",
+    "value": "",
+    "saveEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-005 ACC-003"
+  },
+  {
+    "case": "Tum zorunlu alanlar dolu",
+    "field": "NONE",
+    "value": "",
+    "saveEnabled": true,
+    "expectedMessageKey": null,
+    "acc": "FR-005 ACC-003"
+  }
+]

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  FR-014 Sepet Yonetimi (UC-EACRML-014).
+  Calistirma: ./mvnw test -Dsuite=fr014
+
+  ON KOSUL: product-service ve order-service ayakta olmalidir. ACC-011 testi
+  musteriye onceki satistan AKTIF bir urun kurar (OrderApi.createFinishedProduct).
+
+  DOKUMAN NOTU: bu FR'nin kabul kriterleri dokumanda UC-EACRML-013 basliginin
+  altinda yer alir; bloklar ait olduklari basliktan once gelir.
+
+  ACC-010 testi documented-gap grubundadir: dokuman butonun "In Basket" yazmasini
+  ister, uygulama "Already in Basket" gosterir. Davranis dogru, metin farkli.
+-->
+<suite name="CRM Lite UI - FR-014" verbose="1" parallel="false" configfailurepolicy="continue">
+
+    <listeners>
+        <listener class-name="com.crmlite.ui.core.listeners.SuiteListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.TestListener"/>
+        <listener class-name="com.crmlite.ui.core.listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
+    <test name="FR-014 Sepet Yonetimi">
+        <classes>
+            <class name="com.crmlite.ui.tests.fr014basket.BasketManagementTests"/>
+        </classes>
+    </test>
+
+</suite>

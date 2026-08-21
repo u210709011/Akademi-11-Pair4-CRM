@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.etiya.crm.productservice.business.abstracts.LookupCacheService;
 import com.etiya.crm.productservice.clients.LookupClient;
+import com.etiya.crm.productservice.constants.CacheNames;
 import com.etiya.crm.shared.contracts.gnltp.GnlTpResponse;
 import com.etiya.crm.shared.contracts.gnlst.GnlStResponse;
 
@@ -23,7 +24,7 @@ public class LookupCacheServiceImpl implements LookupCacheService {
     }
 
     @Override
-    @Cacheable(value = "lookups", key = "'TP:' + #entCodeName + ':' + #shrtCode")
+    @Cacheable(value = CacheNames.LOOKUPS, key = "'TP:' + #entCodeName + ':' + #shrtCode")
     public Long resolveTypeIdByCode(String entCodeName, String shrtCode) {
         GnlTpResponse response = lookupClient.resolveType(entCodeName, shrtCode);
         if (response == null || response.gnlTpId() == null) {
@@ -33,7 +34,7 @@ public class LookupCacheServiceImpl implements LookupCacheService {
     }
 
     @Override
-    @Cacheable(value = "lookups", key = "'ST:' + #entCodeName + ':' + #shrtCode")
+    @Cacheable(value = CacheNames.LOOKUPS, key = "'ST:' + #entCodeName + ':' + #shrtCode")
     public Long resolveStatusIdByCode(String entCodeName, String shrtCode) {
         GnlStResponse response = lookupClient.resolveStatus(entCodeName, shrtCode);
         if (response == null || response.gnlStId() == null) {
@@ -78,8 +79,12 @@ public class LookupCacheServiceImpl implements LookupCacheService {
         return response.charValId();
     }
 
+    // Cache key'e istekteki dil dahil edilir - aksi halde Ingilizce bir cagri sonucu Turkce bir
+    // istek icin (ya da tam tersi) yanlislikla cache'ten donerdi (bkz. customer-service
+    // LookupCacheServiceImpl.resolveTypeValue - ayni duzeltme).
     @Override
-    @Cacheable(value = "lookups", key = "'CHARNAME:' + #characteristicId")
+    @Cacheable(value = CacheNames.LOOKUPS,
+            key = "'CHARNAME:' + #characteristicId + ':' + T(org.springframework.context.i18n.LocaleContextHolder).getLocale().toLanguageTag()")
     public String getCharacteristicName(Long characteristicId) {
         GnlCharResponse response = lookupClient.getCharacteristicById(characteristicId);
         if (response == null) {
@@ -89,7 +94,8 @@ public class LookupCacheServiceImpl implements LookupCacheService {
     }
 
     @Override
-    @Cacheable(value = "lookups", key = "'CHARVALNAME:' + #characteristicValueId")
+    @Cacheable(value = CacheNames.LOOKUPS,
+            key = "'CHARVALNAME:' + #characteristicValueId + ':' + T(org.springframework.context.i18n.LocaleContextHolder).getLocale().toLanguageTag()")
     public String getCharacteristicValueName(Long characteristicValueId) {
         GnlCharValResponse response = lookupClient.getCharacteristicValueById(characteristicValueId);
         if (response == null) {

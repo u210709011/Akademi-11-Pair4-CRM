@@ -1,0 +1,50 @@
+[
+  {
+    "case": "E-posta formati gecersiz (@ yok)",
+    "field": "EMAIL",
+    "value": "gecersiz-eposta",
+    "createEnabled": false,
+    "expectedMessageKey": "create.emailFormatError",
+    "acc": "FR-003 ACC-014"
+  },
+  {
+    "case": "E-posta bos",
+    "field": "EMAIL",
+    "value": "",
+    "createEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-003 ACC-014"
+  },
+  {
+    "case": "Mobile Phone 5 ile baslamiyor",
+    "field": "MOBILE_PHONE",
+    "value": "4321234567",
+    "createEnabled": false,
+    "expectedMessageKey": "create.mobilePhoneFormatError",
+    "acc": "FR-003 Validasyon"
+  },
+  {
+    "case": "Mobile Phone 9 haneli (eksik)",
+    "field": "MOBILE_PHONE",
+    "value": "532123456",
+    "createEnabled": false,
+    "expectedMessageKey": "create.mobilePhoneFormatError",
+    "acc": "FR-003 Validasyon"
+  },
+  {
+    "case": "Mobile Phone bos",
+    "field": "MOBILE_PHONE",
+    "value": "",
+    "createEnabled": false,
+    "expectedMessageKey": "create.fieldRequired",
+    "acc": "FR-003 ACC-014"
+  },
+  {
+    "case": "Home Phone 2 ile baslamiyor (FR-003 kurali)",
+    "field": "HOME_PHONE",
+    "value": "5121234567",
+    "createEnabled": false,
+    "expectedMessageKey": "create.homePhoneFormatError",
+    "acc": "FR-003 Validasyon - CELISKI: FR-006 bu kurali 10-11 hane olarak gevsetiyor"
+  }
+]

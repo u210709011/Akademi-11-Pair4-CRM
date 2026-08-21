@@ -23,6 +23,7 @@
         <module>config-server</module>
         <module>order-service</module>
         <module>product-service</module>
+        <module>data-seeder</module>
     </modules>
 
 </project>

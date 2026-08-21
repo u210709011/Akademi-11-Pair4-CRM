@@ -5,7 +5,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.time.LocalDate;
 
-@Schema(description = "Karakteristik degeri.")
+import com.etiya.crm.shared.contracts.constants.SwaggerText;
+
+@Schema(description = SwaggerText.GNL_CHAR_VAL_RESPONSE_DESCRIPTION)
 public record GnlCharValResponse(
 
         Long charValId,

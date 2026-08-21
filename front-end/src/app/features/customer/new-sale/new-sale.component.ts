@@ -1,15 +1,16 @@
 import { NgComponentOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, Injectable, Type, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injectable, Type, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { BasketItemRequest, ItemCharValsRequest, OrderConfigurationRequest, OrderItemSummaryResponse, OrderService } from '../../../core/order';
-import { AddressResponse, CustomerService } from '../../../core/customer';
-import { I18nService } from '../../../core/i18n';
+import { BasketItemRequest, ItemCharValsRequest, OrderConfigurationRequest, OrderItemSummaryResponse, OrderService } from '../data-access/order';
+import { AddressResponse, CustomerService } from '../data-access/customer';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { LookupService } from '../../../core/lookup';
-import { ProductOfferingCharUse } from '../../../core/product';
+import { ProductOfferingCharUse, ProductService } from '../data-access/product';
 import { ConfigurationStepComponent } from './steps/configuration/configuration-step.component';
 import { OfferSelectionComponent } from './steps/offer-selection/offer-selection.component';
 import { ReviewStepComponent } from './steps/review/review-step.component';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 
 type NewSaleStep = 'offer' | 'configuration' | 'review';
 
@@ -22,11 +23,18 @@ interface StepDefinition {
 // Basket satiri - Offer Selection'da toplanir, Configuration'da charVals dolar, Review'da gosterilir.
 export interface BasketLine {
   prodOfrId: number;
+  // Backend'de sifirla soldan 6 haneye doldurulmus (bkz. ProductServiceDefaults.formatNo) -
+  // Configuration/Review'da OFR- prefix'iyle gosterilir, iliski/routing icin prodOfrId kullanilir.
+  prodOfrNo: string;
   offerName: string;
   price: number;
+  // Kampanya indirimi uygulanmadan onceki fiyat - sadece cmpgId'li satirlarda dolu, Review'da
+  // "Discounts" satirini hesaplamak icin. Kampanyasiz satirlarda/otomatik eklenenlerde null.
+  originalPrice: number | null;
   cmpgId: number | null;
   cmpgName: string | null;
-  // Sadece Catalog tab'inden eklenirse biliniyor (secili katalog) - Campaign tab'inden eklenirse null.
+  // Offering'in ait oldugu katalog kategorisi (Internet/Mobile/TV) - hem Catalog hem Campaign
+  // tab'inden eklenen satirlar icin catalogOfferings iliskisinden cozulur; iliski yoksa null.
   catalogName: string | null;
   // product-offering-relations'tan (mandatory=true) otomatik eklenen zorunlu urunler icin.
   isAutoAdded: boolean;
@@ -35,14 +43,27 @@ export interface BasketLine {
 
 interface RequiredOffering {
   productOfferingId: number;
+  productOfferingNo: string;
   name: string;
   price: number;
+}
+
+// Bir kampanya ile eklenen offering'ler ayri urunler gibi degil, tek bir kampanya biriminin
+// icinde (nested) gosterilir - Basket/Configuration/Review'in ucu de aynı gruplamayi kullanir.
+// cmpgId === null olan satirlar kendi baslarina birer grup (tek elemanli).
+export interface BasketGroup {
+  cmpgId: number | null;
+  cmpgName: string | null;
+  lines: BasketLine[];
+  totalPrice: number;
 }
 
 // Adim component'leri NgComponentOutlet ile degistigi icin state kendi icinde degil, bu serviste tutulur.
 @Injectable()
 export class NewSaleFormStateService {
   private readonly lookupService = inject(LookupService);
+  private readonly productService = inject(ProductService);
+  private readonly translate = inject(TranslateService);
   // Hangi charId'lerin secim listesi (GNL_CHAR_VAL) oldugunu belirler - saveConfiguration
   // isteginde charValId mi yoksa serbest metin (val) mi gonderilecegine karar vermek icin.
   private readonly selectableCharIds = signal<ReadonlySet<number>>(new Set());
@@ -51,10 +72,79 @@ export class NewSaleFormStateService {
     this.lookupService.getCharacteristicValues().subscribe(values => {
       this.selectableCharIds.set(new Set(values.map(v => v.charId)));
     });
+
+    // Sepete eklenirken offerName/cmpgName o andaki dilde "donmus" kopyalanir (bkz. addToBasket) -
+    // dil degistiginde Basket paneli VE Configuration'daki urun basligi ayni satiri gosterdigi
+    // icin burada, tek yerde, guncellenirse ikisi de dogru dile gecer. untracked(): basket() hem
+    // okunuyor hem (subscribe icinde) yaziliyor - untracked olmadan bu effect'in kendi yazdigi
+    // degeri tekrar okuyup sonsuz dongu tetiklemesi riski var, o yuzden sadece currentLang()
+    // izlenen bagimlilik.
+    effect(() => {
+      this.translate.currentLang();
+      untracked(() => this.retranslateBasketLines());
+    });
+  }
+
+  private retranslateBasketLines(): void {
+    if (this.basket().length === 0) {
+      return;
+    }
+
+    this.productService.getOfferings().subscribe(offerings => {
+      const nameByOfferingId = new Map(offerings.map(o => [o.productOfferingId, o.name]));
+      this.basket.update(items =>
+        items.map(item => {
+          const freshName = nameByOfferingId.get(item.prodOfrId);
+          return freshName !== undefined && freshName !== item.offerName ? { ...item, offerName: freshName } : item;
+        })
+      );
+    });
+
+    this.productService.getCampaigns().subscribe(campaigns => {
+      const nameByCampaignId = new Map(campaigns.map(c => [c.campaignId, c.name]));
+      this.basket.update(items =>
+        items.map(item => {
+          if (item.cmpgId === null) {
+            return item;
+          }
+          const freshName = nameByCampaignId.get(item.cmpgId);
+          return freshName !== undefined && freshName !== item.cmpgName ? { ...item, cmpgName: freshName } : item;
+        })
+      );
+    });
   }
 
   readonly basket = signal<BasketLine[]>([]);
+
+  // Zorunlu urun olarak otomatik eklenenler haric, musterinin bilfiil sectigi satirlar.
+  readonly selectedLines = computed(() => this.basket().filter(line => !line.isAutoAdded));
+
+  // selectedLines'i kampanyaya gore gruplar - Basket paneli/Configuration/Review'in ucu de
+  // ayni gruplamayi paylasir (bkz. BasketGroup yorumu).
+  readonly selectedGroups = computed<BasketGroup[]>(() => {
+    const groups: BasketGroup[] = [];
+    const groupIndexByCmpgId = new Map<number, number>();
+    for (const line of this.selectedLines()) {
+      if (line.cmpgId === null) {
+        groups.push({ cmpgId: null, cmpgName: null, lines: [line], totalPrice: line.price });
+        continue;
+      }
+      const existingIndex = groupIndexByCmpgId.get(line.cmpgId);
+      if (existingIndex === undefined) {
+        groupIndexByCmpgId.set(line.cmpgId, groups.length);
+        groups.push({ cmpgId: line.cmpgId, cmpgName: line.cmpgName, lines: [line], totalPrice: line.price });
+      } else {
+        const group = groups[existingIndex];
+        group.lines.push(line);
+        group.totalPrice += line.price;
+      }
+    }
+    return groups;
+  });
+
   readonly custOrdId = signal<number | null>(null);
+  // FR-017: Submit sonrasi basari modalinda "Business Interaction Number" gostermek icin.
+  readonly bsnInterId = signal<number | null>(null);
   readonly orderItems = signal<OrderItemSummaryResponse[]>([]);
   readonly totalAmount = signal(0);
 
@@ -71,6 +161,8 @@ export class NewSaleFormStateService {
 
   // Configuration adiminda Service Address karti icin - custId sahibinin adres listesi ve secili adres.
   readonly custId = signal(0);
+  // Offer Selection'da "Already Active" kontrolu (ACC-011/BR-05) icin - hangi hesaba satis yapiliyor.
+  readonly custAcctId = signal(0);
   readonly addresses = signal<AddressResponse[]>([]);
   readonly selectedAddressId = signal<number | null>(null);
 
@@ -78,6 +170,10 @@ export class NewSaleFormStateService {
   // arasinda paylasilmasi gerektigi icin burada tutulur.
   readonly customerName = signal('');
   readonly billingAccountNo = signal('');
+  // Configuration'da servis adresi degistiginde fatura hesabinin gercek adresini de guncellemek
+  // icin (updateBillingAccount accountName/accountDesc'i de istiyor, adresle birlikte gonderilir).
+  readonly billingAccountName = signal<string | null>(null);
+  readonly billingAccountDesc = signal<string | null>(null);
   readonly isSubmittingOrder = signal(false);
   readonly submitError = signal<string | null>(null);
 
@@ -90,12 +186,22 @@ export class NewSaleFormStateService {
   // prodOfrId -> charId(string) -> secilen deger (select icin charValId'nin string hali, text icin ham metin).
   readonly charValues = signal<Record<number, Record<string, string>>>({});
 
+  // FR-015 ACC-009: sepetteki tum konfigure edilebilir urunlerin zorunlu karakteristikleri
+  // dolduruldu MU ve bir servis adresi secildi mi - Configuration adiminda Next'i acmak icin.
+  readonly isConfigurationComplete = computed(() => {
+    const configurableLines = this.basket().filter(line => !line.isAutoAdded);
+    return configurableLines.every(line => this.isConfigured(line.prodOfrId)) && this.selectedAddressId() !== null;
+  });
+
   isConfigured(prodOfrId: number): boolean {
     const charUses = this.charUsesByOffering()[prodOfrId];
-    if (!charUses || charUses.length === 0) {
-      return false;
+    if (!charUses) {
+      return false; // sema henuz yuklenmedi
     }
     const mandatory = charUses.filter(cu => cu.mandatory && cu.active);
+    if (mandatory.length === 0) {
+      return true; // zorunlu karakteristigi yok - doldurulacak bir sey yok, zaten "configured"
+    }
     const values = this.charValues()[prodOfrId] ?? {};
     return mandatory.every(cu => (values[String(cu.characteristicId)] ?? '').trim().length > 0);
   }
@@ -117,8 +223,10 @@ export class NewSaleFormStateService {
         ...items,
         {
           prodOfrId: required.productOfferingId,
+          prodOfrNo: required.productOfferingNo,
           offerName: required.name,
           price: required.price,
+          originalPrice: null,
           cmpgId: null,
           cmpgName: null,
           catalogName: line.catalogName,
@@ -132,11 +240,22 @@ export class NewSaleFormStateService {
   }
 
   removeFromBasket(prodOfrId: number): void {
+    this.removeLines(new Set([prodOfrId]));
+  }
+
+  // Bir kampanyanin TUM teklifleri (kampanya sepette tek bir birim gibi davranir) - trash icon
+  // kampanya grubunun basinda, tek tek offering'ler icin degil.
+  removeCampaignFromBasket(cmpgId: number): void {
+    const idsToRemove = new Set(this.basket().filter(item => item.cmpgId === cmpgId).map(item => item.prodOfrId));
+    this.removeLines(idsToRemove);
+  }
+
+  private removeLines(prodOfrIds: ReadonlySet<number>): void {
     this.basket.update(items => {
-      const remaining = items.filter(item => item.prodOfrId !== prodOfrId);
-      // Kaldirilan urun tetikledigi zorunlu urunu, baska hicbir kalan urun hala gerektirmiyorsa kaldir.
+      const remaining = items.filter(item => !prodOfrIds.has(item.prodOfrId));
+      // Kaldirilan urunlerin tetikledigi zorunlu urunu, baska hicbir kalan urun hala gerektirmiyorsa kaldir.
       return remaining.filter(item => {
-        if (!item.isAutoAdded || item.triggeredBy !== prodOfrId) {
+        if (!item.isAutoAdded || item.triggeredBy === null || !prodOfrIds.has(item.triggeredBy)) {
           return true;
         }
         return remaining.some(other =>
@@ -149,6 +268,21 @@ export class NewSaleFormStateService {
 
   clearBasket(): void {
     this.basket.set([]);
+  }
+
+  // FR-017: basari modalinda "Add New Product" - ayni fatura hesabi icin sifirdan bir siparise
+  // baslamak icin sepet/siparis/konfigurasyon state'ini temizler (adres/musteri bilgisi kalir).
+  resetForNewOrder(): void {
+    this.basket.set([]);
+    this.custOrdId.set(null);
+    this.bsnInterId.set(null);
+    this.orderItems.set([]);
+    this.totalAmount.set(0);
+    this.charValues.set({});
+    this.isValidatingBasket.set(false);
+    this.basketError.set(null);
+    this.isSubmittingOrder.set(false);
+    this.submitError.set(null);
   }
 
   toBasketItemRequests(): BasketItemRequest[] {
@@ -186,14 +320,14 @@ export class NewSaleFormStateService {
 
 @Component({
   selector: 'app-new-sale',
-  imports: [NgComponentOutlet, RouterLink],
+  imports: [NgComponentOutlet, RouterLink, ButtonComponent, TranslatePipe],
   templateUrl: './new-sale.component.html',
   styleUrl: './new-sale.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
   providers: [NewSaleFormStateService]
 })
 export class NewSaleComponent {
-  protected readonly i18n = inject(I18nService);
+  protected readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly customerService = inject(CustomerService);
@@ -220,6 +354,15 @@ export class NewSaleComponent {
 
   private readonly isSavingConfiguration = signal(false);
 
+  // ACC-016: Cancel butonuna basildiginda dogrudan cikmadan once onay istenir.
+  protected readonly isCancelConfirmOpen = signal(false);
+
+  // FR-017-ACC-002: Submit butonuna basildiginda siparisi dogrudan gondermeden once onay istenir.
+  protected readonly isSubmitConfirmOpen = signal(false);
+
+  // FR-017 ACC-004: Submit basarili oldugunda yonlendirmeden once basari modali gosterilir.
+  protected readonly isOrderSubmittedModalOpen = signal(false);
+
   protected readonly isNextDisabled = computed(() => {
     if (this.formState.isValidatingBasket() || this.formState.isSubmittingOrder() || this.isSavingConfiguration()) {
       return true;
@@ -227,19 +370,30 @@ export class NewSaleComponent {
     if (this.activeStep() === 'offer') {
       return this.formState.basket().length === 0;
     }
+    if (this.activeStep() === 'configuration') {
+      return !this.formState.isConfigurationComplete();
+    }
     return false;
   });
 
+  // Next butonunun spinner gostermesi gereken durumlar - isNextDisabled'daki ilk kosulla ayni.
+  protected readonly isNextLoading = computed(
+    () => this.formState.isValidatingBasket() || this.formState.isSubmittingOrder() || this.isSavingConfiguration()
+  );
+
   protected readonly nextButtonLabel = computed(() =>
-    this.activeStep() === 'review' ? this.i18n.t('newSale.submitBtn') : this.i18n.t('newSale.nextBtn')
+    this.activeStep() === 'review' ? this.translate.instant('newSale.submitBtn') : this.translate.instant('newSale.nextBtn')
   );
 
   constructor() {
     this.formState.custId.set(this.custId);
+    this.formState.custAcctId.set(this.custAcctId);
 
     this.customerService.getById(this.custId).subscribe(detail => {
       const account = detail.accounts.find(acc => acc.custAcctId === this.custAcctId);
       this.formState.billingAccountNo.set(account?.accountNo ?? '');
+      this.formState.billingAccountName.set(account?.accountName ?? null);
+      this.formState.billingAccountDesc.set(account?.accountDesc ?? null);
       this.formState.selectedAddressId.set(account?.addressId ?? null);
     });
 
@@ -278,18 +432,55 @@ export class NewSaleComponent {
       return;
     }
     if (this.activeStep() === 'review') {
-      this.submitOrder();
+      this.openSubmitConfirm();
       return;
     }
     this.advanceStep();
   }
 
+  protected goToBillingAccount(): void {
+    this.isOrderSubmittedModalOpen.set(false);
+    this.router.navigate(['/detail-customer', this.custId]);
+  }
+
+  protected startNewOrderForSameAccount(): void {
+    this.isOrderSubmittedModalOpen.set(false);
+    this.formState.resetForNewOrder();
+    this.unlockedIndex.set(0);
+    this.activeStep.set('offer');
+  }
+
   protected previous(): void {
     const currentIndex = this.activeStepIndex();
     const previousStep = this.steps[currentIndex - 1];
-    if (previousStep) {
-      this.activeStep.set(previousStep.key);
+    if (!previousStep) {
+      return;
     }
+    // Configuration'dan Offer Selection'a geri donuluyorsa, o ana kadar acilmis olan WAIT
+    // siparisini iptal eder - yoksa kullanici sepeti degistirip Next'e tekrar bastiginda
+    // validateBasketThenCreateOrder() eskisini hic kapatmadan IKINCI bir siparis daha aciyordu,
+    // ilki sahipsiz (orphan) WAIT durumunda DB'de kaliyordu (bkz. getItemsByCustAcctId'deki
+    // PROCESSING/FINISHED filtresi - artik hesap urun tablosunda gorunmuyorlar ama DB'de birikirlerdi).
+    if (this.activeStep() === 'configuration' && previousStep.key === 'offer') {
+      this.cancelExistingOrderIfAny();
+    }
+    this.activeStep.set(previousStep.key);
+  }
+
+  // custOrdId varsa WAIT->REJECTED'e cevirip form state'teki siparis izini temizler - hem
+  // Cancel Sale'de hem Configuration->Offer Selection geri donusunde kullanilir. En iyi-gayret:
+  // cagri basarisiz olsa bile (ör. siparis zaten baska bir nedenle editable degil) kullaniciyi
+  // beklemeye/hataya dusurmez, akis devam eder.
+  private cancelExistingOrderIfAny(): void {
+    const custOrdId = this.formState.custOrdId();
+    if (custOrdId === null) {
+      return;
+    }
+    this.formState.custOrdId.set(null);
+    this.formState.bsnInterId.set(null);
+    this.formState.orderItems.set([]);
+    this.formState.totalAmount.set(0);
+    this.orderService.cancelOrder(custOrdId).subscribe({ error: () => {} });
   }
 
   private validateBasketThenCreateOrder(): void {
@@ -304,6 +495,7 @@ export class NewSaleComponent {
           next: response => {
             this.formState.isValidatingBasket.set(false);
             this.formState.custOrdId.set(response.custOrdId);
+            this.formState.bsnInterId.set(response.bsnInterId);
             this.formState.orderItems.set(response.items);
             this.formState.totalAmount.set(response.totalAmount);
             this.advanceStep();
@@ -353,9 +545,10 @@ export class NewSaleComponent {
     this.formState.submitError.set(null);
 
     this.orderService.finishOrder(custOrdId).subscribe({
-      next: () => {
+      next: response => {
         this.formState.isSubmittingOrder.set(false);
-        this.router.navigate(['/detail-customer', this.custId]);
+        this.formState.bsnInterId.set(response.bsnInterId);
+        this.isOrderSubmittedModalOpen.set(true);
       },
       error: (httpError: HttpErrorResponse) => {
         this.formState.isSubmittingOrder.set(false);
@@ -365,7 +558,7 @@ export class NewSaleComponent {
   }
 
   private extractErrorMessage(httpError: HttpErrorResponse): string {
-    return (httpError.error as { message?: string } | null)?.message ?? this.i18n.t('newSale.basketValidationError');
+    return (httpError.error as { message?: string } | null)?.message ?? this.translate.instant('newSale.basketValidationError');
   }
 
   private advanceStep(): void {
@@ -377,7 +570,30 @@ export class NewSaleComponent {
     }
   }
 
-  protected cancel(): void {
+  protected openCancelConfirm(): void {
+    this.isCancelConfirmOpen.set(true);
+  }
+
+  protected closeCancelConfirm(): void {
+    this.isCancelConfirmOpen.set(false);
+  }
+
+  protected confirmCancel(): void {
+    this.isCancelConfirmOpen.set(false);
+    this.cancelExistingOrderIfAny();
     this.router.navigate(['/detail-customer', this.custId]);
+  }
+
+  protected openSubmitConfirm(): void {
+    this.isSubmitConfirmOpen.set(true);
+  }
+
+  protected closeSubmitConfirm(): void {
+    this.isSubmitConfirmOpen.set(false);
+  }
+
+  protected confirmSubmit(): void {
+    this.isSubmitConfirmOpen.set(false);
+    this.submitOrder();
   }
 }

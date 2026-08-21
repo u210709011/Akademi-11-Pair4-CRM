@@ -19,6 +19,8 @@ import com.etiya.crm.orderservice.business.dtos.responses.ProdCharValResponse;
 import com.etiya.crm.orderservice.business.exceptions.BsnInterSpecNotFoundException;
 import com.etiya.crm.orderservice.business.exceptions.CampaignNotAppliedToOfferingException;
 import com.etiya.crm.orderservice.business.exceptions.CharacteristicValueMismatchException;
+import com.etiya.crm.orderservice.business.exceptions.CharacteristicValueMissingException;
+import com.etiya.crm.orderservice.business.exceptions.MandatoryCharacteristicMissingException;
 import com.etiya.crm.orderservice.business.exceptions.OfferAlreadyActiveException;
 import com.etiya.crm.orderservice.business.exceptions.OrderItemNotFoundException;
 import com.etiya.crm.orderservice.business.exceptions.OrderNotEditableException;
@@ -35,6 +37,9 @@ import com.etiya.crm.orderservice.clients.responses.CampaignOfferingResponse;
 import com.etiya.crm.orderservice.clients.responses.CampaignResponse;
 import com.etiya.crm.orderservice.clients.responses.CreatedProductResponse;
 import com.etiya.crm.orderservice.clients.responses.CustomerAccountResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductCatalogOfferingResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingCharUseResponse;
+import com.etiya.crm.orderservice.clients.responses.ProductOfferingRelationResponse;
 import com.etiya.crm.orderservice.clients.responses.ProductOfferingResponse;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterItemRepository;
 import com.etiya.crm.orderservice.dataAccess.abstracts.BsnInterRepository;
@@ -67,9 +72,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -101,7 +109,11 @@ public class CustOrdManager implements CustOrdService {
         List<CustomerAccountResponse> accounts = customerClient.getAccounts(request.custId(), 1000).content();
         basketValidationRules.ensureAccountBelongsToCustomer(request.custAcctId(), accounts);
         basketValidationRules.ensureNoDuplicateItems(request.items());
-        request.items().forEach(item -> ensureOfferNotAlreadyActive(request.custAcctId(), item.prodOfrId()));
+        basketValidationRules.ensureNoConflictingItems(request.items(), productClient.getOfferingRelations());
+        request.items().forEach(item -> {
+            ensureOfferNotAlreadyActive(request.custAcctId(), item.prodOfrId());
+            ensureOfferingExists(item.prodOfrId(), item.cmpgId());
+        });
     }
 
     /**
@@ -118,6 +130,8 @@ public class CustOrdManager implements CustOrdService {
         List<CustomerAccountResponse> accounts = customerClient.getAccounts(request.custId(), 1000).content();
         basketValidationRules.ensureAccountBelongsToCustomer(request.custAcctId(), accounts);
         basketValidationRules.ensureNoDuplicateItems(request.items());
+        List<ProductOfferingRelationResponse> relations = productClient.getOfferingRelations();
+        basketValidationRules.ensureNoConflictingItems(request.items(), relations);
         request.items().forEach(item -> ensureOfferNotAlreadyActive(request.custAcctId(), item.prodOfrId()));
 
         BsnInterSpec spec = bsnInterSpecRepository.findByShrtCode(LookupCodes.BSN_INTER_SPEC_NEW_SALE)
@@ -138,24 +152,16 @@ public class CustOrdManager implements CustOrdService {
         custOrd.setBsnInterSpec(spec);
         custOrd = custOrdRepository.save(custOrd);
 
-        for (BasketItemRequest itemRequest : request.items()) {
-            CustOrdItem item = custOrderItemMapper.toEntity(itemRequest);
-            item.setCustOrd(custOrd);
-            item.setCustAcctId(request.custAcctId());
-            item.setCustId(request.custId());
-            applyProductOffering(item, itemRequest.prodOfrId(), itemRequest.cmpgId());
+        // FR-014 ACC-003/004: zorunlu (mandatory) iliskili urunler onceden sadece front-end
+        // tarafindan ekleniyordu (bkz. offer-selection.component.ts) - API'yi dogrudan cagiran
+        // bir istemci bu korumayi atlayabiliyordu. Sunucu artik zaten sepette olmayanlari
+        // kendisi tamamliyor; front-end'in onceden eklediklerini tekrar eklemez (idempotent).
+        List<BasketItemRequest> itemsToCreate = expandWithMandatoryOfferings(request.items(), relations, Set.of());
+
+        for (BasketItemRequest itemRequest : itemsToCreate) {
             // product-service tamamlanınca burada ayrica PROD instance olusturulup
             // dogan prodId buraya yazilacak (subscription provisioning, henuz yok).
-            item = custOrdItemRepository.save(item);
-            // custOrd yeni persist edildigi icin Hibernate items koleksiyonunu bos baslatir ve
-            // ayri bir repository cagrisiyla eklenen satirlari kendiliginden gormez - buildSummary'nin
-            // dogru listeyi donebilmesi icin bidirectional iliski burada elle senkron tutulur.
-            custOrd.getItems().add(item);
-
-            BsnInterItem bsnInterItem = new BsnInterItem();
-            bsnInterItem.setBsnInter(bsnInter);
-            bsnInterItem.setRowId(item.getCustOrdItemId());
-            bsnInterItemRepository.save(bsnInterItem);
+            addOrderItem(custOrd, request.custAcctId(), request.custId(), itemRequest);
         }
 
         return buildSummary(custOrd);
@@ -173,24 +179,67 @@ public class CustOrdManager implements CustOrdService {
                 .orElseThrow(() -> new OrderNotFoundException(custOrdId));
         ensureEditable(custOrd);
         basketValidationRules.ensureItemNotAlreadyInBasket(request, custOrd.getItems());
+        List<ProductOfferingRelationResponse> relations = productClient.getOfferingRelations();
+        basketValidationRules.ensureItemNotConflicting(request, custOrd.getItems(), relations);
 
         Long custAcctId = custOrd.getItems().get(0).getCustAcctId();
         ensureOfferNotAlreadyActive(custAcctId, request.prodOfrId());
 
-        CustOrdItem item = custOrderItemMapper.toEntity(request);
+        // FR-014 ACC-003/004: bkz. createOrder - alreadyPresent, custOrd'a zaten eklenmis
+        // item'lari dikkate alarak ayni zorunlu urunun iki kez eklenmesini engeller.
+        Set<Long> alreadyPresent = custOrd.getItems().stream()
+                .map(CustOrdItem::getProdOfrId).collect(Collectors.toSet());
+        List<BasketItemRequest> itemsToAdd = expandWithMandatoryOfferings(List.of(request), relations, alreadyPresent);
+
+        for (BasketItemRequest itemRequest : itemsToAdd) {
+            addOrderItem(custOrd, custAcctId, custOrd.getCustId(), itemRequest);
+        }
+
+        return buildSummary(custOrd);
+    }
+
+    /**
+     * FR-014 ACC-003/004: relations icindeki mandatory=true+active=true iliskilere gore, items
+     * icindeki her offering'in zorunlu companion'larini (relation.productOfferingId1 -> id2 yonu,
+     * bkz. offer-selection.component.ts buildRequiredOfferingsMap ile ayni yon) alreadyPresent'e
+     * (ve birbirlerine) gore idempotent sekilde ekler - front-end zaten eklediyse tekrar eklemez.
+     */
+    private List<BasketItemRequest> expandWithMandatoryOfferings(List<BasketItemRequest> items,
+            List<ProductOfferingRelationResponse> relations, Set<Long> alreadyPresentOfferingIds) {
+        List<BasketItemRequest> expanded = new ArrayList<>(items);
+        Set<Long> present = new HashSet<>(alreadyPresentOfferingIds);
+        items.forEach(item -> present.add(item.prodOfrId()));
+
+        for (BasketItemRequest item : items) {
+            for (ProductOfferingRelationResponse relation : relations) {
+                if (Boolean.TRUE.equals(relation.mandatory()) && Boolean.TRUE.equals(relation.active())
+                        && item.prodOfrId().equals(relation.productOfferingId1())
+                        && present.add(relation.productOfferingId2())) {
+                    expanded.add(new BasketItemRequest(relation.productOfferingId2(), null, null));
+                }
+            }
+        }
+        return expanded;
+    }
+
+    /** createOrder/addItem'daki tekrarlanan "item olustur+kaydet+siparise ekle" bloğu. */
+    private CustOrdItem addOrderItem(CustOrd custOrd, Long custAcctId, Long custId, BasketItemRequest itemRequest) {
+        CustOrdItem item = custOrderItemMapper.toEntity(itemRequest);
         item.setCustOrd(custOrd);
         item.setCustAcctId(custAcctId);
-        item.setCustId(custOrd.getCustId());
-        applyProductOffering(item, request.prodOfrId(), request.cmpgId());
+        item.setCustId(custId);
+        applyProductOffering(item, itemRequest.prodOfrId(), itemRequest.cmpgId());
         item = custOrdItemRepository.save(item);
+        // custOrd yeni persist edildigi icin Hibernate items koleksiyonunu bos baslatir ve
+        // ayri bir repository cagrisiyla eklenen satirlari kendiliginden gormez - buildSummary'nin
+        // dogru listeyi donebilmesi icin bidirectional iliski burada elle senkron tutulur.
         custOrd.getItems().add(item);
 
         BsnInterItem bsnInterItem = new BsnInterItem();
         bsnInterItem.setBsnInter(custOrd.getBsnInter());
         bsnInterItem.setRowId(item.getCustOrdItemId());
         bsnInterItemRepository.save(bsnInterItem);
-
-        return buildSummary(custOrd);
+        return item;
     }
 
     /**
@@ -286,6 +335,8 @@ public class CustOrdManager implements CustOrdService {
             throw new ServiceAddressMissingException(custOrdId);
         }
 
+        ensureMandatoryCharacteristicsProvided(custOrd);
+
         Long processingStatusId = lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.PROCESSING);
         custOrd.setOrdStId(processingStatusId);
         custOrd = custOrdRepository.save(custOrd);
@@ -331,6 +382,37 @@ public class CustOrdManager implements CustOrdService {
         }
     }
 
+    /**
+     * FR-015 ACC-009/TC-015-44: finishOrder'da, sepetteki her item icin, teklifinin mandatory
+     * isaretli (product-offering-char-uses/by-offering/{id}, mandatory=true+active=true)
+     * karakteristiklerinin hepsi doldurulmus mu kontrol eder - servis adresi icin zaten yapilan
+     * ayni sunucu-tarafi zorunluluk kuralinin (ServiceAddressMissingException) karakteristik
+     * ayagi. Bir CustOrdCharVal satirinin var olmasi yeterli kanittir - saveConfiguration'daki
+     * validateCharacteristic zaten charValId/val'den en az birinin dolu olmasini garanti eder.
+     */
+    private void ensureMandatoryCharacteristicsProvided(CustOrd custOrd) {
+        for (CustOrdItem item : custOrd.getItems()) {
+            List<Long> mandatoryCharIds = productClient.getOfferingCharUsesByOfferingId(item.getProdOfrId()).stream()
+                    .filter(charUse -> Boolean.TRUE.equals(charUse.mandatory()) && Boolean.TRUE.equals(charUse.active()))
+                    .map(ProductOfferingCharUseResponse::characteristicId)
+                    .toList();
+            if (mandatoryCharIds.isEmpty()) {
+                continue;
+            }
+
+            Set<Long> providedCharIds = custOrdCharValRepository
+                    .findByCustOrdItem_CustOrdItemId(item.getCustOrdItemId()).stream()
+                    .map(CustOrdCharVal::getCharId)
+                    .collect(Collectors.toSet());
+
+            for (Long charId : mandatoryCharIds) {
+                if (!providedCharIds.contains(charId)) {
+                    throw new MandatoryCharacteristicMissingException(item.getCustOrdItemId(), charId);
+                }
+            }
+        }
+    }
+
     /** Review & Confirm'de "Cancel" - WAIT durumundaki siparisi REJECTED'e cevirir. */
     @Override
     @Transactional
@@ -354,10 +436,21 @@ public class CustOrdManager implements CustOrdService {
         return buildSummary(custOrd);
     }
 
+    // Musteri detay ekranindaki fatura hesabi urun tablosu icin - KASITLI olarak findActiveItems
+    // ile AYNI (PROCESSING/FINISHED) durum filtresini kullanir. Onceden filtresiz findByCustAcctId
+    // kullaniliyordu: Offer Selection'da createOrder WAIT durumunda bir siparis acar (bkz.
+    // createOrder javadoc'u), kullanici Finish'e basmadan sihirbazdan geri donup FARKLI bir
+    // sepetle tekrar Next'e basarsa (validateBasketThenCreateOrder her seferinde YENIDEN
+    // createOrder cagirir), ilk siparis WAIT durumunda sahipsiz kalir - hicbir zaman
+    // FINISHED'e ulasmadigi icin item'larinin prodId/prodName'i de hic set edilmez (bkz.
+    // provisionProducts, sadece finishOrder icinde calisir), ama cmpgId/cmpgName createOrder
+    // aninda zaten yazilir. Filtresiz sorgu bu terk edilmis WAIT siparisinin item'larini da
+    // donduruyordu - urun tablosunda id/adi bos ama kampanya adi/id'si dolu "hayalet" satirlar
+    // olarak goruluyordu.
     @Override
     @Transactional(readOnly = true)
     public List<CustOrdItemResponse> getItemsByCustAcctId(Long custAcctId) {
-        return custOrdItemRepository.findByCustAcctId(custAcctId).stream()
+        return findActiveItems(custAcctId).stream()
                 .map(custOrderItemMapper::toItemResponse)
                 .collect(Collectors.toList());
     }
@@ -382,11 +475,26 @@ public class CustOrdManager implements CustOrdService {
                 .findByCustAcctIdAndCustOrd_OrdStIdIn(custAcctId, List.of(processingStatusId, finishedStatusId));
     }
 
-    /** FR-014 IK-05: hesapta zaten aktif (PROCESSING/FINISHED) olan bir teklif tekrar sepete eklenemez. */
+    /**
+     * FR-014 IK-05: hesapta zaten aktif (PROCESSING/FINISHED) olan bir teklif tekrar sepete
+     * eklenemez - aynisi degilse de, ayni katalog kategorisinden (Internet/Mobile/TV) FARKLI bir
+     * teklif zaten aktifse yenisi de eklenemez (ör. musteride TV urunu varken ikinci bir TV urunu).
+     */
     private void ensureOfferNotAlreadyActive(Long custAcctId, Long prodOfrId) {
-        boolean alreadyActive = findActiveItems(custAcctId).stream()
-                .anyMatch(item -> prodOfrId.equals(item.getProdOfrId()));
-        if (alreadyActive) {
+        List<CustOrdItem> activeItems = findActiveItems(custAcctId);
+        boolean exactMatch = activeItems.stream().anyMatch(item -> prodOfrId.equals(item.getProdOfrId()));
+        if (exactMatch) {
+            throw new OfferAlreadyActiveException(custAcctId, prodOfrId);
+        }
+
+        Map<Long, Long> catalogIdByOfferingId = productClient.getCatalogOfferings().stream()
+                .collect(Collectors.toMap(ProductCatalogOfferingResponse::productOfferingId,
+                        ProductCatalogOfferingResponse::productCatalogId, (first, second) -> first));
+
+        Long candidateCatalogId = catalogIdByOfferingId.get(prodOfrId);
+        boolean sameCategoryActive = candidateCatalogId != null && activeItems.stream()
+                .anyMatch(item -> candidateCatalogId.equals(catalogIdByOfferingId.get(item.getProdOfrId())));
+        if (sameCategoryActive) {
             throw new OfferAlreadyActiveException(custAcctId, prodOfrId);
         }
     }
@@ -406,6 +514,20 @@ public class CustOrdManager implements CustOrdService {
         Long waitStatusId = lookupCacheService.resolveStatusId(GnlStGroups.CUST_ORDER, GnlStCodes.WAITING);
         if (!waitStatusId.equals(custOrd.getOrdStId())) {
             throw new OrderNotEditableException(custOrd.getCustOrdId());
+        }
+    }
+
+    /**
+     * FR-014: validateBasket, createOrder'in aksine item'lari kalici olarak kaydetmedigi icin
+     * applyProductOffering'i hic cagirmiyordu - var olmayan bir prodOfrId ile validate-basket
+     * 200 donup hata ancak sonraki createOrder adiminda ortaya cikiyordu. Ayni dogrulamayi
+     * (offering var mi, cmpgId varsa o offering'e gercekten uygulaniyor mu) burada da yapip
+     * sonucu atarak Next adiminda erken geri bildirim verir.
+     */
+    private void ensureOfferingExists(Long prodOfrId, Long cmpgId) {
+        productClient.getById(prodOfrId);
+        if (cmpgId != null) {
+            resolveCampaignPrice(cmpgId, prodOfrId);
         }
     }
 
@@ -435,9 +557,18 @@ public class CustOrdManager implements CustOrdService {
                 .orElseThrow(() -> new CampaignNotAppliedToOfferingException(cmpgId, prodOfrId));
     }
 
-    /** charId'nin var oldugunu, verildiyse charValId'nin de o charId'ye ait oldugunu dogrular. */
+    /**
+     * charId'nin var oldugunu, verildiyse charValId'nin de o charId'ye ait oldugunu dogrular.
+     * charValId (listeden secim) ve val (serbest metin) en az birinin dolu olmasini zorunlu kilar
+     * - ikisi de bos kalirsa DB'deki chk_cust_ord_char_val_has_value constraint'ine gitmeden
+     * once burada 400 donduruluyor (bkz. B-20).
+     */
     private void validateCharacteristic(ProdCharValRequest request) {
         lookupCacheService.getCharacteristic(request.charId());
+
+        if (request.charValId() == null && (request.val() == null || request.val().isBlank())) {
+            throw new CharacteristicValueMissingException(request.charId());
+        }
 
         if (request.charValId() != null) {
             GnlCharValResponse charVal = lookupCacheService.getCharacteristicValue(request.charValId());
@@ -485,7 +616,7 @@ public class CustOrdManager implements CustOrdService {
                 ? buildAddressSummary(contactAddressClient.getById(custOrd.getAddressId()))
                 : null;
 
-        return new OrderSummaryResponse(custOrd.getCustOrdId(), custOrd.getOrdStId(),
+        return new OrderSummaryResponse(custOrd.getCustOrdId(), custOrd.getBsnInter().getBsnInterId(), custOrd.getOrdStId(),
                 itemResponses, addressSummary, calculateTotalAmount(custOrd));
     }
 
