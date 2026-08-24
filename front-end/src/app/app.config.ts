@@ -8,7 +8,7 @@ import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth';
-import { languageInterceptor, LANG_STORAGE_KEY } from './core/i18n';
+import { languageInterceptor, readStoredLang } from './core/i18n';
 
 //for datepicker input format
 class AppDateAdapter extends NativeDateAdapter {
@@ -17,10 +17,6 @@ class AppDateAdapter extends NativeDateAdapter {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     return `${day} / ${month} / ${date.getFullYear()}`;
   }
-}
-
-function readStoredLang(): 'en' | 'tr' {
-  return localStorage.getItem(LANG_STORAGE_KEY) === 'tr' ? 'tr' : 'en';
 }
 
 export const appConfig: ApplicationConfig = {

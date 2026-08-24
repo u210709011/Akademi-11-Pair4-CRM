@@ -2,7 +2,11 @@
   "navbar": {
     "appTitle": "Customer Relationship Management",
     "myProfile": "My Profile",
-    "logout": "Log out"
+    "logout": "Log out",
+    "unknownUser": "Unknown User",
+    "jobTitle": {
+      "default": "Sales Representative"
+    }
   },
   "auth": {
     "heroPrefix": "The complete",
@@ -44,6 +48,8 @@
     "natId": "NAT ID Number",
     "custId": "Customer ID",
     "accNum": "Account Number",
+    "roleCustomer": "Customer",
+    "rolePartner": "Partner",
     "gsm": "GSM Number",
     "firstName": "First Name",
     "lastName": "Last Name",
@@ -251,6 +257,10 @@
     "cancelConfirmMessage": "Are you sure you want to cancel this sale?",
     "cancelConfirmKeepBtn": "No, Keep Editing",
     "cancelConfirmConfirmBtn": "Yes, Cancel Sale",
+    "submitConfirmTitle": "Submit Order",
+    "submitConfirmMessage": "Are you sure you want to submit this order?",
+    "submitConfirmKeepBtn": "No, Keep Editing",
+    "submitConfirmConfirmBtn": "Yes, Submit Order",
     "orderSuccessTitle": "Order Successfully Created",
     "orderSuccessMessage": "Your order has been submitted successfully.",
     "goToBillingAccount": "Go to Billing Account",

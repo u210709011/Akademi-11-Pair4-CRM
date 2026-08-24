@@ -2,7 +2,11 @@
   "navbar": {
     "appTitle": "Müşteri İlişkileri Yönetimi",
     "myProfile": "Profilim",
-    "logout": "Çkış"
+    "logout": "Çkış",
+    "unknownUser": "Bilinmeyen Kullanıcı",
+    "jobTitle": {
+      "default": "Satış Temsilcisi"
+    }
   },
   "auth": {
     "heroPrefix": "Ekibiniz için eksiksiz",
@@ -44,6 +48,8 @@
     "natId": "TC Kimlik Numarası",
     "custId": "Müşteri Numarası",
     "accNum": "Hesap Numarası",
+    "roleCustomer": "Müşteri",
+    "rolePartner": "Partner",
     "gsm": "GSM NUmarası",
     "firstName": "Ad",
     "lastName": "Soyad",
@@ -251,6 +257,10 @@
     "cancelConfirmMessage": "Bu satışı iptal etmek istediğinizden emin misiniz?",
     "cancelConfirmKeepBtn": "Hayır, Düzenlemeye Devam Et",
     "cancelConfirmConfirmBtn": "Evet, Satışı İptal Et",
+    "submitConfirmTitle": "Siparişi Gönder",
+    "submitConfirmMessage": "Bu siparişi göndermek istediğinizden emin misiniz?",
+    "submitConfirmKeepBtn": "Hayır, Düzenlemeye Devam Et",
+    "submitConfirmConfirmBtn": "Evet, Siparişi Gönder",
     "orderSuccessTitle": "Sipariş Başarıyla Oluşturuldu",
     "orderSuccessMessage": "Siparişiniz başarıyla gönderildi.",
     "goToBillingAccount": "Fatura Hesabına Git",
