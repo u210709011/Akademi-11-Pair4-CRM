@@ -11,12 +11,7 @@ import com.etiya.crm.customerservice.entities.concretes.CustomerSearchView;
 
 import jakarta.persistence.criteria.Predicate;
 
-/**
- * Arama kurali: firstName ve lastName ikisi de verilmisse birlikte (AND)
- * degerlendirilir; sadece biri verilmisse tek basina kullanilir. tcNo/acctNo
- * gibi diger alanlar bu isim grubuyla ve birbirleriyle her zaman OR'lanir.
- * Silinmis (deleted) kayitlar sonuca hicbir zaman dahil edilmez.
- */
+
 public final class CustomerSearchSpecifications {
 
 	private CustomerSearchSpecifications() {
@@ -65,14 +60,7 @@ public final class CustomerSearchSpecifications {
 		return "%" + value.toLowerCase() + "%";
 	}
 
-	/**
-	 * acctNo artik ACC-/CUST- gibi bir onek TASIMAZ, sadece ACCOUNT_NO_LENGTH
-	 * haneli sifirla soldan doldurulmus bir sayidir (bkz. AccountDefaults).
-	 * Arama kutusuna kullanici "42" yazarsa bunu saklanan "000042" ile
-	 * eslestirmek icin ayni sekilde soldan sifirla doldurulur; olasi bir onek/
-	 * rakam-disi karakter yazilirsa da (ornn. eski "ACC-42" aliskanligi) once
-	 * sadece rakamlar birakilir.
-	 */
+
 	private static String normalizeAccountNo(String value) {
 		String digitsOnly = value.replaceAll("\\D", "");
 		if (digitsOnly.isEmpty()) {

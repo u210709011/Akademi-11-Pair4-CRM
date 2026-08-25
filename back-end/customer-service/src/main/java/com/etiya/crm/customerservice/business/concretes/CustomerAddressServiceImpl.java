@@ -83,8 +83,7 @@ public class CustomerAddressServiceImpl implements CustomerAddressService {
 		Long dataTypeId = lookupResolver.resolveCustomerDataTypeId();
 		List<AddressResponse> existing = contactAddressClient.getAddressesByCustomer(custId, dataTypeId);
 		if (newAddress != null) {
-			// Onceden addAddress'teki gibi max-5 limiti kontrol edilmiyordu - billing account
-			// create/update akisindan yeni adres eklenerek limit delinebiliyordu.
+
 			rules.validateAddressLimit(existing.size());
 			CreateAddressRequest command = new CreateAddressRequest(custId, dataTypeId, newAddress.cityId(),
 					newAddress.streetName(), newAddress.buildingName(), newAddress.addressDesc(), false);

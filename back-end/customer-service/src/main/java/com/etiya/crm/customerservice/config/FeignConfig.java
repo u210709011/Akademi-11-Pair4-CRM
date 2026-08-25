@@ -13,12 +13,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * Feign configuration to propagate JWT tokens from incoming requests
- * to outgoing service calls. When customer-service receives a request with
- * JWT authentication, this interceptor ensures the token is forwarded to
- * downstream services like party-service, contact-address-service, etc.
- */
+
 @Configuration
 @RequiredArgsConstructor
 public class FeignConfig {

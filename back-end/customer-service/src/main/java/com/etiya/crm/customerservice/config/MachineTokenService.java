@@ -10,19 +10,7 @@ import org.springframework.web.client.RestClient;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * PartyEventListener/ContactMediumEventListener gibi Kafka consumer'lar bir
- * HTTP istegi icinde CALISMAZ - FeignConfig'in JWT propagation'i yapacak bir
- * SecurityContext'i yoktur. Bu servis, o durumda lookup-service'e erismek icin
- * "customer-service-m2m" client'inin (serviceAccountsEnabled=true, bkz.
- * infra/keycloak/crm-realm.json) client_credentials grant'iyla kendi
- * service-account token'ini alir ve suresi dolana kadar bellekte cache'ler
- * (her Kafka mesaji icin Keycloak'a gitmemek icin). Bu client, api-gateway'in
- * interaktif login'de kullandigi crm-client'tan KASITLI OLARAK ayridir - bir
- * client'in secret'i sizarsa diger client'in yetkisini acmasin diye (blast
- * radius ayrimi). api-gateway'deki AuthService ile ayni token endpoint'i
- * kullanir, sadece grant_type farklidir.
- */
+
 @Service
 @RequiredArgsConstructor
 public class MachineTokenService {

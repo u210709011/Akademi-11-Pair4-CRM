@@ -14,20 +14,7 @@ import io.swagger.v3.oas.models.servers.Server;
 
 import com.etiya.crm.customerservice.constants.SwaggerText;
 
-/**
- * Swagger UI: http://localhost:{port}/swagger-ui.html
- * OpenAPI JSON: http://localhost:{port}/v3/api-docs
- *
- * "Authorize" butonu icin: once POST /api/v1/auth/login (gateway) veya
- * infra/http/customer-workflow.http'deki login istegiyle bir accessToken
- * alin, sonra buraya (on eke gerek yok, "Bearer " otomatik eklenir) yapistirin.
- *
- * servers() acikca sabitlenir: forward-headers-strategy'ye ragmen bu ortamda
- * (WSL/Windows agi) springdoc kendi ham adresini (rastgele PORT, 172.x WSL IP'si)
- * kullanmaya devam edebiliyor - "Try it out" tarayicidan erisilemeyen bir
- * adrese gidiyordu. Swagger UI'in ust kisminda "Servers" dropdown'undan
- * ikisi arasinda secim yapilabilir.
- */
+
 @Configuration
 public class OpenApiConfig {
 

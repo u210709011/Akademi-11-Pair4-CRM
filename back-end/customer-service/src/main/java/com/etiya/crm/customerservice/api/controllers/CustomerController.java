@@ -39,18 +39,6 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
-/**
- * Musteri onboarding, arama ve Customer aggregate'inin oz yasam dongusu
- * (getById/soft-delete) uc noktalari. Kisisel bilgi/adres/contact/hesap
- * editleme uc noktalari kendi controller'larina tasindi - bkz.
- * CustomerIndividualController, CustomerAddressController,
- * CustomerContactController, CustomerAccountController.
- *
- * @Validated (sinif seviyesinde): FR-002'deki arama filtre alanlari @RequestBody degil ayri ayri
- * @RequestParam oldugu icin (bkz. search()), Bean Validation'in bunlari kontrol edebilmesi icin
- * bu annotation gerekli - method-parameter validation'i tetikler (ConstraintViolationException,
- * bkz. GlobalExceptionHandler).
- */
 @Tag(name = SwaggerText.CUSTOMER_TAG_NAME, description = SwaggerText.CUSTOMER_TAG_DESCRIPTION)
 @RestController
 @RequestMapping("/api/v1/customers")

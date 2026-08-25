@@ -5,12 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-/**
- * Bean Validation (@NotBlank vb.) mesaj key'lerini ("{validation.field.required}")
- * Spring Boot'un varsayilan ValidationMessages bundle'i yerine bizim
- * messages/messages.properties dosyamiz uzerinden coz. Boylece DTO
- * validasyonlari ve business exception'lar ayni MessageSource'u paylasir.
- */
+
 @Configuration
 public class ValidationConfig {
 

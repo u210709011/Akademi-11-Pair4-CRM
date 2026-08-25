@@ -14,13 +14,6 @@ import com.etiya.crm.shared.events.party.PartyEvent;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * PartyEventListener'in dinledigi "party-events" icin ConsumerFactory + ContainerFactory -
- * ContactMediumConsumerConfig ile ayni desen: her event tipi kendi tuketici yapilandirmasini
- * tasir, ortak/varsayilan bir hedef tipe guvenilmez. Diger tum tuketici ayarlari
- * (bootstrap-servers, group-id, error-handling deserializer, trusted packages, vb.)
- * KafkaProperties uzerinden aynen miras alinir, sadece VALUE_DEFAULT_TYPE degistirilir.
- */
 @Configuration
 @RequiredArgsConstructor
 public class PartyConsumerConfig {

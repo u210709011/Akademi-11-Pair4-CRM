@@ -14,12 +14,7 @@ import com.etiya.crm.customerservice.entities.concretes.CustomerAccount;
 
 public interface CustomerAccountRepository extends JpaRepository<CustomerAccount, Long> {
 
-	/**
-	 * Hesap aktifligi artik BaseEntity.active degil acct_st_id (lookup-service GNL_ST/CUST_ACCT
-	 * grubu) uzerinden - deletedStatusId (DEL) caller tarafindan cozulup verilir. Derived query
-	 * bunu ifade edemedigi icin @Query kullanilir. Null-safe: acct_st_id IS NULL da "silinmemis"
-	 * sayilir (yeni acilan/eski satirlar icin varsayilan yorum ACTV'dir).
-	 */
+	/** Standart aktif hesap arama */
 	@Query("select a from CustomerAccount a where a.customer.custId = :custId "
 			+ "and (a.acctStId is null or a.acctStId <> :deletedStatusId)")
 	List<CustomerAccount> findByCustomer_CustIdAndAcctStIdNotDeleted(@Param("custId") Long custId,

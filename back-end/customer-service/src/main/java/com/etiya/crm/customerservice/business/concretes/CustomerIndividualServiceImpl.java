@@ -37,17 +37,12 @@ public class CustomerIndividualServiceImpl implements CustomerIndividualService 
 	public IndividualResponse updateIndividual(Long custId, UpdateIndividualInfo request) {
 		Customer customer = customerFinder.getActiveCustomerOrThrow(custId);
 		identityRules.validateBirthDate(request.birthDate());
-		// FR-004 ACC-008/009/010: onboarding'deki ayni KPS dogrulamasi (fake) burada da calisir.
-		// TC no tekilligi burada TEKRARLANMAZ - alttaki partyClient.updateIndividual() cagrisi
-		// party-service'te checkNationalIdNotDuplicateForUpdate ile kendi kaydini HARIC TUTARAK
-		// kontrol eder; onboarding'in existsByNationalId'si burada kullanilirsa musteri kendi
-		// TC no'sunu degistirmeden kaydettiginde yanlislikla "zaten kayitli" hatasi verirdi.
+
 		identityVerificationService.verify(toIndividualInfo(request));
 		UpdateIndividualCommand command = new UpdateIndividualCommand(request.firstName(), request.middleName(),
 				request.lastName(), request.genderId(), request.motherName(), request.fatherName(),
 				request.birthDate(), request.nationalId());
-		// CustomerSearchView senkronu burada YAPILMAZ: party-service'in yayinlayacagi
-		// IndividualUpdated event'i PartyEventListener tarafindan async islenir.
+
 		return partyClient.updateIndividual(customer.getPartyRoleId(), command);
 	}
 
